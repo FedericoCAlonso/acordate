@@ -1,0 +1,1942 @@
+[
+  {
+    "id": "gc-n1-escala-01",
+    "version": 1,
+    "title": "Escala de Do en primera posición (blancas y negras)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "escala",
+    "level": 1,
+    "tags": [
+      "primera posición",
+      "escala mayor",
+      "cuerdas al aire"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 76,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala de Do en 1ra posición\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"^3⑤\"C2 \"^0④\"D2 | \"^2④\"E2 \"^3④\"F2 | \"^0③\"G2 \"^2③\"A2 | \"^0②\"B2 \"^1②\"c2 |\n\"^1②\"c \"^0②\"B \"^2③\"A \"^0③\"G | \"^3④\"F \"^2④\"E \"^0④\"D \"^3⑤\"C |]",
+    "fingerings": {},
+    "goals": [
+      "Alternar índice y medio (i-m) sin repetir dedo",
+      "Mantener la muñeca izquierda relajada"
+    ],
+    "notes": "Tocá cada nota en primera posición buscando un sonido redondo con yema y uña.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n1-acordes-01",
+    "version": 1,
+    "title": "Acordes abiertos arpegiados: C, Am, Em y G",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acordes",
+    "level": 1,
+    "tags": [
+      "acordes abiertos",
+      "arpegio simple",
+      "mano derecha"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 75,
+      "step": 5
+    },
+    "abc": "X:1\nT:Acordes abiertos arpegiados\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"C\"\"^p\"C \"^i\"E \"^m\"G \"^a\"c | \"Am\"\"^p\"A, \"^i\"E \"^m\"A \"^a\"c | \"Em\"\"^p\"E, \"^i\"B, \"^m\"E \"^a\"G | \"G\"\"^p\"G, \"^i\"B, \"^m\"D \"^a\"G |\n\"C\"C E G c | \"Dm\"D A d f | \"G\"G, B, D G | \"C\"C4 |]",
+    "fingerings": {},
+    "goals": [
+      "Dejar sonar las cuerdas mientras armás el acorde",
+      "Preparar los dedos antes del cambio de compás"
+    ],
+    "notes": "Usá pulgar (p) para el bajo y dedos i-m-a en las tres cuerdas agudas.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n1-lectura-01",
+    "version": 1,
+    "title": "Lectura en cuerdas al aire (Mi, Si, Sol, Re)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "lectura",
+    "level": 1,
+    "tags": [
+      "cuerdas al aire",
+      "lectura inicial",
+      "negras y blancas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura en cuerdas al aire\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"^①\"e2 \"^②\"B2 | \"^③\"G2 \"^④\"D2 | e B G B | e2 G2 |\n\"^④\"D2 \"^③\"G2 | \"^②\"B2 \"^①\"e2 | B G D G | e4 |]",
+    "fingerings": {},
+    "goals": [
+      "Identificar cada cuerda al aire en el pentagrama sin mirar el diapasón",
+      "Respetar la duración completa de cada blanca"
+    ],
+    "notes": "Nombrá mentalmente cada nota antes de pulsarla con tirando.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n1-ritmo-01",
+    "version": 1,
+    "title": "Pulso estable en una sola nota (negras y blancas)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "ritmo",
+    "level": 1,
+    "tags": [
+      "pulso",
+      "ritmo básico",
+      "mano derecha"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Pulso en Sol al aire\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"^i\"G \"^m\"G \"^i\"G \"^m\"G | G2 G2 | G G G2 | G2 G G |\nG z G z | G G z G | G2 z2 | G4 |]",
+    "fingerings": {},
+    "goals": [
+      "Sostener el pulso clavado con el metrónomo",
+      "Apagar la cuerda limpiamente en los silencios"
+    ],
+    "notes": "Practicá sobre la tercera cuerda al aire (Sol) alternando índice y medio.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n1-escala-01",
+    "version": 1,
+    "title": "Pentatónica menor de Mi en cuerdas al aire",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "escala",
+    "level": 1,
+    "tags": [
+      "pentatónica",
+      "primera posición",
+      "púa alternada"
+    ],
+    "key": "Em",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Pentatónica de Em abierta\nM:4/4\nL:1/4\nK:G clef=treble-8\n\"^0⑥\"E, \"^3⑥\"G, \"^0⑤\"A, \"^2⑤\"B, | \"^0④\"D \"^2④\"E \"^0③\"G \"^2③\"A | \"^0②\"B \"^3②\"d \"^0①\"e2 |\n\"Em\"e d B A | G E D B, | A, G, E,2 |]",
+    "fingerings": {},
+    "goals": [
+      "Usar púa alternada abajo-arriba desde el primer día",
+      "Escuchar la sonoridad menor de cada nota"
+    ],
+    "notes": "Tocá lento y parejo aprovechando las cuerdas al aire en primera posición.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n1-acordes-01",
+    "version": 1,
+    "title": "Cambios lentos: C, G, D, Em y Am",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acordes",
+    "level": 1,
+    "tags": [
+      "acordes abiertos",
+      "cambios de acorde",
+      "rasgueo"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 76,
+      "step": 5
+    },
+    "abc": "X:1\nT:Cambios de acordes abiertos\nM:4/4\nL:1/4\nK:G clef=treble-8\n\"G\"G2 G2 | \"Em\"E2 E2 | \"C\"C2 C2 | \"D\"D2 D2 |\n\"G\"G2 G2 | \"Am\"A2 A2 | \"D\"D2 D2 | \"G\"G4 |]",
+    "fingerings": {},
+    "goals": [
+      "Cambiar de acorde sin frenar la mano derecha",
+      "Pisar cerca del traste para evitar trasteos"
+    ],
+    "notes": "Rasgueá hacia abajo en los tiempos 1 y 3 mientras anticipás visualmente el acorde siguiente.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n1-lectura-01",
+    "version": 1,
+    "title": "Primera posición: cuerdas 1 y 2 (Si a Sol)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "lectura",
+    "level": 1,
+    "tags": [
+      "lectura",
+      "primera posición",
+      "agudas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 78,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura en 1ra y 2da cuerda\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"^0②\"B \"^1②\"c \"^3②\"d2 | \"^0①\"e \"^1①\"f \"^3①\"g2 | f e d c | B2 d2 |\nc d e f | g f e d | c2 B2 | c4 |]",
+    "fingerings": {},
+    "goals": [
+      "Un dedo por traste en posición I (dedo 1 en traste 1, dedo 3 en traste 3)",
+      "Leer por intervalos además de por nombre de nota"
+    ],
+    "notes": "Mantené la vista fija en el pentagrama y sentí las distancias en el mango.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n1-ritmo-01",
+    "version": 1,
+    "title": "Ritmo básico sobre acorde de Mi menor",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "ritmo",
+    "level": 1,
+    "tags": [
+      "ritmo",
+      "pulso",
+      "negras y silencios"
+    ],
+    "key": "Em",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove simple en Em\nM:4/4\nL:1/4\nK:G clef=treble-8\n\"Em\"E E E E | E2 E2 | E z E E | E2 z2 |\n\"Em\"E E z E | E2 E2 | E E E z | E4 |]",
+    "fingerings": {},
+    "goals": [
+      "Marcar el pulso con el pie de forma constante",
+      "Cortar el sonido con la palma en cada silencio"
+    ],
+    "notes": "Ideal para afianzar la mano derecha antes de sumar cambios rápidos.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n1-escala-01",
+    "version": 1,
+    "title": "Escala mayor de Do en primera posición (bajo)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "escala",
+    "level": 1,
+    "tags": [
+      "escala mayor",
+      "clave de fa",
+      "primera posición"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala de Do mayor en bajo\nM:4/4\nL:1/4\nK:C clef=bass\n\"^2③\"C,2 \"^4③\"D,2 | \"^1②\"E,2 \"^2②\"F,2 | \"^4②\"G,2 \"^1①\"A,2 | \"^3①\"B,2 \"^4①\"C2 |\nC B, A, G, | F, E, D, C, |]",
+    "fingerings": {},
+    "goals": [
+      "Alternar dedos índice y medio de mano derecha",
+      "Silenciar las cuerdas vecinas para evitar resonancias"
+    ],
+    "notes": "Tocá con dedos 1-2-4 en posición II para no estirar de más la mano izquierda.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n1-acordes-01",
+    "version": 1,
+    "title": "Raíces sobre progresión abierta C – G – Am – F",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acordes",
+    "level": 1,
+    "tags": [
+      "raíces",
+      "progresión pop",
+      "clave de fa"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Raíces C - G - Am - F\nM:4/4\nL:1/4\nK:C clef=bass\n\"C\"C,2 C,2 | \"G\"G,,2 G,,2 | \"Am\"A,,2 A,,2 | \"F\"F,,2 F,,2 |\n\"C\"C, C, C, C, | \"G\"G,, G,, G,, G,, | \"Am\"A,, A,, A,, A,, | \"F\"F,,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Encontrar al instante la raíz de cada acorde en las cuerdas 3 y 4",
+      "Sostener un ataque parejo y firme"
+    ],
+    "notes": "Activá el acompañamiento de acordes para sentir cómo tu raíz sostiene la armonía.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n1-lectura-01",
+    "version": 1,
+    "title": "Cuerdas al aire en clave de Fa (Mi, La, Re, Sol)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "lectura",
+    "level": 1,
+    "tags": [
+      "clave de fa",
+      "cuerdas al aire",
+      "lectura inicial"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Cuerdas al aire en clave de Fa\nM:4/4\nL:1/4\nK:C clef=bass\n\"^④\"E,,2 \"^③\"A,,2 | \"^②\"D,2 \"^①\"G,2 | G, D, A,, E,, | E,,2 A,,2 |\nA,, A,, D, D, | G,2 D,2 | A,,2 E,,2 | E,,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Reconocer las cuatro cuerdas al aire en clave de Fa",
+      "Apoyar el pulgar en la pastilla o en la cuerda superior"
+    ],
+    "notes": "Prestá atención a las líneas adicionales graves para el Mi de cuarta cuerda.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n1-ritmo-01",
+    "version": 1,
+    "title": "Pulso y silencios de negra en La al aire",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "ritmo",
+    "level": 1,
+    "tags": [
+      "pulso",
+      "muteo",
+      "groove inicial"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 80,
+      "step": 5
+    },
+    "abc": "X:1\nT:Pulso y muteo en La\nM:4/4\nL:1/4\nK:C clef=bass\n\"Am\"A,, A,, A,, A,, | A,, z A,, z | A,, A,, z A,, | A,,2 z2 |\n\"Am\"A,, z A,, A,, | z A,, A,, z | A,, A,, A,, z | A,,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Mutear con ambas manos exactamente sobre el tiempo del silencio",
+      "Mantener un volumen uniforme entre índice y medio"
+    ],
+    "notes": "El silencio en el bajo es tan importante como la nota: cortá el sonido a tiempo.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n2-escala-01",
+    "version": 1,
+    "title": "Escala de Sol mayor en una octava (corcheas)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "escala",
+    "level": 2,
+    "tags": [
+      "escala mayor",
+      "corcheas",
+      "sol mayor"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 70,
+      "target": 96,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala de Sol mayor en corcheas\nM:4/4\nL:1/8\nK:G clef=treble-8\nG,A, B,C DE FG | GF ED CB, A,G, |\nG,B, A,C B,D CE | DF EG F2 G2 |]",
+    "fingerings": {
+      "1": "3⑥",
+      "6": "2④",
+      "7": "4④"
+    },
+    "goals": [
+      "Mantener corcheas parejas sin acelerar en la bajada",
+      "Recordar el Fa sostenido de la armadura"
+    ],
+    "notes": "Cuidá el cruce de cuerdas con la mano derecha manteniendo el mismo timbre.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n2-acordes-01",
+    "version": 1,
+    "title": "Progresión I–IV–V en Sol (vals en 3/4)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acordes",
+    "level": 2,
+    "tags": [
+      "vals",
+      "3/4",
+      "I-IV-V"
+    ],
+    "key": "G",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 72,
+      "target": 98,
+      "step": 5
+    },
+    "abc": "X:1\nT:Vals I-IV-V en Sol\nM:3/4\nL:1/4\nK:G clef=treble-8\n\"G\"G, [B,DG] [B,DG] | \"C\"C [EGc] [EGc] | \"D\"D [FAc] [FAc] | \"G\"G, [B,DG]2 |\n\"G\"G, [B,DG] [B,DG] | \"Em\"E, [B,EG] [B,EG] | \"D7\"D [FAc] [FAc] | \"G\"G,3 |]",
+    "fingerings": {},
+    "goals": [
+      "Diferenciar el peso del bajo en el tiempo 1 y los acordes livianos en 2 y 3",
+      "Tocar las tríadas juntas sin arpegiar"
+    ],
+    "notes": "Usá pulgar en el primer tiempo e índice-medio-anular juntos en tiempos 2 y 3.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n2-lectura-01",
+    "version": 1,
+    "title": "Estudio melódico en Fa mayor con ligaduras",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "lectura",
+    "level": 2,
+    "tags": [
+      "fa mayor",
+      "ligaduras",
+      "primera posición"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 70,
+      "target": 95,
+      "step": 5
+    },
+    "abc": "X:1\nT:Estudio en Fa mayor\nM:4/4\nL:1/8\nK:F clef=treble-8\nF2 GA B2 AG | A2 FG A4 | c2 BA G2 FE | F2 G2 A4 |\nB2 AG A2 GF | G2 FE D2 C2 | F2 A2 G2 E2 | F6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Respetar el Si bemol de la armadura",
+      "Respirar al final de cada frase de cuatro compases"
+    ],
+    "notes": "Practicá primero la lectura rítmica palmeando las corcheas y blancas.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n2-ritmo-01",
+    "version": 1,
+    "title": "Patrón de corcheas y silencios en 4/4 (arpegio p-i-m-i)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "ritmo",
+    "level": 2,
+    "tags": [
+      "corcheas",
+      "arpegio",
+      "p-i-m-i"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 72,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Patrón p-i-m-i en Am\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Am\"A,EAE A,EAE | \"Dm\"DAfA DAfA | \"E7\"E,^GBG E,GBG | \"Am\"A,EAE A,2 z2 |\n\"F\"F,AcA \"C\"CEGE | \"E7\"E,^GBG \"Am\"A,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener la mano derecha estable sin rebotar",
+      "Acentuar levemente el pulgar en tiempos 1 y 3"
+    ],
+    "notes": "Ideal para soltar la coordinación p-i-m-i antes de pasar al patrón p-i-m-a.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n2-escala-01",
+    "version": 1,
+    "title": "Escala mayor de Do y pentatónica menor de La",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "escala",
+    "level": 2,
+    "tags": [
+      "do mayor",
+      "pentatónica menor",
+      "corcheas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 75,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Do mayor y pentatónica de Am\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"C\"CD EF GA Bc | cB AG FE DC |\n\"Am\"A,C DE GA cd | ec AG ED CA, |]",
+    "fingerings": {},
+    "goals": [
+      "Reconocer que Do mayor y La menor comparten las mismas notas",
+      "Mantener púa alternada estricta en corcheas"
+    ],
+    "notes": "Escuchá cómo cambia el centro tonal al pasar de C a Am.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n2-acordes-01",
+    "version": 1,
+    "title": "Progresión I–vi–IV–V en Do mayor",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acordes",
+    "level": 2,
+    "tags": [
+      "I-vi-IV-V",
+      "progresión clásica",
+      "acompañamiento"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 75,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Progresión I-vi-IV-V en Do\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"C\"C2 EG c2 GE | \"Am\"A,2 CE A2 EC | \"F\"F,2 AC F2 CA, | \"G\"G,2 B,D G2 DB, |\n\"C\"C2 EG c2 G2 | \"Am\"A,2 CE A2 E2 | \"F\"F,2 A,C \"G\"G,2 B,D | \"C\"C6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Enlazar los cuatro acordes sin pausas",
+      "Mantener un pulso parejo en corcheas"
+    ],
+    "notes": "Probá transponer esta práctica a G, D y F para dominar el círculo en varias tonalidades.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n2-lectura-01",
+    "version": 1,
+    "title": "Lectura en Re mayor con corcheas y ligaduras",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "lectura",
+    "level": 2,
+    "tags": [
+      "re mayor",
+      "ligaduras",
+      "corcheas"
+    ],
+    "key": "D",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 72,
+      "target": 98,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura en Re mayor\nM:4/4\nL:1/8\nK:D clef=treble-8\n\"D\"D2 EF G2 A2 | \"G\"B2 AG F2 E2 | \"A7\"E2 FG A2 G2 | \"D\"F4- F2 z2 |\n\"D\"A2 Bc d2 cB | \"G\"B2 AG \"A7\"A2 FE | \"D\"D2 F2 A2 G2 | \"D\"F6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Recordar Fa# y Do# en la armadura de Re mayor",
+      "Sostener la ligadura de prolongación en el compás 4"
+    ],
+    "notes": "Leé un compás por delante de lo que estás tocando.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n2-ritmo-01",
+    "version": 1,
+    "title": "Síncopas de corchea sobre I–IV–V en Sol",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "ritmo",
+    "level": 2,
+    "tags": [
+      "síncopa",
+      "groove",
+      "I-IV-V"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove sincopado I-IV-V\nM:4/4\nL:1/8\nK:G clef=treble-8\n\"G\"G2 GG z G G2 | \"C\"C2 CC z C C2 | \"D\"D2 DD z D D2 | \"G\"G2 z G G2 D2 |\n\"G\"G2 GG z G B2 | \"C\"c2 cc z c G2 | \"D\"A2 AA z A F2 | \"G\"G6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener el movimiento pendular constante de la púa aunque haya silencios",
+      "Sentir el contratiempo del tercer pulso"
+    ],
+    "notes": "Contá \"1 y 2 y 3 y 4 y\" en voz alta mientras tocás.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n2-escala-01",
+    "version": 1,
+    "title": "Escala mayor de Fa y pentatónica menor de Re (bajo)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "escala",
+    "level": 2,
+    "tags": [
+      "fa mayor",
+      "pentatónica",
+      "corcheas"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 75,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Fa mayor y pentatónica de Dm\nM:4/4\nL:1/8\nK:F clef=bass\n\"F\"F,,G,, A,,B,, C,D, E,F, | F,E, D,C, B,,A,, G,,F,, |\n\"Dm\"D,F, G,A, CD CA, | G,F, D,C, A,,G,, F,,D,, |]",
+    "fingerings": {},
+    "goals": [
+      "Usar digitación económica en posición I y III",
+      "Controlar el timbre parejo al pasar a la cuarta cuerda"
+    ],
+    "notes": "Fijate en el Si bemol de la armadura de Fa mayor.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n2-acordes-01",
+    "version": 1,
+    "title": "Bajo raíz–quinta sobre I–IV–V en Sol",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acordes",
+    "level": 2,
+    "tags": [
+      "raíz y quinta",
+      "I-IV-V",
+      "acompañamiento"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Raíz y quinta en Sol\nM:4/4\nL:1/4\nK:G clef=bass\n\"G\"G,, D, G,, D, | \"C\"C, G, C, G, | \"D\"D, A, D, A, | \"G\"G,, D, B,, D, |\n\"G\"G,, D, G, D, | \"C\"C, G, C, G,, | \"D\"D, A, F, D, | \"G\"G,,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Visualizar la forma geométrica de la quinta justa en el diapasón",
+      "Alternar quinta superior e inferior sin perder el pulso"
+    ],
+    "notes": "Activá las funciones armónicas en la vista Mixto para ver R y 5 sobre cada nota.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n2-lectura-01",
+    "version": 1,
+    "title": "Lectura en clave de Fa con corcheas y silencios",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "lectura",
+    "level": 2,
+    "tags": [
+      "clave de fa",
+      "corcheas",
+      "silencios"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 74,
+      "target": 98,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura en Do (clave de Fa)\nM:4/4\nL:1/8\nK:C clef=bass\n\"C\"C,2 E,G, C2 G,2 | \"Am\"A,,2 C,E, A,2 z2 | \"F\"F,,2 A,,C, F,2 C,2 | \"G\"G,,2 B,,D, G,2 z2 |\n\"C\"C,2 G,E, C,2 E,G, | \"F\"F,2 C,A,, \"G\"G,,2 B,,D, | \"C\"C,4- C,2 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Respetar los silencios de negra y la ligadura final",
+      "Leer frases de corcheas agrupadas de a dos"
+    ],
+    "notes": "Practicá primero a 74 BPM enfocándote en la limpieza de cada corte.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n2-ritmo-01",
+    "version": 1,
+    "title": "Groove raíz–octava en corcheas (estilo pop/disco)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "ritmo",
+    "level": 2,
+    "tags": [
+      "raíz y octava",
+      "groove",
+      "corcheas"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 78,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove raíz-octava en Am\nM:4/4\nL:1/8\nK:C clef=bass\n\"Am\"A,,A, A,,A, A,,A, A,,A, | \"F\"F,,F, F,,F, F,,F, F,,F, |\n\"C\"C,C C,C C,C C,C | \"G\"G,,G, G,,G, G,,G, z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Alternar índice en la raíz y medio en la octava con fluidez",
+      "Evitar que la raíz siga sonando cuando pulsás la octava"
+    ],
+    "notes": "Usá dedo 1 para la raíz y dedo 3 o 4 para la octava, relajando la presión al cambiar.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n3-escala-01",
+    "version": 1,
+    "title": "Escala de La menor melódica en dos octavas",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "escala",
+    "level": 3,
+    "tags": [
+      "dos octavas",
+      "menor melódica",
+      "cambio de posición"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 85,
+      "target": 116,
+      "step": 5
+    },
+    "abc": "X:1\nT:La menor melódica (2 octavas)\nM:4/4\nL:1/8\nK:C clef=treble-8\nA,B, CD E^F ^GA | Bc de ^f^g a2 |\n=g=f ed cB AG | FE DC B,A, A,2 |]",
+    "fingerings": {
+      "1": "0⑤",
+      "6": "4④",
+      "15": "4①"
+    },
+    "goals": [
+      "Subir con 6º y 7º grados ascendidos (Fa# y Sol#) y bajar natural",
+      "Preparar el traslado a posición V antes de llegar al agudo"
+    ],
+    "notes": "Cuidá la claridad de las alteraciones accidentales al ascender y descender.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n3-acordes-01",
+    "version": 1,
+    "title": "Progresión ii–V–I en Do con acordes de séptima",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acordes",
+    "level": 3,
+    "tags": [
+      "ii-V-I",
+      "acordes de séptima",
+      "arpegio"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 85,
+      "target": 115,
+      "step": 5
+    },
+    "abc": "X:1\nT:ii-V-I en Do (clásica)\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"D,A cF D,A cF | \"G7\"G,,F BG G,,F BG | \"Cmaj7\"C,E BG C,E BG | \"Am7\"A,,E Gc A,,E Gc |\n\"Dm7\"D,F Ac \"G7\"G,,F Bd | \"Cmaj7\"C,E GB c4 |]",
+    "fingerings": {},
+    "goals": [
+      "Escuchar la resolución de la 7ª de Dm7 (Do) hacia la 3ª de G7 (Si)",
+      "Mantener los bajos resonando durante todo el compás"
+    ],
+    "notes": "Escuchá la conducción de las notas guía entre Dm7, G7 y Cmaj7.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n3-lectura-01",
+    "version": 1,
+    "title": "Estudio a dos voces en La menor (melodía y bajo)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "lectura",
+    "level": 3,
+    "tags": [
+      "dos voces",
+      "polifonía",
+      "estudio clásico"
+    ],
+    "key": "Am",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 80,
+      "target": 112,
+      "step": 5
+    },
+    "abc": "X:1\nT:Estudio sencillo a 2 voces en Am\nM:3/4\nL:1/4\nK:C clef=treble-8\nV:1\nc B A | d c B | e d c | B3 |\nc B A | G F E | ^G B d | c3 |]\nV:2\nA,3 | D3 | C3 | E,3 |\nA,3 | B,3 | E,3 | A,3 |]",
+    "fingerings": {},
+    "goals": [
+      "Destacar la melodía superior (i-m-a) sobre el bajo sostenido (p)",
+      "Dejar vibrar cada blanca con puntillo del bajo"
+    ],
+    "notes": "Tocá primero cada voz por separado para internalizar el fraseo antes de juntarlas.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n3-ritmo-01",
+    "version": 1,
+    "title": "Estudio de arpegio de tríadas en 6/8",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "ritmo",
+    "level": 3,
+    "tags": [
+      "6/8",
+      "arpegio",
+      "tríadas"
+    ],
+    "key": "Em",
+    "timeSignature": "6/8",
+    "tempo": {
+      "start": 88,
+      "target": 120,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegio de tríadas en 6/8\nM:6/8\nL:1/8\nK:G clef=treble-8\n\"Em\"E,B,E GEB, | \"Am\"A,EA cAE | \"B7\"B,^DF BFD | \"Em\"E,B,E GEB, |\n\"C\"CEG cGE | \"G\"G,B,D GDB, | \"B7\"B,^DF AFD | \"Em\"E,3- E,2 z |]",
+    "fingerings": {},
+    "goals": [
+      "Sentir el compás compuesto en dos pulsos grandes (1-2-3, 4-5-6)",
+      "Lograr una dinámica fluida tipo barcarola"
+    ],
+    "notes": "Usá el metrónomo en 6/8 y acentuá suavemente los pulsos 1 y 4.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n3-escala-01",
+    "version": 1,
+    "title": "Modo Dórico de Re y Mixolidio de Sol (2 octavas)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "escala",
+    "level": 3,
+    "tags": [
+      "modos",
+      "dórico",
+      "mixolidio",
+      "dos octavas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 120,
+      "step": 5
+    },
+    "abc": "X:1\nT:Modos Dórico y Mixolidio\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"DE FG AB cd | ef ed cB AG |\n\"G7\"GA Bc de fg | fe dc BA GF |]",
+    "fingerings": {},
+    "goals": [
+      "Identificar la sexta mayor característica del modo Dórico (Si en Re)",
+      "Identificar la séptima menor del Mixolidio (Fa en Sol)"
+    ],
+    "notes": "Observá cómo ambos modos se conectan de forma natural sobre un ii–V en Do.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n3-acordes-01",
+    "version": 1,
+    "title": "Progresión ii–V–I mayor en Do y Sol (acordes de 7ª)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acordes",
+    "level": 3,
+    "tags": [
+      "ii-V-I",
+      "séptimas",
+      "cejilla"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 85,
+      "target": 118,
+      "step": 5
+    },
+    "abc": "X:1\nT:ii-V-I en Do y Sol\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"Dm7\"F2 c2 | \"G7\"F2 B2 | \"Cmaj7\"E2 B2 | \"Cmaj7\"E2 G2 |\n\"Am7\"G2 c2 | \"D7\"^F2 c2 | \"Gmaj7\"^F2 B2 | \"Gmaj7\"D4 |]",
+    "fingerings": {},
+    "goals": [
+      "Armar los acordes con cejilla relajando el pulgar detrás del mango",
+      "Resaltar las notas guía (3ª y 7ª) en cada cambio"
+    ],
+    "notes": "Escuchá la línea superior de notas guía y acompañate con voicings drop-2 o cejilla.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n3-lectura-01",
+    "version": 1,
+    "title": "Lectura en posición V con arpegios de tríadas",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "lectura",
+    "level": 3,
+    "tags": [
+      "posición V",
+      "arpegios",
+      "tríadas"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 84,
+      "target": 115,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegios en posición V\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Am\"\"^V\"Ac ec Ac e2 | \"Dm\"df af df a2 | \"G\"GB dB GB d2 | \"C\"ce ge ce g2 |\n\"F\"fa cf \"Dm\"df Ad | \"E7\"^GB eB \"Am\"A4 |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener la mano fija en traste 5 (dedo 1 en V, dedo 4 en VIII)",
+      "Articular cada nota del arpegio sin que se empasten"
+    ],
+    "notes": "Leer en quinta posición te abre todo el registro medio de la guitarra.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n3-ritmo-01",
+    "version": 1,
+    "title": "Groove funk-pop en semicorcheas (patrón rítmico)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "ritmo",
+    "level": 3,
+    "tags": [
+      "groove",
+      "síncopa",
+      "rasgueo"
+    ],
+    "key": "Em",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 85,
+      "target": 116,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove rítmico en Em7 - A7\nM:4/4\nL:1/16\nK:D clef=treble-8\n\"Em7\"E2z2 E2E2 z2E2 E2z2 | \"A7\"A2z2 A2A2 z2A2 G2E2 |\n\"Em7\"E2E2 z2G2 B2z2 B2A2 | \"A7\"A2z2 G2E2 \"Em7\"E4 z4 |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener la mano derecha en movimiento continuo de semicorcheas",
+      "Marcar acentos precisos con muteo de mano izquierda"
+    ],
+    "notes": "Empezá lento a 85 BPM hasta que el contratiempo salga relajado y bailable.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n3-escala-01",
+    "version": 1,
+    "title": "Modo Dórico y arpegio de tríadas en dos posiciones",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "escala",
+    "level": 3,
+    "tags": [
+      "dórico",
+      "arpegios",
+      "bajo"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 120,
+      "step": 5
+    },
+    "abc": "X:1\nT:Dórico de Re y arpegio Dm7\nM:4/4\nL:1/8\nK:C clef=bass\n\"Dm7\"D,E, F,G, A,B, CD | CB, A,G, F,E, D,2 |\n\"Dm7\"D,F, A,C DA, F,D, | \"G7\"G,,B,, D,F, G,F, D,B,, |]",
+    "fingerings": {},
+    "goals": [
+      "Conectar la escala dórica con el arpegio de Dm7 sin perder fluidez",
+      "Evitar ruidos de arrastre al cambiar de cuerda"
+    ],
+    "notes": "Excelente preparación para construir líneas melódicas sobre ii–V.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n3-acordes-01",
+    "version": 1,
+    "title": "Arpegios de acordes de séptima sobre ii–V–I en Bb",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acordes",
+    "level": 3,
+    "tags": [
+      "ii-V-I",
+      "arpegios",
+      "séptimas"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 86,
+      "target": 118,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegios ii-V-I en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Cm7\"C, E, G, B, | \"F7\"F, A, C E | \"Bbmaj7\"B,, D, F, A, | \"Bbmaj7\"B, A, F, D, |\n\"Cm7\"C, G, E, C, | \"F7\"F,, A,, C, E, | \"Bbmaj7\"B,, F, D, B,, | \"G7\"G,, B,, D, F, |]",
+    "fingerings": {},
+    "goals": [
+      "Memorizar las formas de arpegio m7, 7 y maj7 en el bajo",
+      "Respetar la armadura de Si bemol (Sib y Mib)"
+    ],
+    "notes": "Observá las funciones R-b3-5-b7 y R-3-5-7 anotadas debajo del pentagrama.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n3-lectura-01",
+    "version": 1,
+    "title": "Línea melódica con notas de paso en clave de Fa",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "lectura",
+    "level": 3,
+    "tags": [
+      "notas de paso",
+      "clave de fa",
+      "lectura"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 120,
+      "step": 5
+    },
+    "abc": "X:1\nT:Notas de paso sobre progresión en Sol\nM:4/4\nL:1/4\nK:G clef=bass\n\"G\"G,, A,, B,, D, | \"Em\"E, D, B,, A,, | \"C\"C, D, E, G, | \"D7\"F, E, D, C, |\n\"G\"B,, D, G, F, | \"Em\"E, G, B, A, | \"Am7\"A, G, \"D7\"F, D, | \"G\"G,,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Unir cada acorde mediante notas diatónicas de paso",
+      "Leer los saltos de tercera y quinta a primera vista"
+    ],
+    "notes": "Notá cómo el movimiento conjunto hace que la línea cante en lugar de solo marcar raíces.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n3-ritmo-01",
+    "version": 1,
+    "title": "Groove soul con notas de paso y síncopa en Do",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "ritmo",
+    "level": 3,
+    "tags": [
+      "groove",
+      "soul",
+      "síncopa"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 86,
+      "target": 118,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove soul en Do\nM:4/4\nL:1/8\nK:C clef=bass\n\"C\"C,2 z C, E,G, A,G, | \"Am\"A,,2 z A,, C,E, G,E, |\n\"F\"F,,2 z F,, A,,C, D,C, | \"G7\"G,,2 B,,D, F,D, B,,G,, |]",
+    "fingerings": {},
+    "goals": [
+      "Acentuar el groove sincopado con el bombo imaginario",
+      "Controlar la duración exacta de las negras antes de cada silencio"
+    ],
+    "notes": "Tocá pegado al pulso: buscá peso y consistencia en el tiempo 1.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n4-escala-01",
+    "version": 1,
+    "title": "Escala de Mi mayor en dos octavas con articulación rápida",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "escala",
+    "level": 4,
+    "tags": [
+      "dos octavas",
+      "mi mayor",
+      "velocidad"
+    ],
+    "key": "E",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 105,
+      "target": 145,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala de Mi mayor (2 octavas)\nM:4/4\nL:1/8\nK:E clef=treble-8\nE,F, G,A, B,C DE | FG AB cd e2 |\ndc BA GF ED | CB, A,G, F,E, E,2 |]",
+    "fingerings": {
+      "1": "0⑥",
+      "9": "2④",
+      "15": "4①"
+    },
+    "goals": [
+      "Mantener relajación total a más de 130 BPM",
+      "Lograr transiciones imperceptibles en los cambios de cuerda"
+    ],
+    "notes": "Usá el entrenador de velocidad del metrónomo subiendo 5 BPM cada 4 pasadas.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n4-acordes-01",
+    "version": 1,
+    "title": "Estudio de arpegios p-i-m-a con armonía extendida",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acordes",
+    "level": 4,
+    "tags": [
+      "p-i-m-a",
+      "arpegios",
+      "extensiones"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 105,
+      "target": 144,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegios p-i-m-a con extensiones\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Am9\"A,EBc A,EBc | \"Dm9\"DAce DAce | \"G13\"G,FBe G,FBe | \"Cmaj7\"CEGB CEGB |\n\"Bm7b5\"B,FAd \"E7b9\"E,^Gdf | \"Am9\"A,EBc A,4 |]",
+    "fingerings": {},
+    "goals": [
+      "Sostener el patrón p-i-m-a parejo en corcheas rápidas",
+      "Destacar la voz aguda (anular) como línea melódica"
+    ],
+    "notes": "Prepará la mano derecha suavemente sobre las cuerdas sin tensar los nudillos.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n4-lectura-01",
+    "version": 1,
+    "title": "Estudio contrapuntístico a dos voces en Re menor",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "lectura",
+    "level": 4,
+    "tags": [
+      "dos voces",
+      "contrapunto",
+      "re menor"
+    ],
+    "key": "Dm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 136,
+      "step": 5
+    },
+    "abc": "X:1\nT:Contrapunto a 2 voces en Dm\nM:4/4\nL:1/8\nK:Dm clef=treble-8\nV:1\nd2 ef g2 fe | f2 ed ^c2 A2 | d2 fe d2 cB | A4- A2 z2 |\nB2 AG A2 GF | G2 FE F2 D2 | E2 ^FG A2 ^c2 | d6 z2 |]\nV:2\nD4 B,4 | A,4 A,4 | F,4 G,4 | A,4 G,2 F,2 |\nG,4 F,4 | E,4 D,4 | A,4 A,4 | D6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener independencia rítmica y dinámica entre melodía y bajo",
+      "Leer las alteraciones de Do# y Fa# con fluidez"
+    ],
+    "notes": "Practicá en bucle de 4 compases hasta que ambas voces respiren con naturalidad.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n4-ritmo-01",
+    "version": 1,
+    "title": "Milonga campera estilizada (síncopa 3-3-2 en 4/4)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "ritmo",
+    "level": 4,
+    "tags": [
+      "milonga",
+      "3-3-2",
+      "folklore rioplatense"
+    ],
+    "key": "Em",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 148,
+      "step": 5
+    },
+    "abc": "X:1\nT:Milonga en Mi menor\nM:4/4\nL:1/8\nK:G clef=treble-8\n\"Em\"E,2 B,E G2 EB, | \"Am\"A,2 EA c2 AE | \"B7\"B,2 ^DF B2 FD | \"Em\"E,2 B,E G2 EB, |\n\"C\"C2 Gc e2 cG | \"Am\"A,2 EA \"B7\"B,2 ^DF | \"Em\"E,2 B,E G2 B2 | \"Em\"E,6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Marcar la acentuación característica 3+3+2 de la milonga rioplatense",
+      "Sostener el bajo con pulgar firme"
+    ],
+    "notes": "Pensá el compás dividido en corcheas: 1-2-3, 1-2-3, 1-2.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n4-escala-01",
+    "version": 1,
+    "title": "Escala menor armónica y arpegio m7b5–7b9",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "escala",
+    "level": 4,
+    "tags": [
+      "menor armónica",
+      "jazz menor",
+      "arpegios"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 110,
+      "target": 150,
+      "step": 5
+    },
+    "abc": "X:1\nT:iiø-V7b9-i y menor armónica\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Bm7b5\"B,D FA BA FD | \"E7b9\"E,^G Bd f^g fd |\n\"Am\"AB cd ef ^ga | ^gf ed cB A2 |]",
+    "fingerings": {},
+    "goals": [
+      "Reconocer la segunda aumentada (Fa–Sol#) de la menor armónica",
+      "Aplicar el arpegio semidisminuido sobre el iiø"
+    ],
+    "notes": "Clave absoluta para improvisar sobre ii–V–i menores de jazz y tango.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n4-acordes-01",
+    "version": 1,
+    "title": "Cambios jazz con extensiones (maj7, m7, 7, m7b5, dim7)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acordes",
+    "level": 4,
+    "tags": [
+      "jazz",
+      "extensiones",
+      "lead sheet"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 110,
+      "target": 148,
+      "step": 5
+    },
+    "abc": "X:1\nT:Cambios jazz con extensiones en Fa\nM:4/4\nL:1/4\nK:F clef=treble-8\n\"Fmaj7\"A2 e2 | \"F#dim7\"A2 _e2 | \"Gm7\"B2 f2 | \"C7\"B2 e2 |\n\"Am7\"c2 g2 | \"D7\"c2 ^f2 | \"Gm7\"B2 f2 | \"C7\"B2 e2 |\n\"Cm7\"_e2 B2 | \"F7\"_e2 A2 | \"Bbmaj7\"d2 A2 | \"Bdim7\"d2 _A2 |\n\"Am7\"c2 g2 | \"Dm7\"c2 f2 | \"Gm7\"B2 \"C7\"e2 | \"Fmaj7\"A4 |]",
+    "fingerings": {},
+    "goals": [
+      "Enlazar voicings con mínimo movimiento de dedos",
+      "Identificar la función de paso de F#dim7 y Bdim7"
+    ],
+    "notes": "Activá la vista Cifrado para practicar comping libre sobre la grilla completa.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n4-lectura-01",
+    "version": 1,
+    "title": "Lead sheet melódico: Estándar sobre ii–V–I en Fa",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "lectura",
+    "level": 4,
+    "tags": [
+      "lead sheet",
+      "jazz",
+      "lectura"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 112,
+      "target": 152,
+      "step": 5
+    },
+    "abc": "X:1\nT:Melodía jazz en Fa (Lead sheet)\nM:4/4\nL:1/8\nK:F clef=treble-8\n\"Gm7\"B2 cd f2 dc | \"C7\"B2 AG E2 G2 | \"Fmaj7\"A4- A2 GF | \"Dm7\"A2 c2 f2 d2 |\n\"Gm7\"d2 cB A2 G2 | \"C7\"G2 FE D2 C2 | \"Fmaj7\"F2 A2 c2 e2 | \"D7\"d6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Frasear las corcheas con intención swing relajada",
+      "Relacionar cada nota de la melodía con el acorde cifrado arriba"
+    ],
+    "notes": "Probá leer primero en modo Pentagrama puro y luego activá el modo Mixto.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n4-ritmo-01",
+    "version": 1,
+    "title": "Comping Charleston (swing jazz sobre blues en Bb)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "ritmo",
+    "level": 4,
+    "tags": [
+      "comping",
+      "swing",
+      "blues"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 115,
+      "target": 155,
+      "step": 5
+    },
+    "abc": "X:1\nT:Comping Charleston sobre blues en Bb\nM:4/4\nL:1/8\nK:Bb clef=treble-8\n\"Bb7\"D2 z A- A4 | \"Eb7\"G2 z c- c4 | \"Bb7\"D2 z A- A2 G2 | \"Fm7\"A2 z2 \"Bb7\"D4 |\n\"Eb7\"G2 z c- c4 | \"Edim7\"G2 z _d- d4 | \"Bb7\"F2 z A- A4 | \"G7\"F2 z B- B4 |\n\"Cm7\"E2 z B- B4 | \"F7\"E2 z A- A4 | \"Bb7\"D2 z A \"G7\"F2 z B | \"Cm7\"E2 z2 \"F7\"A4 |]",
+    "fingerings": {},
+    "goals": [
+      "Acentuar el tiempo 1 y el \"y\" del tiempo 2 (ritmo Charleston)",
+      "Mantener el tiempo interno incluso con silencios largos"
+    ],
+    "notes": "Usá el modo compás silencioso del metrónomo para probar tu swing interno.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-walking-blues-f-01",
+    "version": 1,
+    "title": "Walking bass: blues en F (12 compases)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "walking",
+    "level": 4,
+    "tags": [
+      "blues",
+      "jazz",
+      "12 compases",
+      "walking"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 145,
+      "step": 5
+    },
+    "abc": "X:1\nT:Blues en F (Walking bass)\nM:4/4\nL:1/4\nK:F clef=bass\n\"F7\"F, A, C _E | \"Bb7\"B,, D, F, A, | \"F7\"F, A, C B, | \"Cm7\"C, _E, \"F7\"F, =E, |\n\"Bb7\"B,, D, F, _A, | \"Bdim7\"B,, D, F, =E, | \"F7\"F, A, C B, | \"D7\"D, ^F, A, _A, |\n\"Gm7\"G,, B,, D, F, | \"C7\"C, E, G, B, | \"F7\"F, A, \"D7\"D, ^F, | \"Gm7\"G,, B,, \"C7\"C, E, |]",
+    "fingerings": {
+      "1": "1",
+      "4": "3",
+      "16": "2"
+    },
+    "goals": [
+      "Mantener el pulso estable en negras ligadas (legato)",
+      "Aproximación cromática clara al acorde siguiente en el tiempo 4"
+    ],
+    "notes": "Tocá cada compás con la raíz en el primer tiempo y activá las funciones armónicas para estudiar cada aproximación.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n4-escala-01",
+    "version": 1,
+    "title": "Escalas Mixolidias enlazadas sobre ciclo de cuartas",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "escala",
+    "level": 4,
+    "tags": [
+      "mixolidio",
+      "ciclo de cuartas",
+      "jazz"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 110,
+      "target": 150,
+      "step": 5
+    },
+    "abc": "X:1\nT:Mixolidias en ciclo de cuartas\nM:4/4\nL:1/8\nK:C clef=bass\n\"C7\"C,D, E,F, G,A, _B,A, | \"F7\"F,G, A,_B, CD _EC |\n\"Bb7\"_B,,C, D,_E, F,G, _A,G, | \"Eb7\"_E,F, G,_A, _B,C _D_B, |]",
+    "fingerings": {},
+    "goals": [
+      "Enlazar cada escala mixolidia sin perder el pulso al modular",
+      "Mantener digitación económica en posición media"
+    ],
+    "notes": "Transponé esta práctica por semitonos para cubrir las 12 dominantes.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n4-acordes-01",
+    "version": 1,
+    "title": "Walking bass sobre ii–V–I en tres tonalidades (F, Bb, Eb)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acordes",
+    "level": 4,
+    "tags": [
+      "ii-V-I",
+      "walking",
+      "modulaciones"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 148,
+      "step": 5
+    },
+    "abc": "X:1\nT:Walking ii-V-I en F, Bb y Eb\nM:4/4\nL:1/4\nK:F clef=bass\n\"Gm7\"G,, B,, D, ^C, | \"C7\"C, E, G, E, | \"Fmaj7\"F, A, C B, | \"Fmaj7\"A, G, F, D, |\n\"Cm7\"C, _E, G, ^F, | \"F7\"F, A, C A, | \"Bbmaj7\"B,, D, F, E, | \"Bbmaj7\"D, C, B,, G, |\n\"Fm7\"F, _A, C B, | \"Bb7\"B,, D, F, D, | \"Ebmaj7\"_E, G, B, A, | \"Ebmaj7\"G, F, _E, =E, |]",
+    "fingerings": {},
+    "goals": [
+      "Respetar las notas guía y aproximaciones cromáticas en cada modulación",
+      "Sostener sonido redondo y conectado en todo el diapasón"
+    ],
+    "notes": "Observá cómo el tiempo 4 siempre prepara la raíz del compás siguiente.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n4-lectura-01",
+    "version": 1,
+    "title": "Lectura jazz en clave de Fa con tresillos de swing",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "lectura",
+    "level": 4,
+    "tags": [
+      "clave de fa",
+      "tresillos",
+      "swing"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 144,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura swing con tresillos\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Bbmaj7\"B,, D, F, (3G,/2A,/2B,/2 | \"G7\"G, F, D, =B,, | \"Cm7\"C, E, G, (3A,/2B,/2C/2 | \"F7\"F, E, C, A,, |\n\"Dm7\"D, F, A, C | \"G7\"G, F, D, =B,, | \"Cm7\"C, E, \"F7\"F, A, | \"Bbmaj7\"B,2 B,,2 |]",
+    "fingerings": {},
+    "goals": [
+      "Ejecutar los tresillos de enlace con liviandad sin apurar el pulso",
+      "Leer alteraciones accidentales (Si becuadro) al instante"
+    ],
+    "notes": "En el swing los tresillos de paso dan empuje hacia el tiempo 1.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n4-ritmo-01",
+    "version": 1,
+    "title": "Groove bossa nova (bajo en 2 con anticipación)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "ritmo",
+    "level": 4,
+    "tags": [
+      "bossa nova",
+      "groove",
+      "síncopa"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 112,
+      "target": 150,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove bossa nova en Do\nM:4/4\nL:1/8\nK:C clef=bass\n\"Cmaj7\"C,3 G,- G,2 G,2 | \"A7\"A,,3 E,- E,2 E,2 | \"Dm7\"D,3 A,- A,2 A,2 | \"G7\"G,,3 D,- D,2 D,2 |\n\"Em7\"E,3 B,- B,2 B,2 | \"A7\"A,,3 E,- E,2 E,2 | \"Dm7\"D,3 A, \"G7\"G,,3 D, | \"Cmaj7\"C,6 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Acentuar el patrón blanca con puntillo + negra ligada a la quinta",
+      "Mantener un sonido cálido y profundo tipo contrabajo"
+    ],
+    "notes": "Tocá cerca del mástil para lograr el timbre redondo típico de la bossa nova.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n5-escala-01",
+    "version": 1,
+    "title": "Escala cromática y cambios rápidos de posición (2 octavas)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "escala",
+    "level": 5,
+    "tags": [
+      "cromática",
+      "cambios de posición",
+      "virtuosismo"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 130,
+      "target": 168,
+      "step": 5
+    },
+    "abc": "X:1\nT:Estudio cromático ágil\nM:4/4\nL:1/8\nK:C clef=treble-8\nE,F, ^F,G, ^G,A, _B,B, | C^C D^D EF ^FG |\n^GA _BB c^c d^d | ed _dc B_B A_A | G_G FE _ED _DC | B,_B, A,_A, G,^F, =F,E, |]",
+    "fingerings": {},
+    "goals": [
+      "Mantener la mano izquierda completamente pegada a las cuerdas",
+      "Alternar i-m-i-m sin tensión a 160+ BPM"
+    ],
+    "notes": "Excelente calentamiento técnico de precisión para el nivel avanzado.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n5-acordes-01",
+    "version": 1,
+    "title": "Secuencia armónica romántica arpegiada (Modulación por terceras)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acordes",
+    "level": 5,
+    "tags": [
+      "arpegio avanzado",
+      "modulaciones",
+      "armonía"
+    ],
+    "key": "E",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 128,
+      "target": 164,
+      "step": 5
+    },
+    "abc": "X:1\nT:Secuencia romántica en Mi\nM:4/4\nL:1/8\nK:E clef=treble-8\n\"E\"E,B,EG BGEB, | \"G#7\"^G,,^DFB =dBF^D | \"C#m\"C,G,CE GECG, | \"A\"A,,EAE cAEA |\n\"F#m7\"^F,,CAF cAFC | \"B7\"B,,^DFA BAFD | \"E\"E,B,EG B4 |]",
+    "fingerings": {},
+    "goals": [
+      "Sostener claridad polifónica en cambios de cejilla a alta velocidad",
+      "Dar forma expresiva (crescendo/diminuendo) a cada arco armónico"
+    ],
+    "notes": "Prestá especial atención a los cambios hacia G#7 y F#m7 sin cortar la resonancia.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n5-lectura-01",
+    "version": 1,
+    "title": "Preludio completo a tres planos (bajo, armonía y canto)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "lectura",
+    "level": 5,
+    "tags": [
+      "polifonía",
+      "pieza completa",
+      "varias voces"
+    ],
+    "key": "D",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 120,
+      "target": 160,
+      "step": 5
+    },
+    "abc": "X:1\nT:Preludio polifónico en Re\nM:3/4\nL:1/8\nK:D clef=treble-8\nV:1\n\"D\"f2 ed cB | \"Bm\"d2 cB AG | \"Em7\"B2 AG FE | \"A7\"A4 G2 |\n\"D\"f2 ga bf | \"G\"g2 fe dB | \"A7\"c2 eA gc | \"D\"d6 |]\nV:2\nD,2 A,2 F2 | B,,2 F,2 D2 | E,2 B,2 G2 | A,,2 E,2 C2 |\nD,2 A,2 D2 | G,,2 D,2 B,2 | A,,2 E,2 A,2 | D,6 |]",
+    "fingerings": {},
+    "goals": [
+      "Equilibrar los planos sonoros: melodía cantabile y bajo profundo",
+      "Mantener continuidad armónica en las seis frases"
+    ],
+    "notes": "Estudiá con el reproductor ajustando por separado el volumen de melodía y bajo.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-n5-ritmo-01",
+    "version": 1,
+    "title": "Chacarera estilizada en 6/8 y 3/4 (hemiola)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "ritmo",
+    "level": 5,
+    "tags": [
+      "hemiola",
+      "6/8",
+      "folklore argentino"
+    ],
+    "key": "Am",
+    "timeSignature": "6/8",
+    "tempo": {
+      "start": 132,
+      "target": 168,
+      "step": 5
+    },
+    "abc": "X:1\nT:Hemiola folklórica en Am\nM:6/8\nL:1/8\nK:C clef=treble-8\n\"Am\"A,EA cAE | \"G\"G,DG BGD | \"F\"F,CF AFC | \"E7\"E,^G,B, E2 z |\n\"Dm\"D2 F2 A2 | \"Am\"C2 E2 A2 | \"E7\"B,2 ^G2 E2 | \"Am\"A,3- A,2 z |]",
+    "fingerings": {},
+    "goals": [
+      "Alternar la sensación binaria (6/8) con la hemiola ternaria (3/4) en los compases 5–7",
+      "Mantener precisión rítmica a tempo vivo"
+    ],
+    "notes": "Un rasgo esencial del folklore argentino: sentí el cruce entre 6/8 y 3/4.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n5-escala-01",
+    "version": 1,
+    "title": "Escala alterada y disminuida sobre V7alt–I",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "escala",
+    "level": 5,
+    "tags": [
+      "alterada",
+      "jazz avanzado",
+      "improvisación"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 130,
+      "target": 168,
+      "step": 5
+    },
+    "abc": "X:1\nT:Resolución V7alt hacia Imaj7\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm9\"DF Ac ed cA | \"G7alt\"G_A _B=B _d_e f_e |\n\"Cmaj9\"EG Bd fe dc | \"A7alt\"A_B c^c _ef g_e |]",
+    "fingerings": {},
+    "goals": [
+      "Dominar las tensiones alteradas (b9, #9, #11, b13) resolviendo por semitono",
+      "Articular frases de corcheas fluidas a tempo de bebop"
+    ],
+    "notes": "Escuchá cómo cada alteración de G7alt resuelve suavemente en las notas de Cmaj9.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n5-acordes-01",
+    "version": 1,
+    "title": "Rhythm Changes en Bb (Sección A y puente de dominantes)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acordes",
+    "level": 5,
+    "tags": [
+      "rhythm changes",
+      "bebop",
+      "estándar"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 135,
+      "target": 176,
+      "step": 5
+    },
+    "abc": "X:1\nT:Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=treble-8\n\"Bbmaj7\"d2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 | \"Dm7\"c2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 |\n\"Fm7\"_A2 \"Bb7\"D2 | \"Ebmaj7\"G2 \"Edim7\"_G2 | \"Bbmaj7\"F2 \"F7\"E2 | \"Bbmaj7\"D4 |\n\"D7\"^F2 c2 | \"D7\"^F2 c2 | \"G7\"=F2 =B2 | \"G7\"=F2 =B2 |\n\"C7\"E2 B2 | \"C7\"E2 B2 | \"F7\"E2 A2 | \"F7\"E2 A2 |]",
+    "fingerings": {},
+    "goals": [
+      "Ejecutar cambios de dos acordes por compás con fluidez arriba de 165 BPM",
+      "Navegar el puente de dominantes por ciclo de quintas (D7–G7–C7–F7)"
+    ],
+    "notes": "Subí gradualmente con el entrenador de velocidad hasta alcanzar tempo real de bebop.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n5-lectura-01",
+    "version": 1,
+    "title": "Lectura a primera vista en Mi bemol (fraseo bebop)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "lectura",
+    "level": 5,
+    "tags": [
+      "primera vista",
+      "bebop",
+      "mi bemol"
+    ],
+    "key": "Eb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 128,
+      "target": 164,
+      "step": 5
+    },
+    "abc": "X:1\nT:Estudio bebop en Eb\nM:4/4\nL:1/8\nK:Eb clef=treble-8\n\"Fm7\"FG AB c_d cB | \"Bb7\"AG FE DF AB | \"Ebmaj7\"G2 B2 d2 cB | \"C7\"=EG Bc _dc BG |\n\"Fm7\"AF cA _d2 cB | \"Bb7\"AG F=E F2 AB | \"Ebmaj7\"G2 FE \"C7\"=E2 G2 | \"Fm7\"F2 \"Bb7\"D2 \"Ebmaj7\"E4 |]",
+    "fingerings": {},
+    "goals": [
+      "Leer alteraciones accidentales y cromatismos bebop sin frenar el pulso",
+      "Transponer luego a Ab y Db para entrenar lectura en bemoles"
+    ],
+    "notes": "Respirá antes de empezar, mirá la armadura de 3 bemoles y mantené la vista adelante.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "g-n5-ritmo-01",
+    "version": 1,
+    "title": "Groove en 7/8 (agrupación 2+2+3 fusión)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "ritmo",
+    "level": 5,
+    "tags": [
+      "7/8",
+      "compás irregular",
+      "fusión"
+    ],
+    "key": "Dm",
+    "timeSignature": "7/8",
+    "tempo": {
+      "start": 130,
+      "target": 166,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove fusión en 7/8 (2+2+3)\nM:7/8\nL:1/8\nK:Dm clef=treble-8\n\"Dm7\"DF AG FGA | \"G7\"GB dc Bcd | \"Bbmaj7\"DF BA GFE | \"A7\"^CE GA GFE |\n\"Dm7\"D2 F2 AGF | \"Gm7\"G2 B2 dcB | \"A7\"A2 ^c2 efe | \"Dm7\"d4- d3 |]",
+    "fingerings": {},
+    "goals": [
+      "Internalizar el ciclo asimétrico 1-2, 1-2, 1-2-3 sin cortar el pulso",
+      "Acentuar los inicios de cada subgrupo"
+    ],
+    "notes": "Usá el metrónomo en 7/8 para fijar el pulso de corchea constante.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n5-walking-01",
+    "version": 1,
+    "title": "Walking bass sobre Rhythm Changes en Bb (160+ BPM)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "walking",
+    "level": 5,
+    "tags": [
+      "rhythm changes",
+      "walking",
+      "bebop"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 132,
+      "target": 176,
+      "step": 5
+    },
+    "abc": "X:1\nT:Walking Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Bbmaj7\"B,, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, A,, | \"Dm7\"D, F, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, =E, |\n\"Fm7\"F, _A, \"Bb7\"B,, D, | \"Ebmaj7\"E, G, \"Edim7\"=E, G, | \"Dm7\"F, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, ^C, |\n\"D7\"D, ^F, A, C | \"D7\"B, A, ^F, _A, | \"G7\"G, =B, D F | \"G7\"E D =B, _D |\n\"C7\"C, E, G, B, | \"C7\"A, G, E, _G, | \"F7\"F, A, C E | \"F7\"D C A, =B, |]",
+    "fingerings": {},
+    "goals": [
+      "Resolver cambios de dos tiempos con raíz y aproximación precisa",
+      "Mantener energía y relajación por encima de 165 BPM"
+    ],
+    "notes": "En cambios rápidos de 2 tiempos, tocá raíz + aproximación o 3ª para máxima claridad.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n5-escala-01",
+    "version": 1,
+    "title": "Escala alterada y cambios de posición en registro agudo",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "escala",
+    "level": 5,
+    "tags": [
+      "cambios de posición",
+      "registro agudo",
+      "jazz"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 130,
+      "target": 168,
+      "step": 5
+    },
+    "abc": "X:1\nT:Línea melódica con cambios de posición\nM:4/4\nL:1/8\nK:F clef=bass\n\"Gm7\"G,A, B,C DF GA | \"C7alt\"B_A _G=E _D_B, _A,G, |\n\"Fmaj7\"F,A, CE GA cA | \"D7alt\"D_E F^F _AB c_A |]",
+    "fingerings": {},
+    "goals": [
+      "Trasladar la mano limpiamente desde posición III hasta posición XII",
+      "Mantener afinación y ataque parejos en el registro agudo del bajo"
+    ],
+    "notes": "Practicá despacio buscando que los traslados no generen cortes de sonido.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n5-acordes-01",
+    "version": 1,
+    "title": "Estándar: Cambios tipo Autumn en Sol menor (walking avanzado)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acordes",
+    "level": 5,
+    "tags": [
+      "estándar",
+      "walking",
+      "sol menor"
+    ],
+    "key": "Gm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 128,
+      "target": 164,
+      "step": 5
+    },
+    "abc": "X:1\nT:Estándar en Sol menor (Walking)\nM:4/4\nL:1/4\nK:Gm clef=bass\n\"Cm7\"C, E, G, B, | \"F7\"F, A, C A, | \"Bbmaj7\"B,, D, F, A, | \"Ebmaj7\"E, G, B, G, |\n\"Am7b5\"A,, C, E, G, | \"D7\"D, ^F, A, ^F, | \"Gm7\"G,, B,, D, F, | \"Gm7\"G, F, D, =B,, |]",
+    "fingerings": {},
+    "goals": [
+      "Enlazar el ciclo de cuartas completo en menor con conducción vocal",
+      "Destacar el Fa# de D7 resolviendo hacia Sol menor"
+    ],
+    "notes": "Activá las funciones armónicas para analizar cómo cada compás cae sobre el siguiente.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n5-lectura-01",
+    "version": 1,
+    "title": "Transcripción corta bebop en clave de Fa (Re bemol)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "lectura",
+    "level": 5,
+    "tags": [
+      "transcripción",
+      "bebop",
+      "primera vista"
+    ],
+    "key": "Db",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 126,
+      "target": 162,
+      "step": 5
+    },
+    "abc": "X:1\nT:Frase bebop en Db (Bajo)\nM:4/4\nL:1/8\nK:Db clef=bass\n\"Ebm7\"E,F, G,A, B,C B,A, | \"Ab7\"G,F, E,D, C,E, G,B, |\n\"Dbmaj7\"A,2 F,2 D,2 F,A, | \"Bb7\"C_C B,A, G,F, =D,E, |\n\"Ebm7\"E,G, B,D \"Ab7\"C2 B,A, | \"Dbmaj7\"F,2 D,2- D,2 z2 |]",
+    "fingerings": {},
+    "goals": [
+      "Leer con seguridad en tonalidades con 5 bemoles",
+      "Articular las semicorcheas implícitas del fraseo bebop sin tensar"
+    ],
+    "notes": "Leer en Db y Gb te prepara para cualquier estándar de jazz en vivo.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "b-n5-ritmo-01",
+    "version": 1,
+    "title": "Groove fusión en 5/4 (3+2 con notas fantasmas)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "ritmo",
+    "level": 5,
+    "tags": [
+      "5/4",
+      "fusión",
+      "compás irregular"
+    ],
+    "key": "Em",
+    "timeSignature": "5/4",
+    "tempo": {
+      "start": 128,
+      "target": 164,
+      "step": 5
+    },
+    "abc": "X:1\nT:Groove en 5/4 (3+2)\nM:5/4\nL:1/8\nK:G clef=bass\n\"Em7\"E,2 G,B, D2 E,2 B,A, | \"A7\"A,,2 ^C,E, G,2 A,,2 E,D, |\n\"Em7\"E,2 G,B, D2 E,2 G,A, | \"B7\"B,,2 ^D,F, A,2 B,,2 F,D, |]",
+    "fingerings": {},
+    "goals": [
+      "Sentir la subdivisión 3+2 con naturalidad",
+      "Mantener groove firme y constante por encima de 160 BPM"
+    ],
+    "notes": "Configurá el metrónomo en 5/4 para interiorizar el ciclo de cinco negras.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  }
+]

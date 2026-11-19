@@ -1,0 +1,733 @@
+/* ==========================================================================
+   App Shell Adaptable (Window Size Classes Material 3) y Estilos de Vistas
+   Compact (<600px): Bottom Navigation Bar
+   Medium (600-839px): Navigation Rail
+   Expanded (>=840px): Navigation Drawer + Panel Doble en Prácticas
+   ========================================================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--md-sys-color-surface);
+}
+
+/* Navegación adaptable */
+.m3-nav {
+  background: var(--md-sys-color-surface-container);
+  border-color: var(--md-sys-color-outline-variant);
+  z-index: 900;
+}
+
+.m3-nav__brand {
+  display: none;
+}
+
+.m3-nav__list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.m3-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  min-width: 56px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.m3-nav__pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--md-sys-shape-full);
+  transition: background-color var(--md-sys-motion-fast);
+}
+
+.m3-nav__item[aria-current='page'] {
+  color: var(--md-sys-color-on-surface);
+}
+
+.m3-nav__item[aria-current='page'] .m3-nav__pill {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Compact (<600px): Barra de navegación inferior */
+@media (max-width: 599px) {
+  .m3-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--nav-bar-height);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    padding: 4px 4px env(safe-area-inset-bottom, 0);
+  }
+
+  .m3-nav__list {
+    justify-content: space-around;
+    height: 100%;
+    align-items: center;
+  }
+
+  .m3-nav__item {
+    flex: 1;
+    padding: 4px 2px;
+  }
+
+  .app-main-wrap {
+    width: 100%;
+    padding-bottom: calc(var(--nav-bar-height) + 24px);
+  }
+}
+
+/* Medium (600px - 839px): Navigation Rail lateral */
+@media (min-width: 600px) and (max-width: 839px) {
+  .m3-nav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--nav-rail-width);
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+    padding: 16px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .m3-nav__brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--md-sys-shape-md);
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-weight: 800;
+  }
+
+  .m3-nav__brand-text {
+    display: none;
+  }
+
+  .m3-nav__list {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .app-main-wrap {
+    margin-left: var(--nav-rail-width);
+    width: calc(100% - var(--nav-rail-width));
+  }
+}
+
+/* Expanded (>=840px): Navigation Drawer fijo */
+@media (min-width: 840px) {
+  .m3-nav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--nav-drawer-width);
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .m3-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+  }
+
+  .m3-nav__brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--md-sys-shape-md);
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .m3-nav__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .m3-nav__list {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .m3-nav__item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: 52px;
+    min-height: 52px;
+    padding: 0 16px;
+    border-radius: var(--md-sys-shape-full);
+    font-size: 0.92rem;
+  }
+
+  .m3-nav__pill {
+    width: auto;
+    height: auto;
+    background: transparent !important;
+  }
+
+  .m3-nav__item[aria-current='page'] {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .app-main-wrap {
+    margin-left: var(--nav-drawer-width);
+    width: calc(100% - var(--nav-drawer-width));
+  }
+}
+
+/* Top App Bar */
+.m3-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 800;
+  min-height: var(--top-bar-height);
+  padding: 8px 16px;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.m3-top-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.m3-top-bar__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-content {
+  padding: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Panel Doble en Escritorio (>=840px) para Lista + Práctica Activa
+   ========================================================================== */
+.dual-pane {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 1080px) {
+  .dual-pane {
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  }
+
+  .dual-pane__list {
+    position: sticky;
+    top: calc(var(--top-bar-height) + 12px);
+    max-height: calc(100vh - var(--top-bar-height) - 32px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+}
+
+/* Lista de prácticas */
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.level-section {
+  margin-bottom: 20px;
+}
+
+.level-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-surface-container);
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) and (max-width: 1079px) {
+  .practice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.practice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-lg);
+  padding: 14px 16px;
+}
+
+.practice-card--active {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.practice-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ==========================================================================
+   Reproductor de Práctica, Partitura abcjs y Grilla de Cifrado
+   ========================================================================== */
+.player-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.player-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.player-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.score-surface {
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-lg);
+  padding: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  min-height: 180px;
+}
+
+/* Adaptación de color del SVG de abcjs para tema claro y oscuro */
+.score-surface svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.score-surface svg path,
+.score-surface svg text,
+.score-surface svg line,
+.score-surface svg rect {
+  fill: var(--md-sys-color-on-surface);
+  stroke: var(--md-sys-color-on-surface);
+}
+
+.score-surface svg .abcjs-staff,
+.score-surface svg .abcjs-bar,
+.score-surface svg .abcjs-ledger {
+  stroke: var(--md-sys-color-on-surface-variant);
+  fill: var(--md-sys-color-on-surface-variant);
+}
+
+.score-surface svg .abcjs-chord {
+  fill: var(--md-sys-color-primary) !important;
+  stroke: none !important;
+  font-weight: 700;
+}
+
+.score-surface svg .abcjs-annotation {
+  fill: var(--md-sys-color-tertiary) !important;
+  stroke: none !important;
+  font-weight: 700;
+}
+
+/* Resaltado en tiempo real de la nota que está sonando */
+.score-surface svg .acordate-note-active,
+.score-surface svg .acordate-note-active path,
+.score-surface svg .acordate-note-active ellipse {
+  fill: var(--md-sys-color-primary) !important;
+  stroke: var(--md-sys-color-primary) !important;
+  filter: drop-shadow(0 0 4px var(--md-sys-color-primary));
+}
+
+.count-in-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font-weight: 700;
+}
+
+/* Vista Cifrado (Grilla de compases estilo Lead Sheet / Real Book) */
+.chord-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 10px;
+}
+
+.chord-bar-cell {
+  position: relative;
+  min-height: 82px;
+  padding: 12px 10px;
+  border-radius: var(--md-sys-shape-md);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  border-left: 4px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  transition: background-color var(--md-sys-motion-fast), border-color var(--md-sys-motion-fast), transform var(--md-sys-motion-fast);
+}
+
+.chord-bar-cell--active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+  transform: scale(1.02);
+}
+
+.chord-bar-cell__num {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+}
+
+.chord-bar-cell__chords {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Controles de transporte y mezclador */
+.transport-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.stepper-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bpm-readout {
+  min-width: 78px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Metrónomo
+   ========================================================================== */
+.metronome-layout {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.beat-visualizer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 20px 12px;
+}
+
+.beat-dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  transition: transform 80ms ease, background-color 80ms ease;
+}
+
+.beat-dot--active {
+  transform: scale(1.22);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.beat-dot--accent {
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+  border-color: var(--md-sys-color-tertiary);
+}
+
+.beat-dot--muted {
+  background: var(--md-sys-color-surface-dim);
+  border-style: dashed;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.metronome-bpm-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Editor de Prácticas
+   ========================================================================== */
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 960px) {
+  .editor-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: start;
+  }
+}
+
+.editor-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.abc-textarea {
+  font-family: var(--md-sys-typescale-mono);
+  font-size: 0.9rem;
+  min-height: 200px;
+}
+
+.alert-box {
+  padding: 12px 14px;
+  border-radius: var(--md-sys-shape-md);
+  font-size: 0.875rem;
+}
+
+.alert-box--error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.alert-box--info {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.chord-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 8px;
+}
+
+.chord-editor-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-sm);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.chord-editor-bar input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  min-height: 36px;
+}
+
+/* ==========================================================================
+   Progreso y Ajustes
+   ========================================================================== */
+.stats-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weekly-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  align-items: end;
+  height: 150px;
+  padding-top: 16px;
+}
+
+.weekly-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.weekly-bar-fill {
+  width: 100%;
+  max-width: 40px;
+  min-height: 6px;
+  border-radius: var(--md-sys-shape-sm) var(--md-sys-shape-sm) 2px 2px;
+  background: var(--md-sys-color-primary);
+  transition: height var(--md-sys-motion-standard);
+}
+
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.color-swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.color-swatch[aria-pressed='true'] {
+  border-color: var(--md-sys-color-on-surface);
+  transform: scale(1.08);
+}
+
+.progress-table-wrap {
+  overflow-x: auto;
+}
+
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.progress-table th,
+.progress-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  text-align: left;
+}
+
+.progress-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.goals-list {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

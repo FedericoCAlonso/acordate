@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#3F51B5">
+  <meta name="description" content="Acordate: PWA offline de práctica musical para guitarra clásica, guitarra y bajo. Lectura de partitura, acordes, escalas y walking bass.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Acordate — Práctica musical</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+
+  <link rel="stylesheet" href="./styles/tokens.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/views.css">
+  <link rel="stylesheet" href="./vendor/abcjs/abcjs-audio.css">
+</head>
+<body>
+  <div id="app">
+    <noscript>
+      <p style="padding:24px; font-family:sans-serif">
+        Acordate necesita JavaScript habilitado para renderizar las partituras y reproducir audio.
+      </p>
+    </noscript>
+  </div>
+
+  <!-- abcjs versión fija 6.4.4 empaquetada localmente para funcionamiento 100% offline -->
+  <script src="./vendor/abcjs/abcjs-basic-min.js"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

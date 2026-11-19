@@ -1,0 +1,23 @@
+{
+  "name": "acordate",
+  "version": "1.0.0",
+  "description": "PWA de práctica musical para guitarra clásica, guitarra y bajo (lectura, acordes, escalas y walking bass)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "pwa",
+    "musica",
+    "guitarra",
+    "bajo",
+    "partitura",
+    "abcjs",
+    "metronomo",
+    "walking-bass",
+    "mvvm",
+    "material-3"
+  ],
+  "license": "MIT"
+}

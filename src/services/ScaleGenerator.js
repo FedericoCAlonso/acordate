@@ -1,0 +1,160 @@
+import {
+  NOTE_TO_PC,
+  getKeySignatureMap,
+  midiToAbcPitch,
+  prefersFlats
+} from '../core/MusicTheory.js';
+import { Scale, SCALE_DEFINITIONS } from '../models/Scale.js';
+
+/**
+ * Configuraciones rítmicas disponibles para el generador de escalas y arpegios.
+ */
+export const SCALE_RHYTHMS = {
+  negras: { label: 'Negras', unitLength: '1/4', notesPerBar: 4, isTriplet: false },
+  corcheas: { label: 'Corcheas', unitLength: '1/8', notesPerBar: 8, isTriplet: false },
+  tresillos: { label: 'Tresillos de corchea', unitLength: '1/8', notesPerBar: 12, isTriplet: true },
+  semicorcheas: { label: 'Semicorcheas', unitLength: '1/16', notesPerBar: 16, isTriplet: false }
+};
+
+/**
+ * Servicio de dominio puro que genera notación ABC para escalas, modos y arpegios.
+ */
+export class ScaleGenerator {
+  /**
+   * Genera la secuencia de alturas MIDI y su representación ABC completa.
+   * @param {object} options Parámetros de generación.
+   * @param {string} [options.key='C'] Tonalidad raíz (ej. "C", "F", "Bb", "G").
+   * @param {string} [options.type='mayor'] Tipo definido en SCALE_DEFINITIONS.
+   * @param {number} [options.octaves=1] Rango en octavas (1 o 2).
+   * @param {'negras'|'corcheas'|'tresillos'|'semicorcheas'} [options.rhythm='corcheas'] Figura rítmica.
+   * @param {'asc'|'desc'|'asc-desc'} [options.direction='asc-desc'] Dirección de la escala.
+   * @param {'guitarra-clasica'|'guitarra'|'bajo'} [options.instrument='guitarra'] Instrumento destino para clave y registro.
+   * @param {string} [options.title] Título opcional de la partitura.
+   * @returns {{ abc: string, midiNotes: number[], title: string, key: string, timeSignature: string }} Resultado generado.
+   */
+  generate(options = {}) {
+    const scale = new Scale({
+      key: options.key || 'C',
+      type: options.type || 'mayor',
+      octaves: options.octaves ?? 1,
+      direction: options.direction || 'asc-desc'
+    });
+
+    const instrument = options.instrument || 'guitarra';
+    const rhythmCfg = SCALE_RHYTHMS[options.rhythm] || SCALE_RHYTHMS.corcheas;
+    const isBass = instrument === 'bajo';
+    const rootPc = NOTE_TO_PC[scale.key] ?? 0;
+
+    // Registro idiomático: en clave de sol octavada (treble-8) la guitarra se escribe una octava arriba del sonido real (C4..C6);
+    // en clave de fa (bass) el bajo se escribe en C2..G3 (MIDI 36..55, sonando octava grave).
+    const baseMidi = isBass
+      ? (rootPc >= 4 ? 24 + rootPc : 36 + rootPc) // E1 (28) .. Eb2 (39)
+      : (rootPc >= 4 ? 48 + rootPc : 60 + rootPc); // E3 (52) .. Eb4 (63) escrito en treble-8 -> +12 si se requiere cómodo
+
+    // Ajuste para lectura limpia en pentagrama de guitarra (E3..E5 escrito como E4..E6 en treble-8)
+    const writtenStartMidi = isBass ? baseMidi + 12 : baseMidi + 12;
+
+    /** Secuencia ascendente de alturas MIDI incluyendo la octava superior. */
+    const ascending = [];
+    for (let oct = 0; oct < scale.octaves; oct++) {
+      for (const interval of scale.intervals) {
+        ascending.push(writtenStartMidi + oct * 12 + interval);
+      }
+    }
+    ascending.push(writtenStartMidi + scale.octaves * 12);
+
+    let midiNotes = [];
+    if (scale.direction === 'asc') {
+      midiNotes = [...ascending];
+    } else if (scale.direction === 'desc') {
+      midiNotes = [...ascending].reverse();
+    } else {
+      // Ida y vuelta sin duplicar la nota más aguda
+      midiNotes = [...ascending, ...ascending.slice(0, -1).reverse()];
+    }
+
+    const useFlats = prefersFlats(scale.key) || ['menor-natural', 'dorico', 'frigio', 'locrio', 'pentatonica-menor', 'blues', 'm7', 'm7b5', 'dim7'].includes(scale.type);
+    const keyHeader = scale.type === 'mayor' ? scale.key : 'C';
+    const keyMap = getKeySignatureMap(keyHeader);
+    const clef = isBass ? 'bass' : 'treble-8';
+    const title = options.title || `${scale.name} en ${scale.key}`;
+
+    // Formatea las notas en compases de 4/4 con barras cada 4 compases por línea
+    const abcTokens = midiNotes.map((m) => midiToAbcPitch(m, useFlats, keyMap));
+    const bars = [];
+    const perBar = rhythmCfg.notesPerBar;
+
+    for (let i = 0; i < abcTokens.length; i += perBar) {
+      const slice = abcTokens.slice(i, i + perBar);
+      // Completa el último compás con silencio para mantener la métrica exacta
+      const missing = perBar - slice.length;
+      if (rhythmCfg.isTriplet) {
+        const padded = [...slice];
+        for (let r = 0; r < missing; r++) padded.push('z');
+        const groups = [];
+        for (let g = 0; g < padded.length; g += 3) {
+          groups.push(`(3${padded[g]}${padded[g + 1]}${padded[g + 2]}`);
+        }
+        bars.push(groups.join(' '));
+      } else {
+        const grouped = this._groupNotesForBeaming(slice, rhythmCfg.unitLength);
+        if (missing > 0) {
+          grouped.push(missing === 1 ? 'z' : `z${missing}`);
+        }
+        bars.push(grouped.join(' '));
+      }
+    }
+
+    const lines = [];
+    for (let i = 0; i < bars.length; i += 4) {
+      const lineBars = bars.slice(i, i + 4);
+      const isLastLine = i + 4 >= bars.length;
+      lines.push(`${lineBars.join(' | ')}${isLastLine ? ' |]' : ' |'}`);
+    }
+
+    const abc = [
+      'X:1',
+      `T:${title}`,
+      'M:4/4',
+      `L:${rhythmCfg.unitLength}`,
+      `K:${keyHeader} clef=${clef}`,
+      ...lines
+    ].join('\n');
+
+    return {
+      abc,
+      midiNotes,
+      title,
+      key: scale.key,
+      timeSignature: '4/4'
+    };
+  }
+
+  /**
+   * Agrupa notas en corcheas o semicorcheas para una lectura clara por pulso.
+   * @param {string[]} tokens Notas ABC dentro del compás.
+   * @param {string} unitLength Unidad rítmica ABC ('1/4', '1/8', '1/16').
+   * @returns {string[]} Grupos formateados para separar con espacios.
+   */
+  _groupNotesForBeaming(tokens, unitLength) {
+    if (unitLength === '1/4') return [...tokens];
+    const groupSize = unitLength === '1/16' ? 4 : 2;
+    const out = [];
+    for (let i = 0; i < tokens.length; i += groupSize) {
+      out.push(tokens.slice(i, i + groupSize).join(''));
+    }
+    return out;
+  }
+
+  /**
+   * Lista todas las opciones de escalas y arpegios disponibles para la UI del editor.
+   * @returns {Array<{ id: string, name: string, kind: string }>} Catálogo de tipos soportados.
+   */
+  getAvailableTypes() {
+    return Object.entries(SCALE_DEFINITIONS).map(([id, def]) => ({
+      id,
+      name: def.name,
+      kind: def.kind
+    }));
+  }
+}
