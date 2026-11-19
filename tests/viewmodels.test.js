@@ -25,6 +25,8 @@ function createMockStorage() {
   const drafts = new Map();
   let settings = null;
   let progress = null;
+  let mixes = {};
+  let sessions = [];
   return {
     async getUserPractices() { return [...practices.values()]; },
     async saveUserPractice(p) { practices.set(p.id, p); },
@@ -33,6 +35,10 @@ function createMockStorage() {
     async saveProgress(p) { progress = p; },
     async loadSettings() { return settings; },
     async saveSettings(s) { settings = s; },
+    async loadPracticeMixes() { return mixes; },
+    async savePracticeMixes(m) { mixes = m; },
+    async loadStudySessions() { return sessions; },
+    async saveStudySessions(s) { sessions = s; },
     async saveDraft(k, d) { drafts.set(k, { data: d, updatedAt: Date.now() }); },
     async loadDraft(k) { return drafts.get(k) || null; },
     async clearDraft(k) { drafts.delete(k); }
@@ -123,20 +129,28 @@ async function setupAppEnv() {
   return { appVm, storageService, themeCalls, wakeLockCalls, router, builtin };
 }
 
-test('PracticeListViewModel filtra por instrumento, nivel, categoría y búsqueda', async () => {
+test('PracticeListViewModel filtra por instrumento fijo, nivel, categoría, búsqueda y genera Continuar + Sesión de hoy', async () => {
   const { appVm } = await setupAppEnv();
   const listVm = new PracticeListViewModel(appVm);
 
-  assert.equal(listVm.filteredPractices.value.length, 2);
+  // Instrumento por defecto es 'guitarra'
+  assert.equal(listVm.instrumentFilter.value, 'guitarra');
+  assert.equal(listVm.filteredPractices.value.length, 1);
+  assert.equal(listVm.filteredPractices.value[0].id, 'b-1');
+  assert.equal(listVm.continueCard.value.practice.id, 'b-1');
+  assert.ok(listVm.todayRoutine.value.items.length >= 1);
 
   listVm.setInstrument('bajo');
   assert.equal(listVm.filteredPractices.value.length, 1);
   assert.equal(listVm.filteredPractices.value[0].id, 'b-2');
+  assert.equal(appVm.settings.value.defaultInstrument, 'bajo');
 
+  listVm.setCategory('walking');
+  assert.equal(listVm.activeFilterCount.value, 1);
   listVm.resetFilters();
-  listVm.setSearchQuery('escala');
+  assert.equal(listVm.activeFilterCount.value, 0);
+  listVm.setSearchQuery('blues');
   assert.equal(listVm.filteredPractices.value.length, 1);
-  assert.equal(listVm.filteredPractices.value[0].id, 'b-1');
 });
 
 test('PracticePlayerViewModel reproduce, transpone, gestiona bucle y sube BPM con speed trainer', async () => {
@@ -281,4 +295,59 @@ test('ThemeService genera paleta Material 3 completa para tema claro y oscuro de
   }
   assert.notEqual(light['--md-sys-color-surface'], dark['--md-sys-color-surface']);
 });
+
+test('PracticePlayerViewModel arranca melodía al 100%, guarda mezcla propia por práctica y sanea valores inválidos', async () => {
+  const { appVm, builtin } = await setupAppEnv();
+  const audioService = createMockAudio();
+  const playerVm = new PracticePlayerViewModel({
+    appVm,
+    audioService,
+    abcService: new AbcService(),
+    wakeLockService: { request() {}, release() {} }
+  });
+
+  playerVm.loadPractice(builtin[0]);
+  assert.equal(playerVm.melodyVolume.value, 1.0, 'La voz principal debe arrancar al 100 %');
+
+  // Personaliza la mezcla para b-1 y verifica saneo de NaN
+  playerVm.setVolumes({ melody: 0.72, chords: 0.4 });
+  playerVm.setVolumes({ melody: Number.NaN });
+  assert.equal(playerVm.melodyVolume.value, 0.72, 'Valores no numéricos nunca deben poner la melodía en 0');
+
+  // Al cargar otra práctica (b-2) arranca con su mezcla por defecto al 100 %
+  playerVm.loadPractice(builtin[1]);
+  assert.equal(playerVm.melodyVolume.value, 1.0);
+
+  // Al volver a b-1 recupera su mezcla guardada
+  playerVm.loadPractice(builtin[0]);
+  assert.equal(playerVm.melodyVolume.value, 0.72);
+  assert.equal(playerVm.chordsVolume.value, 0.4);
+
+  await playerVm.resetPracticeMix();
+  assert.equal(playerVm.melodyVolume.value, 1.0);
+});
+
+test('SettingsViewModel gestiona registro de escucha real/+1oct y dispara referencia de afinación', async () => {
+  const { appVm } = await setupAppEnv();
+  const played = [];
+  const mockAudio = {
+    configure() {},
+    playReferenceTone(midi, inst) {
+      played.push({ midi, inst });
+    }
+  };
+  const settingsVm = new SettingsViewModel(appVm, mockAudio);
+
+  assert.equal(appVm.settings.value.listeningRegister, 'real');
+  settingsVm.setListeningRegister('+1oct');
+  assert.equal(appVm.settings.value.listeningRegister, '+1oct');
+
+  settingsVm.playTuningString('bajo', 28);
+  settingsVm.playTuningString('guitarra', 40);
+  assert.deepEqual(played, [
+    { midi: 28, inst: 'electric-bass' },
+    { midi: 40, inst: 'acoustic-guitar' }
+  ]);
+});
+
 

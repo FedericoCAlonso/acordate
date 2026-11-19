@@ -3,7 +3,8 @@ import { LEVELS } from './Level.js';
 
 /**
  * Modelo de dominio puro que registra el progreso del usuario por práctica,
- * racha de días, resumen semanal y estado de desbloqueo de niveles.
+ * racha de días, resumen semanal, objetivos tildados, última práctica por instrumento
+ * y estado de desbloqueo de niveles.
  */
 export class UserProgress {
   /**
@@ -12,7 +13,7 @@ export class UserProgress {
    */
   constructor(data = {}) {
     /** Versión del esquema de progreso. */
-    this.version = data.version ?? 1;
+    this.version = data.version ?? 2;
     /**
      * Mapa practiceId -> { bestBpm, repetitions, studySeconds, lastSessionAt, completedTarget }.
      */
@@ -48,6 +49,26 @@ export class UserProgress {
     this.skippedLevels = Array.isArray(data.skippedLevels)
       ? [...new Set(data.skippedLevels.map(Number).filter((n) => n >= 1 && n <= 5))]
       : [];
+
+    /**
+     * Mapa practiceId -> arreglo de índices tildados de la lista de objetivos de estudio.
+     */
+    this.checkedGoals = {};
+    if (data.checkedGoals && typeof data.checkedGoals === 'object') {
+      for (const [id, list] of Object.entries(data.checkedGoals)) {
+        if (Array.isArray(list)) {
+          this.checkedGoals[id] = [...new Set(list.map(Number).filter((n) => Number.isInteger(n) && n >= 0))];
+        }
+      }
+    }
+
+    /**
+     * Mapa instrumento -> último practiceId practicado (para el bloque "Continuar").
+     */
+    this.lastPracticeByInstrument =
+      data.lastPracticeByInstrument && typeof data.lastPracticeByInstrument === 'object'
+        ? { ...data.lastPracticeByInstrument }
+        : {};
   }
 
   /**
@@ -68,16 +89,34 @@ export class UserProgress {
   }
 
   /**
+   * Devuelve el estado visual de progreso de una práctica: 'nueva', 'en-curso' o 'dominada'.
+   * @param {string} practiceId ID de la práctica.
+   * @param {number} [targetBpm=0] BPM objetivo.
+   * @returns {'nueva'|'en-curso'|'dominada'} Estado legible.
+   */
+  getPracticeStatus(practiceId, targetBpm = 0) {
+    const stats = this.getPracticeStats(practiceId);
+    if (stats.completedTarget || (targetBpm > 0 && stats.bestBpm >= targetBpm)) {
+      return 'dominada';
+    }
+    if (stats.repetitions > 0 || stats.studySeconds > 0 || stats.bestBpm > 0) {
+      return 'en-curso';
+    }
+    return 'nueva';
+  }
+
+  /**
    * Registra una sesión de estudio completada o parcial para una práctica.
    * @param {object} params Datos de la sesión.
    * @param {string} params.practiceId ID de la práctica estudiada.
    * @param {number} params.bpm Tempo alcanzado en la sesión.
-   * @param {number} [params.targetBpm=0] BPM objetivo de la práctica para marcarla como superada.
+   * @param {number} [params.targetBpm=0] BPM objetivo de la práctica.
    * @param {number} [params.repetitions=1] Cantidad de repeticiones o vueltas completadas.
    * @param {number} [params.studySeconds=0] Tiempo de práctica en segundos.
+   * @param {string[]} [params.instruments] Instrumentos asociados para actualizar "Continuar".
    * @param {Date} [params.date=new Date()] Fecha de la sesión.
    */
-  recordSession({ practiceId, bpm, targetBpm = 0, repetitions = 1, studySeconds = 0, date = new Date() }) {
+  recordSession({ practiceId, bpm, targetBpm = 0, repetitions = 1, studySeconds = 0, instruments = [], date = new Date() }) {
     if (!practiceId) return;
     const current = this.getPracticeStats(practiceId);
     const safeBpm = Math.max(0, Math.round(Number(bpm) || 0));
@@ -94,12 +133,48 @@ export class UserProgress {
       completedTarget
     };
 
+    if (Array.isArray(instruments)) {
+      for (const inst of instruments) {
+        this.lastPracticeByInstrument[inst] = practiceId;
+      }
+    }
+
     const dayKey = toLocalDayKey(date);
     const dayEntry = this.dailyLog[dayKey] || { studySeconds: 0, sessions: 0 };
     this.dailyLog[dayKey] = {
       studySeconds: dayEntry.studySeconds + safeSecs,
       sessions: dayEntry.sessions + 1
     };
+  }
+
+  /**
+   * Alterna el estado tildado de un objetivo específico dentro de la guía de estudio de una práctica.
+   * @param {string} practiceId ID de la práctica.
+   * @param {number} goalIndex Índice del objetivo (0-based).
+   * @returns {boolean} Nuevo estado del objetivo (true si quedó tildado).
+   */
+  toggleGoalChecked(practiceId, goalIndex) {
+    const list = new Set(this.checkedGoals[practiceId] || []);
+    let checked;
+    if (list.has(goalIndex)) {
+      list.delete(goalIndex);
+      checked = false;
+    } else {
+      list.add(goalIndex);
+      checked = true;
+    }
+    this.checkedGoals[practiceId] = [...list].sort((a, b) => a - b);
+    return checked;
+  }
+
+  /**
+   * Consulta si un objetivo de estudio está tildado para una práctica dada.
+   * @param {string} practiceId ID de la práctica.
+   * @param {number} goalIndex Índice del objetivo.
+   * @returns {boolean} True si está completado.
+   */
+  isGoalChecked(practiceId, goalIndex) {
+    return (this.checkedGoals[practiceId] || []).includes(goalIndex);
   }
 
   /**
@@ -120,8 +195,8 @@ export class UserProgress {
   /**
    * Calcula qué niveles están desbloqueados según las prácticas que alcanzaron su BPM objetivo
    * o los niveles saltados por el usuario.
-   * @param {Array<{ id: string, level: number, tempo: { target: number } }>} practices Catálogo de prácticas.
-   * @returns {Record<number, { unlocked: boolean, completedCount: number, requiredCount: number, skipped: boolean }>} Estado por nivel.
+   * @param {Array<{ id: string, level: number, tempo: { target: number } }>} practices Catálogo (o filtrado por instrumento).
+   * @returns {Record<number, { unlocked: boolean, completed: boolean, completedCount: number, requiredCount: number, remainingCount: number, totalPractices: number, skipped: boolean }>} Estado por nivel.
    */
   getLevelsStatus(practices = []) {
     const status = {};
@@ -132,20 +207,26 @@ export class UserProgress {
         return stats && (stats.completedTarget || stats.bestBpm >= (p.tempo?.target || 0));
       }).length;
 
+      const requiredCount = Math.min(lvl.minKeyPracticesToUnlock, Math.max(1, levelPractices.length));
       const skipped = this.skippedLevels.includes(lvl.number);
       let unlocked = lvl.number === 1 || skipped;
+      let remainingToUnlock = 0;
 
       if (!unlocked && lvl.number > 1) {
         const prev = status[lvl.number - 1];
         if (prev && prev.completedCount >= prev.requiredCount) {
           unlocked = true;
+        } else if (prev) {
+          remainingToUnlock = Math.max(0, prev.requiredCount - prev.completedCount);
         }
       }
 
       status[lvl.number] = {
         unlocked,
+        completed: completedCount >= requiredCount && levelPractices.length > 0,
         completedCount,
-        requiredCount: Math.min(lvl.minKeyPracticesToUnlock, Math.max(1, levelPractices.length)),
+        requiredCount,
+        remainingToUnlock,
         totalPractices: levelPractices.length,
         skipped
       };
@@ -239,7 +320,9 @@ export class UserProgress {
       version: this.version,
       byPractice: JSON.parse(JSON.stringify(this.byPractice)),
       dailyLog: JSON.parse(JSON.stringify(this.dailyLog)),
-      skippedLevels: [...this.skippedLevels]
+      skippedLevels: [...this.skippedLevels],
+      checkedGoals: JSON.parse(JSON.stringify(this.checkedGoals)),
+      lastPracticeByInstrument: { ...this.lastPracticeByInstrument }
     };
   }
 }

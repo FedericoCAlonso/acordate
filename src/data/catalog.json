@@ -644,7 +644,7 @@
       "target": 100,
       "step": 5
     },
-    "abc": "X:1\nT:Fa mayor y pentatónica de Dm\nM:4/4\nL:1/8\nK:F clef=bass\n\"F\"F,,G,, A,,B,, C,D, E,F, | F,E, D,C, B,,A,, G,,F,, |\n\"Dm\"D,F, G,A, CD CA, | G,F, D,C, A,,G,, F,,D,, |]",
+    "abc": "X:1\nT:Fa mayor y pentatónica de Dm\nM:4/4\nL:1/8\nK:F clef=bass\n\"F\"F,,G,, A,,B,, C,D, E,F, | F,E, D,C, B,,A,, G,,F,, |\n\"Dm\"D,F, G,A, CD CA, | G,F, D,C, A,,C, D,2 |]",
     "fingerings": {},
     "goals": [
       "Usar digitación económica en posición I y III",
@@ -803,7 +803,7 @@
       "target": 115,
       "step": 5
     },
-    "abc": "X:1\nT:ii-V-I en Do (clásica)\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"D,A cF D,A cF | \"G7\"G,,F BG G,,F BG | \"Cmaj7\"C,E BG C,E BG | \"Am7\"A,,E Gc A,,E Gc |\n\"Dm7\"D,F Ac \"G7\"G,,F Bd | \"Cmaj7\"C,E GB c4 |]",
+    "abc": "X:1\nT:ii-V-I en Do (clásica)\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"DA cf DA cf | \"G7\"G,F BG G,F BG | \"Cmaj7\"CE BG CE BG | \"Am7\"A,E Gc A,E Gc |\n\"Dm7\"DF Ac \"G7\"G,F Bd | \"Cmaj7\"CE GB c4 |]",
     "fingerings": {},
     "goals": [
       "Escuchar la resolución de la 7ª de Dm7 (Do) hacia la 3ª de G7 (Si)",
@@ -1211,7 +1211,7 @@
       "target": 136,
       "step": 5
     },
-    "abc": "X:1\nT:Contrapunto a 2 voces en Dm\nM:4/4\nL:1/8\nK:Dm clef=treble-8\nV:1\nd2 ef g2 fe | f2 ed ^c2 A2 | d2 fe d2 cB | A4- A2 z2 |\nB2 AG A2 GF | G2 FE F2 D2 | E2 ^FG A2 ^c2 | d6 z2 |]\nV:2\nD4 B,4 | A,4 A,4 | F,4 G,4 | A,4 G,2 F,2 |\nG,4 F,4 | E,4 D,4 | A,4 A,4 | D6 z2 |]",
+    "abc": "X:1\nT:Contrapunto a 2 voces en Dm\nM:4/4\nL:1/8\nK:Dm clef=treble-8\nV:1\nd2 ef g2 fe | f2 ed ^c2 A2 | d2 fe d2 cB | A4- A2 z2 |\nB2 AG A2 GF | G2 FE F2 D2 | E2 ^FG A2 ^c2 | d6 z2 |]\nV:2\nD4 B,4 | A,4 A,4 | F,4 G,4 | A,4 G,2 F,2 |\nG,4 F,4 | E,4 D4 | A,4 A,4 | D6 z2 |]",
     "fingerings": {},
     "goals": [
       "Mantener independencia rítmica y dinámica entre melodía y bajo",
@@ -1588,7 +1588,7 @@
       "target": 164,
       "step": 5
     },
-    "abc": "X:1\nT:Secuencia romántica en Mi\nM:4/4\nL:1/8\nK:E clef=treble-8\n\"E\"E,B,EG BGEB, | \"G#7\"^G,,^DFB =dBF^D | \"C#m\"C,G,CE GECG, | \"A\"A,,EAE cAEA |\n\"F#m7\"^F,,CAF cAFC | \"B7\"B,,^DFA BAFD | \"E\"E,B,EG B4 |]",
+    "abc": "X:1\nT:Secuencia romántica en Mi\nM:4/4\nL:1/8\nK:E clef=treble-8\n\"E\"E,B,EG BGEB, | \"G#7\"^G,^DFB =dBF^D | \"C#m\"CGce gecG | \"A\"A,EAE cAEA |\n\"F#m7\"^F,CAF cAFC | \"B7\"B,^DFA BAFD | \"E\"E,B,EG B4 |]",
     "fingerings": {},
     "goals": [
       "Sostener claridad polifónica en cambios de cejilla a alta velocidad",
@@ -1619,7 +1619,7 @@
       "target": 160,
       "step": 5
     },
-    "abc": "X:1\nT:Preludio polifónico en Re\nM:3/4\nL:1/8\nK:D clef=treble-8\nV:1\n\"D\"f2 ed cB | \"Bm\"d2 cB AG | \"Em7\"B2 AG FE | \"A7\"A4 G2 |\n\"D\"f2 ga bf | \"G\"g2 fe dB | \"A7\"c2 eA gc | \"D\"d6 |]\nV:2\nD,2 A,2 F2 | B,,2 F,2 D2 | E,2 B,2 G2 | A,,2 E,2 C2 |\nD,2 A,2 D2 | G,,2 D,2 B,2 | A,,2 E,2 A,2 | D,6 |]",
+    "abc": "X:1\nT:Preludio polifónico en Re\nM:3/4\nL:1/8\nK:D clef=treble-8\nV:1\n\"D\"f2 ed cB | \"Bm\"d2 cB AG | \"Em7\"B2 AG FE | \"A7\"A4 G2 |\n\"D\"f2 ga bf | \"G\"g2 fe dB | \"A7\"c2 eA gc | \"D\"d6 |]\nV:2\nD2 A2 F2 | B,2 F2 D2 | E,2 B,2 G2 | A,2 E2 C2 |\nD2 A2 d2 | G,2 D2 B2 | A,2 E2 A2 | D6 |]",
     "fingerings": {},
     "goals": [
       "Equilibrar los planos sonoros: melodía cantabile y bajo profundo",

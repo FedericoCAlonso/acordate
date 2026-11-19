@@ -4,8 +4,8 @@ import { createSwitchRow, el } from './uiHelpers.js';
 
 /**
  * Vista de Ajustes (#/ajustes).
- * Permite personalizar tema claro/oscuro/automático, color semilla dinámico Material 3,
- * cifrado americano/latino, instrumento inicial, Wake Lock y opciones de partitura/metrónomo.
+ * Incluye apariencia Material 3, cifrado americano/latino, registro de escucha (real / +1 octava),
+ * referencia de afinación de cuerdas al aire (guitarra y bajo), Wake Lock y valores por defecto.
  */
 export class SettingsView {
   /**
@@ -41,17 +41,99 @@ export class SettingsView {
   }
 
   /**
-   * Renderiza los controles de preferencias de la aplicación.
+   * Renderiza las tarjetas de preferencias, registro de escucha y referencia de afinación.
    */
   _render() {
     if (!this._container) return;
     const s = this._vm.settings.value;
+    const tuning = this._vm.getTuningReferenceStrings();
+    const isLatin = s.chordNotation === 'latino';
     this._container.innerHTML = '';
 
-    // 1) Apariencia y Dynamic Color Material 3
+    // 1) Audio, registro de escucha y Referencia de afinación
+    const registerSeg = el(
+      'div',
+      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Registro de escucha' },
+      [
+        { value: 'real', label: 'Real (estándar)' },
+        { value: '+1oct', label: '+1 octava (celular)' }
+      ].map((opt) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-segmented__btn',
+            ripple: true,
+            'aria-pressed': String(s.listeningRegister === opt.value),
+            onClick: () => this._vm.setListeningRegister(opt.value)
+          },
+          [opt.label]
+        )
+      )
+    );
+
+    const guitarTuningRow = el(
+      'div',
+      { className: 'tuning-row', role: 'group', 'aria-label': 'Cuerdas al aire de guitarra' },
+      tuning.guitar.map((str) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'tuning-btn',
+            ripple: true,
+            onClick: () => this._vm.playTuningString('guitarra', str.midi)
+          },
+          [
+            el('span', {}, [isLatin ? str.latinLabel : str.label]),
+            el('small', {}, [`${str.stringNumber}ª · ${str.note}`])
+          ]
+        )
+      )
+    );
+
+    const bassTuningRow = el(
+      'div',
+      { className: 'tuning-row', role: 'group', 'aria-label': 'Cuerdas al aire de bajo' },
+      tuning.bass.map((str) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'tuning-btn',
+            ripple: true,
+            onClick: () => this._vm.playTuningString('bajo', str.midi)
+          },
+          [
+            el('span', {}, [isLatin ? str.latinLabel : str.label]),
+            el('small', {}, [`${str.stringNumber}ª · ${str.note}`])
+          ]
+        )
+      )
+    );
+
+    const tuningCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
+      el('h2', { className: 'm3-title-md' }, ['Afinación y registro de escucha']),
+      el('div', {}, [
+        el('div', { className: 'm3-body-md', style: 'margin-bottom:6px' }, [
+          'Registro de escucha (usá +1 octava si el bajo casi no se oye en el parlante del celular)'
+        ]),
+        registerSeg
+      ]),
+      el('div', {}, [
+        el('div', { className: 'm3-body-md', style: 'margin-bottom:6px; font-weight:600' }, ['Referencia de afinación — Guitarra (6ª a 1ª)']),
+        guitarTuningRow
+      ]),
+      el('div', {}, [
+        el('div', { className: 'm3-body-md', style: 'margin-bottom:6px; font-weight:600' }, ['Referencia de afinación — Bajo (4ª a 1ª)']),
+        bassTuningRow
+      ])
+    ]);
+
+    // 2) Apariencia Material 3
     const themeSeg = el(
       'div',
-      { className: 'm3-segmented', role: 'group', 'aria-label': 'Tema visual' },
+      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Tema visual' },
       [
         { value: 'auto', label: 'Automático' },
         { value: 'light', label: 'Claro' },
@@ -94,25 +176,22 @@ export class SettingsView {
       colorInput
     ]);
 
-    const appearanceCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:14px' }, [
+    const appearanceCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('h2', { className: 'm3-title-md' }, ['Apariencia Material 3']),
+      themeSeg,
       el('div', {}, [
-        el('div', { className: 'm3-body-md', style: 'margin-bottom:8px' }, ['Esquema de color']),
-        themeSeg
-      ]),
-      el('div', {}, [
-        el('div', { className: 'm3-body-md', style: 'margin-bottom:8px' }, ['Color semilla dinámico']),
+        el('div', { className: 'm3-body-md', style: 'margin-bottom:6px' }, ['Color semilla dinámico']),
         swatches
       ])
     ]);
 
-    // 2) Notación musical e instrumento inicial
+    // 3) Notación musical
     const notationSeg = el(
       'div',
-      { className: 'm3-segmented', role: 'group', 'aria-label': 'Sistema de cifrado de acordes' },
+      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Sistema de cifrado de acordes' },
       [
-        { value: 'americano', label: 'Americano (C, Dm7, G7)' },
-        { value: 'latino', label: 'Latino (Do, Rem7, Sol7)' }
+        { value: 'americano', label: 'Americano (C, Dm7)' },
+        { value: 'latino', label: 'Latino (Do, Rem7)' }
       ].map((opt) =>
         el(
           'button',
@@ -132,21 +211,18 @@ export class SettingsView {
       'select',
       {
         className: 'm3-field__select',
-        style: 'padding:10px 12px; min-height:48px; max-width:300px',
-        'aria-label': 'Instrumento inicial',
+        style: 'padding:10px 12px; min-height:48px',
+        'aria-label': 'Instrumento activo',
         onChange: (e) => this._vm.setDefaultInstrument(e.target.value)
       },
-      [
-        el('option', { value: 'todos' }, ['Todos los instrumentos']),
-        ...Object.entries(INSTRUMENT_LABELS).map(([val, lbl]) => el('option', { value: val }, [lbl]))
-      ]
+      Object.entries(INSTRUMENT_LABELS).map(([val, lbl]) => el('option', { value: val }, [lbl]))
     );
     instSelect.value = s.defaultInstrument;
 
     const fingeringsSwitch = createSwitchRow({
       id: 'set-fingerings',
       label: 'Mostrar digitaciones anotadas',
-      description: 'Dedos 1-4, cuerdas en círculo y posiciones romanas sobre las notas (nunca tablatura)',
+      description: 'Dedos 1-4, cuerdas y posiciones sobre la nota (nunca tablatura)',
       checked: s.showFingerings,
       onChange: (v) => this._vm.setShowFingerings(v)
     });
@@ -159,25 +235,22 @@ export class SettingsView {
       onChange: (v) => this._vm.setShowBassFunctions(v)
     });
 
-    const notationCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:14px' }, [
+    const notationCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('h2', { className: 'm3-title-md' }, ['Notación y práctica']),
+      notationSeg,
       el('div', {}, [
-        el('div', { className: 'm3-body-md', style: 'margin-bottom:8px' }, ['Cifrado de acordes']),
-        notationSeg
-      ]),
-      el('div', {}, [
-        el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Filtro de instrumento al abrir']),
+        el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Instrumento principal']),
         instSelect
       ]),
       fingeringsSwitch.row,
       bassFnSwitch.row
     ]);
 
-    // 3) Audio, metrónomo y pantalla activa
+    // 4) Dispositivo y metrónomo
     const wakeLockSwitch = createSwitchRow({
       id: 'set-wakelock',
-      label: 'Mantener pantalla encendida durante la práctica',
-      description: 'Usa la Screen Wake Lock API cuando tu dispositivo la soporta',
+      label: 'Mantener pantalla encendida al practicar',
+      description: 'Usa la Screen Wake Lock API mientras reproducís',
       checked: s.wakeLockEnabled,
       onChange: (v) => this._vm.setWakeLockEnabled(v)
     });
@@ -210,12 +283,12 @@ export class SettingsView {
     );
     countInSelect.value = String(s.countInMeasures);
 
-    const deviceCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:14px' }, [
-      el('h2', { className: 'm3-title-md' }, ['Audio y dispositivo']),
+    const deviceCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
+      el('h2', { className: 'm3-title-md' }, ['Metrónomo y dispositivo']),
       wakeLockSwitch.row,
       el('div', { className: 'controls-grid' }, [
         el('div', {}, [
-          el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Sonido predeterminado del metrónomo']),
+          el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Timbre del metrónomo']),
           soundSelect
         ]),
         el('div', {}, [
@@ -223,7 +296,7 @@ export class SettingsView {
           countInSelect
         ])
       ]),
-      el('div', { style: 'margin-top:8px' }, [
+      el('div', { style: 'margin-top:4px' }, [
         el(
           'button',
           {
@@ -238,7 +311,7 @@ export class SettingsView {
     ]);
 
     this._container.appendChild(
-      el('div', { className: 'metronome-layout' }, [appearanceCard, notationCard, deviceCard])
+      el('div', { className: 'metronome-layout' }, [tuningCard, appearanceCard, notationCard, deviceCard])
     );
   }
 }

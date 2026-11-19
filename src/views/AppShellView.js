@@ -1,4 +1,4 @@
-import { el, icon } from './uiHelpers.js';
+import { createPopupMenu, el, icon } from './uiHelpers.js';
 
 /**
  * Destinos principales de navegación presentes en Bottom Bar, Rail y Drawer.
@@ -12,48 +12,55 @@ const NAV_ITEMS = [
 ];
 
 /**
- * Vista contenedora principal (App Shell Material Design 3).
- * Adapta navegación según window size class (<600px barra inferior, 600-839px rail, >=840px drawer + panel doble),
- * renderiza la Top App Bar, aloja las vistas activas y gestiona los snackbars.
+ * Vista contenedora principal (App Shell Material Design 3 v2).
+ * - Adapta navegación por window size class y orientación apaisada sin recargar.
+ * - Oculta la barra inferior durante la práctica para priorizar el "Modo Atril".
+ * - Muestra una Top App Bar compacta de una sola línea con menú contextual ⋮ en práctica.
+ * - Aloja el banner de sesión de estudio guiada y los snackbars con acción Deshacer.
  */
 export class AppShellView {
   /**
-   * Construye el App Shell inyectando el AppViewModel y las sub-vistas de cada pantalla.
+   * Construye el App Shell inyectando el AppViewModel, el PracticePlayerViewModel y las vistas hijas.
    * @param {object} deps Dependencias de vistas y ViewModels.
    */
-  constructor({ rootEl, appVm, views }) {
+  constructor({ rootEl, appVm, playerVm, views }) {
     /** Elemento raíz del DOM (#app). */
     this._root = rootEl;
     /** ViewModel global. */
     this._appVm = appVm;
+    /** ViewModel del reproductor para acciones del menú superior y modo atril pantalla completa. */
+    this._playerVm = playerVm;
     /** Mapa de vistas hijas (list, player, metronome, editor, progress, settings). */
     this._views = views;
 
-    /** Referencia al contenedor principal de contenido. */
+    /** Nodo principal del shell para clases de modo práctica y pantalla completa. */
+    this._shellEl = null;
+    /** Contenedor principal de contenido. */
     this._contentHost = null;
-    /** Referencia al título de la Top App Bar. */
+    /** Banner de sesión de estudio guiada activa. */
+    this._sessionBannerHost = null;
+    /** Título de la Top App Bar. */
     this._topTitle = null;
-    /** Referencia a las acciones de la Top App Bar. */
+    /** Acciones de la Top App Bar. */
     this._topActions = null;
-    /** Referencia al botón volver en la Top App Bar. */
+    /** Botón volver en la Top App Bar. */
     this._backBtn = null;
-    /** Referencia a los enlaces de navegación para actualizar aria-current. */
+    /** Mapa ruta -> elemento enlace de navegación. */
     this._navLinks = new Map();
     /** Contenedor de snackbar activo. */
     this._snackbarHost = null;
-    /** Última clave de layout renderizada para evitar recrear vistas innecesariamente. */
+    /** Última clave de layout renderizada. */
     this._activeLayoutKey = null;
   }
 
   /**
-   * Monta la estructura del App Shell y se suscribe a ruta, tamaño de ventana y snackbar.
+   * Monta la estructura del App Shell y se suscribe a ruta, tamaño de ventana, sesión y snackbar.
    */
   mount() {
     this._root.innerHTML = '';
 
     const skipLink = el('a', { href: '#main-content', className: 'skip-link' }, ['Ir al contenido principal']);
 
-    // Navegación adaptable (Bottom Bar / Rail / Drawer controlado por media queries M3)
     const brand = el('div', { className: 'm3-nav__brand' }, [
       el('span', { className: 'm3-nav__brand-icon', 'aria-hidden': 'true' }, ['♪']),
       el('div', { className: 'm3-nav__brand-text' }, [
@@ -89,7 +96,6 @@ export class AppShellView {
 
     const nav = el('nav', { className: 'm3-nav', 'aria-label': 'Navegación principal' }, [brand, navList]);
 
-    // Top App Bar
     this._backBtn = el(
       'button',
       {
@@ -111,35 +117,50 @@ export class AppShellView {
       this._topActions
     ]);
 
+    this._sessionBannerHost = el('div');
     this._contentHost = el('main', { id: 'main-content', className: 'app-content', tabindex: '-1' });
     this._snackbarHost = el('div', { 'aria-live': 'polite', role: 'status' });
 
-    const mainWrap = el('div', { className: 'app-main-wrap' }, [topBar, this._contentHost]);
-    const shell = el('div', { className: 'app-shell' }, [skipLink, nav, mainWrap, this._snackbarHost]);
-    this._root.appendChild(shell);
+    const mainWrap = el('div', { className: 'app-main-wrap' }, [topBar, this._sessionBannerHost, this._contentHost]);
+    this._shellEl = el('div', { className: 'app-shell' }, [skipLink, nav, mainWrap, this._snackbarHost]);
+    this._root.appendChild(this._shellEl);
 
-    // Suscripciones reactivas al AppViewModel
+    // Suscripciones reactivas
     this._appVm.currentRoute.subscribe(() => this._renderRoute());
     this._appVm.windowSizeClass.subscribe(() => this._renderRoute());
+    this._appVm.isMobileLandscape.subscribe(() => this._renderRoute());
     this._appVm.isReady.subscribe((ready) => {
       if (ready) this._renderRoute();
     });
     this._appVm.activePracticeId.subscribe((id) => {
-      if (this._appVm.currentRoute.value.name === 'practicas' && this._appVm.windowSizeClass.value === 'expanded' && id) {
+      if (
+        this._appVm.currentRoute.value.name === 'practicas' &&
+        this._appVm.windowSizeClass.value === 'expanded' &&
+        !this._appVm.isMobileLandscape.value &&
+        id
+      ) {
         const pr = this._appVm.findPracticeById(id);
         if (pr) this._views.player.showPractice(pr);
       }
     });
+    this._appVm.activeStudySession.subscribe((ses) => this._renderSessionBanner(ses));
     this._appVm.snackbar.subscribe((sb) => this._renderSnackbar(sb));
 
-    // Escucha cambios de tamaño de ventana para actualizar windowSizeClass
-    const updateWidth = () => this._appVm.updateWindowWidth(window.innerWidth);
-    window.addEventListener('resize', updateWidth);
-    updateWidth();
+    if (this._playerVm?.isAtrilFullscreen) {
+      this._playerVm.isAtrilFullscreen.subscribe((full) => {
+        this._shellEl.classList.toggle('app-shell--atril-fullscreen', Boolean(full));
+      });
+    }
+
+    // Actualiza geometría sin recargar al cambiar tamaño o rotar el dispositivo
+    const syncViewport = () => this._appVm.updateWindowWidth(window.innerWidth, window.innerHeight);
+    window.addEventListener('resize', syncViewport);
+    window.addEventListener('orientationchange', () => setTimeout(syncViewport, 120));
+    syncViewport();
   }
 
   /**
-   * Renderiza la vista correspondiente a la ruta activa y a la clase de ventana actual.
+   * Renderiza la vista correspondiente a la ruta activa y a la clase de tamaño/orientación.
    */
   _renderRoute() {
     if (!this._appVm.isReady.value) {
@@ -149,39 +170,32 @@ export class AppShellView {
 
     const route = this._appVm.currentRoute.value;
     const sizeClass = this._appVm.windowSizeClass.value;
+    const isLandscapePhone = this._appVm.isMobileLandscape.value;
+    const isPracticeFull = route.name === 'practica';
 
-    // Actualiza el indicador activo en la navegación
-    const activeNavKey = route.name === 'practica' ? 'practicas' : route.name;
+    this._shellEl.classList.toggle('app-shell--practicing', isPracticeFull);
+    if (!isPracticeFull && this._playerVm?.isAtrilFullscreen?.value) {
+      this._playerVm.isAtrilFullscreen.set(false);
+    }
+
+    const activeNavKey = isPracticeFull ? 'practicas' : route.name;
     for (const [key, link] of this._navLinks.entries()) {
       if (key === activeNavKey) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
 
-    // Actualiza Top App Bar
     this._topActions.innerHTML = '';
-    this._backBtn.style.display = route.name === 'practica' ? 'inline-flex' : 'none';
-
-    const newBtn = el(
-      'button',
-      {
-        type: 'button',
-        className: 'm3-btn m3-btn--tonal',
-        ripple: true,
-        onClick: () => this._appVm.navigate('#/editor/nueva')
-      },
-      [icon('plus', 18), 'Nueva práctica']
-    );
+    this._backBtn.style.display = isPracticeFull ? 'inline-flex' : 'none';
 
     if (route.name === 'practicas') {
       this._topTitle.textContent = 'Prácticas';
-      this._topActions.appendChild(newBtn);
-
-      const layoutKey = sizeClass === 'expanded' ? 'practicas-dual' : 'practicas-single';
+      const useDualPane = sizeClass === 'expanded' && !isLandscapePhone;
+      const layoutKey = useDualPane ? 'practicas-dual' : 'practicas-single';
       if (this._activeLayoutKey !== layoutKey) {
         this._cleanupActiveViews();
         this._contentHost.innerHTML = '';
-        if (sizeClass === 'expanded') {
-          const listPane = el('section', { className: 'dual-pane__list', 'aria-label': 'Catálogo de prácticas' });
+        if (useDualPane) {
+          const listPane = el('section', { className: 'dual-pane__list', 'aria-label': 'Ruta de prácticas' });
           const playerPane = el('section', { className: 'dual-pane__player', 'aria-label': 'Práctica activa' });
           const dual = el('div', { className: 'dual-pane' }, [listPane, playerPane]);
           this._contentHost.appendChild(dual);
@@ -199,10 +213,37 @@ export class AppShellView {
       return;
     }
 
-    if (route.name === 'practica') {
+    if (isPracticeFull) {
       const pr = this._appVm.findPracticeById(route.params.id) || this._appVm.allPractices.value[0];
       this._topTitle.textContent = pr ? pr.title : 'Práctica';
       if (pr) this._appVm.activePracticeId.set(pr.id);
+
+      // Menú contextual compacto (⋮) en la barra superior
+      if (pr && this._playerVm) {
+        const menu = createPopupMenu('Opciones de la práctica', [
+          {
+            label: pr.isReadOnly ? 'Duplicar y editar' : 'Editar práctica',
+            iconName: pr.isReadOnly ? 'copy' : 'edit',
+            onClick: () => this._playerVm.editCurrent()
+          },
+          {
+            label: 'Exportar JSON',
+            iconName: 'download',
+            onClick: () => this._playerVm.exportCurrent('json')
+          },
+          {
+            label: 'Exportar .abc',
+            iconName: 'download',
+            onClick: () => this._playerVm.exportCurrent('abc')
+          },
+          {
+            label: 'Modo atril (pantalla completa)',
+            iconName: 'fullscreen',
+            onClick: () => this._playerVm.toggleAtrilFullscreen()
+          }
+        ]);
+        this._topActions.appendChild(menu);
+      }
 
       if (this._activeLayoutKey !== 'practica-full') {
         this._cleanupActiveViews();
@@ -227,7 +268,7 @@ export class AppShellView {
 
     if (route.name === 'editor') {
       const idParam = route.params.id || 'nueva';
-      this._topTitle.textContent = idParam === 'nueva' ? 'Crear práctica' : 'Editar práctica';
+      this._topTitle.textContent = idParam === 'nueva' ? 'Nueva práctica' : 'Editar práctica';
       if (this._activeLayoutKey !== 'editor') {
         this._cleanupActiveViews();
         this._contentHost.innerHTML = '';
@@ -258,6 +299,46 @@ export class AppShellView {
         this._activeLayoutKey = 'ajustes';
       }
     }
+  }
+
+  /**
+   * Renderiza la barra superior de seguimiento cuando hay una sesión guiada en curso.
+   * @param {object|null} session Estado de la sesión guiada activa.
+   */
+  _renderSessionBanner(session) {
+    this._sessionBannerHost.innerHTML = '';
+    if (!session) return;
+    const mins = Math.floor(session.remainingSeconds / 60);
+    const secs = String(session.remainingSeconds % 60).padStart(2, '0');
+    const stepText = `${session.title} · Bloque ${session.currentIndex + 1}/${session.items.length} · ${mins}:${secs}`;
+
+    this._sessionBannerHost.appendChild(
+      el('div', { className: 'session-banner' }, [
+        el('strong', {}, [stepText]),
+        el('div', { className: 'stepper-inline' }, [
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--filled',
+              ripple: true,
+              onClick: () => this._appVm.nextStudySessionStep()
+            },
+            [session.currentIndex + 1 >= session.items.length ? 'Terminar' : 'Siguiente']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--text',
+              ripple: true,
+              onClick: () => this._appVm.stopStudySession(true)
+            },
+            ['Salir']
+          )
+        ])
+      ])
+    );
   }
 
   /**

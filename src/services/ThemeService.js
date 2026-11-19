@@ -128,10 +128,10 @@ export function generateM3Palette(seedHex, isDark = false) {
     '--md-sys-color-surface-container-high': hsl(h, neuSat + 4, 19),
     '--md-sys-color-surface-container-highest': hsl(h, neuSat + 5, 24),
 
-    '--md-sys-color-on-surface': hsl(h, 12, 92),
-    '--md-sys-color-on-surface-variant': hsl(h, 10, 75),
-    '--md-sys-color-outline': hsl(h, 8, 56),
-    '--md-sys-color-outline-variant': hsl(h, 10, 29),
+    '--md-sys-color-on-surface': hsl(h, 12, 94),
+    '--md-sys-color-on-surface-variant': hsl(h, 10, 82),
+    '--md-sys-color-outline': hsl(h, 10, 64),
+    '--md-sys-color-outline-variant': hsl(h, 10, 34),
 
     '--md-sys-color-inverse-surface': hsl(h, 10, 91),
     '--md-sys-color-inverse-on-surface': hsl(h, 12, 18),

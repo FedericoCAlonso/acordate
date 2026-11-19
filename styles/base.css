@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Base, Accesibilidad, State Layers, Ripple y Preferencias de Movimiento
+   Base, Accesibilidad, Prevención de Desborde Horizontal, State Layers y Ripple
    ========================================================================== */
 
 *,
@@ -12,14 +12,23 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: clip;
   background-color: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
   font-family: var(--md-sys-typescale-font);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+#app {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
 }
 
 button,
@@ -28,6 +37,7 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+  max-width: 100%;
 }
 
 a {
@@ -41,7 +51,6 @@ a {
   outline-offset: 2px;
 }
 
-/* Enlace de salto al contenido principal para lectores de pantalla y teclado */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -58,7 +67,7 @@ a {
   left: 12px;
 }
 
-/* Utilidades tipográficas Material 3 */
+/* Escala tipográfica Material 3 */
 .m3-display {
   font-size: var(--md-sys-typescale-display-size);
   line-height: var(--md-sys-typescale-display-line);
@@ -101,7 +110,7 @@ a {
   letter-spacing: 0.02em;
 }
 
-/* State layers y contenedor de ripple */
+/* State layers y ripple */
 .m3-interactive {
   position: relative;
   overflow: hidden;
@@ -162,7 +171,6 @@ a {
   border: 0;
 }
 
-/* Respeto estricto a prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

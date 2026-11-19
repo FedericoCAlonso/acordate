@@ -41,7 +41,7 @@ async function registerServiceWorker() {
 }
 
 /**
- * Punto de entrada de Acordate.
+ * Punto de entrada de Acordate v2.
  * Realiza la composición e inyección de dependencias manual de la arquitectura MVVM,
  * monta el AppShellView y arranca el router por hash.
  * @returns {Promise<void>}
@@ -76,7 +76,8 @@ async function bootstrap() {
     appVm,
     audioService,
     abcService,
-    wakeLockService
+    wakeLockService,
+    importExportService
   });
   const metronomeVm = new MetronomeViewModel(metronomeService, appVm);
   const editorVm = new EditorViewModel({
@@ -90,11 +91,11 @@ async function bootstrap() {
     importExportService
   });
   const progressVm = new ProgressViewModel(appVm, importExportService);
-  const settingsVm = new SettingsViewModel(appVm);
+  const settingsVm = new SettingsViewModel(appVm, audioService);
 
   // 3) Capa Views (solo renderizado y delegación de eventos)
   const views = {
-    list: new PracticeListView(practiceListVm, appVm),
+    list: new PracticeListView(practiceListVm, appVm, importExportService),
     player: new PracticePlayerView(practicePlayerVm, appVm, abcService),
     metronome: new MetronomeView(metronomeVm),
     editor: new EditorView(editorVm, appVm, abcService),
@@ -103,7 +104,7 @@ async function bootstrap() {
   };
 
   const rootEl = document.getElementById('app');
-  const shell = new AppShellView({ rootEl, appVm, views });
+  const shell = new AppShellView({ rootEl, appVm, playerVm: practicePlayerVm, views });
   shell.mount();
 
   router.start();

@@ -19,7 +19,19 @@ const ICONS = {
   loop: '<path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>',
   lock: '<path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zM9 6a3 3 0 0 1 6 0v2H9V6zm9 14H6V10h12v10z"/>',
   check: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
-  wand: '<path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a1 1 0 0 0-1.41 0L2.29 17.96a1 1 0 0 0 0 1.41l2.34 2.34a1 1 0 0 0 1.41 0L16.71 11.04a1 1 0 0 0 0-1.41l-2.34-2.34z"/>'
+  wand: '<path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a1 1 0 0 0-1.41 0L2.29 17.96a1 1 0 0 0 0 1.41l2.34 2.34a1 1 0 0 0 1.41 0L16.71 11.04a1 1 0 0 0 0-1.41l-2.34-2.34z"/>',
+  more: '<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>',
+  tune: '<path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>',
+  fullscreen: '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>',
+  fullscreenExit: '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>',
+  search: '<path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>',
+  filter: '<path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>',
+  close: '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>',
+  circle: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/>',
+  progress: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 0 1 0-16v16z"/>',
+  playlist: '<path d="M3 10h11v2H3v-2zm0-4h11v2H3V6zm0 8h7v2H3v-2zm13-1v8l6-4-6-4z"/>',
+  target: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm0-14a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 10a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm0-6a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>',
+  chevronDown: '<path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>'
 };
 
 /**
@@ -96,17 +108,79 @@ export function el(tag, attrs = {}, children = []) {
 }
 
 /**
+ * Crea un botón de menú contextual (⋮) con opciones desplegables accesibles.
+ * @param {string} ariaLabel Etiqueta accesible del botón.
+ * @param {Array<{ label: string, iconName?: string, onClick: Function }>} items Opciones del menú.
+ * @returns {HTMLElement} Contenedor relativo con botón y menú.
+ */
+export function createPopupMenu(ariaLabel, items) {
+  let menuEl = null;
+  const close = () => {
+    if (menuEl) {
+      menuEl.remove();
+      menuEl = null;
+    }
+    document.removeEventListener('click', onOutsideClick);
+    document.removeEventListener('keydown', onKey);
+  };
+  const onOutsideClick = (e) => {
+    if (!wrap.contains(e.target)) close();
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+
+  const trigger = el(
+    'button',
+    {
+      type: 'button',
+      className: 'm3-icon-btn',
+      ripple: true,
+      'aria-label': ariaLabel,
+      'aria-haspopup': 'menu',
+      onClick: (e) => {
+        e.stopPropagation();
+        if (menuEl) {
+          close();
+          return;
+        }
+        menuEl = el(
+          'div',
+          { className: 'm3-menu', role: 'menu' },
+          items.filter(Boolean).map((it) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-menu__item',
+                role: 'menuitem',
+                ripple: true,
+                onClick: () => {
+                  close();
+                  it.onClick();
+                }
+              },
+              [it.iconName ? icon(it.iconName, 18) : null, it.label]
+            )
+          )
+        );
+        wrap.appendChild(menuEl);
+        setTimeout(() => {
+          document.addEventListener('click', onOutsideClick);
+          document.addEventListener('keydown', onKey);
+        }, 0);
+      }
+    },
+    [icon('more', 22)]
+  );
+
+  const wrap = el('div', { className: 'm3-menu-wrap' }, [trigger]);
+  return wrap;
+}
+
+/**
  * Crea un campo Material 3 con etiqueta flotante (input, select o textarea).
  * @param {object} opts Opciones del campo.
- * @param {string} opts.id ID único del control.
- * @param {string} opts.label Etiqueta visible.
- * @param {'input'|'select'|'textarea'} [opts.kind='input'] Tipo de control.
- * @param {string} [opts.type='text'] Tipo de input si kind === 'input'.
- * @param {*} [opts.value=''] Valor inicial.
- * @param {Array<{ value: string, label: string }>} [opts.options=[]] Opciones para select.
- * @param {Function} [opts.onInput] Callback al escribir.
- * @param {Function} [opts.onChange] Callback al confirmar cambio.
- * @param {string} [opts.extraClass=''] Clase adicional para el control.
  * @returns {{ wrap: HTMLElement, control: HTMLElement }} Contenedor y control interno.
  */
 export function createFloatingField({
@@ -163,11 +237,6 @@ export function createFloatingField({
 /**
  * Crea una fila con etiqueta y Switch Material 3 accesible.
  * @param {object} opts Opciones del switch.
- * @param {string} opts.id ID único.
- * @param {string} opts.label Texto principal.
- * @param {string} [opts.description] Texto auxiliar opcional.
- * @param {boolean} opts.checked Estado inicial.
- * @param {Function} opts.onChange Handler (boolean) => void.
  * @returns {{ row: HTMLElement, input: HTMLInputElement }} Contenedor e input checkbox.
  */
 export function createSwitchRow({ id, label, description = '', checked = false, onChange }) {
@@ -184,7 +253,7 @@ export function createSwitchRow({ id, label, description = '', checked = false, 
   });
   const track = el('span', { className: 'm3-switch__track' }, [el('span', { className: 'm3-switch__thumb' })]);
   const switchWrap = el('span', { className: 'm3-switch' }, [input, track]);
-  const textCol = el('div', {}, [
+  const textCol = el('div', { style: 'min-width:0' }, [
     el('div', { className: 'm3-title-md' }, [label]),
     description ? el('div', { className: 'm3-body-md' }, [description]) : null
   ]);
@@ -206,7 +275,6 @@ export function createSliderGroup({ id, label, min, max, step = 1, value, format
     min,
     max,
     step,
-    value,
     'aria-label': label,
     onInput: (e) => {
       const num = Number(e.target.value);
@@ -214,6 +282,8 @@ export function createSliderGroup({ id, label, min, max, step = 1, value, format
       onInput?.(num);
     }
   });
+  // Asigna value luego de min/max para evitar acotaciones del navegador con rangos por defecto
+  input.value = String(value);
   const header = el('div', { className: 'm3-slider-header' }, [
     el('label', { for: id }, [label]),
     valueEl
@@ -223,11 +293,77 @@ export function createSliderGroup({ id, label, min, max, step = 1, value, format
 }
 
 /**
+ * Abre un Bottom Sheet modal (o Side Sheet a la derecha en apaisado / pantallas >=720px).
+ * @param {object} opts Configuración del sheet.
+ * @param {string} opts.title Título visible del sheet.
+ * @param {HTMLElement} opts.body Contenido del cuerpo.
+ * @param {boolean} [opts.sideOnWide=true] True para mostrarlo como panel lateral en apaisado/escritorio.
+ * @param {Function} [opts.onClose] Callback ejecutado al cerrar.
+ * @returns {{ close: Function, bodyHost: HTMLElement }} Controlador del sheet.
+ */
+export function openSheetModal({ title, body, sideOnWide = true, onClose }) {
+  const previousFocus = document.activeElement;
+  const close = () => {
+    document.removeEventListener('keydown', onKey);
+    backdrop.remove();
+    onClose?.();
+    if (previousFocus && typeof previousFocus.focus === 'function') {
+      previousFocus.focus();
+    }
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+
+  const bodyHost = el('div', { className: 'm3-sheet__body' }, [body]);
+  const sheet = el(
+    'div',
+    {
+      className: 'm3-sheet',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': title
+    },
+    [
+      el('div', { className: 'm3-sheet__handle', 'aria-hidden': 'true' }),
+      el('div', { className: 'm3-sheet__header' }, [
+        el('h2', { className: 'm3-title-lg' }, [title]),
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-icon-btn',
+            ripple: true,
+            'aria-label': 'Cerrar panel',
+            onClick: close
+          },
+          [icon('close', 22)]
+        )
+      ]),
+      bodyHost
+    ]
+  );
+
+  const backdrop = el(
+    'div',
+    {
+      className: `m3-sheet-backdrop ${sideOnWide ? 'm3-sheet-backdrop--side' : ''}`.trim(),
+      onClick: (e) => {
+        if (e.target === backdrop) close();
+      }
+    },
+    [sheet]
+  );
+
+  document.body.appendChild(backdrop);
+  document.addEventListener('keydown', onKey);
+  sheet.querySelector('button, input, select')?.focus();
+  return { close, bodyHost };
+}
+
+/**
  * Abre un diálogo modal Material 3 accesible con soporte de tecla Escape y cierre por fondo.
  * @param {object} opts Contenido del diálogo.
- * @param {string} opts.title Título del diálogo.
- * @param {HTMLElement|string} opts.body Contenido principal.
- * @param {Array<{ label: string, variant?: string, onClick: Function }>} opts.actions Botones del pie.
  * @returns {{ close: Function }} Controlador para cerrar el diálogo.
  */
 export function openModalDialog({ title, body, actions = [] }) {
@@ -265,7 +401,7 @@ export function openModalDialog({ title, body, actions = [] }) {
       'aria-labelledby': 'm3-dialog-title'
     },
     [
-      el('h2', { id: 'm3-dialog-title', className: 'm3-headline' }, [title]),
+      el('h2', { id: 'm3-dialog-title', className: 'm3-title-lg' }, [title]),
       typeof body === 'string' ? el('p', { className: 'm3-body-md' }, [body]) : body,
       el('div', { className: 'm3-dialog__actions' }, actionBtns)
     ]
@@ -284,8 +420,7 @@ export function openModalDialog({ title, body, actions = [] }) {
 
   document.body.appendChild(backdrop);
   document.addEventListener('keydown', onKeyDown);
-  const firstBtn = dialog.querySelector('input, select, button');
-  firstBtn?.focus();
+  dialog.querySelector('input, select, button')?.focus();
   return { close };
 }
 

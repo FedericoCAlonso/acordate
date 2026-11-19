@@ -4,6 +4,7 @@ import {
   midiToAbcPitch,
   prefersFlats
 } from '../core/MusicTheory.js';
+import { getPitchPolicy, soundingMidiToWrittenMidi } from '../core/PitchPolicy.js';
 import { Scale, SCALE_DEFINITIONS } from '../models/Scale.js';
 
 /**
@@ -17,20 +18,21 @@ export const SCALE_RHYTHMS = {
 };
 
 /**
- * Servicio de dominio puro que genera notación ABC para escalas, modos y arpegios.
+ * Servicio de dominio puro que genera notación ABC para escalas, modos y arpegios
+ * respetando la política única de registro (PitchPolicy) de cada instrumento.
  */
 export class ScaleGenerator {
   /**
-   * Genera la secuencia de alturas MIDI y su representación ABC completa.
+   * Genera la secuencia de alturas MIDI escritas y su representación ABC completa.
    * @param {object} options Parámetros de generación.
    * @param {string} [options.key='C'] Tonalidad raíz (ej. "C", "F", "Bb", "G").
    * @param {string} [options.type='mayor'] Tipo definido en SCALE_DEFINITIONS.
    * @param {number} [options.octaves=1] Rango en octavas (1 o 2).
    * @param {'negras'|'corcheas'|'tresillos'|'semicorcheas'} [options.rhythm='corcheas'] Figura rítmica.
    * @param {'asc'|'desc'|'asc-desc'} [options.direction='asc-desc'] Dirección de la escala.
-   * @param {'guitarra-clasica'|'guitarra'|'bajo'} [options.instrument='guitarra'] Instrumento destino para clave y registro.
+   * @param {'guitarra-clasica'|'guitarra'|'bajo'} [options.instrument='guitarra'] Instrumento destino.
    * @param {string} [options.title] Título opcional de la partitura.
-   * @returns {{ abc: string, midiNotes: number[], title: string, key: string, timeSignature: string }} Resultado generado.
+   * @returns {{ abc: string, midiNotes: number[], soundingMidiNotes: number[], title: string, key: string, timeSignature: string }} Resultado generado.
    */
   generate(options = {}) {
     const scale = new Scale({
@@ -41,52 +43,54 @@ export class ScaleGenerator {
     });
 
     const instrument = options.instrument || 'guitarra';
+    const policy = getPitchPolicy(instrument);
     const rhythmCfg = SCALE_RHYTHMS[options.rhythm] || SCALE_RHYTHMS.corcheas;
-    const isBass = instrument === 'bajo';
     const rootPc = NOTE_TO_PC[scale.key] ?? 0;
 
-    // Registro idiomático: en clave de sol octavada (treble-8) la guitarra se escribe una octava arriba del sonido real (C4..C6);
-    // en clave de fa (bass) el bajo se escribe en C2..G3 (MIDI 36..55, sonando octava grave).
-    const baseMidi = isBass
-      ? (rootPc >= 4 ? 24 + rootPc : 36 + rootPc) // E1 (28) .. Eb2 (39)
-      : (rootPc >= 4 ? 48 + rootPc : 60 + rootPc); // E3 (52) .. Eb4 (63) escrito en treble-8 -> +12 si se requiere cómodo
+    // Determina la tónica real más cómoda dentro del rango físico del instrumento
+    let startSoundingMidi = policy.minSoundingMidi;
+    while (startSoundingMidi % 12 !== rootPc) {
+      startSoundingMidi += 1;
+    }
 
-    // Ajuste para lectura limpia en pentagrama de guitarra (E3..E5 escrito como E4..E6 en treble-8)
-    const writtenStartMidi = isBass ? baseMidi + 12 : baseMidi + 12;
+    const writtenStartMidi = soundingMidiToWrittenMidi(startSoundingMidi, instrument);
 
-    /** Secuencia ascendente de alturas MIDI incluyendo la octava superior. */
-    const ascending = [];
+    /** Secuencia ascendente de alturas MIDI escritas incluyendo la octava superior. */
+    const ascendingWritten = [];
+    const ascendingSounding = [];
     for (let oct = 0; oct < scale.octaves; oct++) {
       for (const interval of scale.intervals) {
-        ascending.push(writtenStartMidi + oct * 12 + interval);
+        ascendingWritten.push(writtenStartMidi + oct * 12 + interval);
+        ascendingSounding.push(startSoundingMidi + oct * 12 + interval);
       }
     }
-    ascending.push(writtenStartMidi + scale.octaves * 12);
+    ascendingWritten.push(writtenStartMidi + scale.octaves * 12);
+    ascendingSounding.push(startSoundingMidi + scale.octaves * 12);
 
     let midiNotes = [];
+    let soundingMidiNotes = [];
     if (scale.direction === 'asc') {
-      midiNotes = [...ascending];
+      midiNotes = [...ascendingWritten];
+      soundingMidiNotes = [...ascendingSounding];
     } else if (scale.direction === 'desc') {
-      midiNotes = [...ascending].reverse();
+      midiNotes = [...ascendingWritten].reverse();
+      soundingMidiNotes = [...ascendingSounding].reverse();
     } else {
-      // Ida y vuelta sin duplicar la nota más aguda
-      midiNotes = [...ascending, ...ascending.slice(0, -1).reverse()];
+      midiNotes = [...ascendingWritten, ...ascendingWritten.slice(0, -1).reverse()];
+      soundingMidiNotes = [...ascendingSounding, ...ascendingSounding.slice(0, -1).reverse()];
     }
 
     const useFlats = prefersFlats(scale.key) || ['menor-natural', 'dorico', 'frigio', 'locrio', 'pentatonica-menor', 'blues', 'm7', 'm7b5', 'dim7'].includes(scale.type);
     const keyHeader = scale.type === 'mayor' ? scale.key : 'C';
     const keyMap = getKeySignatureMap(keyHeader);
-    const clef = isBass ? 'bass' : 'treble-8';
     const title = options.title || `${scale.name} en ${scale.key}`;
 
-    // Formatea las notas en compases de 4/4 con barras cada 4 compases por línea
     const abcTokens = midiNotes.map((m) => midiToAbcPitch(m, useFlats, keyMap));
     const bars = [];
     const perBar = rhythmCfg.notesPerBar;
 
     for (let i = 0; i < abcTokens.length; i += perBar) {
       const slice = abcTokens.slice(i, i + perBar);
-      // Completa el último compás con silencio para mantener la métrica exacta
       const missing = perBar - slice.length;
       if (rhythmCfg.isTriplet) {
         const padded = [...slice];
@@ -117,13 +121,14 @@ export class ScaleGenerator {
       `T:${title}`,
       'M:4/4',
       `L:${rhythmCfg.unitLength}`,
-      `K:${keyHeader} clef=${clef}`,
+      `K:${keyHeader} clef=${policy.clef}`,
       ...lines
     ].join('\n');
 
     return {
       abc,
       midiNotes,
+      soundingMidiNotes,
       title,
       key: scale.key,
       timeSignature: '4/4'

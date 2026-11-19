@@ -85,7 +85,7 @@ export class MetronomeView {
 
     // Compás, subdivisión y sonido
     this._tsChips = el('div', { className: 'm3-chip-row', role: 'group', 'aria-label': 'Compás' });
-    this._subSeg = el('div', { className: 'm3-segmented', role: 'group', 'aria-label': 'Subdivisión' });
+    this._subSeg = el('div', { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Subdivisión' });
 
     const accentSwitch = createSwitchRow({
       id: 'metro-accent',
@@ -158,22 +158,25 @@ export class MetronomeView {
       onChange: (e) => this._vm.setSpeedTrainer({ targetBpm: Number(e.target.value) })
     });
 
-    const trainerCard = el('div', { className: 'm3-card' }, [
-      trainerSwitch.row,
-      el('div', { className: 'stepper-inline', style: 'margin-top:10px; flex-wrap:wrap' }, [
-        el('span', { className: 'm3-body-md' }, ['Subir']),
-        stepInput,
-        el('span', { className: 'm3-body-md' }, ['BPM cada']),
-        everyInput,
-        el('span', { className: 'm3-body-md' }, ['compases hasta']),
-        targetInput,
-        el('span', { className: 'm3-body-md' }, ['BPM'])
+    const trainerCard = el('details', { className: 'm3-collapsible' }, [
+      el('summary', {}, [el('span', {}, ['Entrenador de velocidad']), icon('chevronDown', 20)]),
+      el('div', { className: 'm3-collapsible__content' }, [
+        trainerSwitch.row,
+        el('div', { className: 'stepper-inline', style: 'margin-top:6px' }, [
+          el('span', { className: 'm3-body-md' }, ['Subir']),
+          stepInput,
+          el('span', { className: 'm3-body-md' }, ['BPM cada']),
+          everyInput,
+          el('span', { className: 'm3-body-md' }, ['compases hasta']),
+          targetInput,
+          el('span', { className: 'm3-body-md' }, ['BPM'])
+        ])
       ])
     ]);
 
     const silentSwitch = createSwitchRow({
       id: 'metro-silent-switch',
-      label: 'Modo compás silencioso',
+      label: 'Activar compás silencioso',
       description: 'Silencia el clic periódicamente para entrenar tu pulso interno',
       checked: this._vm.silentBarEnabled.value,
       onChange: (v) => this._vm.setSilentBars({ enabled: v })
@@ -191,13 +194,16 @@ export class MetronomeView {
       onChange: (e) => this._vm.setSilentBars({ muteBars: Number(e.target.value) })
     });
 
-    const silentCard = el('div', { className: 'm3-card' }, [
-      silentSwitch.row,
-      el('div', { className: 'stepper-inline', style: 'margin-top:10px; flex-wrap:wrap' }, [
-        el('span', { className: 'm3-body-md' }, ['Sonar']),
-        playBarsInput,
-        el('span', { className: 'm3-body-md' }, ['compases y silenciar']),
-        muteBarsInput
+    const silentCard = el('details', { className: 'm3-collapsible' }, [
+      el('summary', {}, [el('span', {}, ['Modo compás silencioso']), icon('chevronDown', 20)]),
+      el('div', { className: 'm3-collapsible__content' }, [
+        silentSwitch.row,
+        el('div', { className: 'stepper-inline', style: 'margin-top:6px' }, [
+          el('span', { className: 'm3-body-md' }, ['Sonar']),
+          playBarsInput,
+          el('span', { className: 'm3-body-md' }, ['compases y silenciar']),
+          muteBarsInput
+        ])
       ])
     ]);
 

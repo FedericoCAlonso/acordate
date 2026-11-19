@@ -14,13 +14,23 @@ const DB_VERSION = 1;
 const SETTINGS_LS_KEY = 'acordate_settings_v1';
 
 /**
+ * Clave de respaldo en localStorage para mezclas por práctica.
+ */
+const MIXES_LS_KEY = 'acordate_practice_mixes_v1';
+
+/**
+ * Clave de respaldo en localStorage para sesiones de estudio armadas por el usuario.
+ */
+const SESSIONS_LS_KEY = 'acordate_study_sessions_v1';
+
+/**
  * Clave de respaldo en localStorage para el borrador automático del editor.
  */
 const DRAFT_LS_KEY = 'acordate_editor_draft_v1';
 
 /**
  * Servicio de persistencia local basado en IndexedDB (prácticas de usuario, progreso,
- * ajustes y borradores), con fallback seguro a localStorage para ajustes pequeños.
+ * ajustes, mezclas por práctica, sesiones y borradores), con fallback a localStorage.
  */
 export class StorageService {
   /**
@@ -157,7 +167,7 @@ export class StorageService {
       const row = await this._withStore('settings', 'readonly', (store) => store.get('main'));
       if (row?.data) return row.data;
     } catch {
-      // Continúa hacia fallback de localStorage
+      // Fallback
     }
     try {
       if (typeof localStorage !== 'undefined') {
@@ -181,14 +191,102 @@ export class StorageService {
         localStorage.setItem(SETTINGS_LS_KEY, JSON.stringify(settingsJson));
       }
     } catch {
-      // Ignora cuotas de localStorage si falla
+      // Ignora cuotas
     }
     try {
       await this._withStore('settings', 'readwrite', (store) =>
         store.put({ key: 'main', data: settingsJson })
       );
     } catch {
-      // Fallback ya persistido en localStorage
+      // Ya persistido en localStorage
+    }
+  }
+
+  /**
+   * Carga el mapa de mezclas de audio personalizadas por ID de práctica.
+   * @returns {Promise<Record<string, object>>} Mapa practiceId -> mezcla guardada.
+   */
+  async loadPracticeMixes() {
+    try {
+      const row = await this._withStore('settings', 'readonly', (store) => store.get('practiceMixes'));
+      if (row?.data && typeof row.data === 'object') return row.data;
+    } catch {
+      // Fallback
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(MIXES_LS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      }
+    } catch {
+      return {};
+    }
+    return {};
+  }
+
+  /**
+   * Guarda el mapa de mezclas personalizadas por práctica.
+   * @param {Record<string, object>} mixesMap Mapa practiceId -> configuración de volúmenes.
+   * @returns {Promise<void>}
+   */
+  async savePracticeMixes(mixesMap) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(MIXES_LS_KEY, JSON.stringify(mixesMap));
+      }
+    } catch {
+      // Ignora
+    }
+    try {
+      await this._withStore('settings', 'readwrite', (store) =>
+        store.put({ key: 'practiceMixes', data: mixesMap })
+      );
+    } catch {
+      // Fallback en localStorage
+    }
+  }
+
+  /**
+   * Carga las sesiones de estudio personalizadas (listas ordenadas con minutos por práctica).
+   * @returns {Promise<Array<object>>} Lista de sesiones guardadas.
+   */
+  async loadStudySessions() {
+    try {
+      const row = await this._withStore('settings', 'readonly', (store) => store.get('studySessions'));
+      if (Array.isArray(row?.data)) return row.data;
+    } catch {
+      // Fallback
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(SESSIONS_LS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  }
+
+  /**
+   * Guarda las sesiones de estudio personalizadas del usuario.
+   * @param {Array<object>} sessions Lista de sesiones.
+   * @returns {Promise<void>}
+   */
+  async saveStudySessions(sessions) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(SESSIONS_LS_KEY, JSON.stringify(sessions));
+      }
+    } catch {
+      // Ignora
+    }
+    try {
+      await this._withStore('settings', 'readwrite', (store) =>
+        store.put({ key: 'studySessions', data: sessions })
+      );
+    } catch {
+      // Fallback
     }
   }
 

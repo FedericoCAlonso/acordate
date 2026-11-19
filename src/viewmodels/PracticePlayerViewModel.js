@@ -3,20 +3,17 @@ import { NOTE_TO_PC, pcToNoteName, prefersFlats, transposeAbc, transposeChordSym
 import { Exercise } from '../models/Exercise.js';
 
 /**
- * ViewModel del reproductor de prácticas.
- * Coordina transposición, modos de notación (Pentagrama / Cifrado / Mixto), síntesis multi-voz,
- * bucle por rango de compases, conteo previo, entrenador de velocidad y registro de progreso.
+ * ViewModel del reproductor de prácticas ("Modo Atril").
+ * Coordina transposición, vistas (Pentagrama / Cifrado / Mixto), síntesis multi-voz con
+ * mezcla guardada por práctica, registro de escucha real/+1oct, bucle, conteo previo,
+ * entrenador de velocidad, lista de verificación de objetivos y modo pantalla completa.
  */
 export class PracticePlayerViewModel {
   /**
    * Inicializa el reproductor inyectando los servicios y el AppViewModel.
    * @param {object} deps Dependencias inyectadas manualmente.
-   * @param {import('./AppViewModel.js').AppViewModel} deps.appVm ViewModel raíz.
-   * @param {import('../services/AudioSynthService.js').AudioSynthService} deps.audioService Sintetizador offline.
-   * @param {import('../services/AbcService.js').AbcService} deps.abcService Servicio de partitura abcjs.
-   * @param {import('../services/WakeLockService.js').WakeLockService} deps.wakeLockService Wake Lock API.
    */
-  constructor({ appVm, audioService, abcService, wakeLockService }) {
+  constructor({ appVm, audioService, abcService, wakeLockService, importExportService = null }) {
     /** Referencia al AppViewModel global. */
     this._appVm = appVm;
     /** Servicio de reproducción Web Audio multi-voz. */
@@ -25,12 +22,14 @@ export class PracticePlayerViewModel {
     this._abc = abcService;
     /** Servicio de bloqueo de pantalla durante el estudio. */
     this._wakeLock = wakeLockService;
+    /** Servicio opcional de exportación desde el menú superior. */
+    this._io = importExportService;
 
     /** Práctica activa cargada actualmente. */
     this.practice = new Observable(null);
     /** Tempo actual en BPM (40-240). */
     this.bpm = new Observable(80);
-    /** Desplazamiento de transposición en semitonos (-6 a +6 o -11 a +11). */
+    /** Desplazamiento de transposición en semitonos (-11 a +11). */
     this.transposeSemitones = new Observable(0);
     /** Modo de vista de notación ('pentagrama' | 'cifrado' | 'mixto'). */
     this.viewMode = new Observable('mixto');
@@ -41,7 +40,7 @@ export class PracticePlayerViewModel {
     this.isPlaying = new Observable(false);
     /** Estado de pausa a mitad de reproducción. */
     this.isPaused = new Observable(false);
-    /** Estado del conteo previo (null o { beat, totalBeats }). */
+    /** Estado del conteo previo (null o { beat, countDown, totalBeats }). */
     this.countInStatus = new Observable(null);
     /** Compás actualmente sonando (1-based, 0 si está detenido). */
     this.activeMeasure = new Observable(0);
@@ -59,8 +58,8 @@ export class PracticePlayerViewModel {
 
     /** Instrumento de síntesis seleccionado. */
     this.synthInstrument = new Observable('acoustic-guitar');
-    /** Volumen de melodía / voz principal (0-1). */
-    this.melodyVolume = new Observable(0.85);
+    /** Volumen de melodía / voz principal (1.0 = 100 % por defecto). */
+    this.melodyVolume = new Observable(1.0);
     /** Acompañamiento de acordes activado/desactivado. */
     this.chordsEnabled = new Observable(true);
     /** Volumen del acompañamiento de acordes (0-1). */
@@ -82,8 +81,17 @@ export class PracticePlayerViewModel {
     /** Cantidad de vueltas de bucle antes de subir el tempo automáticamente. */
     this.speedTrainerEveryLoops = new Observable(2);
 
+    /** Modo pantalla completa ("atril"): muestra solo partitura y barra de transporte. */
+    this.isAtrilFullscreen = new Observable(false);
+    /** Indica si el panel modal de ajustes (bottom sheet / side sheet) está abierto. */
+    this.isSheetOpen = new Observable(false);
+    /** Pestaña activa del sheet de ajustes ('mezcla' | 'bucle' | 'timbre' | 'vista'). */
+    this.activeSheetTab = new Observable('mezcla');
+
     /** Repeticiones completadas durante la sesión actual. */
     this.sessionRepetitions = new Observable(0);
+    /** Vueltas limpias registradas al BPM actual para sugerir subir tempo. */
+    this._cleanRepsAtCurrentBpm = 0;
     /** Cantidad de compases detectados en la práctica activa. */
     this.measureCount = new Observable(4);
 
@@ -92,7 +100,7 @@ export class PracticePlayerViewModel {
     /** Segundos acumulados sin guardar en la sesión en curso. */
     this._pendingStudySeconds = 0;
 
-    /** ABC resultante luego de aplicar la transposición en semitonos (mantiene cifrado americano). */
+    /** ABC resultante luego de aplicar la transposición en semitonos. */
     this.transposedAbc = new ComputedObservable(
       [this.practice, this.transposeSemitones],
       () => {
@@ -119,7 +127,7 @@ export class PracticePlayerViewModel {
       }
     );
 
-    /** Modelo Exercise parseado a partir del ABC transpuesto (para la vista de Cifrado y conteo de compases). */
+    /** Modelo Exercise parseado a partir del ABC transpuesto. */
     this.exercise = new ComputedObservable(
       [this.practice, this.transposedAbc],
       () => {
@@ -134,7 +142,7 @@ export class PracticePlayerViewModel {
       }
     );
 
-    /** ABC preparado finalmente para renderizar con abcjs (modo de vista, cifrado latino/americano, digitaciones). */
+    /** ABC preparado finalmente para renderizar con abcjs (sin título T: duplicado). */
     this.renderableAbc = new ComputedObservable(
       [
         this.practice,
@@ -153,7 +161,8 @@ export class PracticePlayerViewModel {
           showFingerings: this.showFingerings.value,
           fingerings: pr.fingerings,
           showBassFunctions: this.showBassFunctions.value,
-          isBass: pr.instruments.includes('bajo')
+          isBass: pr.instruments.includes('bajo'),
+          stripTitle: true
         });
       }
     );
@@ -171,7 +180,10 @@ export class PracticePlayerViewModel {
     // Vincula eventos del motor de audio
     this._audio.onVisualEvent = (ev) => {
       if (ev.isCountIn) {
-        this.countInStatus.set({ beat: ev.countInBeat, totalBeats: ev.totalBeats }, true);
+        this.countInStatus.set(
+          { beat: ev.countInBeat, countDown: ev.countDown ?? ev.countInBeat, totalBeats: ev.totalBeats },
+          true
+        );
         return;
       }
       this.countInStatus.set(null);
@@ -192,16 +204,17 @@ export class PracticePlayerViewModel {
       this._wakeLock.release();
     };
 
-    // Actualiza preferencias por defecto cuando cambian los ajustes globales
+    // Sincroniza ajustes globales (registro de escucha, digitaciones, conteo)
     appVm.settings.subscribe((s) => {
       this.showFingerings.set(s.showFingerings);
       this.showBassFunctions.set(s.showBassFunctions);
       this.countInMeasures.set(s.countInMeasures);
+      this._audio.configure({ listeningRegister: s.listeningRegister });
     });
   }
 
   /**
-   * Carga una práctica en el reproductor, reiniciando el estado de transporte y adaptando tempo e instrumento.
+   * Carga una práctica en el reproductor, aplicando su mezcla guardada (o 100 % voz principal por defecto).
    * @param {import('../models/Practice.js').Practice|null} practice Práctica a cargar.
    */
   loadPractice(practice) {
@@ -209,12 +222,22 @@ export class PracticePlayerViewModel {
     this.practice.set(practice || null);
     this.transposeSemitones.set(0);
     this.sessionRepetitions.set(0);
+    this._cleanRepsAtCurrentBpm = 0;
     this._pendingStudySeconds = 0;
 
     if (!practice) return;
 
     this.bpm.set(practice.tempo.start);
     this.synthInstrument.set(practice.getDefaultSynthInstrument());
+
+    // Carga la mezcla propia de la práctica (o la predeterminada con melodía al 100 %)
+    const mix = this._appVm.getPracticeMix(practice);
+    this.melodyVolume.set(mix.melody);
+    this.chordsVolume.set(mix.chords);
+    this.bassVolume.set(mix.bass);
+    this.metronomeVolume.set(mix.metronome);
+    this.chordsEnabled.set(mix.chordsEnabled);
+    this.metronomeEnabled.set(mix.metronomeEnabled);
 
     const ex = this.exercise.value;
     const totalMeasures = Math.max(1, ex?.measureCount || 4);
@@ -223,8 +246,8 @@ export class PracticePlayerViewModel {
     this.loopStartMeasure.set(1);
     this.loopEndMeasure.set(totalMeasures);
 
-    // Precarga una línea de tiempo base (será enriquecida con elementos SVG al renderizar)
     const fallbackTimeline = this._abc.extractTimeline(null, this.transposedAbc.value, {
+      instrument: practice.instruments[0] || 'guitarra',
       isBass: practice.instruments.includes('bajo'),
       timeSignature: practice.timeSignature
     });
@@ -233,7 +256,7 @@ export class PracticePlayerViewModel {
   }
 
   /**
-   * Registra la línea de tiempo extraída luego del renderizado de abcjs (con vínculos a nodos SVG).
+   * Registra la línea de tiempo extraída tras el renderizado de abcjs sin interrumpir la reproducción.
    * @param {object} timeline Línea de tiempo devuelta por AbcService.extractTimeline.
    */
   registerVisualTimeline(timeline) {
@@ -252,6 +275,7 @@ export class PracticePlayerViewModel {
     this._audio.configure({
       bpm: this.bpm.value,
       instrument: this.synthInstrument.value,
+      listeningRegister: this._appVm.settings.value.listeningRegister || 'real',
       melodyVolume: this.melodyVolume.value,
       chordsEnabled: this.chordsEnabled.value,
       chordsVolume: this.chordsVolume.value,
@@ -266,7 +290,41 @@ export class PracticePlayerViewModel {
   }
 
   /**
-   * Inicia o reanuda la reproducción y activa el bloqueo de pantalla (Wake Lock).
+   * Persiste la mezcla actual asociada a la práctica activa.
+   */
+  _persistCurrentMix() {
+    const pr = this.practice.value;
+    if (!pr) return;
+    this._appVm.savePracticeMix(pr.id, {
+      melody: this.melodyVolume.value,
+      chords: this.chordsVolume.value,
+      bass: this.bassVolume.value,
+      metronome: this.metronomeVolume.value,
+      chordsEnabled: this.chordsEnabled.value,
+      metronomeEnabled: this.metronomeEnabled.value
+    });
+  }
+
+  /**
+   * Restablece el mezclador de la práctica activa a sus niveles óptimos por defecto (melodía 100 %).
+   */
+  async resetPracticeMix() {
+    const pr = this.practice.value;
+    if (!pr) return;
+    await this._appVm.resetPracticeMix(pr.id);
+    const mix = this._appVm.getPracticeMix(pr);
+    this.melodyVolume.set(mix.melody);
+    this.chordsVolume.set(mix.chords);
+    this.bassVolume.set(mix.bass);
+    this.metronomeVolume.set(mix.metronome);
+    this.chordsEnabled.set(mix.chordsEnabled);
+    this.metronomeEnabled.set(mix.metronomeEnabled);
+    this._syncAudioConfig();
+    this._appVm.showSnackbar('Mezcla restablecida (voz principal al 100 %).');
+  }
+
+  /**
+   * Inicia o reanuda la reproducción y solicita Wake Lock para mantener la pantalla encendida.
    */
   play() {
     if (!this.practice.value) return;
@@ -279,7 +337,7 @@ export class PracticePlayerViewModel {
   }
 
   /**
-   * Pausa la reproducción acumulando el tiempo practicado hasta el momento.
+   * Pausa la reproducción acumulando el tiempo practicado.
    */
   pause() {
     if (!this.isPlaying.value) return;
@@ -319,6 +377,9 @@ export class PracticePlayerViewModel {
    */
   setTempo(bpm) {
     const clamped = Math.max(40, Math.min(240, Math.round(Number(bpm) || 80)));
+    if (clamped !== this.bpm.value) {
+      this._cleanRepsAtCurrentBpm = 0;
+    }
     this.bpm.set(clamped);
     this._audio.configure({ bpm: clamped });
   }
@@ -333,7 +394,7 @@ export class PracticePlayerViewModel {
 
   /**
    * Transpone melodía y cifrado juntos una cantidad de semitonos respecto a la tonalidad original.
-   * @param {number} semitones Cantidad de semitonos (-6 a +6 o -11 a +11).
+   * @param {number} semitones Semitonos a desplazar (-11 a +11).
    */
   transpose(semitones) {
     const wasPlaying = this.isPlaying.value;
@@ -343,6 +404,7 @@ export class PracticePlayerViewModel {
     const pr = this.practice.value;
     if (pr) {
       const tl = this._abc.extractTimeline(null, this.transposedAbc.value, {
+        instrument: pr.instruments[0] || 'guitarra',
         isBass: pr.instruments.includes('bajo'),
         timeSignature: pr.timeSignature
       });
@@ -384,12 +446,12 @@ export class PracticePlayerViewModel {
     const maxM = Math.max(1, this.measureCount.value);
     if (cfg.enabled !== undefined) this.loopEnabled.set(Boolean(cfg.enabled));
     if (cfg.start !== undefined) {
-      const s = Math.max(1, Math.min(maxM, Number(cfg.start)));
+      const s = Math.max(1, Math.min(maxM, Number(cfg.start) || 1));
       this.loopStartMeasure.set(s);
       if (this.loopEndMeasure.value < s) this.loopEndMeasure.set(s);
     }
     if (cfg.end !== undefined) {
-      const e = Math.max(this.loopStartMeasure.value, Math.min(maxM, Number(cfg.end)));
+      const e = Math.max(this.loopStartMeasure.value, Math.min(maxM, Number(cfg.end) || maxM));
       this.loopEndMeasure.set(e);
     }
     this._syncAudioConfig();
@@ -400,7 +462,7 @@ export class PracticePlayerViewModel {
    * @param {number} measures Cantidad de compases.
    */
   setCountIn(measures) {
-    const safe = Math.max(0, Math.min(2, Number(measures)));
+    const safe = Math.max(0, Math.min(2, Number(measures) || 0));
     this.countInMeasures.set(safe);
     this._syncAudioConfig();
   }
@@ -415,33 +477,48 @@ export class PracticePlayerViewModel {
   }
 
   /**
-   * Ajusta volúmenes independientes de melodía, acordes, bajo y metrónomo.
-   * @param {{ melody?: number, chords?: number, bass?: number, metronome?: number }} volumes Mapa parcial de volúmenes.
+   * Cambia el registro de escucha global ('real' | '+1oct') directamente desde el sheet del reproductor.
+   * @param {'real'|'+1oct'} register Registro de escucha.
    */
-  setVolumes(volumes = {}) {
-    if (volumes.melody !== undefined) this.melodyVolume.set(Number(volumes.melody));
-    if (volumes.chords !== undefined) this.chordsVolume.set(Number(volumes.chords));
-    if (volumes.bass !== undefined) this.bassVolume.set(Number(volumes.bass));
-    if (volumes.metronome !== undefined) this.metronomeVolume.set(Number(volumes.metronome));
-    this._syncAudioConfig();
+  setListeningRegister(register) {
+    this._appVm.updateSettings({ listeningRegister: register });
   }
 
   /**
-   * Activa o desactiva el acompañamiento reproducible de acordes.
+   * Ajusta volúmenes independientes y persiste la mezcla propia de la práctica activa.
+   * @param {{ melody?: number, chords?: number, bass?: number, metronome?: number }} volumes Volúmenes.
+   */
+  setVolumes(volumes = {}) {
+    const safe = (v, prev) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : prev;
+    };
+    if (volumes.melody !== undefined) this.melodyVolume.set(safe(volumes.melody, this.melodyVolume.value));
+    if (volumes.chords !== undefined) this.chordsVolume.set(safe(volumes.chords, this.chordsVolume.value));
+    if (volumes.bass !== undefined) this.bassVolume.set(safe(volumes.bass, this.bassVolume.value));
+    if (volumes.metronome !== undefined) this.metronomeVolume.set(safe(volumes.metronome, this.metronomeVolume.value));
+    this._syncAudioConfig();
+    this._persistCurrentMix();
+  }
+
+  /**
+   * Activa o desactiva el acompañamiento reproducible de acordes y guarda en la mezcla de la práctica.
    * @param {boolean} enabled Nuevo estado.
    */
   setChordsEnabled(enabled) {
     this.chordsEnabled.set(Boolean(enabled));
     this._syncAudioConfig();
+    this._persistCurrentMix();
   }
 
   /**
-   * Activa o desactiva el metrónomo integrado durante la reproducción.
+   * Activa o desactiva el metrónomo integrado y guarda en la mezcla de la práctica.
    * @param {boolean} enabled Nuevo estado.
    */
   setMetronomeEnabled(enabled) {
     this.metronomeEnabled.set(Boolean(enabled));
     this._syncAudioConfig();
+    this._persistCurrentMix();
   }
 
   /**
@@ -468,14 +545,45 @@ export class PracticePlayerViewModel {
   }
 
   /**
-   * Registra manualmente el logro del BPM actual en el progreso (útil cuando se practica sin audio).
+   * Abre o cierra el bottom sheet / side sheet de ajustes avanzados del reproductor.
+   * @param {boolean} open True para abrir.
+   * @param {'mezcla'|'bucle'|'timbre'|'vista'} [tab] Pestaña a enfocar.
+   */
+  setSheetOpen(open, tab) {
+    if (tab) this.activeSheetTab.set(tab);
+    this.isSheetOpen.set(Boolean(open));
+  }
+
+  /**
+   * Activa o desactiva el modo pantalla completa ("atril") dejando solo partitura y transporte.
+   */
+  toggleAtrilFullscreen() {
+    this.isAtrilFullscreen.set(!this.isAtrilFullscreen.value);
+  }
+
+  /**
+   * Marca o desmarca un objetivo pedagógico de la práctica activa.
+   * @param {number} goalIndex Índice del objetivo.
+   */
+  async toggleGoal(goalIndex) {
+    const pr = this.practice.value;
+    if (!pr) return;
+    await this._appVm.toggleGoalChecked(pr.id, goalIndex);
+  }
+
+  /**
+   * Registra una vuelta manual con snackbar, opción "Deshacer", retroalimentación háptica
+   * y sugerencia de subir BPM tras 3 vueltas limpias.
    * @returns {Promise<void>}
    */
   async logManualRepetition() {
     const pr = this.practice.value;
     if (!pr) return;
-    this.sessionRepetitions.update((r) => r + 1);
-    await this._appVm.recordPracticeSession({
+    const prevSessionReps = this.sessionRepetitions.value;
+    this.sessionRepetitions.set(prevSessionReps + 1);
+    this._cleanRepsAtCurrentBpm += 1;
+
+    const prevProgressSnapshot = await this._appVm.recordPracticeSession({
       practiceId: pr.id,
       bpm: this.bpm.value,
       targetBpm: pr.tempo.target,
@@ -483,11 +591,36 @@ export class PracticePlayerViewModel {
       studySeconds: Math.max(15, this._pendingStudySeconds)
     });
     this._pendingStudySeconds = 0;
+
     const reached = this.bpm.value >= pr.tempo.target;
+    this._appVm.triggerHaptic(reached ? [20, 40, 30] : 16);
+
+    // Si completó 3 vueltas limpias por debajo del objetivo, sugiere subir el BPM
+    if (!reached && this._cleanRepsAtCurrentBpm >= 3) {
+      const suggestedBpm = Math.min(pr.tempo.target, this.bpm.value + (pr.tempo.step || 5));
+      this._cleanRepsAtCurrentBpm = 0;
+      this._appVm.showSnackbar(`¡3 vueltas limpias a ${this.bpm.value} BPM! ¿Subimos a ${suggestedBpm} BPM?`, {
+        actionLabel: `Subir a ${suggestedBpm}`,
+        durationMs: 5500,
+        onAction: () => this.setTempo(suggestedBpm)
+      });
+      return;
+    }
+
     this._appVm.showSnackbar(
       reached
-        ? `¡Objetivo alcanzado a ${this.bpm.value} BPM! Progreso guardado.`
-        : `Repetición registrada a ${this.bpm.value} BPM.`
+        ? `¡Objetivo alcanzado a ${this.bpm.value} BPM!`
+        : `Vuelta registrada a ${this.bpm.value} BPM.`,
+      {
+        actionLabel: 'Deshacer',
+        durationMs: 4800,
+        onAction: async () => {
+          this.sessionRepetitions.set(prevSessionReps);
+          this._cleanRepsAtCurrentBpm = Math.max(0, this._cleanRepsAtCurrentBpm - 1);
+          await this._appVm.replaceProgress(prevProgressSnapshot);
+          this._appVm.showSnackbar('Registro deshecho.');
+        }
+      }
     );
   }
 
@@ -518,6 +651,24 @@ export class PracticePlayerViewModel {
   }
 
   /**
+   * Exporta la práctica activa en JSON o .abc desde el menú superior de la pantalla de práctica.
+   * @param {'json'|'abc'} [format='json'] Formato deseado.
+   */
+  exportCurrent(format = 'json') {
+    const pr = this.practice.value;
+    if (!pr || !this._io) return;
+    if (format === 'abc') {
+      const content = this._io.exportPracticeAbc(pr);
+      this._io.triggerBrowserDownload(`${pr.id}.abc`, content, 'text/vnd.abc');
+      this._appVm.showSnackbar('Partitura exportada en .abc.');
+    } else {
+      const content = this._io.exportPracticeJson(pr);
+      this._io.triggerBrowserDownload(`${pr.id}.json`, content, 'application/json');
+      this._appVm.showSnackbar('Práctica exportada en JSON.');
+    }
+  }
+
+  /**
    * Maneja la finalización de una pasada completa o una vuelta del bucle.
    */
   _handlePassComplete() {
@@ -539,7 +690,6 @@ export class PracticePlayerViewModel {
       studySeconds: studySecs
     });
 
-    // Entrenador de velocidad en bucle: sube tempo.step cada N vueltas hasta tempo.target
     if (
       this.loopEnabled.value &&
       this.speedTrainerEnabled.value &&
@@ -548,6 +698,7 @@ export class PracticePlayerViewModel {
     ) {
       const nextBpm = Math.min(pr.tempo.target, this.bpm.value + (pr.tempo.step || 5));
       this.setTempo(nextBpm);
+      this._appVm.triggerHaptic(16);
       this._appVm.showSnackbar(`Entrenador de velocidad: subiendo a ${nextBpm} BPM`);
     }
   }

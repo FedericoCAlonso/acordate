@@ -387,10 +387,11 @@ export class EditorView {
       showFingerings: true,
       fingerings: f.fingerings || {},
       showBassFunctions: f.instruments.includes('bajo'),
-      isBass: f.instruments.includes('bajo')
+      isBass: f.instruments.includes('bajo'),
+      stripTitle: true
     });
     const { visualObj, warnings } = this._abc.renderScore(this._previewScoreEl, prepared, {
-      width: this._previewScoreEl.clientWidth || 520,
+      width: this._previewScoreEl.clientWidth || 340,
       zoom: 0.95
     });
     this._lastVisualObj = visualObj;

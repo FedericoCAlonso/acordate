@@ -2,7 +2,7 @@
  * Versión del caché estático de la PWA Acordate.
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v1';
+const CACHE_NAME = 'acordate-static-v2';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -27,6 +27,7 @@ const PRECACHE_ASSETS = [
   './src/core/Router.js',
   './src/core/i18n.js',
   './src/core/MusicTheory.js',
+  './src/core/PitchPolicy.js',
   './src/models/Practice.js',
   './src/models/Level.js',
   './src/models/Exercise.js',

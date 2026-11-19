@@ -29,9 +29,9 @@
   --md-sys-color-surface-container-highest: hsl(231 12% 88%);
 
   --md-sys-color-on-surface: hsl(231 12% 12%);
-  --md-sys-color-on-surface-variant: hsl(231 10% 32%);
-  --md-sys-color-outline: hsl(231 8% 48%);
-  --md-sys-color-outline-variant: hsl(231 10% 80%);
+  --md-sys-color-on-surface-variant: hsl(231 10% 30%);
+  --md-sys-color-outline: hsl(231 8% 45%);
+  --md-sys-color-outline-variant: hsl(231 10% 78%);
 
   --md-sys-color-inverse-surface: hsl(231 12% 18%);
   --md-sys-color-inverse-on-surface: hsl(231 10% 95%);
@@ -46,18 +46,18 @@
   --md-sys-color-success-container: #D6F5E3;
   --md-sys-color-on-success-container: #0B361E;
 
-  /* Escala tipográfica Material 3 (sin depender de fuentes externas para 100% offline) */
+  /* Escala tipográfica Material 3 proporcionada a pantallas móviles y escritorio */
   --md-sys-typescale-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
   --md-sys-typescale-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
 
-  --md-sys-typescale-display-size: 2.25rem;
-  --md-sys-typescale-display-line: 2.75rem;
-  --md-sys-typescale-headline-size: 1.5rem;
-  --md-sys-typescale-headline-line: 2rem;
-  --md-sys-typescale-title-lg-size: 1.25rem;
-  --md-sys-typescale-title-lg-line: 1.75rem;
+  --md-sys-typescale-display-size: clamp(1.75rem, 4vw, 2.25rem);
+  --md-sys-typescale-display-line: 1.2;
+  --md-sys-typescale-headline-size: 1.375rem;
+  --md-sys-typescale-headline-line: 1.75rem;
+  --md-sys-typescale-title-lg-size: 1.125rem;
+  --md-sys-typescale-title-lg-line: 1.5rem;
   --md-sys-typescale-title-md-size: 1rem;
-  --md-sys-typescale-title-md-line: 1.5rem;
+  --md-sys-typescale-title-md-line: 1.35rem;
   --md-sys-typescale-body-lg-size: 1rem;
   --md-sys-typescale-body-lg-line: 1.5rem;
   --md-sys-typescale-body-md-size: 0.875rem;
@@ -73,37 +73,37 @@
   --md-sys-shape-xl: 28px;
   --md-sys-shape-full: 9999px;
 
-  /* Elevación tonal y sombras sutiles */
-  --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 3px 1px rgba(0, 0, 0, 0.08);
-  --md-sys-elevation-2: 0 2px 6px 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
-  --md-sys-elevation-3: 0 4px 12px 3px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.12);
+  /* Elevación tonal y sombras */
+  --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.14), 0 1px 3px 1px rgba(0, 0, 0, 0.08);
+  --md-sys-elevation-2: 0 2px 6px 2px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --md-sys-elevation-3: 0 6px 18px 4px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.14);
 
   /* Movimiento */
   --md-sys-motion-fast: 150ms cubic-bezier(0.2, 0, 0, 1);
   --md-sys-motion-standard: 240ms cubic-bezier(0.2, 0, 0, 1);
 
   /* Dimensiones de navegación */
-  --nav-bar-height: 76px;
-  --nav-rail-width: 84px;
-  --nav-drawer-width: 248px;
-  --top-bar-height: 64px;
+  --nav-bar-height: 70px;
+  --nav-rail-width: 80px;
+  --nav-drawer-width: 244px;
+  --top-bar-height: 56px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --md-sys-color-primary: hsl(231 56% 76%);
+    --md-sys-color-primary: hsl(231 64% 78%);
     --md-sys-color-on-primary: hsl(231 48% 16%);
     --md-sys-color-primary-container: hsl(231 48% 28%);
-    --md-sys-color-on-primary-container: hsl(231 60% 92%);
+    --md-sys-color-on-primary-container: hsl(231 60% 94%);
     --md-sys-color-surface: hsl(231 10% 9%);
     --md-sys-color-surface-container-lowest: hsl(231 10% 7%);
     --md-sys-color-surface-container-low: hsl(231 10% 12%);
     --md-sys-color-surface-container: hsl(231 11% 15%);
     --md-sys-color-surface-container-high: hsl(231 12% 19%);
     --md-sys-color-surface-container-highest: hsl(231 13% 24%);
-    --md-sys-color-on-surface: hsl(231 12% 92%);
-    --md-sys-color-on-surface-variant: hsl(231 10% 75%);
-    --md-sys-color-outline: hsl(231 8% 56%);
-    --md-sys-color-outline-variant: hsl(231 10% 29%);
+    --md-sys-color-on-surface: hsl(231 12% 94%);
+    --md-sys-color-on-surface-variant: hsl(231 10% 82%);
+    --md-sys-color-outline: hsl(231 10% 64%);
+    --md-sys-color-outline-variant: hsl(231 10% 34%);
   }
 }

@@ -141,7 +141,9 @@ export class ProgressView {
                 : el('span', { className: 'm3-badge' }, [icon('lock', 13), 'Pendiente'])
             ]),
             el('p', { className: 'm3-body-md', style: 'margin:6px 0' }, [
-              `${item.level.subtitle} · ${item.completedCount}/${item.requiredCount} prácticas clave al BPM objetivo`
+              item.unlocked
+                ? `${item.level.subtitle} · ${item.completedCount}/${item.requiredCount} prácticas clave al BPM objetivo`
+                : `${item.level.subtitle} · Te faltan ${item.remainingToUnlock || 2} prácticas clave del nivel ${item.level.number - 1}`
             ]),
             !item.unlocked
               ? el(

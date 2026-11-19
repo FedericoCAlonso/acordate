@@ -1,18 +1,23 @@
 import { DEFAULT_SETTINGS } from '../models/Settings.js';
+import { getTuningStrings } from '../core/PitchPolicy.js';
 
 /**
  * ViewModel de la pantalla de Ajustes (#/ajustes).
  * Gestiona tema claro/oscuro/automático, color semilla dinámico Material 3,
- * cifrado americano/latino, instrumento inicial, Wake Lock y valores por defecto.
+ * cifrado americano/latino, registro de escucha (real / +1 octava), referencia de afinación,
+ * instrumento inicial, Wake Lock y valores por defecto.
  */
 export class SettingsViewModel {
   /**
-   * Construye el SettingsViewModel inyectando el AppViewModel.
+   * Construye el SettingsViewModel inyectando el AppViewModel y opcionalmente AudioSynthService.
    * @param {import('./AppViewModel.js').AppViewModel} appVm ViewModel raíz.
+   * @param {import('../services/AudioSynthService.js').AudioSynthService|null} [audioService=null] Sintetizador para la referencia de afinación.
    */
-  constructor(appVm) {
+  constructor(appVm, audioService = null) {
     /** Referencia al ViewModel global. */
     this._appVm = appVm;
+    /** Referencia opcional al sintetizador para sonar cuerdas al aire. */
+    this._audio = audioService;
     /** Observable compartido con el objeto Settings activo. */
     this.settings = appVm.settings;
   }
@@ -47,7 +52,49 @@ export class SettingsViewModel {
   }
 
   /**
-   * Configura el filtro de instrumento inicial al abrir la app.
+   * Cambia el registro de escucha del sintetizador ('real' por defecto o '+1oct').
+   * @param {'real'|'+1oct'} listeningRegister Registro elegido.
+   */
+  setListeningRegister(listeningRegister) {
+    const safe = listeningRegister === '+1oct' ? '+1oct' : 'real';
+    this._appVm.updateSettings({ listeningRegister: safe });
+    this._appVm.showSnackbar(
+      safe === '+1oct'
+        ? 'Registro de escucha +1 octava activado (más audible en parlantes chicos).'
+        : 'Registro de escucha real restaurado.'
+    );
+  }
+
+  /**
+   * Reproduce la nota real de una cuerda al aire para comparar de oído con el instrumento.
+   * @param {'guitarra'|'guitarra-clasica'|'bajo'} instrument Instrumento de referencia.
+   * @param {number} midi Altura MIDI real de la cuerda al aire.
+   */
+  playTuningString(instrument, midi) {
+    if (!this._audio) return;
+    this._audio.configure({ listeningRegister: this.settings.value.listeningRegister });
+    const synthVoice =
+      instrument === 'bajo'
+        ? 'electric-bass'
+        : instrument === 'guitarra-clasica'
+          ? 'nylon-guitar'
+          : 'acoustic-guitar';
+    this._audio.playReferenceTone(midi, synthVoice);
+  }
+
+  /**
+   * Devuelve las cuerdas al aire de referencia de afinación para guitarra y bajo.
+   * @returns {{ guitar: Array<object>, bass: Array<object> }} Cuerdas al aire.
+   */
+  getTuningReferenceStrings() {
+    return {
+      guitar: getTuningStrings('guitarra'),
+      bass: getTuningStrings('bajo')
+    };
+  }
+
+  /**
+   * Configura el instrumento inicial al abrir la app.
    * @param {string} defaultInstrument Instrumento predeterminado.
    */
   setDefaultInstrument(defaultInstrument) {

@@ -6,18 +6,19 @@ import {
   getKeySignatureMap,
   parseTimeSignature
 } from '../core/MusicTheory.js';
+import { writtenMidiToSoundingMidi } from '../core/PitchPolicy.js';
 
 /**
  * Servicio encapsulador sobre abcjs (versión fija 6.4.4) responsable de:
- * - Renderizar el pentagrama adaptable con reflujo de compases según ancho disponible.
+ * - Renderizar el pentagrama adaptable con reflujo de compases según ancho y orientación.
+ * - Ocultar cabeceras T: duplicadas dentro del SVG y evitar recortes inferiores.
  * - Anotar digitaciones y funciones armónicas de bajo sin usar tablatura en ningún caso.
- * - Detectar advertencias de sintaxis ABC para el editor en vivo.
- * - Extraer la línea de tiempo reproducible vinculada a los elementos SVG para el resaltado.
+ * - Extraer la línea de tiempo reproducible aplicando únicamente PitchPolicy.
  */
 export class AbcService {
   /**
    * Obtiene la referencia global a la librería vendored abcjs.
-   * @returns {object|null} Objeto ABCJS o null en entornos sin navegador (tests unitarios).
+   * @returns {object|null} Objeto ABCJS o null en entornos sin navegador.
    */
   _getAbcjs() {
     if (typeof window !== 'undefined' && window.ABCJS) {
@@ -28,15 +29,10 @@ export class AbcService {
 
   /**
    * Prepara el texto ABC final para visualización aplicando modo de vista, cifrado latino/americano,
-   * digitaciones y etiquetas de función armónica en bajo (nunca tablatura).
+   * digitaciones, etiquetas de función armónica en bajo y eliminación de T: para evitar títulos
+   * gigantes cortados dentro del SVG (el título ya vive en la barra superior).
    * @param {string} abcText ABC original (ya transpuesto si corresponde).
    * @param {object} options Opciones de visualización.
-   * @param {'pentagrama'|'mixto'|'cifrado'} [options.viewMode='mixto'] Modo de notación.
-   * @param {'americano'|'latino'} [options.chordNotation='americano'] Sistema de cifrado.
-   * @param {boolean} [options.showFingerings=true] Mostrar digitaciones anotadas.
-   * @param {Record<string, string>} [options.fingerings={}] Mapa nota/compás -> digitación.
-   * @param {boolean} [options.showBassFunctions=false] Mostrar función armónica (R, 3, 5, 7, Crom) sobre bajo.
-   * @param {boolean} [options.isBass=false] Indica si la práctica corresponde a bajo.
    * @returns {string} Cadena ABC preparada para renderAbc.
    */
   prepareAbcForRender(abcText, options = {}) {
@@ -49,8 +45,17 @@ export class AbcService {
       showFingerings = true,
       fingerings = {},
       showBassFunctions = false,
-      isBass = false
+      isBass = false,
+      stripTitle = true
     } = options;
+
+    // Quita cabeceras T: del ABC que se dibuja para no duplicar ni recortar el título en el SVG
+    if (stripTitle) {
+      result = result
+        .split('\n')
+        .filter((line) => !/^T:/i.test(line.trim()))
+        .join('\n');
+    }
 
     // 1) En bajo con funciones armónicas activas, anota R, 3, 5, 7, Crom debajo de cada nota
     if (isBass && showBassFunctions && viewMode !== 'pentagrama') {
@@ -61,7 +66,6 @@ export class AbcService {
     if (showFingerings && fingerings && Object.keys(fingerings).length > 0) {
       result = this._injectFingeringAnnotations(result, fingerings);
     } else if (!showFingerings) {
-      // Quita anotaciones explícitas de digitación (^1, ^①, etc.) si el usuario las ocultó
       result = result.replace(/"\^[^"]+"/g, '');
     }
 
@@ -79,7 +83,22 @@ export class AbcService {
   }
 
   /**
-   * Renderiza la partitura ABC en el elemento contenedor con reflujo de compases adaptable al ancho.
+   * Calcula la cantidad óptima de compases por línea según el ancho efectivo disponible.
+   * Vertical móvil: 2-3 compases; apaisado/tablet: 4-6; escritorio amplio: hasta 6-8.
+   * @param {number} effectiveWidth Ancho útil del contenedor dividido por el zoom.
+   * @returns {number} Cantidad sugerida de compases por sistema.
+   */
+  computeMeasuresPerLine(effectiveWidth) {
+    if (effectiveWidth < 380) return 2;
+    if (effectiveWidth < 560) return 3;
+    if (effectiveWidth < 760) return 4;
+    if (effectiveWidth < 980) return 6;
+    return 8;
+  }
+
+  /**
+   * Renderiza la partitura ABC en el contenedor usando todo el ancho disponible,
+   * con reflujo de compases y protección contra recortes en la última línea.
    * Nunca pasa opciones de tablatura a abcjs.
    * @param {HTMLElement} container Contenedor DOM destino.
    * @param {string} abcText Texto ABC preparado para mostrar.
@@ -92,29 +111,33 @@ export class AbcService {
       return { visualObj: null, warnings: [] };
     }
 
-    const containerWidth = Math.max(280, options.width || container.clientWidth || 680);
-    const zoom = Math.max(0.7, Math.min(1.8, Number(options.zoom) || 1));
+    const styles = typeof window !== 'undefined' && window.getComputedStyle
+      ? window.getComputedStyle(container)
+      : null;
+    const padX = styles
+      ? (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0)
+      : 16;
 
-    // Reflujo inteligente: ajusta la cantidad de compases preferidos por línea según ancho y zoom
-    const effectiveWidth = containerWidth / zoom;
-    let preferredMeasuresPerLine = 4;
-    if (effectiveWidth < 420) preferredMeasuresPerLine = 2;
-    else if (effectiveWidth < 680) preferredMeasuresPerLine = 3;
-    else if (effectiveWidth > 1050) preferredMeasuresPerLine = 4;
+    const rawWidth = options.width || container.clientWidth || 340;
+    const availableWidth = Math.max(260, Math.floor(rawWidth - padX));
+    const zoom = Math.max(0.75, Math.min(1.6, Number(options.zoom) || 1));
+    const effectiveWidth = availableWidth / zoom;
+    const preferredMeasuresPerLine = this.computeMeasuresPerLine(effectiveWidth);
 
     const visualParams = {
       add_classes: true,
-      staffwidth: Math.max(260, Math.floor(containerWidth / zoom) - 24),
+      responsive: 'resize',
+      staffwidth: Math.max(250, Math.floor(effectiveWidth)),
       scale: zoom,
       jazzchords: true,
-      paddingtop: 12,
-      paddingbottom: 16,
-      paddingleft: 10,
-      paddingright: 10,
+      paddingtop: 16,
+      paddingbottom: 36,
+      paddingleft: 6,
+      paddingright: 6,
       wrap: {
         preferredMeasuresPerLine,
-        minSpacing: 1.4,
-        maxSpacing: 2.8
+        minSpacing: 1.35,
+        maxSpacing: 2.7
       }
     };
 
@@ -125,11 +148,47 @@ export class AbcService {
     container.innerHTML = '';
     const tunes = ABCJS.renderAbc(container, abcText, visualParams);
     const visualObj = tunes && tunes[0] ? tunes[0] : null;
+
+    // Ajusta el viewBox si alguna digitación o cifrado inferior sobresale del alto calculado
+    this._ensureSvgNeverClips(container);
+
     const warnings = Array.isArray(visualObj?.warnings)
       ? visualObj.warnings.map((w) => String(w).replace(/<[^>]+>/g, '').trim()).filter(Boolean)
       : [];
 
     return { visualObj, warnings };
+  }
+
+  /**
+   * Revisa el bounding box real del SVG generado por abcjs y amplía el viewBox si
+   * alguna anotación, cifrado o digitación inferior quedaría recortada.
+   * @param {HTMLElement} container Contenedor que aloja el SVG renderizado.
+   */
+  _ensureSvgNeverClips(container) {
+    const svg = container.querySelector('svg');
+    if (!svg || typeof svg.getBBox !== 'function') return;
+    try {
+      const vb = svg.getAttribute('viewBox');
+      if (!vb) return;
+      const parts = vb.split(/\s+/).map(Number);
+      if (parts.length !== 4 || parts.some(Number.isNaN)) return;
+      const [vx, vy, vw, vh] = parts;
+      const bbox = svg.getBBox();
+      if (!bbox || bbox.width === 0 || bbox.height === 0) return;
+
+      const minY = Math.min(vy, Math.floor(bbox.y - 10));
+      const maxY = Math.max(vy + vh, Math.ceil(bbox.y + bbox.height + 18));
+      const nextH = Math.max(vh, maxY - minY);
+
+      if (minY !== vy || nextH > vh) {
+        svg.setAttribute('viewBox', `${vx} ${minY} ${vw} ${nextH}`);
+      }
+      svg.style.width = '100%';
+      svg.style.height = 'auto';
+      svg.style.overflow = 'visible';
+    } catch {
+      // Algunos entornos sin layout (display:none) lanzan en getBBox: se ignora sin error
+    }
   }
 
   /**
@@ -169,43 +228,45 @@ export class AbcService {
   }
 
   /**
-   * Extrae una línea de tiempo reproducible completa (notas, acordes, compases y elementos SVG)
-   * a partir del visualObj de abcjs (o mediante parser puro si no hay navegador).
-   * @param {object|null} visualObj Objeto retornado por ABCJS.renderAbc.
-   * @param {string} rawAbc Texto ABC fuente (en cifrado americano para generar voicings).
-   * @param {object} [meta={}] Metadatos de respaldo (isBass, timeSignature).
+   * Extrae una línea de tiempo reproducible completa (notas con MIDI real según PitchPolicy,
+   * acordes, compases y elementos SVG) a partir del visualObj de abcjs o del ABC crudo.
+   * @param {object|null} visualObj Objeto retornado por ABCJS.renderAbc o ABCJS.parseOnly.
+   * @param {string} rawAbc Texto ABC fuente (en cifrado americano).
+   * @param {object} [meta={}] Metadatos de respaldo (instrument, isBass, timeSignature).
    * @returns {object} Línea de tiempo lista para AudioSynthService.
    */
   extractTimeline(visualObj, rawAbc, meta = {}) {
     const timeSig = extractTimeSignatureFromAbc(rawAbc, meta.timeSignature || '4/4');
     const { beats, beatUnit } = parseTimeSignature(timeSig);
     const beatsPerMeasure = beats * (4 / beatUnit);
-    const isBassPiece = Boolean(meta.isBass || /clef\s*=\s*bass/i.test(rawAbc || ''));
+    const isBassPiece = Boolean(
+      meta.instrument === 'bajo' || meta.isBass || /clef\s*=\s*bass/i.test(rawAbc || '')
+    );
+    const instrument = meta.instrument || (isBassPiece ? 'bajo' : 'guitarra');
 
-    // Si disponemos del visualObj de abcjs con setUpAudio / lines, extraemos exactamente las posiciones y SVG elements
     if (visualObj && Array.isArray(visualObj.lines) && visualObj.lines.length > 0) {
-      return this._extractFromVisualObj(visualObj, rawAbc, { beatsPerMeasure, beatUnit, isBassPiece });
+      return this._extractFromVisualObj(visualObj, rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, instrument });
     }
 
-    // Fallback puro (sin navegador) para tests unitarios
-    return this._extractFromRawAbc(rawAbc, { beatsPerMeasure, beatUnit, isBassPiece });
+    return this._extractFromRawAbc(rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, instrument });
   }
 
   /**
    * Extrae eventos reproducibles y referencias a elementos SVG directamente desde visualObj de abcjs.
-   * @param {object} visualObj Objeto renderizado por abcjs.
+   * Aplica la conversión de octava exclusivamente mediante PitchPolicy.writtenMidiToSoundingMidi.
+   * @param {object} visualObj Objeto renderizado/parseado por abcjs.
    * @param {string} rawAbc ABC original en cifrado americano.
-   * @param {{ beatsPerMeasure: number, beatUnit: number, isBassPiece: boolean }} cfg Configuración métrica.
+   * @param {{ beatsPerMeasure: number, beatUnit: number, isBassPiece: boolean, instrument: string }} cfg Configuración.
    * @returns {object} Timeline estructurada.
    */
   _extractFromVisualObj(visualObj, rawAbc, cfg) {
-    const { beatsPerMeasure, beatUnit, isBassPiece } = cfg;
+    const { beatsPerMeasure, beatUnit, isBassPiece, instrument } = cfg;
     const notes = [];
     const chords = [];
     const keyMatch = String(rawAbc || '').match(/^K:\s*([A-G][#b]?m?)/m);
     const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
 
-    // Mapa de acordes originales en americano desde el ABC crudo por índice de compás
+    // Acordes en cifrado americano del texto ABC original (independiente del cifrado latino visual)
     const rawChordQueue = [];
     const chordRegex = /"([^"]+)"/g;
     let cm;
@@ -217,7 +278,6 @@ export class AbcService {
     }
     let chordCursor = 0;
 
-    // Recorre las voces acumulando tiempos exactos en negras (en abcjs duration=1 equivale a redonda = 4 negras)
     const voiceCursors = new Map();
     const voiceMeasures = new Map();
     const voiceBarAcc = new Map();
@@ -227,7 +287,7 @@ export class AbcService {
       line.staff.forEach((staff, staffIdx) => {
         const clefType = staff.clef?.type || (isBassPiece ? 'bass' : 'treble-8');
         const isStaffBass = clefType.startsWith('bass');
-        const octaveShift = isStaffBass ? -12 : clefType === 'treble-8' ? -12 : 0;
+        const policyTarget = isStaffBass ? 'bajo' : clefType === 'treble-8' ? instrument : clefType;
 
         if (!Array.isArray(staff.voices)) return;
         staff.voices.forEach((voice, voiceIdx) => {
@@ -255,7 +315,6 @@ export class AbcService {
             const durBeats = (elem.duration || 0.25) * 4;
             const isRest = Boolean(elem.rest);
 
-            // Detecta acordes cifrados asociados a la nota (solo en voz 0)
             if (staffIdx === 0 && voiceIdx === 0 && Array.isArray(elem.chord)) {
               for (const chObj of elem.chord) {
                 if (chObj.position === 'default' && chObj.name && !/^[\^_<>@]/.test(chObj.name)) {
@@ -271,18 +330,18 @@ export class AbcService {
               }
             }
 
-            // Calcula alturas MIDI desde elem.pitches usando keyMap y alteraciones del compás
+            // Altura escrita -> altura MIDI real usando únicamente PitchPolicy
             const midis = [];
             if (!isRest && Array.isArray(elem.pitches)) {
               for (const p of elem.pitches) {
-                const midi = this._abcjsPitchToMidi(p, keyMap, barAcc) + octaveShift;
-                if (Number.isFinite(midi)) {
-                  midis.push(midi);
+                const writtenMidi = this._abcjsPitchToWrittenMidi(p, keyMap, barAcc);
+                const soundingMidi = writtenMidiToSoundingMidi(writtenMidi, policyTarget, 'real');
+                if (Number.isFinite(soundingMidi)) {
+                  midis.push(soundingMidi);
                 }
               }
             }
 
-            // Recolecta los elementos SVG renderizados para resaltado visual
             const svgElements = [];
             if (elem.abselem?.elemset) {
               for (const node of elem.abselem.elemset) {
@@ -309,7 +368,6 @@ export class AbcService {
       });
     }
 
-    // Ajusta duración de cada acorde hasta el acorde siguiente
     chords.sort((a, b) => a.beat - b.beat);
     const totalBeats = Math.max(beatsPerMeasure, ...[...voiceCursors.values(), 0]);
     for (let i = 0; i < chords.length; i++) {
@@ -332,14 +390,14 @@ export class AbcService {
   }
 
   /**
-   * Convierte un objeto pitch interno de abcjs ({ pitch, accidental, name }) a número MIDI.
-   * En abcjs, pitch=0 corresponde a C4 (MIDI 60), pitch=7 a C5 (MIDI 72).
+   * Convierte un objeto pitch interno de abcjs ({ pitch, accidental }) a altura MIDI escrita
+   * (donde pitch=0 corresponde a C4 = MIDI 60), sin desplazar octavas.
    * @param {object} pitchObj Objeto pitch de abcjs.
    * @param {Record<string, number>} keyMap Armadura de clave activa.
    * @param {Record<string, number>} barAcc Alteraciones vigentes en el compás.
-   * @returns {number} Número MIDI.
+   * @returns {number} Número MIDI escrito.
    */
-  _abcjsPitchToMidi(pitchObj, keyMap, barAcc) {
+  _abcjsPitchToWrittenMidi(pitchObj, keyMap, barAcc) {
     const diatonicSemitones = [0, 2, 4, 5, 7, 9, 11];
     const letterNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const p = Number(pitchObj.pitch || 0);
@@ -364,15 +422,19 @@ export class AbcService {
   }
 
   /**
-   * Parser de respaldo para entornos sin DOM (pruebas unitarias) que extrae una línea de tiempo básica desde ABC.
+   * Parser de respaldo para entornos sin DOM (pruebas unitarias) que extrae una línea de tiempo
+   * aplicando exactamente la misma PitchPolicy que el parser visual.
    * @param {string} rawAbc Texto ABC.
-   * @param {{ beatsPerMeasure: number, beatUnit: number, isBassPiece: boolean }} cfg Configuración métrica.
+   * @param {{ beatsPerMeasure: number, beatUnit: number, isBassPiece: boolean, instrument: string }} cfg Configuración.
    * @returns {object} Timeline estructurada.
    */
   _extractFromRawAbc(rawAbc, cfg) {
-    const { beatsPerMeasure, beatUnit, isBassPiece } = cfg;
+    const { beatsPerMeasure, beatUnit, isBassPiece, instrument } = cfg;
     const keyMatch = String(rawAbc || '').match(/^K:\s*([A-G][#b]?m?)/m);
     const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
+    const clefMatch = String(rawAbc || '').match(/clef\s*=\s*([a-z0-9+-]+)/i);
+    const policyTarget = clefMatch ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1]) : instrument;
+
     const unitMatch = String(rawAbc || '').match(/^L:\s*(\d+)\/(\d+)/m);
     const unitBeats = unitMatch ? (Number(unitMatch[1]) / Number(unitMatch[2])) * 4 : 0.5;
 
@@ -407,12 +469,13 @@ export class AbcService {
         currentBeat += dur;
       } else if (match[6]) {
         const pitchStr = `${match[5] || ''}${match[6]}${match[7] || ''}`;
-        const midi = abcPitchToMidi(pitchStr, keyMap, barAcc);
+        const writtenMidi = abcPitchToMidi(pitchStr, keyMap, barAcc);
+        const soundingMidi = writtenMidi !== null ? writtenMidiToSoundingMidi(writtenMidi, policyTarget, 'real') : null;
         const dur = unitBeats * this._parseAbcDurationFactor(match[8]);
         notes.push({
           beat: currentBeat,
           durationBeats: dur,
-          midis: midi !== null ? [midi - 12] : [],
+          midis: soundingMidi !== null ? [soundingMidi] : [],
           isRest: false,
           measureIndex,
           isBassVoice: isBassPiece,
@@ -459,7 +522,6 @@ export class AbcService {
     const keyMatch = abcText.match(/^K:\s*([A-G][#b]?m?)/m);
     const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
 
-    // Recolecta todos los acordes por compás para conocer el acorde siguiente en tiempo 4
     const measureChords = [];
     const musicLines = abcText.split('\n');
     const barChordScan = musicLines
@@ -494,7 +556,6 @@ export class AbcService {
           const nextChord = measureChords[currentBar + 1] || measureChords[0] || null;
           const barAcc = {};
 
-          // Cuenta cuántas notas tiene el compás para identificar la última nota (aproximación)
           const noteMatches = [...barText.matchAll(/(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g)];
           const totalNotesInBar = noteMatches.length;
           let noteIdx = 0;
@@ -527,7 +588,7 @@ export class AbcService {
   /**
    * Inyecta digitaciones definidas en practice.fingerings sobre el número de nota correspondiente.
    * @param {string} abcText Texto ABC.
-   * @param {Record<string, string>} fingerings Mapa índice de nota (1-based) -> texto de digitación (ej. "1-3", "①").
+   * @param {Record<string, string>} fingerings Mapa índice de nota (1-based) -> texto de digitación.
    * @returns {string} ABC con anotaciones "^..." sobre las notas indicadas.
    */
   _injectFingeringAnnotations(abcText, fingerings) {

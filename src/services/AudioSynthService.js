@@ -1,4 +1,5 @@
 import { getChordVoicingMidi, midiToFrequency } from '../core/MusicTheory.js';
+import { applyListeningRegister } from '../core/PitchPolicy.js';
 
 /**
  * Intervalo de sondeo del scheduler de reproducción en milisegundos.
@@ -11,9 +12,21 @@ const PLAYBACK_POLL_MS = 25;
 const PLAYBACK_LOOKAHEAD_SEC = 0.14;
 
 /**
+ * Acota un valor numérico de volumen al rango seguro [0, 1], devolviendo el respaldo si no es numérico.
+ * @param {*} value Valor candidato.
+ * @param {number} fallback Valor por defecto si value es NaN o no numérico.
+ * @returns {number} Volumen normalizado en [0, 1].
+ */
+function sanitizeVolume(value, fallback) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(0, Math.min(1, num));
+}
+
+/**
  * Servicio de síntesis musical 100% offline sobre Web Audio API con voces separadas
- * (melodía, acordes y bajo), cuatro timbres instrumentales, bucle por rango de compases,
- * conteo previo, metrónomo integrado y sincronización precisa para resaltado de notas.
+ * (melodía, acordes y bajo), cuatro timbres instrumentales, registro de escucha configurable
+ * (real / +1 octava según PitchPolicy), referencia de afinación, bucle por compases y resaltado sincronizado.
  */
 export class AudioSynthService {
   /**
@@ -23,7 +36,7 @@ export class AudioSynthService {
   constructor(metronomeService) {
     /** Referencia al servicio de metrónomo para compartir reloj y sonidos de clic. */
     this._metronome = metronomeService;
-    /** Línea de tiempo musical actual (notas, acordes, compases). */
+    /** Línea de tiempo musical actual (notas con alturas MIDI reales, acordes, compases). */
     this._timeline = null;
     /** Indica si la reproducción está activa. */
     this._isPlaying = false;
@@ -38,8 +51,10 @@ export class AudioSynthService {
     this.bpm = 90;
     /** Instrumento de síntesis activo para la voz principal. */
     this.instrument = 'acoustic-guitar';
-    /** Volumen independiente de la melodía / voz principal (0-1). */
-    this.melodyVolume = 0.85;
+    /** Registro de escucha configurado en Ajustes ('real' | '+1oct'). */
+    this.listeningRegister = 'real';
+    /** Volumen independiente de la melodía / voz principal (por defecto 100%). */
+    this.melodyVolume = 1.0;
     /** Activar/desactivar acompañamiento armónico de acordes. */
     this.chordsEnabled = true;
     /** Volumen independiente del acompañamiento de acordes (0-1). */
@@ -98,6 +113,8 @@ export class AudioSynthService {
 
   /**
    * Carga la línea de tiempo extraída por AbcService lista para reproducirse.
+   * Si el reproductor ya estaba reproduciendo (por ejemplo tras un redibujo al rotar la pantalla),
+   * actualiza suavemente las referencias SVG sin cortar el audio ni perder la posición.
    * @param {object} timeline Línea de tiempo con notes, chords, beatsPerMeasure, totalBeats y measureCount.
    */
   loadTimeline(timeline) {
@@ -105,11 +122,14 @@ export class AudioSynthService {
     if (timeline && timeline.measureCount > 0) {
       this.loopStartMeasure = Math.max(1, Math.min(this.loopStartMeasure, timeline.measureCount));
       this.loopEndMeasure = Math.max(this.loopStartMeasure, Math.min(this.loopEndMeasure, timeline.measureCount));
+      if (this._isPlaying) {
+        this._recomputeRangeBeats();
+      }
     }
   }
 
   /**
-   * Actualiza parámetros de reproducción (BPM, volúmenes, bucle, instrumento, conteo).
+   * Actualiza parámetros de reproducción (BPM, volúmenes, bucle, instrumento, conteo y registro de escucha).
    * Si cambia el BPM en vivo, re-ancla suavemente sin saltos ni cambio de tono.
    * @param {object} patch Propiedades a modificar.
    */
@@ -121,22 +141,38 @@ export class AudioSynthService {
       this._anchorBeat = currentBeat;
     }
 
-    if (patch.bpm !== undefined) this.bpm = Math.max(40, Math.min(240, Math.round(Number(patch.bpm))));
+    if (patch.bpm !== undefined) this.bpm = Math.max(40, Math.min(240, Math.round(Number(patch.bpm) || 90)));
     if (patch.instrument !== undefined) this.instrument = patch.instrument;
-    if (patch.melodyVolume !== undefined) this.melodyVolume = Number(patch.melodyVolume);
+    if (patch.listeningRegister !== undefined) {
+      this.listeningRegister = patch.listeningRegister === '+1oct' ? '+1oct' : 'real';
+    }
+    if (patch.melodyVolume !== undefined) this.melodyVolume = sanitizeVolume(patch.melodyVolume, 1.0);
     if (patch.chordsEnabled !== undefined) this.chordsEnabled = Boolean(patch.chordsEnabled);
-    if (patch.chordsVolume !== undefined) this.chordsVolume = Number(patch.chordsVolume);
-    if (patch.bassVolume !== undefined) this.bassVolume = Number(patch.bassVolume);
+    if (patch.chordsVolume !== undefined) this.chordsVolume = sanitizeVolume(patch.chordsVolume, 0.55);
+    if (patch.bassVolume !== undefined) this.bassVolume = sanitizeVolume(patch.bassVolume, 0.75);
     if (patch.metronomeEnabled !== undefined) this.metronomeEnabled = Boolean(patch.metronomeEnabled);
-    if (patch.metronomeVolume !== undefined) this.metronomeVolume = Number(patch.metronomeVolume);
-    if (patch.countInMeasures !== undefined) this.countInMeasures = Math.max(0, Math.min(2, Number(patch.countInMeasures)));
+    if (patch.metronomeVolume !== undefined) this.metronomeVolume = sanitizeVolume(patch.metronomeVolume, 0.65);
+    if (patch.countInMeasures !== undefined) this.countInMeasures = Math.max(0, Math.min(2, Number(patch.countInMeasures) || 0));
     if (patch.loopEnabled !== undefined) this.loopEnabled = Boolean(patch.loopEnabled);
-    if (patch.loopStartMeasure !== undefined) this.loopStartMeasure = Math.max(1, Number(patch.loopStartMeasure));
-    if (patch.loopEndMeasure !== undefined) this.loopEndMeasure = Math.max(this.loopStartMeasure, Number(patch.loopEndMeasure));
+    if (patch.loopStartMeasure !== undefined) this.loopStartMeasure = Math.max(1, Number(patch.loopStartMeasure) || 1);
+    if (patch.loopEndMeasure !== undefined) this.loopEndMeasure = Math.max(this.loopStartMeasure, Number(patch.loopEndMeasure) || this.loopStartMeasure);
 
     if (this._timeline && this._isPlaying) {
       this._recomputeRangeBeats();
     }
+  }
+
+  /**
+   * Reproduce una nota sostenida de referencia de afinación (cuerdas al aire de guitarra o bajo)
+   * aplicando el registro de escucha actual mediante PitchPolicy.
+   * @param {number} soundingMidi Altura MIDI real de la cuerda al aire (ej. 40 = E2 guitarra, 28 = E1 bajo).
+   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} [instrument='acoustic-guitar'] Timbre.
+   */
+  playReferenceTone(soundingMidi, instrument = 'acoustic-guitar') {
+    const ctx = this._metronome.ensureAudioContext();
+    if (!ctx) return;
+    const finalMidi = applyListeningRegister(soundingMidi, this.listeningRegister);
+    this._playPluckedNote(ctx, finalMidi, ctx.currentTime + 0.02, 2.2, instrument, 0.95);
   }
 
   /**
@@ -270,7 +306,7 @@ export class AudioSynthService {
     const beatsPerMeasure = tl.beatsPerMeasure || 4;
     const clickStep = tl.beatUnit === 8 ? 0.5 : 1;
 
-    // 1) Agenda eventos del conteo previo (pulsos negativos respecto a _rangeStartBeat)
+    // 1) Agenda conteo previo
     if (this._scheduledUntilBeat < this._rangeStartBeat) {
       const countStart = this._rangeStartBeat - this._countInTotalBeats;
       for (let b = countStart; b < this._rangeStartBeat - 0.0001; b += clickStep) {
@@ -279,23 +315,24 @@ export class AudioSynthService {
           const relIndex = Math.round((b - countStart) / clickStep);
           const beatsInBar = Math.round(beatsPerMeasure / clickStep);
           const beatInBar = (relIndex % beatsInBar) + 1;
+          const remaining = Math.max(1, Math.round((this._rangeStartBeat - b) / clickStep));
           this._metronome.playClickAt(t, beatInBar === 1 ? 'accent' : 'beat', this._metronome.soundType, Math.max(0.65, this.metronomeVolume));
           this._visualQueue.push({
             time: t,
             isCountIn: true,
             countInBeat: beatInBar,
+            countDown: remaining,
             totalBeats: beatsInBar
           });
         }
       }
     }
 
-    // 2) Agenda música dentro del tramo [_rangeStartBeat, _rangeEndBeat)
+    // 2) Agenda música dentro del tramo activo
     const scheduleWindowStart = Math.max(this._scheduledUntilBeat, this._rangeStartBeat - 0.0001);
     const scheduleWindowEnd = Math.min(horizonBeat, this._rangeEndBeat);
 
     if (scheduleWindowEnd > scheduleWindowStart) {
-      // Clic de metrónomo integrado
       if (this.metronomeEnabled) {
         const firstClickIdx = Math.ceil((Math.max(this._rangeStartBeat, scheduleWindowStart) + 0.00001) / clickStep);
         for (let idx = firstClickIdx; idx * clickStep < scheduleWindowEnd; idx++) {
@@ -308,22 +345,27 @@ export class AudioSynthService {
         }
       }
 
-      // Notas de la partitura (melodía / bajo principal)
       for (const noteEv of tl.notes) {
         if (noteEv.beat > scheduleWindowStart && noteEv.beat <= scheduleWindowEnd && noteEv.beat < this._rangeEndBeat) {
           const t = this._beatToAudioTime(noteEv.beat);
           const durSec = Math.max(0.06, noteEv.durationBeats * secPerBeat);
 
           if (!noteEv.isRest && noteEv.midis.length > 0) {
-            // Determina si la voz suena por canal de bajo o de melodía
+            // En prácticas de guitarra/clásica la voz principal siempre usa melodyVolume;
+            // en prácticas de bajo usa bassVolume (o melodyVolume si el usuario bajó bajo).
             const isBassVoice = noteEv.isBassVoice || tl.isBassPiece;
-            const vol = isBassVoice ? this.bassVolume : this.melodyVolume;
+            const vol = tl.isBassPiece
+              ? Math.max(this.melodyVolume, this.bassVolume)
+              : isBassVoice
+                ? this.bassVolume
+                : this.melodyVolume;
             const voiceInst = isBassVoice
               ? (this.instrument.includes('bass') ? this.instrument : 'acoustic-bass')
               : this.instrument;
 
             for (const midi of noteEv.midis) {
-              this._playPluckedNote(ctx, midi, t, durSec, voiceInst, vol);
+              const playbackMidi = applyListeningRegister(midi, this.listeningRegister);
+              this._playPluckedNote(ctx, playbackMidi, t, durSec, voiceInst, vol);
             }
           }
 
@@ -336,7 +378,6 @@ export class AudioSynthService {
         }
       }
 
-      // Acompañamiento de acordes cifrados (rasgueo cálido + bajo de acompañamiento si no es pieza de bajo)
       if (this.chordsEnabled && tl.chords.length > 0) {
         for (const chordEv of tl.chords) {
           if (chordEv.beat > scheduleWindowStart && chordEv.beat <= scheduleWindowEnd && chordEv.beat < this._rangeEndBeat) {
@@ -350,7 +391,7 @@ export class AudioSynthService {
 
     this._scheduledUntilBeat = Math.min(horizonBeat, this._rangeEndBeat);
 
-    // 3) Comprueba fin de rango: bucle o finalización limpia
+    // 3) Fin de tramo: bucle o finalización
     if (horizonBeat >= this._rangeEndBeat) {
       if (this.loopEnabled) {
         const endAudioTime = this._beatToAudioTime(this._rangeEndBeat);
@@ -370,7 +411,7 @@ export class AudioSynthService {
   }
 
   /**
-   * Bucle visual sincronizado con audioCtx.currentTime para resaltar la nota activa y eventos de fin.
+   * Bucle visual sincronizado con audioCtx.currentTime para resaltar la nota activa.
    */
   _visualLoop() {
     if (!this._isPlaying) return;
@@ -402,9 +443,9 @@ export class AudioSynthService {
 
   /**
    * Sintetiza una nota pulsada en Web Audio API modelada según el instrumento elegido.
-   * Funciona completamente offline sin requerir descarga de soundfonts externos.
+   * No realiza desplazamientos de octava propios: reproduce exactamente la altura MIDI recibida.
    * @param {AudioContext} ctx Contexto Web Audio activo.
-   * @param {number} midi Nota MIDI (ajustada a octava real del instrumento).
+   * @param {number} midi Nota MIDI exacta a sintetizar.
    * @param {number} startTime Instante exacto de ataque.
    * @param {number} duration Duración en segundos.
    * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} instrument Timbre.
@@ -449,20 +490,20 @@ export class AudioSynthService {
       osc1.type = 'triangle';
       osc2.type = 'sawtooth';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.16, safeStart);
-      filter.frequency.setValueAtTime(Math.min(1400, freq * 4.5), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(220, freq * 1.8), safeStart + totalDur);
+      osc2Gain.gain.setValueAtTime(0.22, safeStart);
+      filter.frequency.setValueAtTime(Math.min(1600, freq * 5.2), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(240, freq * 2.0), safeStart + totalDur);
       masterGain.gain.setValueAtTime(0.001, safeStart);
       masterGain.gain.linearRampToValueAtTime(0.38 * volume, safeStart + 0.01);
       masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
     } else {
-      // acoustic-bass (contrabajo / bajo acústico pizzicato cálido)
+      // acoustic-bass
       osc1.type = 'sine';
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.22, safeStart);
-      filter.frequency.setValueAtTime(Math.min(950, freq * 3.4), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(160, freq * 1.4), safeStart + totalDur * 0.85);
+      osc2Gain.gain.setValueAtTime(0.26, safeStart);
+      filter.frequency.setValueAtTime(Math.min(1050, freq * 3.8), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(180, freq * 1.5), safeStart + totalDur * 0.85);
       masterGain.gain.setValueAtTime(0.001, safeStart);
       masterGain.gain.linearRampToValueAtTime(0.42 * volume, safeStart + 0.018);
       masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur * 0.85);
@@ -492,12 +533,13 @@ export class AudioSynthService {
   }
 
   /**
-   * Reproduce un rasgueo suave de acompañamiento para el acorde cifrado y su nota de bajo si corresponde.
+   * Reproduce un rasgueo suave de acompañamiento para el acorde cifrado sin aplicar desplazamientos
+   * dobles de octava sobre la nota grave.
    * @param {AudioContext} ctx Contexto Web Audio.
    * @param {string} chordSymbol Símbolo del acorde americano.
    * @param {number} startTime Instante de inicio.
    * @param {number} duration Duración del acorde en segundos.
-   * @param {boolean} isBassPiece Si true, evita duplicar el bajo para no tapar la línea de bajo principal.
+   * @param {boolean} isBassPiece Si true, omite el bajo de acompañamiento para no duplicar la línea principal.
    */
   _playChordAccompaniment(ctx, chordSymbol, startTime, duration, isBassPiece) {
     const voicing = getChordVoicingMidi(chordSymbol, 52);
@@ -506,26 +548,28 @@ export class AudioSynthService {
     if (this.chordsVolume > 0.01) {
       const strumSpread = 0.018;
       voicing.chordMidis.forEach((midi, idx) => {
+        const finalMidi = applyListeningRegister(midi, this.listeningRegister);
         this._playPluckedNote(
           ctx,
-          midi,
+          finalMidi,
           startTime + idx * strumSpread,
           Math.min(duration, 1.8),
           'nylon-guitar',
-          this.chordsVolume * 0.42
+          this.chordsVolume * 0.36
         );
       });
     }
 
-    // Si la práctica es de guitarra y el canal de bajo tiene volumen, aporta la raíz grave de acompañamiento
+    // Usa voicing.bassMidi en su registro real (40..51, rango de guitarra/bajo medio) sin restar otra octava
     if (!isBassPiece && this.bassVolume > 0.01) {
+      const finalBass = applyListeningRegister(voicing.bassMidi, this.listeningRegister);
       this._playPluckedNote(
         ctx,
-        voicing.bassMidi - 12,
+        finalBass,
         startTime,
         Math.min(duration, 1.8),
         'acoustic-bass',
-        this.bassVolume * 0.48
+        this.bassVolume * 0.38
       );
     }
   }

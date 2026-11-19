@@ -17,7 +17,8 @@ export const DEFAULT_SETTINGS = {
   theme: 'auto',
   seedColor: '#3F51B5',
   chordNotation: 'americano',
-  defaultInstrument: 'todos',
+  defaultInstrument: 'guitarra',
+  listeningRegister: 'real',
   wakeLockEnabled: true,
   showFingerings: true,
   showBassFunctions: true,
@@ -42,10 +43,14 @@ export class Settings {
     this.chordNotation = ['americano', 'latino'].includes(data.chordNotation)
       ? data.chordNotation
       : DEFAULT_SETTINGS.chordNotation;
-    /** Filtro de instrumento inicial preferido en la lista de prácticas. */
-    this.defaultInstrument = ['todos', 'guitarra-clasica', 'guitarra', 'bajo'].includes(data.defaultInstrument)
+    /** Instrumento seleccionado en la ruta de prácticas (recordado entre sesiones). */
+    this.defaultInstrument = ['guitarra-clasica', 'guitarra', 'bajo'].includes(data.defaultInstrument)
       ? data.defaultInstrument
       : DEFAULT_SETTINGS.defaultInstrument;
+    /** Registro de escucha del sintetizador: 'real' (por defecto) o '+1oct' (útil para parlantes chicos en bajo). */
+    this.listeningRegister = ['real', '+1oct'].includes(data.listeningRegister)
+      ? data.listeningRegister
+      : DEFAULT_SETTINGS.listeningRegister;
     /** Indica si se intenta mantener la pantalla encendida durante la práctica (Wake Lock). */
     this.wakeLockEnabled = data.wakeLockEnabled !== undefined ? Boolean(data.wakeLockEnabled) : DEFAULT_SETTINGS.wakeLockEnabled;
     /** Mostrar digitaciones anotadas sobre las notas. */
@@ -81,6 +86,7 @@ export class Settings {
       seedColor: this.seedColor,
       chordNotation: this.chordNotation,
       defaultInstrument: this.defaultInstrument,
+      listeningRegister: this.listeningRegister,
       wakeLockEnabled: this.wakeLockEnabled,
       showFingerings: this.showFingerings,
       showBassFunctions: this.showBassFunctions,
