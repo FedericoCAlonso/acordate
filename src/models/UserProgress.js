@@ -84,6 +84,21 @@ export class UserProgress {
       data.changeTrainerCpm && typeof data.changeTrainerCpm === 'object'
         ? { ...data.changeTrainerCpm }
         : {};
+
+    /**
+     * Colección personal "Mis acordes": voicings creados por el usuario en la grilla táctil 6×5 o 4×5.
+     */
+    this.customChords = Array.isArray(data.customChords)
+      ? data.customChords.filter((v) => v && typeof v === 'object' && Array.isArray(v.frets))
+      : [];
+
+    /**
+     * Mapa practiceId -> true para piezas de repertorio marcadas como verificadas localmente por el usuario/profesor.
+     */
+    this.verifiedPractices =
+      data.verifiedPractices && typeof data.verifiedPractices === 'object'
+        ? { ...data.verifiedPractices }
+        : {};
   }
 
   /**
@@ -369,6 +384,49 @@ export class UserProgress {
   }
 
   /**
+   * Guarda o actualiza una digitación creada por el usuario en su biblioteca personal "Mis acordes".
+   * @param {object} voicingJson Voicing serializado.
+   */
+  saveCustomChord(voicingJson) {
+    if (!voicingJson || !voicingJson.id) return;
+    const idx = this.customChords.findIndex((v) => v.id === voicingJson.id);
+    if (idx >= 0) this.customChords[idx] = { ...voicingJson };
+    else this.customChords.push({ ...voicingJson });
+  }
+
+  /**
+   * Elimina una digitación personalizada de "Mis acordes".
+   * @param {string} voicingId Identificador del voicing.
+   */
+  removeCustomChord(voicingId) {
+    this.customChords = this.customChords.filter((v) => v.id !== voicingId);
+  }
+
+  /**
+   * Marca o desmarca localmente una práctica/pieza de repertorio como verificada.
+   * @param {string} practiceId Identificador de la práctica.
+   * @param {boolean} verified Nuevo estado de verificación.
+   */
+  setPracticeVerified(practiceId, verified) {
+    if (!practiceId) return;
+    if (verified) this.verifiedPractices[practiceId] = true;
+    else delete this.verifiedPractices[practiceId];
+  }
+
+  /**
+   * Consulta si una práctica está verificada (ya sea de origen o marcada por el usuario/profesor).
+   * @param {object|string} practiceOrId Instancia de Practice o identificador string.
+   * @returns {boolean} True si está verificada.
+   */
+  isPracticeVerified(practiceOrId) {
+    if (!practiceOrId) return true;
+    if (typeof practiceOrId === 'string') {
+      return Boolean(this.verifiedPractices[practiceOrId]);
+    }
+    return Boolean(practiceOrId.verified || this.verifiedPractices[practiceOrId.id]);
+  }
+
+  /**
    * Serializa el progreso del usuario a JSON plano para almacenamiento o exportación.
    * @returns {object} Objeto JSON serializable.
    */
@@ -381,7 +439,9 @@ export class UserProgress {
       checkedGoals: JSON.parse(JSON.stringify(this.checkedGoals)),
       lastPracticeByInstrument: { ...this.lastPracticeByInstrument },
       favoriteChords: [...this.favoriteChords],
-      changeTrainerCpm: { ...this.changeTrainerCpm }
+      changeTrainerCpm: { ...this.changeTrainerCpm },
+      customChords: JSON.parse(JSON.stringify(this.customChords)),
+      verifiedPractices: { ...this.verifiedPractices }
     };
   }
 }

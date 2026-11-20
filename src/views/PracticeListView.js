@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, formatKeyName } from '../core/i18n.js';
+import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, RIGHTS_LABELS, STYLE_LABELS, formatKeyName } from '../core/i18n.js';
 import {
   createFloatingField,
   createPopupMenu,
@@ -116,6 +116,7 @@ export class PracticeListView {
       this._vm.continueCard.subscribe(() => this._renderBody()),
       this._vm.todayRoutine.subscribe(() => this._renderBody()),
       this._vm.userPractices.subscribe(() => this._renderBody()),
+      this._vm.repertoirePractices.subscribe(() => this._renderBody()),
       this._vm.expandedLevel.subscribe(() => this._renderBody()),
       this._appVm.activePracticeId.subscribe(() => this._renderBody()),
       this._appVm.studySessions.subscribe(() => this._renderBody()),
@@ -201,7 +202,10 @@ export class PracticeListView {
     // 2) Ruta de niveles (1 a 5) con anillos de progreso
     this._bodyHost.appendChild(this._buildLevelsRouteSection());
 
-    // 3) Sección propia "Mis prácticas" y sesiones personalizadas
+    // 3) Sección "Repertorio" integrada con filtros de estilo, derechos y nivel (B2)
+    this._bodyHost.appendChild(this._buildRepertoireSection());
+
+    // 4) Sección propia "Mis prácticas" y sesiones personalizadas
     this._bodyHost.appendChild(this._buildMyPracticesSection());
   }
 
@@ -254,7 +258,7 @@ export class PracticeListView {
 
     const rows = routine.items.map((item) =>
       el('div', { className: 'routine-row' }, [
-        el('span', { style: 'min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap' }, [
+        el('span', { className: 'routine-row__title' }, [
           el('strong', {}, [`${item.role}: `]),
           item.practice.title
         ]),
@@ -578,8 +582,100 @@ export class PracticeListView {
   }
 
   /**
+   * Construye la sección "Repertorio" integrada en la ruta, con filtros por estilo, derechos y nivel
+   * y tarjetas con insignias claras (Dominio público, Solo armonía, Importada, A verificar).
+   * @returns {HTMLElement} Sección Repertorio.
+   */
+  _buildRepertoireSection() {
+    const items = this._vm.repertoirePractices.value;
+    const styleF = this._vm.repertoireStyleFilter.value;
+    const rightsF = this._vm.repertoireRightsFilter.value;
+    const lvlF = this._vm.repertoireLevelFilter.value;
+
+    const styleChips = el(
+      'div',
+      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por estilo' },
+      [
+        { value: 'todos', label: 'Todos los estilos' },
+        ...Object.entries(STYLE_LABELS).map(([value, label]) => ({ value, label }))
+      ].map((opt) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(styleF === opt.value),
+            onClick: () => this._vm.repertoireStyleFilter.set(opt.value)
+          },
+          [opt.label]
+        )
+      )
+    );
+
+    const rightsChips = el(
+      'div',
+      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por derechos' },
+      [
+        { value: 'todos', label: 'Todos los derechos' },
+        ...Object.entries(RIGHTS_LABELS).map(([value, label]) => ({ value, label }))
+      ].map((opt) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(rightsF === opt.value),
+            onClick: () => this._vm.repertoireRightsFilter.set(opt.value)
+          },
+          [opt.label]
+        )
+      )
+    );
+
+    const levelChips = el(
+      'div',
+      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por nivel' },
+      [
+        { value: 'todos', label: 'Todos los niveles' },
+        ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `Nivel ${n}` }))
+      ].map((opt) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(lvlF === opt.value),
+            onClick: () => this._vm.repertoireLevelFilter.set(opt.value)
+          },
+          [opt.label]
+        )
+      )
+    );
+
+    const listEl = items.length > 0
+      ? el('div', { className: 'practice-cards-grid' }, items.map((pr) => this._buildCompactPracticeCard(pr)))
+      : el('p', { className: 'm3-body-md' }, ['No hay piezas de repertorio que coincidan con esos filtros para este instrumento.']);
+
+    return el('section', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px', 'aria-label': 'Repertorio' }, [
+      el('div', { className: 'player-toolbar' }, [
+        el('div', {}, [
+          el('h2', { className: 'm3-title-md' }, [`Repertorio (${items.length})`]),
+          el('span', { className: 'm3-body-md' }, ['Standards en modo solo armonía, temas tradicionales y obras de dominio público integradas a tu progreso'])
+        ])
+      ]),
+      styleChips,
+      rightsChips,
+      levelChips,
+      listEl
+    ]);
+  }
+
+  /**
    * Construye una tarjeta compacta de práctica:
-   * título (máx 2 líneas), línea única ("Do · 4/4"), barra de progreso BPM e ícono de estado.
+   * título (máx 2 líneas), línea única ("Do · 4/4"), insignias de repertorio/derechos, barra BPM e ícono de estado.
    * @param {import('../models/Practice.js').Practice} pr Instancia de práctica.
    * @returns {HTMLElement} Botón tarjeta.
    */
@@ -590,9 +686,21 @@ export class PracticeListView {
     const notation = this._appVm.settings.value.chordNotation;
     const isSelected = pr.id === this._appVm.activePracticeId.value && this._appVm.windowSizeClass.value === 'expanded';
     const pct = Math.min(100, Math.round(((stats.bestBpm || 0) / (pr.tempo.target || 100)) * 100));
+    const isVerified = prog.isPracticeVerified(pr);
 
     const statusIconName = status === 'dominada' ? 'check' : status === 'en-curso' ? 'progress' : 'circle';
     const statusLabel = status === 'dominada' ? 'Dominada' : status === 'en-curso' ? 'En curso' : 'Nueva';
+
+    const repBadges = [];
+    if (pr.rights) {
+      repBadges.push(el('span', { className: 'm3-badge m3-badge--success' }, [RIGHTS_LABELS[pr.rights] || pr.rights]));
+    }
+    if (pr.style) {
+      repBadges.push(el('span', { className: 'm3-badge' }, [STYLE_LABELS[pr.style] || pr.style]));
+    }
+    if (pr.isRepertoire && !isVerified) {
+      repBadges.push(el('span', { className: 'm3-badge m3-badge--warning' }, ['A verificar']));
+    }
 
     return el(
       'button',
@@ -617,8 +725,9 @@ export class PracticeListView {
           )
         ]),
         el('div', { className: 'm3-body-md' }, [
-          `${PRACTICE_TYPE_LABELS[pr.type] || 'Melodía'} · ${formatKeyName(pr.key, notation)} · ${pr.timeSignature}${pr.origin === 'user' ? ' · Propia' : ''}`
+          `${PRACTICE_TYPE_LABELS[pr.type] || 'Melodía'} · Nivel ${pr.level} · ${formatKeyName(pr.key, notation)} · ${pr.timeSignature}${pr.origin === 'user' ? ' · Propia' : ''}`
         ]),
+        repBadges.length > 0 ? el('div', { className: 'm3-chip-row', style: 'gap:4px' }, repBadges) : null,
         el('div', { className: 'practice-card__progress-row' }, [
           el('div', { className: 'm3-linear-progress', style: 'flex:1 1 auto' }, [
             el('div', {

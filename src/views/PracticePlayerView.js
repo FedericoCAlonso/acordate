@@ -3,14 +3,21 @@ import {
   INSTRUMENT_LABELS,
   NOTATION_VIEW_LABELS,
   PRACTICE_TYPE_LABELS,
+  RIGHTS_LABELS,
+  STYLE_LABELS,
   SYNTH_INSTRUMENT_LABELS,
   formatChordSymbol,
   formatKeyName
 } from '../core/i18n.js';
 import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
 import { Tuning } from '../models/Tuning.js';
-import { createBassFretboardMapElement, createChordDiagramElement } from './ChordDiagramView.js';
-import { createSliderGroup, createSwitchRow, el, icon, openSheetModal } from './uiHelpers.js';
+import {
+  createBassFretboardMapElement,
+  createChordColorLegendElement,
+  createChordDiagramElement,
+  createChordSymbolElement
+} from './ChordDiagramView.js';
+import { createPopupMenu, createSliderGroup, createSwitchRow, el, icon, openModalDialog, openSheetModal } from './uiHelpers.js';
 
 /**
  * Pestañas del Bottom Sheet / Side Sheet de ajustes avanzados del reproductor.
@@ -143,6 +150,7 @@ export class PracticePlayerView {
   _buildSkeleton() {
     this._container.innerHTML = '';
 
+    this._panelHeader = el('div', { className: 'player-panel-header' });
     this._metaStrip = el('div', { className: 'meta-strip', 'aria-label': 'Datos de la práctica' });
     this._viewBar = el('div', { className: 'player-view-bar' });
     this._countInEl = el('div', { className: 'count-in-overlay', style: 'display:none', 'aria-live': 'assertive' });
@@ -160,6 +168,7 @@ export class PracticePlayerView {
     ]);
 
     const layout = el('div', { className: 'player-layout' }, [
+      this._panelHeader,
       this._metaStrip,
       this._viewBar,
       scoreWrap,
@@ -242,10 +251,20 @@ export class PracticePlayerView {
       this._vm.activeMeasure.subscribe((m) => this._highlightActiveChartBar(m)),
       this._vm.activeChordStepIndex.subscribe((idx) => this._highlightActiveHarmonyStep(idx)),
       this._vm.harmonySteps.subscribe(() => this._renderNotationSurface()),
-      this._vm.compingPattern.subscribe(() => this._renderViewBar()),
+      this._vm.compingPattern.subscribe(() => {
+        this._renderViewBar();
+        this._renderNotationSurface();
+      }),
+      this._vm.chordsEnabled.subscribe(() => this._renderNotationSurface()),
+      this._vm.bassEnabled.subscribe(() => this._renderNotationSurface()),
+      this._vm.voiceMode.subscribe(() => this._renderViewBar()),
+      this._vm.hasMultipleVoices.subscribe(() => this._renderViewBar()),
+      this._vm.showHarmonicAnalysis.subscribe(() => this._renderViewBar()),
+      this._vm.generatedWalkingAbc.subscribe(() => this._renderNotationSurface()),
       this._vm.practiceStats.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.sessionRepetitions.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.isAtrilFullscreen.subscribe((full) => {
+        if (this._panelHeader) this._panelHeader.style.display = full ? 'none' : '';
         this._metaStrip.style.display = full ? 'none' : 'flex';
         this._guideHost.style.display = full ? 'none' : 'block';
         this._renderViewBar();
@@ -267,15 +286,63 @@ export class PracticePlayerView {
     if (!pr || !this._metaStrip) return;
 
     const notation = this._appVm.settings.value.chordNotation;
+    const prog = this._appVm.progress.value;
     const stats = this._vm.practiceStats.value;
     const keyLabel = formatKeyName(this._vm.transposedKey.value, notation);
     const semi = this._vm.transposeSemitones.value;
+    const isVerified = prog.isPracticeVerified(pr);
+
+    // Encabezado propio del panel de práctica (A1.2: visible en escritorio de dos paneles)
+    if (this._panelHeader) {
+      this._panelHeader.innerHTML = '';
+      const menu = createPopupMenu('Opciones de la práctica', [
+        {
+          label: pr.isReadOnly ? 'Duplicar y editar' : 'Editar práctica',
+          iconName: pr.isReadOnly ? 'copy' : 'edit',
+          onClick: () => this._vm.editCurrent()
+        },
+        {
+          label: 'Exportar JSON',
+          iconName: 'download',
+          onClick: () => this._vm.exportCurrent('json')
+        },
+        ...(pr.abc
+          ? [{ label: 'Exportar .abc', iconName: 'download', onClick: () => this._vm.exportCurrent('abc') }]
+          : []),
+        ...(pr.isRepertoire
+          ? [{
+              label: isVerified ? 'Marcar como "A verificar"' : 'Confirmar transcripción verificada',
+              iconName: 'check',
+              onClick: () => this._vm.toggleVerifiedCurrent()
+            }]
+          : []),
+        {
+          label: 'Detalles de la práctica',
+          iconName: 'music',
+          onClick: () => this._openPracticeDetailsModal(pr, notation)
+        }
+      ]);
+
+      this._panelHeader.append(
+        el('div', { style: 'min-width:0; flex:1 1 auto' }, [
+          el('h2', { className: 'm3-headline player-panel-header__title' }, [pr.title]),
+          pr.form
+            ? el('span', { className: 'm3-body-md', style: 'font-size:0.84rem' }, [
+                `${pr.form}${pr.style ? ` · ${STYLE_LABELS[pr.style] || pr.style}` : ''}`
+              ])
+            : null
+        ]),
+        menu
+      );
+    }
 
     this._metaStrip.innerHTML = '';
     const badges = [
       el('span', { className: 'm3-badge m3-badge--primary' }, [`Nivel ${pr.level}`]),
       el('span', { className: 'm3-badge m3-badge--tertiary' }, [PRACTICE_TYPE_LABELS[pr.type] || 'Melodía']),
       el('span', { className: 'm3-badge' }, [CATEGORY_LABELS[pr.category] || pr.category]),
+      pr.rights ? el('span', { className: 'm3-badge m3-badge--success' }, [RIGHTS_LABELS[pr.rights] || pr.rights]) : null,
+      pr.isRepertoire && !isVerified ? el('span', { className: 'm3-badge m3-badge--warning' }, ['A verificar']) : null,
       el('span', { className: 'm3-badge' }, [`${keyLabel}${semi ? ` (${semi > 0 ? '+' : ''}${semi})` : ''} · ${pr.timeSignature}`]),
       el('span', { className: 'm3-badge' }, [`Obj. ${pr.tempo.target} BPM`]),
       stats?.bestBpm > 0
@@ -291,10 +358,20 @@ export class PracticePlayerView {
 
     this._renderViewBar();
 
-    // Guía de estudio y objetivos plegable con lista de verificación tildable
-    const prog = this._appVm.progress.value;
-    const wasOpen = this._guideHost.querySelector('details')?.open || false;
+    // Guía de estudio y objetivos: abierta por defecto en escritorio amplio (A2) para aprovechar el espacio
+    const existingDetails = this._guideHost.querySelector('details');
+    const isWideDesktop = typeof window !== 'undefined' && window.innerWidth >= 1080;
+    const wasOpen = existingDetails ? existingDetails.open : isWideDesktop;
     const checkedCount = pr.goals.filter((_, idx) => prog.isGoalChecked(pr.id, idx)).length;
+
+    const focusNodes = pr.focus
+      ? Object.entries(pr.focus).map(([instKey, text]) =>
+          el('div', { className: 'm3-body-md' }, [
+            el('strong', {}, [`Foco ${INSTRUMENT_LABELS[instKey] || instKey}: `]),
+            text
+          ])
+        )
+      : [];
 
     const details = el('details', { className: 'm3-collapsible', open: wasOpen }, [
       el('summary', {}, [
@@ -302,6 +379,7 @@ export class PracticePlayerView {
         icon('chevronDown', 20)
       ]),
       el('div', { className: 'm3-collapsible__content' }, [
+        ...focusNodes,
         pr.notes ? el('p', { className: 'm3-body-md' }, [pr.notes]) : null,
         pr.goals.length > 0
           ? el(
@@ -319,6 +397,12 @@ export class PracticePlayerView {
                 ]);
               })
             )
+          : null,
+        pr.sourceRef
+          ? el('div', { className: 'm3-body-md', style: 'font-size:0.8rem' }, [
+              el('strong', {}, ['Fuente / referencia: ']),
+              pr.sourceRef
+            ])
           : null,
         el('div', { className: 'm3-body-md' }, [
           `Instrumentos: ${pr.instruments.map((i) => INSTRUMENT_LABELS[i] || i).join(', ')} · Inicio sugerido ${pr.tempo.start} BPM`
@@ -403,7 +487,50 @@ export class PracticePlayerView {
         : null;
     if (compingSelect) compingSelect.value = this._vm.compingPattern.value;
 
+    // Modo voces para piezas polifónicas clásicas (Ambas / Melodía V1 / Bajo V2)
+    const voiceControl = this._vm.hasMultipleVoices.value
+      ? el(
+          'div',
+          { className: 'm3-segmented', role: 'group', 'aria-label': 'Modo de voces' },
+          [
+            { id: 'both', label: 'Ambas' },
+            { id: 'v1', label: 'Melodía' },
+            { id: 'v2', label: 'Bajo' }
+          ].map((v) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-segmented__btn',
+                ripple: true,
+                'aria-pressed': String(this._vm.voiceMode.value === v.id),
+                onClick: () => this._vm.setVoiceMode(v.id)
+              },
+              [v.label]
+            )
+          )
+        )
+      : null;
+
+    // Capa opcional de análisis armónico (grados romanos / cadencias para guitarra clásica)
+    const harmonicLayerBtn = pr?.harmonicAnalysis?.length > 0
+      ? el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(this._vm.showHarmonicAnalysis.value),
+            title: 'Mostrar u ocultar análisis armónico (grados y cadencias)',
+            onClick: () => this._vm.showHarmonicAnalysis.set(!this._vm.showHarmonicAnalysis.value)
+          },
+          ['Grados']
+        )
+      : null;
+
     const quickRight = el('div', { className: 'stepper-inline' }, [
+      voiceControl,
+      harmonicLayerBtn,
       compingSelect,
       el(
         'button',
@@ -468,16 +595,20 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la fila desplazable de diagramas de acordes de una práctica de armonía o mixta,
-   * y en bajo incluye además el mapa de notas del acorde activo sobre el diapasón.
+   * Renderiza la tira de diagramas de acordes (horizontal en móvil, grilla completa en escritorio),
+   * el patrón visual de ritmo (flechas ↓↑ / p-i-m-a), los controles de play-along por instrumento,
+   * los marcadores de sección (A, B, C) y el generador de walking bass para bajo.
    */
   _renderHarmonyDiagrams() {
     const pr = this._vm.practice.value;
     const steps = this._vm.harmonySteps.value;
     const notation = this._appVm.settings.value.chordNotation;
-    const isBass = pr?.instruments?.includes('bajo');
+    const isBass = pr?.instruments?.includes('bajo') && !pr?.instruments?.includes('guitarra');
+    const supportsBass = pr?.instruments?.includes('bajo');
     const tuning = Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar');
     const activeIdx = this._vm.activeChordStepIndex.value;
+    const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
+    const sections = this._vm.getFormSections();
 
     this._harmonyEl.innerHTML = '';
     if (steps.length === 0) {
@@ -485,7 +616,97 @@ export class PracticePlayerView {
       return;
     }
 
-    // En bajo, muestra el mapa del diapasón para el acorde activo (o el primero)
+    // 1) Barra visible del patrón de ritmo (flechas ↓↑ / p-i-m-a) + Play-along + Secciones
+    const rhythmBar = el('div', { className: 'comping-banner' }, [
+      el('div', { className: 'comping-banner__info' }, [
+        el('span', { className: 'm3-label' }, [`Patrón: ${compingSpec.label}`]),
+        el('strong', { className: 'comping-banner__arrows', 'aria-label': `Patrón rítmico ${compingSpec.patternDisplay}` }, [
+          compingSpec.patternDisplay
+        ])
+      ]),
+      el('div', { className: 'm3-chip-row' }, [
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(this._vm.chordsEnabled.value),
+            title: 'Activar o silenciar los acordes de acompañamiento (útil para guitarristas en play-along)',
+            onClick: () => this._vm.setChordsEnabled(!this._vm.chordsEnabled.value)
+          },
+          [this._vm.chordsEnabled.value ? 'Acordes: ON' : 'Acordes: silenciados']
+        ),
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip',
+            ripple: true,
+            'aria-pressed': String(this._vm.bassEnabled.value),
+            title: 'Activar o silenciar la pista de bajo (útil para bajistas en play-along)',
+            onClick: () => this._vm.setBassEnabled(!this._vm.bassEnabled.value)
+          },
+          [this._vm.bassEnabled.value ? 'Bajo base: ON' : 'Bajo base: silenciado']
+        ),
+        ...sections.map((sec) =>
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-chip',
+              ripple: true,
+              'aria-pressed': String(this._vm.loopEnabled.value && this._vm.loopStartMeasure.value === sec.startMeasure && this._vm.loopEndMeasure.value === sec.endMeasure),
+              title: `Repetir en bucle la sección ${sec.label} (compases ${sec.startMeasure}–${sec.endMeasure})`,
+              onClick: () => this._vm.loopSection(sec)
+            },
+            [`Sección ${sec.label}`]
+          )
+        ),
+        supportsBass
+          ? el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-btn m3-btn--compact m3-btn--tonal',
+                ripple: true,
+                onClick: () => this._vm.generateWalkingForCurrent()
+              },
+              [icon('wand', 15), 'Generar walking bass']
+            )
+          : null
+      ])
+    ]);
+    this._harmonyEl.appendChild(rhythmBar);
+    this._harmonyEl.appendChild(createChordColorLegendElement());
+
+    // 2) Si el bajista generó un walking bass sugerido sobre esta progresión, mostrar pentagrama + botón guardar
+    if (this._vm.generatedWalkingAbc.value) {
+      const walkScore = el('div', { className: 'score-surface', style: 'margin:10px 0' });
+      const walkBox = el('div', { className: 'm3-card', style: 'margin:10px 0; display:flex; flex-direction:column; gap:8px' }, [
+        el('div', { className: 'player-toolbar' }, [
+          el('strong', {}, ['Walking bass sugerido (notas del acorde y guías 3.ª / 7.ª)']),
+          el('div', { className: 'm3-chip-row' }, [
+            el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--filled', ripple: true, onClick: () => this._vm.saveGeneratedWalkingAsPractice() }, ['Guardar y editar walking']),
+            el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--text', onClick: () => this._vm.generatedWalkingAbc.set('') }, ['Ocultar'])
+          ])
+        ]),
+        walkScore
+      ]);
+      this._harmonyEl.appendChild(walkBox);
+      setTimeout(() => {
+        const prepared = this._abc.prepareAbcForRender(this._vm.generatedWalkingAbc.value, {
+          viewMode: 'mixto',
+          chordNotation: notation,
+          showBassFunctions: true,
+          isBass: true,
+          stripTitle: true
+        });
+        this._abc.renderScore(walkScore, prepared, { width: walkScore.clientWidth || 520, zoom: 0.95 });
+      }, 0);
+    }
+
+    // 3) En bajo puro, muestra además el mapa del diapasón para el acorde activo
     if (isBass) {
       const focusStep = steps[activeIdx >= 0 ? activeIdx : 0] || steps[0];
       this._harmonyEl.appendChild(
@@ -497,6 +718,7 @@ export class PracticePlayerView {
       );
     }
 
+    // 4) Tira de diagramas (scroll horizontal en móvil; grilla completa en escritorio)
     const strip = el(
       'div',
       { className: 'harmony-strip', role: 'list', 'aria-label': 'Progresión de acordes con diagramas' },
@@ -509,7 +731,10 @@ export class PracticePlayerView {
           },
           [
             el('div', { className: 'player-toolbar', style: 'margin-bottom:4px' }, [
-              el('strong', {}, [formatChordSymbol(step.chord, notation)]),
+              el('div', { style: 'display:flex; align-items:center; gap:4px' }, [
+                step.section ? el('span', { className: 'm3-badge m3-badge--primary', style: 'padding:1px 6px' }, [step.section]) : null,
+                el('strong', {}, [createChordSymbolElement(step.chord, notation)])
+              ]),
               el('span', { className: 'm3-label' }, [`${step.bars} c.`])
             ]),
             step.voicing
@@ -525,7 +750,7 @@ export class PracticePlayerView {
                   type: 'button',
                   className: 'm3-btn m3-btn--compact m3-btn--tonal',
                   onClick: () => this._vm.playStepVoicing(step)
-                }, [formatChordSymbol(step.chord, notation)])
+                }, [createChordSymbolElement(step.chord, notation)])
           ]
         )
       )
@@ -718,13 +943,14 @@ export class PracticePlayerView {
     });
     this._bpmSlider.value = String(this._vm.bpm.value);
 
-    const targetBtn = el(
+    this._targetBtn = el(
       'button',
       {
         type: 'button',
         className: 'm3-btn m3-btn--compact m3-btn--text',
         ripple: true,
-        title: 'Ir al BPM objetivo',
+        'aria-label': 'Ir al tempo objetivo de la práctica',
+        title: 'Ir al tempo objetivo',
         onClick: () => {
           const target = this._vm.practice.value?.tempo?.target;
           if (target) this._vm.setTempo(target);
@@ -739,11 +965,11 @@ export class PracticePlayerView {
     ]);
 
     const bpmRow = el('div', { className: 'transport-dock__bpm-row' }, [
-      el('button', { type: 'button', className: 'm3-icon-btn', ripple: true, 'aria-label': 'Bajar 5 BPM', onClick: () => this._vm.stepTempo(-5) }, ['−']),
+      el('button', { type: 'button', className: 'm3-icon-btn', ripple: true, 'aria-label': 'Bajar 5 BPM', title: 'Bajar 5 BPM', onClick: () => this._vm.stepTempo(-5) }, ['−']),
       this._bpmReadout,
-      el('button', { type: 'button', className: 'm3-icon-btn', ripple: true, 'aria-label': 'Subir 5 BPM', onClick: () => this._vm.stepTempo(5) }, ['+']),
+      el('button', { type: 'button', className: 'm3-icon-btn', ripple: true, 'aria-label': 'Subir 5 BPM', title: 'Subir 5 BPM', onClick: () => this._vm.stepTempo(5) }, ['+']),
       this._bpmSlider,
-      targetBtn
+      this._targetBtn
     ]);
 
     this._transportDock.innerHTML = '';
@@ -769,6 +995,36 @@ export class PracticePlayerView {
 
     this._bpmReadout.textContent = `${this._vm.bpm.value} BPM`;
     this._bpmSlider.value = String(this._vm.bpm.value);
+    const targetBpm = this._vm.practice.value?.tempo?.target;
+    if (this._targetBtn && targetBpm) {
+      this._targetBtn.setAttribute('aria-label', `Ir al tempo objetivo (${targetBpm} BPM)`);
+      this._targetBtn.setAttribute('title', `Ir al tempo objetivo (${targetBpm} BPM)`);
+    }
+  }
+
+  /**
+   * Muestra un diálogo con todos los detalles, derechos, forma y referencia bibliográfica de la práctica.
+   * @param {import('../models/Practice.js').Practice} pr Práctica actual.
+   * @param {'americano'|'latino'} notation Sistema de cifrado.
+   */
+  _openPracticeDetailsModal(pr, notation) {
+    const prog = this._appVm.progress.value;
+    const isVerified = prog.isPracticeVerified(pr);
+    const content = el('div', { style: 'display:flex; flex-direction:column; gap:8px' }, [
+      el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Tipo: ']), PRACTICE_TYPE_LABELS[pr.type] || pr.type]),
+      el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Nivel y tonalidad: ']), `Nivel ${pr.level} · ${formatKeyName(pr.key, notation)} · ${pr.timeSignature}`]),
+      pr.form ? el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Forma: ']), pr.form]) : null,
+      pr.style ? el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Estilo: ']), STYLE_LABELS[pr.style] || pr.style]) : null,
+      pr.rights ? el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Derechos: ']), RIGHTS_LABELS[pr.rights] || pr.rights]) : null,
+      pr.isRepertoire ? el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Estado de transcripción: ']), isVerified ? 'Verificada' : 'A verificar']) : null,
+      pr.sourceRef ? el('div', { className: 'm3-body-md' }, [el('strong', {}, ['Referencia: ']), pr.sourceRef]) : null,
+      pr.notes ? el('p', { className: 'm3-body-md' }, [pr.notes]) : null
+    ]);
+    openModalDialog({
+      title: pr.title,
+      content,
+      actions: [{ label: 'Cerrar', variant: 'tonal' }]
+    });
   }
 
   /**
@@ -804,9 +1060,15 @@ export class PracticePlayerView {
       if (tabId === 'mezcla') {
         const chordsToggle = createSwitchRow({
           id: 'sheet-chords-toggle',
-          label: 'Acompañamiento de acordes',
+          label: 'Acompañamiento de acordes (guitarra)',
           checked: this._vm.chordsEnabled.value,
           onChange: (v) => this._vm.setChordsEnabled(v)
+        });
+        const bassToggle = createSwitchRow({
+          id: 'sheet-bass-toggle',
+          label: 'Pista de bajo (play-along)',
+          checked: this._vm.bassEnabled.value,
+          onChange: (v) => this._vm.setBassEnabled(v)
         });
         const metroToggle = createSwitchRow({
           id: 'sheet-metro-toggle',
@@ -863,6 +1125,7 @@ export class PracticePlayerView {
           melodySlider.wrap,
           chordsToggle.row,
           chordsSlider.wrap,
+          bassToggle.row,
           bassSlider.wrap,
           metroToggle.row,
           metroSlider.wrap,

@@ -33,14 +33,22 @@ export const EDITOR_TEMPLATES = {
   },
   progresion: {
     label: 'Progresión de acordes',
-    category: 'acordes',
+    type: 'harmony',
+    category: 'cambios',
     level: 2,
     key: 'G',
     timeSignature: '4/4',
+    comping: 'rasgueo-balada',
     tempo: { start: 70, target: 105, step: 5 },
     goals: ['Cambiar de acorde sin cortar el pulso', 'Conducir notas guía'],
-    notes: 'Activá el acompañamiento para practicar el comping.',
-    abc: 'X:1\nT:Progresión I-vi-IV-V en Sol\nM:4/4\nL:1/4\nK:G clef=treble-8\n"G"B2 d2 | "Em"B2 e2 | "C"c2 e2 | "D7"c2 d2 |]'
+    notes: 'Elegí la digitación de cada acorde desde la biblioteca o creá una propia en 6×5.',
+    progression: [
+      { bars: 1, chord: 'G', voicingId: 'g-major-open', section: 'A' },
+      { bars: 1, chord: 'Em', voicingId: 'e-minor-open' },
+      { bars: 1, chord: 'C', voicingId: 'c-major-open' },
+      { bars: 1, chord: 'D7', voicingId: 'd7-open' }
+    ],
+    abc: null
   },
   walking: {
     label: 'Walking bass',
@@ -313,16 +321,19 @@ export class EditorViewModel {
     if (!tpl) return;
     const next = {
       ...this.form.value,
+      type: tpl.type || 'melody',
       category: tpl.category,
       level: tpl.level,
       key: tpl.key,
       timeSignature: tpl.timeSignature,
+      comping: tpl.comping || this.form.value.comping,
       tempoStart: tpl.tempo.start,
       tempoTarget: tpl.tempo.target,
       tempoStep: tpl.tempo.step,
       goalsText: tpl.goals.join('\n'),
       notes: tpl.notes,
-      abc: tpl.abc,
+      abc: tpl.abc ?? '',
+      progression: tpl.progression ? tpl.progression.map((s) => ({ ...s })) : this.form.value.progression,
       instruments: tpl.instruments ? [...tpl.instruments] : this.form.value.instruments
     };
     this.form.set(next, true);
@@ -473,12 +484,73 @@ export class EditorViewModel {
   }
 
   /**
-   * Guarda un voicing personalizado (creado en la grilla 6×5) y lo asigna al paso indicado.
+   * Divide un paso de la progresión en dos acordes dentro del mismo compás (ej. ii–V de 0.5 c. cada uno).
+   * @param {number} idx Índice del paso a dividir.
+   */
+  splitProgressionStep(idx) {
+    const steps = [...(this.form.value.progression || [])];
+    const target = steps[idx];
+    if (!target || steps.length >= 64) return;
+    const half = Math.max(0.25, Number(((Number(target.bars) || 1) / 2).toFixed(2)));
+    steps.splice(idx, 1, { ...target, bars: half }, { bars: half, chord: target.chord, voicingId: target.voicingId });
+    this.updateField('progression', steps);
+  }
+
+  /**
+   * Elimina o reordena un paso puntual de la progresión armónica.
+   * @param {number} idx Índice del paso.
+   * @param {'left'|'right'|'remove'} action Acción.
+   */
+  editProgressionStepOrder(idx, action) {
+    const steps = [...(this.form.value.progression || [])];
+    if (action === 'remove' && steps.length > 1) {
+      steps.splice(idx, 1);
+    } else if (action === 'left' && idx > 0) {
+      [steps[idx - 1], steps[idx]] = [steps[idx], steps[idx - 1]];
+    } else if (action === 'right' && idx < steps.length - 1) {
+      [steps[idx], steps[idx + 1]] = [steps[idx + 1], steps[idx]];
+    }
+    this.updateField('progression', steps);
+  }
+
+  /**
+   * Duplica el bloque completo de la progresión actual (repetición ×2, ideal para formas AABA o vueltas).
+   */
+  repeatProgressionBlock() {
+    const steps = [...(this.form.value.progression || [])];
+    if (steps.length === 0 || steps.length * 2 > 64) return;
+    const clone = steps.map((s) => ({ ...s, section: s.section ? undefined : undefined }));
+    this.updateField('progression', [...steps, ...clone]);
+    this._appVm.showSnackbar(`Se repitió la progresión (ahora ${steps.length * 2} pasos).`);
+  }
+
+  /**
+   * Reproduce un voicing de vista previa desde el selector de acordes del editor.
+   * @param {Voicing} voicing Voicing a escuchar.
+   * @param {Tuning} tuning Afinación activa.
+   */
+  playVoicingPreview(voicing, tuning) {
+    if (!voicing) return;
+    const isBass = tuning.instrument === 'bass';
+    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
+    this._audio.playVoicing(voicing, {
+      mode: isBass ? 'block' : 'strum-down',
+      instrument: isBass ? 'electric-bass' : this.form.value.instruments.includes('guitarra-clasica') ? 'nylon-guitar' : 'acoustic-guitar',
+      tuning,
+      duration: 1.4
+    });
+  }
+
+  /**
+   * Guarda un voicing personalizado (creado en la grilla 6×5), lo asigna al paso indicado
+   * y lo persiste también en "Mis acordes" del progreso del usuario para reutilizarlo.
    * @param {number} stepIdx Índice del paso destino.
    * @param {Voicing} voicing Instancia Voicing personalizada.
+   * @param {boolean} [saveToMyChords=true] Si true, guarda en "Mis acordes".
    */
-  attachCustomVoicingToStep(stepIdx, voicing) {
+  async attachCustomVoicingToStep(stepIdx, voicing, saveToMyChords = true) {
     const vJson = voicing instanceof Voicing ? voicing.toJSON() : new Voicing(voicing).toJSON();
+    vJson.tags = [...new Set([...(vJson.tags || []), 'propio'])];
     const customList = [
       ...(this.form.value.customVoicings || []).filter((v) => v.id !== vJson.id),
       vJson
@@ -490,6 +562,14 @@ export class EditorViewModel {
     const next = { ...this.form.value, customVoicings: customList, progression: steps };
     this.form.set(next, true);
     this._scheduleDraftSave(next);
+
+    if (saveToMyChords && this._appVm?.progress?.value && typeof this._appVm.replaceProgress === 'function') {
+      const { UserProgress } = await import('../models/UserProgress.js');
+      const nextProg = new UserProgress(this._appVm.progress.value.toJSON());
+      nextProg.saveCustomChord(vJson);
+      await this._appVm.replaceProgress(nextProg);
+      this._appVm.showSnackbar(`Digitación de ${vJson.chord} guardada en "Mis acordes".`);
+    }
   }
 
   /**
@@ -674,7 +754,7 @@ export class EditorViewModel {
   async importFileContent(text, filename = 'import.json') {
     const lower = filename.toLowerCase();
     if (lower.endsWith('.abc')) {
-      const { practice, errors } = this._io.importPracticeFromAbc(text, filename);
+      const { practice, errors, notice } = this._io.importPracticeFromAbc(text, filename);
       if (errors.length > 0 || !practice) {
         this.validationErrors.set(errors, true);
         this._appVm.showSnackbar('Error al importar archivo .abc.');
@@ -682,7 +762,7 @@ export class EditorViewModel {
       }
       await this._appVm.upsertUserPractice(practice);
       await this.loadForEdit(practice.id);
-      this._appVm.showSnackbar(`Importada "${practice.title}" desde .abc.`);
+      this._appVm.showSnackbar(`Importada "${practice.title}". ${notice}`);
       return { importedCount: 1, errors: [] };
     }
 

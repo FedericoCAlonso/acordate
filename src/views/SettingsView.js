@@ -82,6 +82,8 @@ export class SettingsView {
             type: 'button',
             className: 'tuning-btn',
             ripple: true,
+            title: `Escuchar cuerda ${str.stringNumber}ª de guitarra (${str.note} · MIDI ${str.midi})`,
+            'aria-label': `Escuchar cuerda ${str.stringNumber}ª de guitarra ${isLatin ? str.latinLabel : str.label} (${str.note})`,
             onClick: () => this._vm.playTuningString('guitarra', str.midi)
           },
           [
@@ -102,6 +104,8 @@ export class SettingsView {
             type: 'button',
             className: 'tuning-btn',
             ripple: true,
+            title: `Escuchar cuerda ${str.stringNumber}ª de bajo (${str.note} · MIDI ${str.midi})`,
+            'aria-label': `Escuchar cuerda ${str.stringNumber}ª de bajo ${isLatin ? str.latinLabel : str.label} (${str.note})`,
             onClick: () => this._vm.playTuningString('bajo', str.midi)
           },
           [
@@ -311,7 +315,7 @@ export class SettingsView {
     ]);
 
     this._container.appendChild(
-      el('div', { className: 'metronome-layout' }, [tuningCard, appearanceCard, notationCard, deviceCard])
+      el('div', { className: 'settings-layout' }, [tuningCard, appearanceCard, notationCard, deviceCard])
     );
   }
 }

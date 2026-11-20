@@ -70,11 +70,11 @@ export class MetronomeView {
       this._barInfo,
       this._bpmHero,
       el('div', { className: 'stepper-inline' }, [
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 5 BPM', onClick: () => this._vm.stepBpm(-5) }, ['−5']),
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 1 BPM', onClick: () => this._vm.stepBpm(-1) }, ['−1']),
+        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 5 BPM', title: 'Bajar 5 BPM', onClick: () => this._vm.stepBpm(-5) }, ['−5']),
+        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 1 BPM', title: 'Bajar 1 BPM', onClick: () => this._vm.stepBpm(-1) }, ['−1']),
         this._toggleFab,
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 1 BPM', onClick: () => this._vm.stepBpm(1) }, ['+1']),
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 5 BPM', onClick: () => this._vm.stepBpm(5) }, ['+5'])
+        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 1 BPM', title: 'Subir 1 BPM', onClick: () => this._vm.stepBpm(1) }, ['+1']),
+        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 5 BPM', title: 'Subir 5 BPM', onClick: () => this._vm.stepBpm(5) }, ['+5'])
       ]),
       el('div', { style: 'width:100%; max-width:480px; margin-top:8px' }, [this._bpmSlider]),
       el('div', { className: 'stepper-inline', style: 'margin-top:8px; flex-wrap:wrap; justify-content:center' }, [

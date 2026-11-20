@@ -94,7 +94,10 @@ test('Todas las prácticas con partitura ABC del catálogo producen la primera n
       timeSignature: practice.timeSignature
     });
 
-    const firstNote = timeline.notes.find((n) => !n.isRest && n.midis.length > 0);
+    // En obras polifónicas (V:1 / V:2) comparamos la primera nota de la voz principal (V:1)
+    const firstNote =
+      timeline.notes.find((n) => !n.isRest && n.midis.length > 0 && (n.voiceIndex ?? 0) === 0) ||
+      timeline.notes.find((n) => !n.isRest && n.midis.length > 0);
     assert.ok(firstNote, `La práctica ${practice.id} debe tener al menos una nota reproducible`);
 
     const keyMatch = practice.abc.match(/^K:\s*([A-G][#b]?m?)/m);

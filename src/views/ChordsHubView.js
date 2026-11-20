@@ -1,14 +1,37 @@
-import { INSTRUMENT_LABELS, formatChordSymbol } from '../core/i18n.js';
+import { INSTRUMENT_LABELS, formatChordSymbol, formatVoicingTag } from '../core/i18n.js';
 import { ALL_KEYS } from '../core/MusicTheory.js';
 import { PRESET_TUNINGS } from '../models/Tuning.js';
 import { INVERSION_LABELS } from '../models/Voicing.js';
 import { HARMONIC_FIELD_SHORTCUTS } from '../services/HarmonyService.js';
 import {
   createBassFretboardMapElement,
+  createChordColorLegendElement,
   createChordDiagramElement,
+  createChordSymbolElement,
   createVoiceLeadingConnector
 } from './ChordDiagramView.js';
-import { el, icon } from './uiHelpers.js';
+import { el, icon, openModalDialog } from './uiHelpers.js';
+
+/**
+ * Formatea una calidad de acorde para listas desplegables sin repetir el nombre (ej. "Mayor", "Menor (m)").
+ * @param {import('../models/ChordQuality.js').ChordQuality} q Calidad.
+ * @returns {string} Etiqueta limpia.
+ */
+function formatQualityOptionLabel(q) {
+  if (!q.id) return q.name;
+  if (q.shortName.toLowerCase() === q.name.toLowerCase()) return q.name;
+  return `${q.name} (${q.shortName.replace(/b/g, '♭').replace(/#/g, '♯')})`;
+}
+
+/**
+ * Formatea una nota con símbolos tipográficos reales ♯ y ♭ para botoneras de raíces.
+ * @param {string} root Raíz americana.
+ * @param {'americano'|'latino'} notation Sistema de cifrado.
+ * @returns {string} Raíz visual.
+ */
+function formatRootDisplay(root, notation) {
+  return formatChordSymbol(root, notation).replace(/#/g, '♯').replace(/b/g, '♭');
+}
 
 /**
  * Pestañas del módulo Acordes (#/acordes).
@@ -78,6 +101,7 @@ export class ChordsHubView {
       this._vm.instrument.subscribe(() => this._renderPanel()),
       this._vm.tuningId.subscribe(() => this._renderPanel()),
       this._vm.activeChord.subscribe(() => this._renderPanel()),
+      this._vm.preferSharps.subscribe(() => this._renderPanel()),
       this._vm.voicingsList.subscribe(() => this._renderPanel()),
       this._vm.activeVoicingIndex.subscribe(() => this._renderPanel()),
       this._vm.diagramViewMode.subscribe(() => this._renderPanel()),
@@ -294,11 +318,36 @@ export class ChordsHubView {
     const currentVoicing = voicings[safeIdx] || null;
     const isFav = this._appVm.progress.value.favoriteChords.includes(chord.americanSymbol);
 
-    // Grilla de 12 raíces
+    // Selector de enarmonía (♯ Sostenidos / ♭ Bemoles) + grilla de 12 raíces
+    const rootChoices = this._vm.getRootChoices();
+    const enharmonicRow = el('div', { className: 'player-toolbar' }, [
+      el('span', { className: 'm3-label' }, ['Raíz del acorde']),
+      el(
+        'div',
+        { className: 'm3-segmented', role: 'group', 'aria-label': 'Enarmonía preferida' },
+        [
+          { sharps: true, label: '♯ Sostenidos' },
+          { sharps: false, label: '♭ Bemoles' }
+        ].map((opt) =>
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-segmented__btn',
+              ripple: true,
+              'aria-pressed': String(this._vm.preferSharps.value === opt.sharps),
+              onClick: () => this._vm.setPreferSharps(opt.sharps)
+            },
+            [opt.label]
+          )
+        )
+      )
+    ]);
+
     const rootsGrid = el(
       'div',
       { className: 'root-grid', role: 'group', 'aria-label': 'Raíz del acorde' },
-      ALL_KEYS.map((root) =>
+      rootChoices.map((root) =>
         el(
           'button',
           {
@@ -309,12 +358,12 @@ export class ChordsHubView {
             'aria-pressed': String(this._vm.selectedRoot.value === root),
             onClick: () => this._vm.selectChord({ root, bass: '' })
           },
-          [formatChordSymbol(root, notation)]
+          [formatRootDisplay(root, notation)]
         )
       )
     );
 
-    // Selector de calidad y bajo slash opcional
+    // Selector de calidad (sin repetir "Mayor — Mayor") y bajo slash ("Inversión: fundamental")
     const qualitySelect = el(
       'select',
       {
@@ -324,7 +373,7 @@ export class ChordsHubView {
         onChange: (e) => this._vm.selectChord({ quality: e.target.value })
       },
       this._vm.getAvailableQualities().map((q) =>
-        el('option', { value: q.id, selected: q.id === this._vm.selectedQuality.value }, [`${q.shortName} — ${q.name}`])
+        el('option', { value: q.id, selected: q.id === this._vm.selectedQuality.value }, [formatQualityOptionLabel(q)])
       )
     );
     qualitySelect.value = this._vm.selectedQuality.value;
@@ -334,13 +383,13 @@ export class ChordsHubView {
       {
         className: 'm3-field__select',
         style: 'padding:8px 12px; min-height:44px',
-        'aria-label': 'Bajo alternativo (slash chord)',
+        'aria-label': 'Inversión o bajo alternativo',
         onChange: (e) => this._vm.selectChord({ bass: e.target.value })
       },
       [
-        el('option', { value: '', selected: this._vm.selectedBass.value === '' }, ['Bajo: fundamental']),
-        ...ALL_KEYS.map((k) =>
-          el('option', { value: k, selected: this._vm.selectedBass.value === k }, [`Bajo en ${formatChordSymbol(k, notation)} (/${formatChordSymbol(k, notation)})`])
+        el('option', { value: '', selected: this._vm.selectedBass.value === '' }, ['Inversión: fundamental']),
+        ...rootChoices.map((k) =>
+          el('option', { value: k, selected: this._vm.selectedBass.value === k }, [`Bajo en ${formatRootDisplay(k, notation)} (/${formatRootDisplay(k, notation)})`])
         )
       ]
     );
@@ -493,30 +542,61 @@ export class ChordsHubView {
         ])
       : null;
 
-    // Carrusel de variantes (voicings)
-    const carousel = voicings.length > 1
+    // Grilla agrupada por tipo (Abiertas, Cejillas / CAGED, Tríadas, Drop 2, Shell…) ordenada por traste
+    const groupedVoicings = this._vm.getGroupedVoicings();
+    const groupsHost = groupedVoicings.length > 0
       ? el(
           'div',
-          { className: 'voicing-carousel', role: 'list', 'aria-label': 'Variantes del acorde' },
-          voicings.map((v, idx) =>
-            el(
-              'button',
-              {
-                type: 'button',
-                className: `voicing-thumb ${idx === safeIdx ? 'voicing-thumb--active' : ''}`,
-                ripple: true,
-                onClick: () => {
-                  this._vm.activeVoicingIndex.set(idx);
-                  this._vm.playVoicing(v);
-                }
-              },
-              [
-                el('span', { className: 'm3-label' }, [
-                  `${INVERSION_LABELS[v.computeInversion(tuning)] || 'Fund.'} · T${v.baseFret}`
-                ]),
-                el('span', { className: 'm3-body-md' }, [v.tags.slice(0, 2).join(', ') || (v.suggested ? 'sugerido' : 'forma')])
-              ]
-            )
+          { className: 'voicing-groups', 'aria-label': 'Digitaciones agrupadas por tipo' },
+          groupedVoicings.map((grp) =>
+            el('section', { className: 'voicing-group' }, [
+              el('h3', { className: 'm3-title-md voicing-group__title' }, [`${grp.label} (${grp.items.length})`]),
+              el(
+                'div',
+                { className: 'voicing-group-grid' },
+                grp.items.map(({ voicing: v, flatIndex }) => {
+                  const isActive = flatIndex === safeIdx;
+                  const invLbl = INVERSION_LABELS[v.computeInversion(tuning)] || 'Fundamental';
+                  const tagText = (v.tags || []).slice(0, 2).map(formatVoicingTag).join(' · ');
+                  return el(
+                    'div',
+                    { className: `voicing-grid-card ${isActive ? 'voicing-grid-card--active' : ''}` },
+                    [
+                      createChordDiagramElement(v, {
+                        tuning,
+                        notation,
+                        labelMode: this._vm.labelMode.value,
+                        leftHanded: this._vm.leftHanded.value,
+                        size: 'sm',
+                        showTitle: false,
+                        onPlay: (vo) => {
+                          this._vm.activeVoicingIndex.set(flatIndex);
+                          this._vm.playVoicing(vo);
+                        }
+                      }),
+                      el('div', { className: 'voicing-grid-card__meta' }, [
+                        el('strong', { className: 'm3-label' }, [v.getPositionLabel()]),
+                        el('span', { className: 'm3-body-md' }, [`${v.getUsedStringsLabel(tuning)} · ${invLbl}`]),
+                        tagText ? el('span', { className: 'm3-body-md', style: 'font-size:0.74rem' }, [tagText]) : null
+                      ]),
+                      el('div', { className: 'm3-chip-row', style: 'justify-content:center' }, [
+                        el(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'm3-btn m3-btn--compact m3-btn--text',
+                            ripple: true,
+                            'aria-label': `Ampliar digitación en ${v.getPositionLabel()}`,
+                            onClick: () => this._openZoomVoicingModal(v, tuning, notation)
+                          },
+                          [icon('fullscreen', 15), 'Ampliar']
+                        )
+                      ])
+                    ]
+                  );
+                })
+              )
+            ])
           )
         )
       : null;
@@ -540,9 +620,16 @@ export class ChordsHubView {
         type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
         onClick: () => this._vm.generateSuggestedVoicings()
       }, [icon('wand', 18), 'Generar voicings']),
+      currentVoicing
+        ? el('button', {
+            type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
+            onClick: () => this._openZoomVoicingModal(currentVoicing, tuning, notation)
+          }, [icon('fullscreen', 16), 'Ampliar'])
+        : null,
       el('button', {
         type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true,
         'aria-label': isFav ? 'Quitar de favoritos' : 'Marcar como favorito',
+        title: isFav ? 'Quitar de favoritos' : 'Guardar en favoritos',
         onClick: () => this._vm.toggleFavoriteActiveChord()
       }, [icon(isFav ? 'star' : 'starOutline', 22)])
     ]);
@@ -550,6 +637,7 @@ export class ChordsHubView {
     const selectorCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       this._buildInstrumentTuningBar(),
       el('div', { className: 'controls-grid' }, [qualitySelect, slashSelect]),
+      enharmonicRow,
       rootsGrid,
       filtersCollapsible
     ]);
@@ -557,9 +645,9 @@ export class ChordsHubView {
     const detailCard = el('div', { className: 'm3-card m3-card--elevated', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('div', {}, [
-          el('h2', { className: 'm3-headline' }, [chord.getSymbol(notation)]),
+          el('h2', { className: 'm3-headline' }, [createChordSymbolElement(chord.americanSymbol, notation)]),
           el('span', { className: 'm3-body-md' }, [
-            `${chord.quality.name}${currentVoicing ? ` · ${INVERSION_LABELS[currentVoicing.computeInversion(tuning)]} · Bajo en ${currentVoicing.computeBassNote(tuning, notation)}` : ''}`
+            `${chord.quality.name}${currentVoicing ? ` · ${currentVoicing.getPositionLabel()} (${currentVoicing.getUsedStringsLabel(tuning)}) · ${INVERSION_LABELS[currentVoicing.computeInversion(tuning)]} · Bajo en ${currentVoicing.computeBassNote(tuning, notation)}` : ''}`
           ])
         ]),
         viewModeSeg
@@ -570,9 +658,10 @@ export class ChordsHubView {
           ])
         : null,
       el('div', { className: 'm3-chip-row' }, notesBadges),
+      createChordColorLegendElement(),
       visualHost,
-      carousel,
       actionsRow,
+      groupsHost,
       bassMapSection
     ]);
 
@@ -942,7 +1031,7 @@ export class ChordsHubView {
             size: 'sm',
             onPlay: (v) => this._vm.playVoicing(v)
           }),
-          el('span', { className: 'm3-label' }, [`${INVERSION_LABELS[step.voicing.computeInversion(tuning)]} · T${step.voicing.baseFret}`])
+          el('span', { className: 'm3-label' }, [`${INVERSION_LABELS[step.voicing.computeInversion(tuning)]} · ${step.voicing.getPositionLabel()}`])
         ])
       );
       if (idx < vlSteps.length - 1) {
@@ -1012,7 +1101,7 @@ export class ChordsHubView {
         onChange: (e) => this._vm.selectInversionChord({ quality: e.target.value })
       },
       this._vm.getAvailableQualities().map((q) =>
-        el('option', { value: q.id, selected: q.id === this._vm.inversionQuality.value }, [`${q.shortName} — ${q.name}`])
+        el('option', { value: q.id, selected: q.id === this._vm.inversionQuality.value }, [formatQualityOptionLabel(q)])
       )
     );
     invQualSel.value = this._vm.inversionQuality.value;
@@ -1071,7 +1160,8 @@ export class ChordsHubView {
             { className: 'voice-leading-strip' },
             invVoicings.map((v) =>
               el('div', { style: 'display:flex; flex-direction:column; align-items:center; gap:4px' }, [
-                el('span', { className: 'm3-badge m3-badge--primary' }, [`${INVERSION_LABELS[v.computeInversion(tuning)]} · T${v.baseFret}`]),
+                el('span', { className: 'm3-badge m3-badge--primary' }, [`${INVERSION_LABELS[v.computeInversion(tuning)]} · ${v.getPositionLabel()}`]),
+                el('span', { className: 'm3-body-md', style: 'font-size:0.75rem' }, [v.getUsedStringsLabel(tuning)]),
                 createChordDiagramElement(v, {
                   tuning,
                   notation,
@@ -1172,6 +1262,45 @@ export class ChordsHubView {
     ]);
 
     this._panelHost.appendChild(card);
+  }
+
+  /**
+   * Abre un diálogo modal ampliado para estudiar una digitación en tamaño grande con leyenda y escucha.
+   * @param {import('../models/Voicing.js').Voicing} voicing Voicing seleccionado.
+   * @param {import('../models/Tuning.js').Tuning} tuning Afinación activa.
+   * @param {'americano'|'latino'} notation Sistema de cifrado.
+   */
+  _openZoomVoicingModal(voicing, tuning, notation) {
+    const content = el('div', { style: 'display:flex; flex-direction:column; align-items:center; gap:12px' }, [
+      el('p', { className: 'm3-body-md', style: 'text-align:center' }, [
+        `${voicing.getPositionLabel()} · ${voicing.getUsedStringsLabel(tuning)} · ${INVERSION_LABELS[voicing.computeInversion(tuning)]}`
+      ]),
+      createChordColorLegendElement(),
+      createChordDiagramElement(voicing, {
+        tuning,
+        notation,
+        labelMode: this._vm.labelMode.value,
+        leftHanded: this._vm.leftHanded.value,
+        size: 'lg',
+        showTitle: false,
+        onPlay: (v) => this._vm.playVoicing(v)
+      }),
+      el('p', { className: 'm3-body-md', style: 'text-align:center; font-size:0.82rem' }, [
+        voicing.toAccessibleDescription(tuning, notation)
+      ]),
+      el('button', {
+        type: 'button',
+        className: 'm3-btn m3-btn--filled',
+        ripple: true,
+        onClick: () => this._vm.playVoicing(voicing)
+      }, [icon('play', 18), 'Escuchar digitación'])
+    ]);
+
+    openModalDialog({
+      title: `${formatChordSymbol(voicing.chord, notation)} — ${voicing.getPositionLabel()}`,
+      content,
+      actions: [{ label: 'Cerrar', variant: 'tonal' }]
+    });
   }
 
   /**

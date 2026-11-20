@@ -59,8 +59,12 @@ export class AudioSynthService {
     this.chordsEnabled = true;
     /** Volumen independiente del acompañamiento de acordes (0-1). */
     this.chordsVolume = 0.55;
+    /** Activar/desactivar la pista de bajo (permite al bajista silenciar el bajo en modo play-along). */
+    this.bassEnabled = true;
     /** Volumen independiente de la voz de bajo (0-1). */
     this.bassVolume = 0.75;
+    /** Modo de voces en piezas polifónicas clásicas ('both' | 'v1' | 'v2'). */
+    this.voiceMode = 'both';
     /** Activar/desactivar clic de metrónomo integrado durante la reproducción. */
     this.metronomeEnabled = true;
     /** Volumen del metrónomo integrado (0-1). */
@@ -151,7 +155,11 @@ export class AudioSynthService {
     if (patch.melodyVolume !== undefined) this.melodyVolume = sanitizeVolume(patch.melodyVolume, 1.0);
     if (patch.chordsEnabled !== undefined) this.chordsEnabled = Boolean(patch.chordsEnabled);
     if (patch.chordsVolume !== undefined) this.chordsVolume = sanitizeVolume(patch.chordsVolume, 0.55);
+    if (patch.bassEnabled !== undefined) this.bassEnabled = Boolean(patch.bassEnabled);
     if (patch.bassVolume !== undefined) this.bassVolume = sanitizeVolume(patch.bassVolume, 0.75);
+    if (patch.voiceMode !== undefined && ['both', 'v1', 'v2'].includes(patch.voiceMode)) {
+      this.voiceMode = patch.voiceMode;
+    }
     if (patch.metronomeEnabled !== undefined) this.metronomeEnabled = Boolean(patch.metronomeEnabled);
     if (patch.metronomeVolume !== undefined) this.metronomeVolume = sanitizeVolume(patch.metronomeVolume, 0.65);
     if (patch.comping !== undefined) this.comping = patch.comping || 'negras-abajo';
@@ -464,21 +472,30 @@ export class AudioSynthService {
           const durSec = Math.max(0.06, noteEv.durationBeats * secPerBeat);
 
           if (!noteEv.isRest && noteEv.midis.length > 0) {
-            // En prácticas de guitarra/clásica la voz principal siempre usa melodyVolume;
-            // en prácticas de bajo usa bassVolume (o melodyVolume si el usuario bajó bajo).
-            const isBassVoice = noteEv.isBassVoice || tl.isBassPiece;
-            const vol = tl.isBassPiece
-              ? Math.max(this.melodyVolume, this.bassVolume)
-              : isBassVoice
-                ? this.bassVolume
-                : this.melodyVolume;
-            const voiceInst = isBassVoice
-              ? (this.instrument.includes('bass') ? this.instrument : 'acoustic-bass')
-              : this.instrument;
+            // Respeta el modo de voces en piezas polifónicas clásicas ('both' | 'v1' melodía | 'v2' bajo)
+            const isSecondVoice = (noteEv.voiceIndex ?? 0) > 0 || (noteEv.isBassVoice && !tl.isBassPiece);
+            const skipForVoiceMode =
+              (this.voiceMode === 'v1' && isSecondVoice) ||
+              (this.voiceMode === 'v2' && !isSecondVoice);
 
-            for (const midi of noteEv.midis) {
-              const playbackMidi = applyListeningRegister(midi, this.listeningRegister);
-              this._playPluckedNote(ctx, playbackMidi, t, durSec, voiceInst, vol);
+            if (!skipForVoiceMode) {
+              // En prácticas de guitarra/clásica la voz principal siempre usa melodyVolume;
+              // en prácticas de bajo usa bassVolume (respetando bassEnabled para modo play-along).
+              const isBassVoice = noteEv.isBassVoice || tl.isBassPiece;
+              const effectiveBassVol = this.bassEnabled ? this.bassVolume : 0;
+              const vol = tl.isBassPiece
+                ? (this.bassEnabled ? Math.max(this.melodyVolume, effectiveBassVol) : 0)
+                : isBassVoice
+                  ? effectiveBassVol
+                  : this.melodyVolume;
+              const voiceInst = isBassVoice
+                ? (this.instrument.includes('bass') ? this.instrument : 'acoustic-bass')
+                : this.instrument;
+
+              for (const midi of noteEv.midis) {
+                const playbackMidi = applyListeningRegister(midi, this.listeningRegister);
+                this._playPluckedNote(ctx, playbackMidi, t, durSec, voiceInst, vol);
+              }
             }
           }
 
@@ -665,17 +682,118 @@ export class AudioSynthService {
    * @param {object} tl Línea de tiempo activa.
    */
   _playChordEvent(ctx, chordEv, startTime, duration, secPerBeat, tl) {
-    if (Array.isArray(chordEv.voicingMidis) && chordEv.voicingMidis.length > 0) {
-      const pattern = chordEv.rhythm || this.comping || 'negras-abajo';
-      const vol = tl.isHarmonyOnly ? Math.max(this.chordsVolume, this.melodyVolume) : this.chordsVolume;
+    const pattern = chordEv.rhythm || this.comping || 'negras-abajo';
+    const hasVoicing = Array.isArray(chordEv.voicingMidis) && chordEv.voicingMidis.length > 0;
+
+    if (tl.isHarmonyOnly) {
+      // Modo armonía / play-along: pista de acordes y pista de bajo separadas y silenciables
+      if (this.chordsEnabled && this.chordsVolume > 0.01) {
+        const chordMidis = hasVoicing
+          ? chordEv.voicingMidis
+          : (getChordVoicingMidi(chordEv.symbol, 52)?.chordMidis || []);
+        if (chordMidis.length > 0) {
+          const chordInst = tl.isBassPiece && !this.instrument.includes('guitar')
+            ? 'electric-bass'
+            : (this.instrument.includes('guitar') ? this.instrument : 'nylon-guitar');
+          this._scheduleCompingPattern(
+            ctx,
+            chordMidis,
+            startTime,
+            chordEv.durationBeats,
+            secPerBeat,
+            pattern,
+            chordInst,
+            this.chordsVolume,
+            false
+          );
+        }
+      }
+
+      if (this.bassEnabled && this.bassVolume > 0.01) {
+        this._schedulePlayAlongBass(ctx, chordEv.symbol, startTime, chordEv.durationBeats, secPerBeat, pattern);
+      }
+      return;
+    }
+
+    if (hasVoicing && this.chordsEnabled && this.chordsVolume > 0.01) {
       const inst = tl.isBassPiece
         ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
         : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
-      this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, vol, tl.isBassPiece);
+      this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, tl.isBassPiece);
       return;
     }
 
     this._playChordAccompaniment(ctx, chordEv.symbol, startTime, duration, tl.isBassPiece);
+  }
+
+  /**
+   * Genera una línea de acompañamiento de bajo en vivo para modo "tocar sobre la base" (play-along)
+   * adaptada al feeling del tema (swing, bossa, shuffle, vals, balada, tango o recto).
+   * @param {AudioContext} ctx Contexto Web Audio.
+   * @param {string} chordSymbol Símbolo americano del acorde.
+   * @param {number} startTime Instante inicial.
+   * @param {number} durationBeats Duración en negras.
+   * @param {number} secPerBeat Segundos por negra.
+   * @param {string} pattern Clave en COMPING_PATTERNS.
+   */
+  _schedulePlayAlongBass(ctx, chordSymbol, startTime, durationBeats, secPerBeat, pattern) {
+    const voicing = getChordVoicingMidi(chordSymbol, 40);
+    if (!voicing) return;
+    // Baja al registro real de contrabajo / bajo eléctrico (E1..D#2 = MIDI 28..39)
+    let root = voicing.bassMidi;
+    while (root >= 40) root -= 12;
+    while (root < 28) root += 12;
+    const fifth = root + 7;
+    const third = voicing.chordMidis.length > 1 ? root + ((voicing.chordMidis[1] - voicing.chordMidis[0] + 12) % 12) : root + 4;
+    const bassInst = pattern === 'swing-negras' || pattern === 'balada-lenta' ? 'acoustic-bass' : 'electric-bass';
+    const vol = this.bassVolume * 0.65;
+    const beats = Math.max(1, Math.round(durationBeats));
+
+    if (pattern === 'bossa') {
+      // Bajo en 2 con anticipación clásica de bossa nova
+      const hits = [
+        { offset: 0, midi: root, dur: secPerBeat * 1.4 },
+        { offset: 1.5, midi: fifth, dur: secPerBeat * 0.45 },
+        { offset: 2, midi: fifth, dur: secPerBeat * 1.4 },
+        { offset: 3.5, midi: root, dur: secPerBeat * 0.45 }
+      ];
+      for (const h of hits) {
+        if (h.offset < durationBeats) {
+          this._playPluckedNote(ctx, applyListeningRegister(h.midi, this.listeningRegister), startTime + h.offset * secPerBeat, h.dur, bassInst, vol);
+        }
+      }
+      return;
+    }
+
+    if (pattern === 'shuffle') {
+      const seq = [root, third, fifth, root + 9];
+      for (let b = 0; b < beats; b++) {
+        const m = seq[b % seq.length];
+        this._playPluckedNote(ctx, applyListeningRegister(m, this.listeningRegister), startTime + b * secPerBeat, secPerBeat * 0.85, bassInst, vol);
+      }
+      return;
+    }
+
+    if (pattern === 'swing-negras') {
+      // Walking de 4 negras (R - 3 - 5 - 3/aprox) para base de jazz
+      const seq = [root, third, fifth, third];
+      for (let b = 0; b < beats; b++) {
+        const m = seq[b % seq.length];
+        this._playPluckedNote(ctx, applyListeningRegister(m, this.listeningRegister), startTime + b * secPerBeat, secPerBeat * 0.92, bassInst, vol);
+      }
+      return;
+    }
+
+    if (pattern === 'balada-lenta' || pattern === 'bloque') {
+      this._playPluckedNote(ctx, applyListeningRegister(root, this.listeningRegister), startTime, durationBeats * secPerBeat * 0.92, bassInst, vol);
+      return;
+    }
+
+    // Por defecto (recto, vals, tango): raíz en tiempo 1 y quinta en mitad de compás
+    this._playPluckedNote(ctx, applyListeningRegister(root, this.listeningRegister), startTime, Math.min(2, durationBeats) * secPerBeat * 0.9, bassInst, vol);
+    if (durationBeats >= 3) {
+      this._playPluckedNote(ctx, applyListeningRegister(fifth, this.listeningRegister), startTime + 2 * secPerBeat, Math.min(2, durationBeats - 2) * secPerBeat * 0.9, bassInst, vol * 0.88);
+    }
   }
 
   /**
@@ -771,6 +889,38 @@ export class AudioSynthService {
         if (s.offset < durationBeats) {
           this._scheduleVoicingAt(ctx, sorted, startTime + s.offset * secPerBeat, secPerBeat * 0.85, s.mode, instrument, volume * s.accent, 22);
         }
+      }
+      return;
+    }
+
+    if (pattern === 'shuffle') {
+      // Shuffle blues con corchea atresillada (2/3 de pulso)
+      const beats = Math.max(1, Math.round(durationBeats));
+      for (let b = 0; b < beats; b++) {
+        this._scheduleVoicingAt(ctx, sorted, startTime + b * secPerBeat, secPerBeat * 0.55, 'strum-down', instrument, volume * (b % 2 === 0 ? 1.0 : 0.78), 18);
+        if (b + 0.67 < durationBeats) {
+          this._scheduleVoicingAt(ctx, sorted, startTime + (b + 0.67) * secPerBeat, secPerBeat * 0.28, 'strum-up', instrument, volume * 0.62, 16);
+        }
+      }
+      return;
+    }
+
+    if (pattern === 'balada-lenta') {
+      const halves = Math.max(1, Math.ceil(durationBeats / 2));
+      for (let h = 0; h < halves; h++) {
+        const offset = h * 2;
+        if (offset < durationBeats) {
+          this._scheduleVoicingAt(ctx, sorted, startTime + offset * secPerBeat, Math.min(2, durationBeats - offset) * secPerBeat * 0.95, 'strum-down', instrument, volume * (h === 0 ? 0.92 : 0.72), 26);
+        }
+      }
+      return;
+    }
+
+    if (pattern === 'tango-marcato') {
+      const beats = Math.max(1, Math.round(durationBeats));
+      for (let b = 0; b < beats; b++) {
+        const strong = b % 2 === 0;
+        this._scheduleVoicingAt(ctx, sorted, startTime + b * secPerBeat, secPerBeat * 0.5, 'block', instrument, volume * (strong ? 1.0 : 0.72), 10);
       }
       return;
     }

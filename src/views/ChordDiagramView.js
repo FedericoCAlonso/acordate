@@ -1,10 +1,68 @@
-import { formatChordSymbol } from '../core/i18n.js';
+import { formatChordSymbol, splitChordTypography } from '../core/i18n.js';
 import { mod12, pcToNoteName, prefersFlats } from '../core/MusicTheory.js';
 import { Chord } from '../models/Chord.js';
 import { Tuning } from '../models/Tuning.js';
 import { Voicing } from '../models/Voicing.js';
 import { VoicingGenerator } from '../services/VoicingGenerator.js';
 import { el } from './uiHelpers.js';
+
+/**
+ * Determina el par de colores Material 3 (relleno y texto) según la función armónica de la nota
+ * (Raíz, 3ª, 5ª o 7ª/extensión) para mantener consistencia con la leyenda de colores.
+ * @param {string} fnLabel Etiqueta de función armónica ('R', '3', 'b3', '5', '7', 'b7', etc.).
+ * @param {boolean} isRoot True si la nota es la raíz.
+ * @returns {{ fill: string, textFill: string }} Tokens CSS de color.
+ */
+function getFunctionDotColors(fnLabel, isRoot) {
+  if (isRoot || fnLabel === 'R') {
+    return { fill: 'var(--md-sys-color-primary)', textFill: 'var(--md-sys-color-on-primary)' };
+  }
+  if (['3', 'b3', '2', '4'].includes(fnLabel)) {
+    return { fill: 'var(--md-sys-color-tertiary)', textFill: 'var(--md-sys-color-on-tertiary)' };
+  }
+  if (['5', 'b5', '#5'].includes(fnLabel)) {
+    return { fill: 'var(--md-sys-color-secondary)', textFill: 'var(--md-sys-color-on-secondary)' };
+  }
+  return { fill: 'var(--md-sys-color-on-surface)', textFill: 'var(--md-sys-color-surface)' };
+}
+
+/**
+ * Construye un nodo DOM tipográfico para un símbolo de acorde manteniendo 'm' normal ("Em", "Am")
+ * y aplicando superíndice solo a extensiones (7, maj7, 9, 13, ♭5…).
+ * @param {string} chordSymbol Símbolo americano.
+ * @param {'americano'|'latino'} [notation='americano'] Sistema de cifrado.
+ * @returns {HTMLElement} Elemento span con tipografía armónica limpia.
+ */
+export function createChordSymbolElement(chordSymbol, notation = 'americano') {
+  const { base, ext, bass } = splitChordTypography(chordSymbol, notation);
+  const children = [base];
+  if (ext) children.push(el('sup', { className: 'chord-ext-sup' }, [ext]));
+  if (bass) children.push(`/${bass}`);
+  return el('span', { className: 'chord-symbol' }, children);
+}
+
+/**
+ * Crea la leyenda visual de colores de los puntos del diagrama (Raíz, 3.ª, 5.ª, 7.ª / tensión).
+ * @returns {HTMLElement} Fila de leyenda accesible.
+ */
+export function createChordColorLegendElement() {
+  const items = [
+    { label: 'Raíz (R)', color: 'var(--md-sys-color-primary)' },
+    { label: '3.ª (3 / ♭3)', color: 'var(--md-sys-color-tertiary)' },
+    { label: '5.ª (5)', color: 'var(--md-sys-color-secondary)' },
+    { label: '7.ª / tensión', color: 'var(--md-sys-color-on-surface)' }
+  ];
+  return el(
+    'div',
+    { className: 'chord-legend', role: 'note', 'aria-label': 'Leyenda de colores de los puntos' },
+    items.map((it) =>
+      el('span', { className: 'chord-legend__item' }, [
+        el('span', { className: 'chord-legend__dot', style: `background:${it.color}`, 'aria-hidden': 'true' }),
+        it.label
+      ])
+    )
+  );
+}
 
 /**
  * Crea un diagrama SVG vectorial accesible y escalable para un Voicing de guitarra (6 cuerdas) o bajo (4/5 cuerdas).
@@ -114,8 +172,7 @@ export function createChordDiagramElement(voicing, options = {}) {
     const relRow = fret - baseFret + 1;
     if (relRow < 1 || relRow > fretRows) continue;
     const cy = padTop + (relRow - 0.5) * fretSpacing;
-    const fill = isRoot ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-on-surface)';
-    const textFill = isRoot ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-surface)';
+    const { fill, textFill } = getFunctionDotColors(det?.fnLabel || '', isRoot);
 
     let dotLabel = '';
     if (labelMode === 'fingers') dotLabel = v.fingers[s] ? String(v.fingers[s]) : '';
@@ -139,7 +196,7 @@ export function createChordDiagramElement(voicing, options = {}) {
 
   const header = showTitle
     ? el('div', { className: 'chord-diagram__title' }, [
-        el('strong', {}, [chordObj.getSymbol(notation)]),
+        el('strong', {}, [createChordSymbolElement(v.chord, notation)]),
         v.suggested ? el('span', { className: 'm3-badge' }, ['Sugerido']) : null
       ])
     : null;

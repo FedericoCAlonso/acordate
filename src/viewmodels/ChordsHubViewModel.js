@@ -1,10 +1,11 @@
-import { ALL_KEYS } from '../core/MusicTheory.js';
+import { ALL_KEYS, FLAT_NOTES, SHARP_NOTES } from '../core/MusicTheory.js';
 import { ComputedObservable, Observable } from '../core/Observable.js';
 import { getCuratedVoicingsForChord } from '../data/voicings.js';
 import { Chord } from '../models/Chord.js';
 import { ChordQuality } from '../models/ChordQuality.js';
 import { Practice, generatePracticeId } from '../models/Practice.js';
 import { Tuning } from '../models/Tuning.js';
+import { Voicing } from '../models/Voicing.js';
 
 /**
  * ViewModel del módulo Acordes y Armonía (#/acordes).
@@ -44,6 +45,8 @@ export class ChordsHubViewModel {
     // --- Estado Biblioteca de Acordes ---
     /** Raíz seleccionada en cifrado americano ('C'..'B'). */
     this.selectedRoot = new Observable('C');
+    /** Preferencia de enarmonía en la botonera de raíces (true = sostenidos C#, D#...; false = bemoles Db, Eb...). */
+    this.preferSharps = new Observable(true);
     /** Calidad seleccionada ('', 'm', '7', 'maj7', 'm7', etc.). */
     this.selectedQuality = new Observable('');
     /** Bajo alternativo opcional (slash chord) o ''. */
@@ -149,7 +152,7 @@ export class ChordsHubViewModel {
       })
     );
 
-    /** Lista combinada y filtrada de voicings (curados + generados) para el acorde activo. */
+    /** Lista combinada y filtrada de voicings (Mis acordes + curados + generados) para el acorde activo. */
     this.voicingsList = new ComputedObservable(
       [
         this.activeChord,
@@ -158,7 +161,8 @@ export class ChordsHubViewModel {
         this.voicingTypeFilter,
         this.inversionFilter,
         this.fretRangeFilter,
-        this.generatedVoicings
+        this.generatedVoicings,
+        appVm.progress
       ],
       () => this._computeVoicingsList()
     );
@@ -318,7 +322,102 @@ export class ChordsHubViewModel {
   }
 
   /**
-   * Combina voicings curados + generados aplicando filtros de tipo, inversión y rango de trastes.
+   * Devuelve las 12 raíces cromáticas según la preferencia de enarmonía activa (sostenidos o bemoles).
+   * @returns {string[]} Lista de 12 raíces.
+   */
+  getRootChoices() {
+    return this.preferSharps.value ? [...SHARP_NOTES] : [...FLAT_NOTES];
+  }
+
+  /**
+   * Alterna la preferencia de enarmonía (♯ sostenidos / ♭ bemoles) convirtiendo la raíz activa si es alterada.
+   * @param {boolean} useSharps True para sostenidos, false para bemoles.
+   */
+  setPreferSharps(useSharps) {
+    this.preferSharps.set(Boolean(useSharps));
+    const current = this.activeChord.value;
+    const targetList = useSharps ? SHARP_NOTES : FLAT_NOTES;
+    const mapped = targetList[current.rootPc];
+    if (mapped && mapped !== this.selectedRoot.value) {
+      this.selectedRoot.set(mapped);
+    }
+  }
+
+  /**
+   * Agrupa los voicings filtrados por familia pedagógica (Mis acordes, Abiertas, Cejillas/CAGED,
+   * Tríadas, Drop 2/3, Shell, Décimas/Bajo, Extensiones, Sugeridas) ordenados por posición en el mango.
+   * @returns {Array<{ id: string, label: string, items: Array<{ voicing: Voicing, flatIndex: number }> }>} Grupos ordenados.
+   */
+  getGroupedVoicings() {
+    const list = this.voicingsList.value;
+    const isBass = this.instrument.value === 'bajo';
+    const order = isBass
+      ? [
+          { id: 'propio', label: 'Mis acordes' },
+          { id: 'decima', label: 'Décimas y díadas' },
+          { id: 'shell', label: 'Shell voicings' },
+          { id: 'triada', label: 'Tríadas (abiertas y agudas)' },
+          { id: 'guias', label: 'Notas guía (3.ª y 7.ª)' },
+          { id: 'extension', label: 'Extensiones y color' },
+          { id: 'sugerido', label: 'Sugeridas' }
+        ]
+      : [
+          { id: 'propio', label: 'Mis acordes' },
+          { id: 'abierto', label: 'Abiertas' },
+          { id: 'cejilla', label: 'Cejillas / CAGED' },
+          { id: 'triada', label: 'Tríadas' },
+          { id: 'drop2', label: 'Drop 2 / Drop 3' },
+          { id: 'shell', label: 'Shell' },
+          { id: 'extension', label: 'Extensiones y alteradas' },
+          { id: 'sugerido', label: 'Sugeridas' }
+        ];
+
+    const classify = (v) => {
+      const tags = v.tags || [];
+      if (tags.includes('propio')) return 'propio';
+      if (v.suggested) return 'sugerido';
+      if (isBass) {
+        if (tags.includes('decima') || tags.includes('power')) return 'decima';
+        if (tags.includes('shell')) return 'shell';
+        if (tags.includes('guias')) return 'guias';
+        if (tags.includes('triada') || tags.includes('inversion')) return 'triada';
+        if (tags.includes('extension')) return 'extension';
+        return 'decima';
+      }
+      if (tags.includes('abierto')) return 'abierto';
+      if (tags.includes('cejilla') || tags.includes('CAGED')) return 'cejilla';
+      if (tags.includes('triada')) return 'triada';
+      if (tags.includes('drop2') || tags.includes('drop3')) return 'drop2';
+      if (tags.includes('shell')) return 'shell';
+      if (tags.includes('extension') || tags.includes('alterado') || tags.includes('power')) return 'extension';
+      return 'cejilla';
+    };
+
+    const buckets = new Map(order.map((g) => [g.id, []]));
+    list.forEach((v, flatIndex) => {
+      const key = classify(v);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push({ voicing: v, flatIndex });
+    });
+
+    const minFretOf = (v) => {
+      const active = v.frets.filter((f) => f !== null);
+      return active.length > 0 ? Math.min(...active) : 0;
+    };
+
+    const groups = [];
+    for (const spec of order) {
+      const items = buckets.get(spec.id) || [];
+      if (items.length === 0) continue;
+      items.sort((a, b) => a.voicing.baseFret - b.voicing.baseFret || minFretOf(a.voicing) - minFretOf(b.voicing));
+      groups.push({ id: spec.id, label: spec.label, items });
+    }
+    return groups;
+  }
+
+  /**
+   * Combina Mis acordes + voicings curados + generados aplicando filtros de tipo, inversión y rango de trastes,
+   * ordenados ascendentemente por posición en el diapasón.
    * @returns {import('../models/Voicing.js').Voicing[]} Lista filtrada de voicings.
    */
   _computeVoicingsList() {
@@ -327,15 +426,23 @@ export class ChordsHubViewModel {
     const fam = tuning.instrument;
     const curated = getCuratedVoicingsForChord(symbol, fam, tuning);
 
-    const seen = new Set(curated.map((v) => v.frets.map((f) => (f === null ? 'x' : f)).join('-')));
-    const combined = [...curated];
-    for (const v of this.generatedVoicings.value) {
+    // Incluye "Mis acordes" guardados por el usuario que coincidan con este acorde e instrumento
+    const userSaved = (this._appVm.progress.value.customChords || [])
+      .filter((raw) => raw.instrument === fam && raw.chord === symbol)
+      .map((raw) => new Voicing({ ...raw, tags: [...new Set([...(raw.tags || []), 'propio'])] }));
+
+    const seen = new Set();
+    const combined = [];
+    const addIfUnique = (v) => {
       const sig = v.frets.map((f) => (f === null ? 'x' : f)).join('-');
-      if (!seen.has(sig)) {
-        seen.add(sig);
-        combined.push(v);
-      }
-    }
+      if (seen.has(sig)) return;
+      seen.add(sig);
+      combined.push(v);
+    };
+
+    userSaved.forEach(addIfUnique);
+    curated.forEach(addIfUnique);
+    this.generatedVoicings.value.forEach(addIfUnique);
 
     // Si no hubo ningún voicing curado para esa afinación/slash, genera sugerencias automáticamente
     if (combined.length === 0) {

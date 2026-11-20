@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v4: Auditoría musical, acordes de bajo y herramientas armónicas editables).
+ * Versión del caché estático de la PWA Acordate (v6: Correcciones v4, editor armónico completo y módulo de repertorio).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v5';
+const CACHE_NAME = 'acordate-static-v6';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -55,6 +55,9 @@ const PRECACHE_ASSETS = [
   './src/data/catalog.js',
   './src/data/catalog.json',
   './src/data/harmonyCatalog.json',
+  './src/data/repertoireJazz.json',
+  './src/data/repertoireTraditional.json',
+  './src/data/repertoireClassical.json',
   './src/data/voicings.js',
   './src/viewmodels/AppViewModel.js',
   './src/viewmodels/PracticeListViewModel.js',

@@ -1,0 +1,2996 @@
+[
+  {
+    "id": "rep-jazz-blues-shuffle-a",
+    "version": 3,
+    "type": "harmony",
+    "title": "Blues de 12 compases (shuffle) en A",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "blues",
+      "shuffle",
+      "12-compases",
+      "turnaround"
+    ],
+    "key": "A",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 120,
+      "step": 6
+    },
+    "form": "Blues 12 compases",
+    "rights": "harmony_only",
+    "style": "blues",
+    "feeling": "shuffle",
+    "verified": false,
+    "sourceRef": "Forma tradicional de blues de 12 compases en A (transponible a E con el botón de transporte).",
+    "focus": {
+      "guitarra": "Mantené el shuffle relajado en corcheas ternarias y diferenciá los cambios I7–IV7–V7 con voicings de séptima cercanos.",
+      "bajo": "Alterná patrón shuffle (raíz–3.ª–5.ª–6.ª) y notas de paso cromáticas al llegar al compás 5 (IV7) y al 9 (V7)."
+    },
+    "comping": {
+      "pattern": "shuffle",
+      "beatsPerBar": 4,
+      "feeling": "shuffle"
+    },
+    "progression": [
+      {
+        "chord": "A7",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "A7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Usá el control de transporte (+7 o −5 semitonos) para practicar exactamente la misma forma en E.",
+    "goals": [
+      "Sentir el ciclo completo de 12 compases sin perder el turnaround final.",
+      "Mantener el pulso ternario (shuffle) constante en mano derecha o mano de pulsación.",
+      "Silenciar tu instrumento en el modo play-along para improvisar o caminar libremente."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-blues-quick-f",
+    "version": 3,
+    "type": "harmony",
+    "title": "Blues de 12 con cambio rápido en F",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "blues",
+      "quick-change",
+      "jazz-blues",
+      "ii-v"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 84,
+      "target": 132,
+      "step": 6
+    },
+    "form": "Blues 12 compases (Quick IV)",
+    "rights": "harmony_only",
+    "style": "blues",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar de jazz blues en F con cambio al IV en compás 2 y cadencia ii–V–I (transponible a Bb).",
+    "focus": {
+      "guitarra": "Practicá acordes shell (R–3–7) en cuerdas 6–4–3 para enlazar F7 → Bb7 y Gm7 → C7 moviendo un solo semitono.",
+      "bajo": "Resolvé cada cambio de acorde en el tiempo 1 con aproximación cromática o diatónica desde el tiempo 4."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Transponé +5 semitonos para trabajar la misma forma en Bb, la otra tonalidad clásica de jam de jazz.",
+    "goals": [
+      "Anticipar el cambio rápido al IV7 en el compás 2.",
+      "Controlar el turnaround de medio compás por acorde en los compases 11 y 12.",
+      "En bajo, generar un walking bass automático y compararlo con tu propia línea."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-blues-minor-am",
+    "version": 3,
+    "type": "harmony",
+    "title": "Blues menor de 12 compases en Am",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "blues",
+      "menor",
+      "turnaround"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 124,
+      "step": 6
+    },
+    "form": "Blues menor 12 compases",
+    "rights": "harmony_only",
+    "style": "blues",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión tradicional de blues menor de 12 compases en Am (bVI7–V7 en compases 9–10; transponible a Dm).",
+    "focus": {
+      "guitarra": "Contrastá el color menor de Am7 y Dm7 con la tensión bVI7 → V7 (F7 → E7) y la cadencia Bm7b5 → E7.",
+      "bajo": "Usá la tercera menor en el tiempo 2 y descendé por semitono de F7 a E7 en los compases 9 y 10."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Am7",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Bm7b5",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 0.5,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Transponé +5 semitonos para tocar el mismo blues menor en Dm.",
+    "goals": [
+      "Reconocer de oído la bajada cromática bVI7 → V7 → Im7.",
+      "Digitar sin pausa el semidisminuido Bm7b5 hacia E7 en el último compás."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-summertime",
+    "version": 3,
+    "type": "harmony",
+    "title": "Summertime (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "balada",
+      "menor"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 68,
+      "target": 100,
+      "step": 4
+    },
+    "form": "16 compases (ABAC)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "ballad",
+    "verified": false,
+    "sourceRef": "Progresión armónica estándar de 16 compases en Am (solo cifrado; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Trabajá el balanceo suave Am6–E7 con voicings cálidos en blancas y espacio entre ataques.",
+      "bajo": "Alterná blancas profundas (pedal en 2 tiempos) en los primeros 4 compases y pasá a walking tranquilo en el IVm."
+    },
+    "comping": {
+      "pattern": "balada-lenta",
+      "beatsPerBar": 4,
+      "feeling": "ballad"
+    },
+    "progression": [
+      {
+        "chord": "Am6",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am6",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am6",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am6",
+        "bars": 2,
+        "section": "C"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Bm7b5",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Am6",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Bm7b5",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 0.5,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Solo estructura armónica estándar de 16 compases; ideal como primer standard menor de jazz.",
+    "goals": [
+      "Sostener el clima de balada lenta sin acelerar en los cambios de dos tiempos.",
+      "Enlazar Am6 → E7 con movimiento mínimo de dedos."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-so-what",
+    "version": 3,
+    "type": "harmony",
+    "title": "So What (forma modal AABA)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "modal",
+      "dorico",
+      "aaba"
+    ],
+    "key": "Dm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 138,
+      "step": 6
+    },
+    "form": "AABA (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Forma modal AABA de 32 compases en D dórico / Eb dórico (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Explorá voicings cuartales («So What» o drop 2 de Dm7) desplazándolos por la escala dórica y subiendo un semitono en el puente B.",
+      "bajo": "Mantené la cuenta exacta de los 16 compases en Dm7 para entrar con seguridad al salto cromático de Ebm7 en la sección B."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebm7",
+        "bars": 4,
+        "section": "B"
+      },
+      {
+        "chord": "Ebm7",
+        "bars": 4,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A3"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 4,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Cada bloque representa 4 compases para seguir la forma completa de 32 compases sin perder la estructura AABA.",
+    "goals": [
+      "Contar frases de 8 compases sin perder el inicio del puente en Ebm7.",
+      "Variar rítmicamente el comping sobre un acorde estático prolongado."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-all-of-me",
+    "version": 3,
+    "type": "harmony",
+    "title": "All of Me (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "swing",
+      "dominantes-secundarios",
+      "abac"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 152,
+      "step": 6
+    },
+    "form": "ABAC (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar ABAC de 32 compases en C mayor (solo cifrado; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Practicá comping Freddie Green (negras suaves) siguiendo la cadena de dominantes secundarios E7 → A7 → Dm7.",
+      "bajo": "Construí un walking claro sobre dos compases por acorde antes de acelerar el ritmo armónico en la sección C."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "E7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Fm6",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "A7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Prestá atención al intercambio modal Fmaj7 → Fm6 en la sección C: la nota Lab desciende suavemente hacia Sol.",
+    "goals": [
+      "Encadenar los dominantes secundarios E7 y A7 con buena conducción de voces.",
+      "Resolver con fluidez el final de la sección C sin cortar el groove."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-autumn-leaves",
+    "version": 3,
+    "type": "harmony",
+    "title": "Autumn Leaves (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "ii-v-i",
+      "mayor-y-menor",
+      "aabc"
+    ],
+    "key": "Gm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 160,
+      "step": 6
+    },
+    "form": "AABC (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar AABC de 32 compases en Sol menor / Sib mayor (solo armonía; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Estudiá la sucesión de ii–V–I mayor (Cm7–F7–Bbmaj7) y ii–V–i menor (Am7b5–D7–Gm7) manteniendo las notas guía (3.ª y 7.ª).",
+      "bajo": "Conectá el ciclo de cuartas diatónicas y el descenso cromático Gm7–C7–Fm7–Bb7 en la sección C."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am7b5",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Am7b5",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Am7b5",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7b5",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 2,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Transponé −3 semitonos si preferís estudiarla en Em / G mayor, tonalidad frecuente en guitarra.",
+    "goals": [
+      "Tocar toda la forma enlazando 3.ª y 7.ª de cada acorde sin saltos bruscos.",
+      "Usar el bucle de sección C para dominar la bajada Gm7–C7–Fm7–Bb7."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-blue-bossa",
+    "version": 3,
+    "type": "harmony",
+    "title": "Blue Bossa (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "bossa",
+      "ii-v-i",
+      "modulacion"
+    ],
+    "key": "Cm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 144,
+      "step": 6
+    },
+    "form": "16 compases (AB)",
+    "rights": "harmony_only",
+    "style": "bossa",
+    "feeling": "bossa",
+    "verified": false,
+    "sourceRef": "Progresión estándar de 16 compases en Cm con modulación a Db mayor (solo cifrado; sin melodía).",
+    "focus": {
+      "guitarra": "Mantené la clave rítmica de bossa nova (síncopas limpias) y prepará la modulación brillante a Ebm7–Ab7–Dbmaj7.",
+      "bajo": "Tocá bajo de bossa en 2 (negra con puntillo + corchea anticipada, alternando raíz y quinta)."
+    },
+    "comping": {
+      "pattern": "bossa",
+      "beatsPerBar": 4,
+      "feeling": "bossa"
+    },
+    "progression": [
+      {
+        "chord": "Cm7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7b5",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Ebm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Ab7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dbmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7b5",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7b5",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "B"
+      }
+    ],
+    "abc": null,
+    "notes": "Excelente pieza para practicar la transición entre un centro menor (Cm) y una modulación momentánea medio tono arriba (Db mayor).",
+    "goals": [
+      "Sostener el groove de bossa nova con pulsación liviana y precisa.",
+      "Entrar y salir de la región de Dbmaj7 sin titubeos."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-fly-me-to-the-moon",
+    "version": 3,
+    "type": "harmony",
+    "title": "Fly Me to the Moon (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "swing",
+      "ciclo-de-cuartas",
+      "abac"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 144,
+      "step": 6
+    },
+    "form": "ABAC (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar ABAC de 32 compases en C mayor / Am (solo armonía; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Aprovechá la cadena diatónica de cuartas (Am7–Dm7–G7–Cmaj7–Fmaj7–Bm7b5–E7–Am7) para practicar conducciones de voces en todo el mango.",
+      "bajo": "Alterná movimiento por grados conjuntos y saltos de cuarta limpios para realzar el ciclo armónico."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bm7b5",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Bm7b5",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Em7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "A7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Podés cambiar el patrón de acompañamiento a «Bossa nova» para practicarla también en versión bossa.",
+    "goals": [
+      "Enlazar el ciclo diatónico de 8 compases en una sola posición del mango.",
+      "Diferenciar el cierre de la sección B del de la sección C (Em7–A7–Dm7–G7–Cmaj7)."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-satin-doll",
+    "version": 3,
+    "type": "harmony",
+    "title": "Satin Doll (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "swing",
+      "ii-v",
+      "aaba"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 138,
+      "step": 6
+    },
+    "form": "AABA (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar AABA de 32 compases en C mayor con cadenas de ii–V (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Deslizá los bloques ii–V paralelos (Dm7–G7 → Em7–A7 → Am7–D7 → Abm7–Db7) buscando voicings con movimiento cromático limpio.",
+      "bajo": "Alterná 2 tiempos por acorde en las secciones A con walking en negras fluidas durante el puente en F y G."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Em7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "A7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Observá el descenso paralelo Am7–D7 hacia Abm7–Db7 (sustituto tritonal de Dm7–G7) resolviendo a Cmaj7.",
+    "goals": [
+      "Mantener el swing relajado cuando cambian dos acordes por compás.",
+      "Resolver el puente Gm7–C7–Fmaj7 y Am7–D7–G7 con claridad."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-take-the-a-train",
+    "version": 3,
+    "type": "harmony",
+    "title": "Take the \"A\" Train (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "swing",
+      "ii7",
+      "aaba"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 168,
+      "step": 6
+    },
+    "form": "AABA (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar AABA de 32 compases en C mayor con dominante II7 (D7/D7#11) (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Destacá el color lidio dominante del D7 en los compases 3–4 (podés agregar la #11 = Sol#) antes de resolver a Dm7–G7.",
+      "bajo": "Mantené un walking impulsivo hacia adelante y remarcá la bajada Cmaj7 → C7 hacia el puente en Fmaj7."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 4,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A3"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A3"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "En el compás 3–4 de cada A, el D7 suele tocarse como D7(b5) o D9(#11) para su sonoridad característica.",
+    "goals": [
+      "Controlar la transición D7 → Dm7 (la tercera mayor Fa# desciende a Fa natural).",
+      "Mantener el swing liviano a tempos medios-altos."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-billies-bounce",
+    "version": 3,
+    "type": "harmony",
+    "title": "Billie's Bounce / Bebop Blues en F",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "blues",
+      "bebop",
+      "jazz-blues",
+      "dim7"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 112,
+      "target": 180,
+      "step": 8
+    },
+    "form": "Blues bebop 12 compases",
+    "rights": "harmony_only",
+    "style": "blues",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar de jazz blues bebop en F (tipo Billie's Bounce / Now's the Time; solo armonía).",
+    "focus": {
+      "guitarra": "Practicá voicings económicos (3 notas) para el paso Bb7 → Bdim7 → F7/C → Am7–D7 y el turnaround rápido.",
+      "bajo": "Resaltá la subida cromática Bb → B natural → C (bajo de F7/C) en los compases 5–7."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Bdim7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 0.5,
+        "section": "C"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Base armónica esencial del blues bebop en F; funciona para decenas de temas clásicos del género.",
+    "goals": [
+      "Tocar la cadencia secundaria Cm7–F7 en el compás 4 resolviendo a Bb7.",
+      "Mantener precisión rítmica en el turnaround a 160–180 BPM."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-mr-pc",
+    "version": 3,
+    "type": "harmony",
+    "title": "Mr. P.C. (Blues menor rápido en Cm)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "blues",
+      "menor",
+      "up-tempo"
+    ],
+    "key": "Cm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 124,
+      "target": 210,
+      "step": 8
+    },
+    "form": "Blues menor 12 compases",
+    "rights": "harmony_only",
+    "style": "blues",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar de blues menor rápido en Cm (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Usá voicings cortos y ágiles con comping sincopado; evitá acordes pesados de 6 cuerdas a tempo rápido.",
+      "bajo": "Entrená resistencia y claridad de articulación en walking up-tempo, con bajada Ab7 → G7 bien definida."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Cm7",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Ab7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "C"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "C"
+      }
+    ],
+    "abc": null,
+    "notes": "Activá el Entrenador de velocidad (+4 o +6 BPM) para subir gradualmente desde 124 hasta 210 BPM sin tensión en la mano.",
+    "goals": [
+      "Sostener el pulso estable sin correr en los 4 compases iniciales de Cm7.",
+      "Conectar Ab7 → G7 → Cm7 con limpieza a tempo rápido."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-misty",
+    "version": 3,
+    "type": "harmony",
+    "title": "Misty (estructura armónica de balada)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "balada",
+      "modulacion",
+      "aaba"
+    ],
+    "key": "Eb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 84,
+      "step": 4
+    },
+    "form": "AABA (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "ballad",
+    "verified": false,
+    "sourceRef": "Progresión estándar AABA de 32 compases en Eb mayor (solo armonía; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Estudiá voicings Drop 2 y Drop 3 con conducción suave de voz superior en las cadencias Bbm7–Eb7–Abmaj7 y Abm7–Db7–Ebmaj7.",
+      "bajo": "Tocá en tiempo de balada (blancas cantables o walking muy espaciado) respetando el espacio armónico."
+    },
+    "comping": {
+      "pattern": "balada-lenta",
+      "beatsPerBar": 4,
+      "feeling": "ballad"
+    },
+    "progression": [
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Abm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Db7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 2,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Prestá atención al backdoor cadence Abm7–Db7 → Ebmaj7 en los compases 4–5 de cada A.",
+    "goals": [
+      "Mantener subdivisión interna lenta y expresiva sin apresurar los cambios de dos tiempos.",
+      "Conectar suavemente el puente desde Abmaj7 hacia Am7–D7–Gm7–C7–Fm7–Bb7."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-ipanema",
+    "version": 3,
+    "type": "harmony",
+    "title": "The Girl from Ipanema (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "bossa",
+      "modulaciones",
+      "aaba"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 144,
+      "step": 6
+    },
+    "form": "AABA (40 compases)",
+    "rights": "harmony_only",
+    "style": "bossa",
+    "feeling": "bossa",
+    "verified": false,
+    "sourceRef": "Progresión estándar AABA de 40 compases en F mayor con puente de 16 compases (solo armonía; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Cuidá el ataque con dedos (estilo João Gilberto) y las modulaciones secuenciales del puente (Gbmaj7 → F#m7/D7 → Gm7/Eb7).",
+      "bajo": "Mantené la figura de bossa en 2 estable en los 16 compases del puente modulante."
+    },
+    "comping": {
+      "pattern": "bossa",
+      "beatsPerBar": 4,
+      "feeling": "bossa"
+    },
+    "progression": [
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Gb7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Gb7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Gb7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Gbmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "B7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F#m7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A3"
+      },
+      {
+        "chord": "Gm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Gb7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Fmaj7",
+        "bars": 2,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Activá el bucle en la sección B para automatizar las tres secuencias modulantes del puente de 16 compases.",
+    "goals": [
+      "Enlazar el sustituto tritonal Gb7 → Fmaj7 al final de cada sección A.",
+      "Tocar todo el puente de 16 compases con conducción de voces fluida."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-rhythm-changes",
+    "version": 3,
+    "type": "harmony",
+    "title": "I Got Rhythm (Rhythm Changes en Bb)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "rhythm-changes",
+      "turnaround",
+      "aaba"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 120,
+      "target": 210,
+      "step": 8
+    },
+    "form": "AABA (32 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar Rhythm Changes AABA de 32 compases en Bb mayor (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Usá voicings compactos (shell o 3 notas) para el ritmo armónico rápido de dos acordes por compás en las secciones A y dominantes en ciclo de cuartas en el puente.",
+      "bajo": "Alterná movimiento lineal de 2 tiempos en las secciones A y construí arcos melódicos largos sobre D7–G7–C7–F7 en la sección B."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Bbmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Edim7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Edim7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Edim7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "F7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "Bbmaj7",
+        "bars": 1,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Una de las formas pilares del repertorio bebop (Oleo, Anthropology, Dexter Rides Again, etc.).",
+    "goals": [
+      "Mantener conducción limpia en las secciones A a tempo rápido.",
+      "Conectar la línea guía del puente D7 → G7 → C7 → F7."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-all-the-things",
+    "version": 3,
+    "type": "harmony",
+    "title": "All the Things You Are (estructura armónica)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "modulaciones",
+      "ii-v-i",
+      "36-compases"
+    ],
+    "key": "Ab",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 168,
+      "step": 6
+    },
+    "form": "AABA (36 compases)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar de 36 compases recorriendo 5 centros tonales (Ab, C, Eb, G, E) (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Estudiá cada sección por separado con el bucle de forma para dominar los 5 centros tonales (Ab, C, Eb, G y E mayor).",
+      "bajo": "Practicá el paso suave por semitono en Cmaj7 → Cm7, Gmaj7 → Am7 y el final Dbmaj7 → Dbm7 → Cm7 → Bdim7 → Bbm7."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Fm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Dbmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Cmaj7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Gmaj7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Am7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gmaj7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F#m7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "B7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Emaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Dbmaj7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Dbm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Cm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Bdim7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Bbm7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "Abmaj7",
+        "bars": 1,
+        "section": "A3"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A3"
+      },
+      {
+        "chord": "C7",
+        "bars": 0.5,
+        "section": "A3"
+      }
+    ],
+    "abc": null,
+    "notes": "Observá la sección A3 extendida a 12 compases (36 en total) con la bajada cromática Dbmaj7 → Dbm7 → Cm7 → Bdim7 → Bbm7.",
+    "goals": [
+      "Identificar y enlazar los 5 centros tonales sin perder la referencia del pulso.",
+      "Tocar toda la forma de 36 compases en una sola región del mango."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-jazz-giant-steps",
+    "version": 3,
+    "type": "harmony",
+    "title": "Giant Steps (Coltrane changes)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "jazz",
+      "coltrane-changes",
+      "terceras-mayores"
+    ],
+    "key": "B",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 100,
+      "target": 200,
+      "step": 6
+    },
+    "form": "16 compases (ciclo de 3.ª mayores)",
+    "rights": "harmony_only",
+    "style": "jazz",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Progresión estándar de 16 compases con ciclo de terceras mayores B–G–Eb (solo armonía; sin melodía).",
+    "focus": {
+      "guitarra": "Practicá primero a 100 BPM con voicings Drop 2 o shell mínimos, anticipando el salto de tercera mayor entre Bmaj7, Gmaj7 y Ebmaj7.",
+      "bajo": "En la sección A (2 tiempos por acorde) priorizá raíz + nota de paso precisa; en la sección B abrí el walking sobre los ii–V–I."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "Bmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Gmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Gmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "F#7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bmaj7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Gmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C#m7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "F#7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Bmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Fm7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Bb7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "Ebmaj7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C#m7",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "F#7",
+        "bars": 0.5,
+        "section": "B"
+      }
+    ],
+    "abc": null,
+    "notes": "Trabajá primero a 90–100 BPM con la sección A en bucle y subí de a 4–6 BPM cuando la conducción salga sin dudas.",
+    "goals": [
+      "Enlazar los tres centros tonales simétricos (B, G, Eb) sin saltos bruscos de mano.",
+      "Subir gradualmente de 100 a 200 BPM manteniendo precisión armónica."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  }
+]

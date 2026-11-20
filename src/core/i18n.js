@@ -59,8 +59,81 @@ export const CATEGORY_LABELS = {
   'campo-armonico': 'Campo armónico',
   acompanamiento: 'Acompañamiento',
   'arpegios-de-acorde': 'Arpegios de acorde',
-  oido: 'Entrenamiento de oído'
+  oido: 'Entrenamiento de oído',
+  repertorio: 'Repertorio'
 };
+
+/**
+ * Etiquetas legibles para los estados de derechos de autor del módulo Repertorio.
+ */
+export const RIGHTS_LABELS = {
+  public_domain: 'Dominio público',
+  harmony_only: 'Solo armonía',
+  user_import: 'Importada'
+};
+
+/**
+ * Etiquetas legibles para los estilos musicales del repertorio.
+ */
+export const STYLE_LABELS = {
+  jazz: 'Jazz',
+  blues: 'Blues',
+  bossa: 'Bossa nova',
+  barroco: 'Barroco',
+  'clasico-romantico': 'Clásico-romántico',
+  tradicional: 'Tradicional',
+  tango: 'Tango'
+};
+
+/**
+ * Etiquetas legibles con tildes correctas para los tags internos de voicings.
+ */
+export const VOICING_TAG_LABELS = {
+  abierto: 'Abierto',
+  'clásica': 'Clásica',
+  cejilla: 'Cejilla',
+  CAGED: 'CAGED',
+  triada: 'Tríada',
+  inversion: 'Inversión',
+  drop2: 'Drop 2',
+  drop3: 'Drop 3',
+  shell: 'Shell',
+  power: 'Power chord',
+  extension: 'Extensión',
+  alterado: 'Alterado',
+  decima: 'Décima',
+  diada: 'Díada',
+  guias: 'Notas guía',
+  sugerido: 'Sugerido',
+  propio: 'Mi acorde'
+};
+
+/**
+ * Formatea una etiqueta interna de voicing con ortografía correcta en español.
+ * @param {string} tag Clave de etiqueta.
+ * @returns {string} Etiqueta legible con tildes.
+ */
+export function formatVoicingTag(tag) {
+  return VOICING_TAG_LABELS[tag] || tag;
+}
+
+/**
+ * Divide un símbolo de acorde ya formateado en parte base (raíz + 'm' normal, nunca superíndice)
+ * y extensión/tensión opcional (7, maj7, 9, 13, b5, etc.) más bajo alternativo (/E).
+ * @param {string} chordSymbol Símbolo de acorde americano.
+ * @param {'americano'|'latino'} [notation='americano'] Sistema de cifrado.
+ * @returns {{ base: string, ext: string, bass: string }} Partes listas para tipografía limpia.
+ */
+export function splitChordTypography(chordSymbol, notation = 'americano') {
+  const formatted = formatChordSymbol(chordSymbol, notation);
+  const [main, bass = ''] = formatted.split('/');
+  // Mantiene raíz + 'm' menor (ej. "Em", "Am", "Mim") en línea normal, sin capturar la 'm' de "maj7"
+  const match = main.match(/^((?:Do|Re|Mi|Fa|Sol|La|Si|[A-G])[#b♯♭]?(?:m(?!aj))?)(.*)$/);
+  if (!match) return { base: main, ext: '', bass };
+  const [, base, rawExt] = match;
+  const ext = rawExt.replace(/b/g, '♭').replace(/#/g, '♯');
+  return { base, ext, bass };
+}
 
 /**
  * Etiquetas legibles para los instrumentos de síntesis de audio.

@@ -18,7 +18,8 @@ export const AREA_ORDER = [
   'ritmo',
   'walking',
   'arpegio',
-  'oido'
+  'oido',
+  'repertorio'
 ];
 
 /**
@@ -48,6 +49,12 @@ export class PracticeListViewModel {
     this.originFilter = new Observable('todos');
     /** Filtro opcional por etiqueta. */
     this.tagFilter = new Observable('');
+    /** Filtro de estilo en la sección Repertorio ('todos' | estilo). */
+    this.repertoireStyleFilter = new Observable('todos');
+    /** Filtro de derechos en la sección Repertorio ('todos' | 'public_domain' | 'harmony_only' | 'user_import'). */
+    this.repertoireRightsFilter = new Observable('todos');
+    /** Filtro de nivel en la sección Repertorio ('todos' | 1..5). */
+    this.repertoireLevelFilter = new Observable('todos');
     /** Texto libre de búsqueda en la Search Bar Material 3. */
     this.searchQuery = new Observable('');
     /** Nivel actualmente abierto en la ruta de niveles (null = automático según progreso). */
@@ -107,6 +114,30 @@ export class PracticeListViewModel {
     this.userPractices = new ComputedObservable(
       [this.instrumentPractices],
       () => this.instrumentPractices.value.filter((p) => p.origin === 'user')
+    );
+
+    /** Piezas de la sección Repertorio filtradas por instrumento, estilo, derechos y nivel. */
+    this.repertoirePractices = new ComputedObservable(
+      [
+        this.instrumentPractices,
+        this.repertoireStyleFilter,
+        this.repertoireRightsFilter,
+        this.repertoireLevelFilter
+      ],
+      () => {
+        const styleF = this.repertoireStyleFilter.value;
+        const rightsF = this.repertoireRightsFilter.value;
+        const lvlF = this.repertoireLevelFilter.value;
+        return this.instrumentPractices.value
+          .filter((p) => p.isRepertoire)
+          .filter((p) => {
+            if (styleF !== 'todos' && p.style !== styleF) return false;
+            if (rightsF !== 'todos' && p.rights !== rightsF) return false;
+            if (lvlF !== 'todos' && p.level !== Number(lvlF)) return false;
+            return true;
+          })
+          .sort((a, b) => a.level - b.level || a.title.localeCompare(b.title, 'es-AR'));
+      }
     );
 
     /** Etiquetas disponibles en el instrumento activo para sugerir en el filtro. */

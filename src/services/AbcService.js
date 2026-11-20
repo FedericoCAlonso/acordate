@@ -6,7 +6,171 @@ import {
   getKeySignatureMap,
   parseTimeSignature
 } from '../core/MusicTheory.js';
-import { writtenMidiToSoundingMidi } from '../core/PitchPolicy.js';
+import { getPitchPolicy, writtenMidiToSoundingMidi } from '../core/PitchPolicy.js';
+
+/**
+ * Valida la duración exacta de cada compás por voz en un texto ABC (Control de calidad B4.1).
+ * Tolera anacrusa inicial (primer compás incompleto) y compás final incompleto.
+ * @param {string} abcText Partitura en notación ABC.
+ * @returns {{ valid: boolean, errors: string[], measureCount: number }} Resultado de validación.
+ */
+export function validateAbcMeasures(abcText) {
+  const errors = [];
+  const text = String(abcText || '').trim();
+  if (!text) return { valid: false, errors: ['ABC vacío.'], measureCount: 0 };
+
+  const timeSig = extractTimeSignatureFromAbc(text, '4/4');
+  const { beats, beatUnit } = parseTimeSignature(timeSig);
+  const expectedBarQuarters = beats * (4 / beatUnit);
+
+  const unitMatch = text.match(/^L:\s*(\d+)\/(\d+)/m);
+  const unitQuarters = unitMatch ? (Number(unitMatch[1]) / Number(unitMatch[2])) * 4 : 0.5;
+
+  // Separa el cuerpo musical por voz (V:1, V:2, etc.)
+  const voices = new Map();
+  let curVoice = 'V:1';
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('%')) continue;
+    const vMatch = line.match(/^V:\s*(\S+)/);
+    if (vMatch) {
+      curVoice = `V:${vMatch[1]}`;
+      if (!voices.has(curVoice)) voices.set(curVoice, []);
+      continue;
+    }
+    if (/^[A-Za-z]:/.test(line)) continue;
+    if (!voices.has(curVoice)) voices.set(curVoice, []);
+    voices.get(curVoice).push(line);
+  }
+
+  let maxBars = 0;
+
+  for (const [voiceId, lines] of voices.entries()) {
+    const body = lines.join(' ');
+    const rawBars = body
+      .split(/:\|\||\|\||:\||\|:|\|\]|\[\||\|/)
+      .map((b) => b.trim())
+      .filter((b) => b.length > 0 && /[A-Ga-gzZx]/.test(b));
+
+    maxBars = Math.max(maxBars, rawBars.length);
+
+    rawBars.forEach((barText, barIdx) => {
+      // Limpia acordes/anotaciones entre comillas, decoraciones !...! y ligaduras de fraseo ()
+      const cleaned = barText
+        .replace(/"[^"]*"/g, ' ')
+        .replace(/![^!]*!/g, ' ')
+        .replace(/\[[A-Za-z]:[^\]]*\]/g, ' ');
+
+      let sum = 0;
+      let tupletRemaining = 0;
+      let tupletFactor = 1;
+      const tokenRe = /\((\d+)|\[[^\]]+\](\d*\/?\d*)|(?:\^{1,2}|_{1,2}|=)?[A-Ga-g][,']*(\d*\/?\d*)|[zZx](\d*\/?\d*)|([<>]+)/g;
+      let m;
+      while ((m = tokenRe.exec(cleaned)) !== null) {
+        if (m[1]) {
+          const n = Number(m[1]);
+          if (n === 3) {
+            tupletRemaining = 3;
+            tupletFactor = 2 / 3;
+          } else if (n === 2) {
+            tupletRemaining = 2;
+            tupletFactor = 3 / 2;
+          }
+          continue;
+        }
+        if (m[5]) {
+          // Ritmo punteado > o < redistribuye entre dos notas sin cambiar la suma total del compás
+          continue;
+        }
+        const durStr = m[2] ?? m[3] ?? m[4] ?? '';
+        let mult = 1;
+        if (durStr) {
+          if (durStr.includes('/')) {
+            const [numS, denS] = durStr.split('/');
+            const num = numS ? Number(numS) : 1;
+            const den = denS ? Number(denS) : 2;
+            if (den > 0) mult = num / den;
+          } else {
+            mult = Number(durStr) || 1;
+          }
+        }
+        let durQ = unitQuarters * mult;
+        if (tupletRemaining > 0) {
+          durQ *= tupletFactor;
+          tupletRemaining -= 1;
+        }
+        sum += durQ;
+      }
+
+      const isFirst = barIdx === 0;
+      const isLast = barIdx === rawBars.length - 1;
+      const diff = Math.abs(sum - expectedBarQuarters);
+
+      if (diff > 0.05) {
+        // Permite anacrusa inicial o compás final incompleto (nunca excedido)
+        if ((isFirst || isLast) && sum > 0 && sum < expectedBarQuarters + 0.05) {
+          return;
+        }
+        errors.push(`${voiceId} compás ${barIdx + 1}: suma ${sum.toFixed(2)} negras (esperado ${expectedBarQuarters.toFixed(2)} en ${timeSig}).`);
+      }
+    });
+  }
+
+  return { valid: errors.length === 0, errors, measureCount: maxBars };
+}
+
+/**
+ * Valida que todas las notas sonantes de una partitura ABC estén dentro del rango físico real
+ * del instrumento según PitchPolicy (Guitarra >= Mi2/MIDI 40; Bajo >= Mi1/MIDI 28) (Control B4.2).
+ * @param {string} abcText Partitura ABC.
+ * @param {'guitarra'|'guitarra-clasica'|'bajo'} instrument Instrumento destino.
+ * @returns {{ valid: boolean, errors: string[], minMidi: number|null, maxMidi: number|null }} Resultado de rango.
+ */
+export function validateAbcInstrumentRange(abcText, instrument = 'guitarra') {
+  const text = String(abcText || '').trim();
+  const policy = getPitchPolicy(instrument);
+  const keyMatch = text.match(/^K:\s*([A-G][#b]?m?)/m);
+  const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
+  const clefMatch = text.match(/clef\s*=\s*([a-z0-9+-]+)/i);
+  const policyTarget = clefMatch
+    ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1])
+    : instrument;
+
+  const musicBody = text
+    .split('\n')
+    .filter((l) => {
+      const t = l.trim();
+      return t && !t.startsWith('%') && !/^[A-Za-z]:/.test(t);
+    })
+    .join(' ')
+    .replace(/"[^"]*"/g, ' ')
+    .replace(/![^!]*!/g, ' ')
+    .replace(/\[[A-Za-z]:[^\]]*\]/g, ' ');
+
+  const errors = [];
+  let minMidi = Infinity;
+  let maxMidi = -Infinity;
+  const noteRe = /(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g;
+  let m;
+  while ((m = noteRe.exec(musicBody)) !== null) {
+    const token = `${m[1] || ''}${m[2]}${m[3] || ''}`;
+    const written = abcPitchToMidi(token, keyMap);
+    if (written === null) continue;
+    const sounding = writtenMidiToSoundingMidi(written, policyTarget, 'real');
+    if (sounding < minMidi) minMidi = sounding;
+    if (sounding > maxMidi) maxMidi = sounding;
+    if (sounding < policy.minSoundingMidi || sounding > policy.maxSoundingMidi) {
+      errors.push(`Nota "${token}" suena MIDI ${sounding}, fuera de rango [${policy.minSoundingMidi}..${policy.maxSoundingMidi}] para ${instrument}.`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    minMidi: Number.isFinite(minMidi) ? minMidi : null,
+    maxMidi: Number.isFinite(maxMidi) ? maxMidi : null
+  };
+}
 
 /**
  * Servicio encapsulador sobre abcjs (versión fija 6.4.4) responsable de:
@@ -46,7 +210,9 @@ export class AbcService {
       fingerings = {},
       showBassFunctions = false,
       isBass = false,
-      stripTitle = true
+      stripTitle = true,
+      showHarmonicAnalysis = false,
+      harmonicAnalysis = []
     } = options;
 
     // Quita cabeceras T: del ABC que se dibuja para no duplicar ni recortar el título en el SVG
@@ -55,6 +221,16 @@ export class AbcService {
         .split('\n')
         .filter((line) => !/^T:/i.test(line.trim()))
         .join('\n');
+    }
+
+    // Combina V:1 y V:2 en un único pentagrama polifónico de guitarra clásica si no se especificó %%score
+    if (/^V:\s*1\b/m.test(result) && /^V:\s*2\b/m.test(result) && !/^%%score/m.test(result)) {
+      result = result.replace(/^(K:[^\n]*)/m, '$1\n%%score (1 2)');
+    }
+
+    // Capa opcional de análisis armónico (grados romanos / cadencias para guitarra clásica)
+    if (showHarmonicAnalysis && Array.isArray(harmonicAnalysis) && harmonicAnalysis.length > 0) {
+      result = this._injectHarmonicAnalysisLayer(result, harmonicAnalysis);
     }
 
     // 1) En bajo con funciones armónicas activas, anota R, 3, 5, 7, Crom debajo de cada nota
@@ -69,10 +245,10 @@ export class AbcService {
       result = result.replace(/"\^[^"]+"/g, '');
     }
 
-    // 3) En modo Pentagrama puro, oculta los símbolos de acorde para lectura pura
+    // 3) En modo Pentagrama puro, oculta los símbolos de acorde para lectura pura (mantiene digitaciones p-i-m-a)
     if (viewMode === 'pentagrama') {
       result = result.replace(/"([^"]+)"/g, (full, inner) => {
-        if (/^[\^_<>@]/.test(inner)) return full;
+        if (/^[\^_<>@]/.test(inner) || /^(p|i|m|a|[0-4])$/.test(inner.trim())) return full;
         return '';
       });
     } else if (chordNotation === 'latino') {
@@ -129,7 +305,8 @@ export class AbcService {
       responsive: 'resize',
       staffwidth: Math.max(250, Math.floor(effectiveWidth)),
       scale: zoom,
-      jazzchords: true,
+      // Desactivado para que "Em" y "Am" se muestren normales y no como "Eᵐ" / "Aᵐ"
+      jazzchords: false,
       paddingtop: 16,
       paddingbottom: 36,
       paddingleft: 6,
@@ -281,6 +458,8 @@ export class AbcService {
     const voiceCursors = new Map();
     const voiceMeasures = new Map();
     const voiceBarAcc = new Map();
+    /** Asigna índice lógico estable 0, 1, ... a cada voz (funciona con o sin %%score (1 2)). */
+    const voiceLogicalIndex = new Map();
 
     for (const line of visualObj.lines) {
       if (!Array.isArray(line.staff)) continue;
@@ -292,6 +471,10 @@ export class AbcService {
         if (!Array.isArray(staff.voices)) return;
         staff.voices.forEach((voice, voiceIdx) => {
           const vKey = `${staffIdx}-${voiceIdx}`;
+          if (!voiceLogicalIndex.has(vKey)) {
+            voiceLogicalIndex.set(vKey, voiceLogicalIndex.size);
+          }
+          const logicalVoice = voiceLogicalIndex.get(vKey);
           if (!voiceCursors.has(vKey)) voiceCursors.set(vKey, 0);
           if (!voiceMeasures.has(vKey)) voiceMeasures.set(vKey, 1);
           if (!voiceBarAcc.has(vKey)) voiceBarAcc.set(vKey, {});
@@ -315,9 +498,14 @@ export class AbcService {
             const durBeats = (elem.duration || 0.25) * 4;
             const isRest = Boolean(elem.rest);
 
-            if (staffIdx === 0 && voiceIdx === 0 && Array.isArray(elem.chord)) {
+            if (logicalVoice === 0 && Array.isArray(elem.chord)) {
               for (const chObj of elem.chord) {
-                if (chObj.position === 'default' && chObj.name && !/^[\^_<>@]/.test(chObj.name)) {
+                if (
+                  chObj.position === 'default' &&
+                  chObj.name &&
+                  !/^[\^_<>@]/.test(chObj.name) &&
+                  /^[A-G][#b]?/.test(chObj.name.trim())
+                ) {
                   const americanSymbol = rawChordQueue[chordCursor] || chObj.name;
                   chordCursor += 1;
                   chords.push({
@@ -355,7 +543,8 @@ export class AbcService {
               midis,
               isRest,
               measureIndex,
-              isBassVoice: isStaffBass || voiceIdx > 0,
+              voiceIndex: logicalVoice,
+              isBassVoice: isStaffBass || logicalVoice > 0,
               svgElements
             });
 
@@ -385,7 +574,8 @@ export class AbcService {
       beatsPerMeasure,
       beatUnit,
       measureCount,
-      isBassPiece
+      isBassPiece,
+      hasMultipleVoices: voiceCursors.size > 1
     };
   }
 
@@ -609,6 +799,52 @@ export class AbcService {
           }
           return token;
         });
+      })
+      .join('\n');
+  }
+
+  /**
+   * Inyecta la capa opcional de análisis armónico (grados romanos y cadencias, ej. I, V7, ii6)
+   * debajo del primer pulso de cada compás de la voz principal en obras de guitarra clásica.
+   * @param {string} abcText Texto ABC.
+   * @param {Array<{ measure: number, label: string }|string>} analysis Lista de grados por compás.
+   * @returns {string} ABC enriquecido con anotaciones inferiores "_...".
+   */
+  _injectHarmonicAnalysisLayer(abcText, analysis) {
+    const byMeasure = new Map();
+    analysis.forEach((entry, idx) => {
+      if (typeof entry === 'string') {
+        if (entry.trim()) byMeasure.set(idx + 1, entry.trim());
+      } else if (entry && entry.label) {
+        byMeasure.set(Number(entry.measure) || idx + 1, String(entry.label).trim());
+      }
+    });
+    if (byMeasure.size === 0) return abcText;
+
+    let measureCounter = 0;
+    let inFirstVoice = true;
+
+    return abcText
+      .split('\n')
+      .map((line) => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('%')) return line;
+        if (/^V:\s*/.test(trimmed)) {
+          inFirstVoice = /^V:\s*1\b/.test(trimmed);
+          return line;
+        }
+        if (/^[A-Za-z]:/.test(trimmed) || !inFirstVoice) return line;
+
+        const bars = line.split('|');
+        return bars
+          .map((bar) => {
+            if (!/[A-Ga-gz]/.test(bar)) return bar;
+            measureCounter += 1;
+            const roman = byMeasure.get(measureCounter);
+            if (!roman) return bar;
+            return bar.replace(/(\[?[A-Ga-g][,']*)/, `"_${roman}"$1`);
+          })
+          .join('|');
       })
       .join('\n');
   }

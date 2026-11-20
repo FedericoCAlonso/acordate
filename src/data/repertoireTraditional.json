@@ -1,0 +1,1362 @@
+[
+  {
+    "id": "rep-trad-amazing-grace",
+    "version": 3,
+    "type": "mixed",
+    "title": "Amazing Grace (melodía y acordes en G)",
+    "instruments": [
+      "guitarra",
+      "guitarra-clasica"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "3/4",
+      "pentatonica",
+      "dominio-publico"
+    ],
+    "key": "G",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 72,
+      "target": 96,
+      "step": 4
+    },
+    "form": "16 compases (vals lento)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Himno tradicional «New Britain» (siglo XIX, dominio público). Transcripción propia para guitarra en Sol mayor.",
+    "focus": {
+      "guitarra": "Cantá la melodía pentatónica mayor en 3/4 con ligados expresivos mientras escuchás la base de vals I–IV–V.",
+      "guitarra-clasica": "Cuidá el fraseo ligado en 3/4 y la acentuación natural en el primer tiempo de cada compás."
+    },
+    "comping": {
+      "pattern": "vals",
+      "beatsPerBar": 3,
+      "feeling": "waltz"
+    },
+    "progression": [
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 3,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=treble-8\nD | \"G\"G2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"G\"G2 B/G/ | \"G\"B2 A | \"D7\"d3- | \"D7\"d2 B |\n\"G\"d2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"Em\"G2 B/G/ | \"G\"B2 A | \"D7\"G3- | \"G\"G2 |]",
+    "notes": "Prestá atención a la anacrusa inicial en el tiempo 3 (Re) y a las corcheas ligadas de la melodía tradicional.",
+    "goals": [
+      "Tocar los 16 compases ligando las notas con sonido cantable.",
+      "Acompañar la misma forma en ritmo de vals (bajo + dos acordes)."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-saints",
+    "version": 3,
+    "type": "mixed",
+    "title": "When the Saints Go Marching In (C mayor)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "dixieland",
+      "sincopa",
+      "dominio-publico"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 136,
+      "step": 6
+    },
+    "form": "16 compases (AB)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Espiritual tradicional norteamericano (siglo XIX, dominio público). Transcripción propia en Do mayor.",
+    "focus": {
+      "guitarra": "Mantené las notas largas ligadas entre compases sin perder el pulso firme en 4/4.",
+      "bajo": "Usá la progresión I–V7–IV–I para practicar un walking alegre en dos o en cuatro tiempos."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      {
+        "chord": "C",
+        "bars": 4,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "F",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\nz C E F | \"C\"G4- | \"C\"G C E F | \"C\"G4- | \"C\"G C E F | \"C\"G2 E2 | \"C\"C2 E2 | \"G7\"D4- | \"G7\"D z E D |\n\"C\"C3 E | \"C7\"G2 G F | \"F\"E4- | \"F\"E z E F | \"C\"G2 E2 | \"G7\"D2 D2 | \"C\"C4- | \"C\"C4 |]",
+    "notes": "Las entradas en anacrusa (silencio en el tiempo 1, entrada en 2–3–4) son la clave rítmica del tema.",
+    "goals": [
+      "Entrar con precisión tras el silencio del primer tiempo en cada frase.",
+      "Tocar la melodía y luego alternar al acompañamiento con swing liviano."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-greensleeves",
+    "version": 3,
+    "type": "mixed",
+    "title": "Greensleeves (melodía tradicional en Am)",
+    "instruments": [
+      "guitarra-clasica",
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "renacentista",
+      "6/8",
+      "dominio-publico"
+    ],
+    "key": "Am",
+    "timeSignature": "6/8",
+    "tempo": {
+      "start": 66,
+      "target": 92,
+      "step": 4
+    },
+    "form": "16 compases (AB, 6/8)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Melodía tradicional inglesa (registrada en 1580, dominio público). Transcripción propia en La menor.",
+    "focus": {
+      "guitarra-clasica": "Acentuá el balanceo ternario de 6/8 (pulso en 1 y 4) y distinguí el color dórico (Fa#) de la sensible armónica (Sol#).",
+      "guitarra": "Alterná melodía con púa alternada suave y acompañamiento arpegiado en 6/8."
+    },
+    "comping": {
+      "pattern": "arpegio-pima",
+      "beatsPerBar": 6,
+      "feeling": "waltz"
+    },
+    "progression": [
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "F",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nA | \"Am\"c2 d e2 f/e/ | \"G\"d2 B G2 A/B/ | \"F\"c2 A A2 ^G/A/ | \"E7\"B2 ^G E2 A |\n\"Am\"c2 d e2 f/e/ | \"G\"d2 B G2 A/B/ | \"E7\"c2 B/A/ ^G2 ^F/^G/ | \"Am\"A3 A3 |\n\"C\"g3 g2 ^f/e/ | \"G\"d2 B G2 A/B/ | \"F\"c2 A A2 ^G/A/ | \"E7\"B2 ^G E3 |\n\"C\"g3 g2 ^f/e/ | \"G\"d2 B G2 A/B/ | \"E7\"c2 B/A/ ^G2 ^F/^G/ | \"Am\"A3 A2 |]",
+    "notes": "Observá el uso clásico de las notas alteradas ^F y ^G (escala menor melódica) en las cadencias hacia E7 y Am.",
+    "goals": [
+      "Leer con soltura las alteraciones accidentales Fa# y Sol# en primera posición.",
+      "Mantener el balanceo fluido de dos pulsos ternarios por compás."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-rising-sun",
+    "version": 3,
+    "type": "mixed",
+    "title": "House of the Rising Sun (arpegio y tema en Am)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "folk",
+      "6/8",
+      "arpegio",
+      "dominio-publico"
+    ],
+    "key": "Am",
+    "timeSignature": "6/8",
+    "tempo": {
+      "start": 70,
+      "target": 108,
+      "step": 6
+    },
+    "form": "16 compases (6/8)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Balada folk tradicional norteamericana (dominio público). Transcripción propia de línea melódica y ciclo armónico en Am.",
+    "focus": {
+      "guitarra": "Practicá tanto la melodía vocal en 6/8 como el célebre ciclo de acordes arpegiados Am–C–D–F–Am–C–E7."
+    },
+    "comping": {
+      "pattern": "arpegio-asc",
+      "beatsPerBar": 6,
+      "feeling": "waltz"
+    },
+    "progression": [
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "D",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "F",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am",
+        "bars": 2,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nE | \"Am\"A2 A B2 c | \"C\"e2 d c2 A | \"D\"d3 ^f2 d | \"F\"c3 A2 c |\n\"Am\"e2 e e2 d | \"C\"c2 A G2 E | \"E7\"B6- | \"E7\"B3 z2 e |\n\"Am\"a2 a a2 g | \"C\"e2 d c2 A | \"D\"d3 ^f2 d | \"F\"c3 A2 c |\n\"Am\"e2 c A2 A | \"E7\"B2 ^G E2 E | \"Am\"A6- | \"Am\"A3 z2 |]",
+    "notes": "Prestá atención al acorde D mayor (IV mayor prestado del modo dórico) antes de bajar a F mayor (bVI).",
+    "goals": [
+      "Tocar el ciclo de acordes en arpegio de 6 corcheas sin cortar el sonido entre cambios.",
+      "Cantar y tocar la melodía respetando las ligaduras de compás."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-scarborough-fair",
+    "version": 3,
+    "type": "mixed",
+    "title": "Scarborough Fair (modo Em dórico)",
+    "instruments": [
+      "guitarra-clasica",
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "dorico",
+      "3/4",
+      "dominio-publico"
+    ],
+    "key": "Em",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 84,
+      "target": 116,
+      "step": 4
+    },
+    "form": "16 compases (vals dórico)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Balada tradicional inglesa (dominio público). Transcripción propia en Mi dórico (sexta mayor Do#).",
+    "focus": {
+      "guitarra-clasica": "Destacá el color medieval del modo dórico (nota Do# sobre el acorde A mayor en el compás 8) con sonido cálido cerca de la boca.",
+      "guitarra": "Practicá arpegios en 3/4 manteniendo la relación modal Em–D–G–A."
+    },
+    "comping": {
+      "pattern": "vals",
+      "beatsPerBar": 3,
+      "feeling": "waltz"
+    },
+    "progression": [
+      {
+        "chord": "Em",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "D",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Em",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "D",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:Em clef=treble-8\n\"Em\"E2 E | \"Em\"B2 B | \"D\"F>G F | \"D\"E3 | \"Em\"z B d | \"G\"e2 d | \"Em\"B ^c A | \"Em\"B3 |\n\"G\"z e e | \"G\"e2 d | \"D\"B A G | \"Em\"F D2 | \"Em\"E2 B | \"D\"A2 G | \"D\"F E D | \"Em\"E3 |]",
+    "notes": "El modo dórico se distingue por la sexta mayor (Do#) en lugar de la sexta menor, creando un carácter modal muy claro.",
+    "goals": [
+      "Reconocer auditivamente el color del modo dórico en Mi.",
+      "Frasear con dinámicas suaves y respiración entre frases de 4 compases."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-danny-boy",
+    "version": 3,
+    "type": "mixed",
+    "title": "Danny Boy / Londonderry Air (balada en C)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "tradicional",
+      "balada",
+      "fraseo",
+      "dominio-publico"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 82,
+      "step": 4
+    },
+    "form": "16 compases (balada)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "ballad",
+    "verified": false,
+    "sourceRef": "Melodía tradicional irlandesa «Londonderry Air» (publicada en 1855, dominio público). Transcripción propia en Do mayor.",
+    "focus": {
+      "guitarra": "Trabajá el vibrato suave, el legato y el rango melódico amplio de la frase A hacia el clímax agudo de la sección B."
+    },
+    "comping": {
+      "pattern": "balada-lenta",
+      "beatsPerBar": 4,
+      "feeling": "ballad"
+    },
+    "progression": [
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "F",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "F",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:C clef=treble-8\nB,CD | \"C\"E3 D E A G E | \"C\"D C A,2 z C E F | \"F\"G3 A G E C E | \"F\"D4 z B, C D |\n\"C\"E3 D E A G E | \"Am\"D C A,2 z B, C D | \"Dm7\"E3 F E D C D | \"G7\"C4 z G A B |\n\"C\"c3 B B A G A | \"C\"G E C2 z G A B | \"F\"c3 B B A G E | \"Dm7\"D4 z G G G |\n\"C\"e3 d d c A c | \"Am\"G E C2 z B, C D | \"G7\"E A G E D C B, D | \"C\"C4 z |]",
+    "notes": "Cuidado con el salto de rango desde las notas graves en 5.ª cuerda hasta el Mi agudo (1.ª cuerda al aire) en la sección B.",
+    "goals": [
+      "Conectar los cambios de posición del mango sin cortar la línea cantable.",
+      "Usar la armonía para practicar un acompañamiento de balada o chord-melody."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-entertainer",
+    "version": 3,
+    "type": "mixed",
+    "title": "The Entertainer — Scott Joplin (sección A en C)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "ragtime",
+      "sincopa",
+      "scott-joplin",
+      "dominio-publico"
+    ],
+    "key": "C",
+    "timeSignature": "2/4",
+    "tempo": {
+      "start": 66,
+      "target": 92,
+      "step": 4
+    },
+    "form": "16 compases (Sección A, ragtime)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Scott Joplin, «The Entertainer» (1902, dominio público, IMSLP). Adaptación propia de la sección A para guitarra en Do mayor.",
+    "focus": {
+      "guitarra": "Mantené las semicorcheas parejísimas (sin swing: ragtime se toca derecho, «Not fast») y articulá con nitidez cada síncopa."
+    },
+    "comping": {
+      "pattern": "negras-abajo",
+      "beatsPerBar": 2,
+      "feeling": "straight"
+    },
+    "progression": [
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "F",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A2"
+      }
+    ],
+    "abc": "X:1\nM:2/4\nL:1/16\nK:C clef=treble-8\n=D^D | \"C\"E c2 E c2 E c- | \"C\"c6 c d | \"C\"^d e c d e B d c- | \"C\"c6 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c6 A G | \"G7\"^F A c e d c A d- | \"G7\"d6 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c6 c d | \"F\"^d e c d e B d c- | \"F\"c6 c d |\n\"C\"e c d e c d e c | \"D7\"^F A c e d c A c | \"G7\"G B d f e d B G | \"C\"c4 z2 |]",
+    "notes": "Indicación original de Joplin: «Not fast». Dominá primero las síncopas de semicorchea a 66 BPM antes de subir.",
+    "goals": [
+      "Leer con precisión las ligaduras sincopadas en 2/4.",
+      "Tocar las aproximaciones cromáticas D–D#–E sin perder estabilidad rítmica."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-maple-leaf-rag",
+    "version": 3,
+    "type": "mixed",
+    "title": "Maple Leaf Rag — Scott Joplin (sección A en Ab)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "ragtime",
+      "sincopa",
+      "tonalidad-bemoles",
+      "dominio-publico"
+    ],
+    "key": "Ab",
+    "timeSignature": "2/4",
+    "tempo": {
+      "start": 70,
+      "target": 100,
+      "step": 4
+    },
+    "form": "16 compases (Sección A en Ab)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Scott Joplin, «Maple Leaf Rag» (1899, dominio público, IMSLP). Adaptación propia del tema A para guitarra en Lab mayor.",
+    "focus": {
+      "guitarra": "Entrená lectura avanzada con cuatro bemoles (Bb, Eb, Ab, Db) y arpegios sincopados en posición IV–VI."
+    },
+    "comping": {
+      "pattern": "negras-abajo",
+      "beatsPerBar": 2,
+      "feeling": "straight"
+    },
+    "progression": [
+      {
+        "chord": "Ab",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Ab",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Ab",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Db",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Ab",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Ab",
+        "bars": 2,
+        "section": "A2"
+      }
+    ],
+    "abc": "X:1\nM:2/4\nL:1/16\nK:Ab clef=treble-8\n\"Ab\"z A c e z A c e | \"Ab\"A c e a g e c A | \"Eb7\"z G B e z G B e | \"Eb7\"G B e g f d B G |\n\"Ab\"z A c e A c e a | \"Ab\"g e c A E c A E | \"Eb7\"z G B d e d B G | \"Eb7\"B d e g f d B G |\n\"Ab\"z A c e c A e c | \"Ab\"A c e a c' a e c | \"Db\"z A d f d A f d | \"Db\"A d f a g f d A |\n\"Ab\"e c A c e c A E | \"Eb7\"G B d e g e d B | \"Ab\"A c e a e c A c | \"Ab\"A4 z4 |]",
+    "notes": "Trabajá en posición IV (dedo 1 en traste 4) para cubrir Lab mayor con comodidad y mínima traslación.",
+    "goals": [
+      "Leer con seguridad en armadura de 4 bemoles (Ab mayor).",
+      "Mantener precisión de semicorcheas en los arpegios ascendentes y descendentes."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-lat-el-choclo",
+    "version": 3,
+    "type": "mixed",
+    "title": "El choclo — Ángel Villoldo (sección A en Dm)",
+    "instruments": [
+      "guitarra",
+      "guitarra-clasica"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "tango",
+      "argentina",
+      "marcato",
+      "dominio-publico"
+    ],
+    "key": "Dm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 124,
+      "step": 4
+    },
+    "form": "16 compases (Sección A de tango)",
+    "rights": "public_domain",
+    "style": "tango",
+    "feeling": "tango",
+    "verified": false,
+    "sourceRef": "Ángel Villoldo (1861–1919), «El choclo» (1903, dominio público). Transcripción propia de la sección A en Re menor.",
+    "focus": {
+      "guitarra": "Acentuá las síncopas porteñas con articulación picada (staccato) y alterná melodía con acompañamiento marcato en 4.",
+      "guitarra-clasica": "Cuidá el contraste entre notas ligadas expresivas y cierres secos en las cadencias Dm–A7."
+    },
+    "comping": {
+      "pattern": "tango-marcato",
+      "beatsPerBar": 4,
+      "feeling": "tango"
+    },
+    "progression": [
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Gm",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "A7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "B"
+      }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:Dm clef=treble-8\n\"Dm\"z A d e f2 e d | \"Dm\"f2 e d A4 | \"A7\"z A ^c d e2 d ^c | \"A7\"e2 d ^c A4 |\n\"A7\"z A ^c e g2 f e | \"A7\"g2 f e ^c4 | \"Dm\"z A d e f2 e d | \"Dm\"d6 z2 |\n\"Dm\"z d f g a2 g f | \"D7\"^f2 a g f2 d2 | \"Gm\"z G B c d2 c B | \"Gm\"d2 c B G4 |\n\"Dm\"z A d e f2 e d | \"A7\"e2 d ^c A2 ^c2 | \"Dm\"d2 A2 F2 A2 | \"Dm\"d4 z4 |]",
+    "notes": "Clásico del tango rioplatense. Prestá atención a las entradas acéfalas (silencio de corchea en el primer tiempo) y a la sensible Do#.",
+    "goals": [
+      "Tocar con fraseo de tango (entradas definidas, marcato firme y fraseo con intención).",
+      "Cambiar con claridad entre Dm, A7, D7 y Gm."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-lat-la-cumparsita",
+    "version": 3,
+    "type": "harmony",
+    "title": "La cumparsita (estructura armónica de tango)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "tango",
+      "marcato",
+      "rioplatense"
+    ],
+    "key": "Dm",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 124,
+      "step": 4
+    },
+    "form": "16 compases (Sección A en Dm)",
+    "rights": "harmony_only",
+    "style": "tango",
+    "feeling": "tango",
+    "verified": false,
+    "sourceRef": "Progresión armónica tradicional de tango en Re menor (solo cifrado; sin melodía por criterio prudente de derechos internacionales).",
+    "focus": {
+      "guitarra": "Trabajá el marcato en cuatro tiempos (negras acentuadas en 1 y 3 con corte seco en mano derecha) y el bordoneo sobre Dm–A7.",
+      "bajo": "Usá arrastres cromáticos (bajo de tango) hacia el tiempo 1 en las resoluciones A7 → Dm y D7 → Gm."
+    },
+    "comping": {
+      "pattern": "tango-marcato",
+      "beatsPerBar": 4,
+      "feeling": "tango"
+    },
+    "progression": [
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "A7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Gm",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Dm",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "A7",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "Dm",
+        "bars": 2,
+        "section": "B"
+      }
+    ],
+    "abc": null,
+    "notes": "Ideal para estudiar acompañamiento tanguero en guitarra y bajo (marcato en 4, síncopa a tierra y arrastres).",
+    "goals": [
+      "Sostener el marcato parejo sin arrastrar el tiempo.",
+      "Introducir notas de paso en el bajo al pasar de Dm a D7 y Gm."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-lat-por-una-cabeza",
+    "version": 3,
+    "type": "harmony",
+    "title": "Por una cabeza (estructura armónica en G/Gm)",
+    "instruments": [
+      "guitarra",
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "tango",
+      "argentina",
+      "cambio-de-modo"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 96,
+      "target": 122,
+      "step": 4
+    },
+    "form": "32 compases (A mayor / B menor)",
+    "rights": "harmony_only",
+    "style": "tango",
+    "feeling": "tango",
+    "verified": false,
+    "sourceRef": "Progresión armónica estándar en Sol mayor / Sol menor (solo cifrado; sin melodía ni letra).",
+    "focus": {
+      "guitarra": "Contrastá el carácter luminoso de la sección A en Sol mayor con el dramatismo de la sección B en Sol menor.",
+      "bajo": "Acentuá los bajos caminantes entre G–D7–Em–Am–D7 y la modulación al homónimo menor Gm–Cm–D7."
+    },
+    "comping": {
+      "pattern": "tango-marcato",
+      "beatsPerBar": 4,
+      "feeling": "tango"
+    },
+    "progression": [
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Am",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "G",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "Gm",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "D7",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "Gm",
+        "bars": 2,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 2,
+        "section": "B2"
+      },
+      {
+        "chord": "Cm",
+        "bars": 2,
+        "section": "B2"
+      },
+      {
+        "chord": "Gm",
+        "bars": 1,
+        "section": "B2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
+        "section": "B2"
+      },
+      {
+        "chord": "Gm",
+        "bars": 2,
+        "section": "B2"
+      }
+    ],
+    "abc": null,
+    "notes": "Forma clásica de tango canción con contraste entre tonalidad mayor (A) y su homónimo menor (B).",
+    "goals": [
+      "Cambiar con claridad entre voicings mayores (G, C) y menores (Gm, Cm).",
+      "Mantener el peso rítmico del tango marcato durante los 32 compases."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-lat-julia-florida",
+    "version": 3,
+    "type": "melody",
+    "title": "Julia Florida (Barcarola) — A. Barrios (fragmento inicial)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "latinoamericano",
+      "barcarola",
+      "polifonia",
+      "dominio-publico"
+    ],
+    "key": "D",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 56,
+      "target": 80,
+      "step": 4
+    },
+    "form": "8 compases (tema inicial, 2 voces)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Agustín Barrios Mangoré (1885–1944), «Julia Florida — Barcarola» (1938, dominio público; fragmento introductorio en Re mayor).",
+    "focus": {
+      "guitarra-clasica": "Separá con total claridad el canto lírico superior (m–a con apoyando/tirando cantable) del acompañamiento de barcarola y el bajo (p)."
+    },
+    "harmonicAnalysis": [
+      "I",
+      "I",
+      "ii7",
+      "V7",
+      "I",
+      "vi",
+      "ii",
+      "V7"
+    ],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:D clef=treble-8\nV:1 stem=up\n\"a\"f2 \"m\"d2 \"i\"A2 | \"a\"f4 \"m\"e d | \"m\"e2 \"i\"c2 \"m\"B2 | \"a\"A4 z2 |\n\"a\"a2 \"m\"f2 \"i\"d2 | \"a\"g2 \"m\"e2 \"i\"B2 | \"a\"f2 \"m\"e2 \"i\"d2 | \"m\"c4 z2 |]\nV:2 stem=down\n\"p\"D4 A2 | \"p\"D4 A2 | \"p\"E4 B2 | \"p\"A4 E2 |\n\"p\"D4 A2 | \"p\"B,4 G2 | \"p\"E4 B2 | \"p\"A4 E2 |]",
+    "notes": "Estudio introductorio basado en el carácter y el lenguaje armónico de la barcarola en Re mayor (contrastar contra edición urtext/IMSLP para la obra completa).",
+    "goals": [
+      "Escuchar ambas voces por separado usando el selector «Voces: Melodía / Bajo».",
+      "Mantener el balanceo cantable de barcarola sin rigidez mecánica."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-bass-bach-coral",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Línea de bajo coral barroco en G",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "barroco",
+      "bach",
+      "clave-de-fa",
+      "lectura",
+      "dominio-publico"
+    ],
+    "key": "G",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 68,
+      "target": 96,
+      "step": 4
+    },
+    "form": "8 compases (coral barroco en clave de fa)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Estudio de bajo continuo al estilo de los corales de J. S. Bach (BWV 269, dominio público) adaptado a lectura en clave de fa para bajo eléctrico.",
+    "focus": {
+      "bajo": "Practicá conducción melódica por grados conjuntos, articulación legato y lectura fluida en clave de fa entre primera y quinta posición."
+    },
+    "harmonicAnalysis": [
+      "I",
+      "V6",
+      "vi",
+      "iii",
+      "IV",
+      "I6",
+      "V",
+      "I"
+    ],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=bass\nG,, B,, D, | F,, A,, D, | E,, G,, B,, | B,, A,, G,, |\nC, B,, A,, | B,, G,, E,, | D, C, A,, | G,,3 |]",
+    "notes": "Recordá que el bajo suena una octava más grave de lo escrito: G,, corresponde al Sol grave de la 4.ª cuerda traste 3 (MIDI 31) y D, a la 2.ª cuerda al aire (MIDI 38).",
+    "goals": [
+      "Leer toda la línea de corrido en clave de fa sin perder el fraseo legato.",
+      "Escuchar cómo la línea de bajo funciona como melodía independiente."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-bass-bach-cello-suite1",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Suite para cello n.º 1, Preludio BWV 1007 (inicio)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 5,
+    "tags": [
+      "repertorio",
+      "barroco",
+      "bach",
+      "arpegios",
+      "clave-de-fa",
+      "dominio-publico"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 56,
+      "target": 84,
+      "step": 4
+    },
+    "form": "8 compases iniciales (arpegios barrocos)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "J. S. Bach, Suite n.º 1 para violonchelo en Sol mayor, BWV 1007, Preludio cc. 1–8 (c. 1720, dominio público, IMSLP). Adaptado a registro de bajo de 4 cuerdas.",
+    "focus": {
+      "bajo": "Alterná índices y medios con uniformidad de ataque (o técnica de tres dedos/cuerdas cruzadas) dejando resonar el bajo pedal en Sol (G,,)."
+    },
+    "harmonicAnalysis": [
+      "I",
+      "IV6/4",
+      "V7/4/2",
+      "I",
+      "vi6",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "abc": "X:1\nM:4/4\nL:1/16\nK:G clef=bass\nG,,D,B,A, B,D,B,D, G,,D,B,A, B,D,B,D, | G,,E,CB, CE,CE, G,,E,CB, CE,CE, |\nG,,F,CB, CF,CF, G,,F,CB, CF,CF, | G,,G,B,A, B,G,B,G, G,,G,B,A, B,G,B,G, |\nG,,E,B,A, B,G,F,G, E,G,F,G, B,,D,^C,B,, | G,,^C,A,G, A,^C,A,^C, G,,^C,A,G, A,^C,A,^C, |\nG,,D,A,G, A,F,D,F, G,,D,A,G, A,F,D,F, | G,,D,B,A, B,D,B,D, G,,4 z4 |]",
+    "notes": "Transcrito al rango real del bajo de 4 cuerdas (G,, = 4.ª cuerda traste 3, MIDI 31, hasta C = 1.ª cuerda traste 5, MIDI 48). Confirmar articulación con tu edición IMSLP.",
+    "goals": [
+      "Tocar los 8 compases con semicorcheas parejas y sin ruidos de cruce de cuerda.",
+      "Hacer cantar la voz superior cambiante (B–c–c–B–c–A–A–B) sobre el pedal en Sol."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  }
+]

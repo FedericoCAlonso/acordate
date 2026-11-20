@@ -204,6 +204,31 @@ export class Voicing {
   }
 
   /**
+   * Devuelve una etiqueta clara de la posición en el mango (ej. "Posición abierta" o "Traste 8").
+   * @returns {string} Etiqueta legible de posición sin abreviaturas ambiguas.
+   */
+  getPositionLabel() {
+    const hasOpen = this.frets.includes(0);
+    if (this.baseFret <= 1 && hasOpen) return 'Posición abierta';
+    return `Traste ${Math.max(1, this.baseFret)}`;
+  }
+
+  /**
+   * Devuelve las cuerdas tradicionales activas del voicing (ej. "cuerdas 4-3-2" o "cuerdas 5-4-3-2-1").
+   * @param {Tuning} [tuning] Afinación activa.
+   * @returns {string} Descripción de cuerdas utilizadas.
+   */
+  getUsedStringsLabel(tuning = Tuning.defaultForInstrument(this.instrument)) {
+    const nums = [];
+    for (let i = 0; i < this.frets.length && i < tuning.stringCount; i++) {
+      if (this.frets[i] !== null) {
+        nums.push(tuning.getTraditionalStringNumber(i));
+      }
+    }
+    return nums.length > 0 ? `cuerdas ${nums.join('-')}` : 'sin cuerdas';
+  }
+
+  /**
    * Serializa el voicing al esquema JSON oficial (sin persistir MIDI ni funciones derivadas).
    * @returns {object} Objeto JSON plano.
    */

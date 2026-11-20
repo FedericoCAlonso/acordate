@@ -2,7 +2,9 @@ import { ComputedObservable, Observable } from '../core/Observable.js';
 import { NOTE_TO_PC, parseTimeSignature, pcToNoteName, prefersFlats, transposeAbc, transposeChordSymbol } from '../core/MusicTheory.js';
 import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
 import { Exercise } from '../models/Exercise.js';
+import { Practice, generatePracticeId } from '../models/Practice.js';
 import { Tuning } from '../models/Tuning.js';
+import { WalkingBassGenerator } from '../services/WalkingBassGenerator.js';
 
 /**
  * ViewModel del reproductor de prácticas ("Modo Atril").
@@ -66,12 +68,24 @@ export class PracticePlayerViewModel {
     this.synthInstrument = new Observable('acoustic-guitar');
     /** Volumen de melodía / voz principal (1.0 = 100 % por defecto). */
     this.melodyVolume = new Observable(1.0);
-    /** Acompañamiento de acordes activado/desactivado. */
+    /** Acompañamiento de acordes activado/desactivado (el guitarrista puede silenciarlo en play-along). */
     this.chordsEnabled = new Observable(true);
     /** Volumen del acompañamiento de acordes (0-1). */
     this.chordsVolume = new Observable(0.55);
+    /** Pista de bajo activada/desactivada (el bajista puede silenciarla en play-along). */
+    this.bassEnabled = new Observable(true);
     /** Volumen independiente de la voz de bajo (0-1). */
     this.bassVolume = new Observable(0.75);
+    /** Modo de voces en piezas polifónicas clásicas ('both' | 'v1' | 'v2'). */
+    this.voiceMode = new Observable('both');
+    /** Indica si la partitura activa posee varias voces (V:1 / V:2). */
+    this.hasMultipleVoices = new Observable(false);
+    /** Mostrar capa opcional de análisis armónico (grados y cadencias en clásica). */
+    this.showHarmonicAnalysis = new Observable(false);
+    /** Walking bass sugerido generado sobre una progresión armónica de bajo/repertorio. */
+    this.generatedWalkingAbc = new Observable('');
+    /** Generador puro de líneas de walking bass sobre progresiones. */
+    this._walkingGen = new WalkingBassGenerator();
     /** Metrónomo integrado activado durante la reproducción. */
     this.metronomeEnabled = new Observable(true);
     /** Volumen del metrónomo integrado (0-1). */
@@ -128,14 +142,19 @@ export class PracticePlayerViewModel {
         const tuning = Tuning.defaultForInstrument(fam);
         const useFlats = prefersFlats(this.transposedKey?.value || pr.key);
 
+        let barCursor = 1;
         return pr.progression.map((step, idx) => {
           const chordSymbol = semi ? transposeChordSymbol(step.chord, semi, useFlats) : step.chord;
           const voicing = !semi && step.voicingId
             ? findVoicingById(step.voicingId, pr.customVoicings, chordSymbol, fam)
             : (getCuratedVoicingsForChord(chordSymbol, fam, tuning)[0] || findVoicingById(null, pr.customVoicings, chordSymbol, fam));
+          const startMeasure = Math.floor(barCursor);
+          barCursor += Number(step.bars) || 1;
           return {
             index: idx,
             bars: step.bars,
+            startMeasure,
+            section: step.section || null,
             chord: chordSymbol,
             voicing,
             rhythm: step.rhythm || null,
@@ -185,6 +204,7 @@ export class PracticePlayerViewModel {
         this.viewMode,
         this.showFingerings,
         this.showBassFunctions,
+        this.showHarmonicAnalysis,
         this._appVm.settings
       ],
       () => {
@@ -196,6 +216,8 @@ export class PracticePlayerViewModel {
           showFingerings: this.showFingerings.value,
           fingerings: pr.fingerings,
           showBassFunctions: this.showBassFunctions.value,
+          showHarmonicAnalysis: this.showHarmonicAnalysis.value,
+          harmonicAnalysis: pr.harmonicAnalysis || [],
           isBass: pr.instruments.includes('bajo'),
           stripTitle: true
         });
@@ -258,6 +280,11 @@ export class PracticePlayerViewModel {
     this.practice.set(practice || null);
     this.transposeSemitones.set(0);
     this.sessionRepetitions.set(0);
+    this.bassEnabled.set(true);
+    this.voiceMode.set('both');
+    this.generatedWalkingAbc.set('');
+    this.hasMultipleVoices.set(Boolean(practice?.abc && /^V:\s*2/m.test(practice.abc)));
+    this.showHarmonicAnalysis.set(Boolean(practice?.harmonicAnalysis?.length > 0));
     this._cleanRepsAtCurrentBpm = 0;
     this._pendingStudySeconds = 0;
 
@@ -403,10 +430,143 @@ export class PracticePlayerViewModel {
   registerVisualTimeline(timeline) {
     if (!timeline) return;
     this.measureCount.set(timeline.measureCount);
+    if (timeline.hasMultipleVoices !== undefined) {
+      this.hasMultipleVoices.set(Boolean(timeline.hasMultipleVoices));
+    }
     if (this.loopEndMeasure.value > timeline.measureCount) {
       this.loopEndMeasure.set(timeline.measureCount);
     }
     this._audio.loadTimeline(timeline);
+  }
+
+  /**
+   * Activa o silencia la pista de bajo (permite al bajista tocar sobre la base sin doblar su instrumento).
+   * @param {boolean} enabled True para escuchar el bajo de base.
+   */
+  setBassEnabled(enabled) {
+    this.bassEnabled.set(Boolean(enabled));
+    this._syncAudioConfig();
+  }
+
+  /**
+   * Cambia el modo de voces en piezas polifónicas clásicas ('both' | 'v1' | 'v2').
+   * @param {'both'|'v1'|'v2'} mode Voces activas.
+   */
+  setVoiceMode(mode) {
+    if (['both', 'v1', 'v2'].includes(mode)) {
+      this.voiceMode.set(mode);
+      this._syncAudioConfig();
+    }
+  }
+
+  /**
+   * Calcula las secciones marcadas (A, B, C…) de la progresión actual para bucle rápido por sección.
+   * @returns {Array<{ label: string, startMeasure: number, endMeasure: number }>} Secciones detectadas.
+   */
+  getFormSections() {
+    const steps = this.harmonySteps.value || [];
+    const totalMeasures = Math.max(1, this.measureCount.value || 1);
+    const markers = [];
+    let lastLabel = null;
+    steps.forEach((s) => {
+      if (s.section && s.section !== lastLabel) {
+        lastLabel = s.section;
+        markers.push({ label: s.section, startMeasure: Math.max(1, s.startMeasure || 1) });
+      }
+    });
+    if (markers.length === 0) return [];
+    return markers.map((mk, idx) => ({
+      label: mk.label,
+      startMeasure: mk.startMeasure,
+      endMeasure: idx + 1 < markers.length ? Math.max(mk.startMeasure, markers[idx + 1].startMeasure - 1) : totalMeasures
+    }));
+  }
+
+  /**
+   * Activa el bucle exactamente sobre una sección de la forma del tema (ej. Sección A o B).
+   * @param {{ label: string, startMeasure: number, endMeasure: number }} section Sección elegida.
+   */
+  loopSection(section) {
+    if (!section) return;
+    this.setLoop({
+      enabled: true,
+      start: section.startMeasure,
+      end: section.endMeasure
+    });
+    this._appVm.showSnackbar(`Bucle en sección ${section.label} (compases ${section.startMeasure}–${section.endMeasure}).`);
+  }
+
+  /**
+   * Genera una línea de walking bass sugerida sobre la progresión armónica actual (con notas del acorde
+   * y objetivos de notas guía 3ª y 7ª) para estudiar o guardar como práctica editable de bajo.
+   * @returns {string} Partitura ABC de walking bass generada.
+   */
+  generateWalkingForCurrent() {
+    const pr = this.practice.value;
+    const steps = this.harmonySteps.value || [];
+    if (!pr || steps.length === 0) return '';
+
+    const chordsPerBar = [];
+    for (const s of steps) {
+      const count = Math.max(1, Math.round(Number(s.bars) || 1));
+      for (let i = 0; i < count; i++) {
+        chordsPerBar.push(s.chord);
+      }
+    }
+    const generated = this._walkingGen.generate({
+      chords: chordsPerBar.slice(0, 32),
+      key: this.transposedKey.value || pr.key || 'C',
+      title: `Walking sobre ${pr.title}`
+    });
+    this.generatedWalkingAbc.set(generated.abc);
+    this._appVm.showSnackbar('Walking bass generado sobre la progresión. Podés guardarlo como práctica editable.');
+    return generated.abc;
+  }
+
+  /**
+   * Guarda el walking bass generado como una práctica editable del usuario y la abre en el editor.
+   */
+  async saveGeneratedWalkingAsPractice() {
+    const abc = this.generatedWalkingAbc.value;
+    const pr = this.practice.value;
+    if (!abc || !pr) return;
+    const title = `Walking: ${pr.title}`;
+    const nextPr = new Practice({
+      id: generatePracticeId(title),
+      version: 3,
+      type: 'mixed',
+      title,
+      instruments: ['bajo'],
+      category: 'walking',
+      level: pr.level,
+      tags: ['walking', 'generado', ...(pr.tags || []).slice(0, 2)],
+      key: this.transposedKey.value || pr.key,
+      timeSignature: pr.timeSignature,
+      tempo: { ...pr.tempo },
+      abc,
+      progression: pr.progression.map((s) => s.toJSON()),
+      comping: pr.comping || 'swing-negras',
+      goals: ['Marcar la raíz en el tiempo 1', 'Apuntar a notas guía (3.ª y 7.ª) en tiempos fuertes'],
+      notes: `Línea de walking sugerida generada sobre ${pr.title}.`,
+      origin: 'user',
+      createdAt: new Date().toISOString()
+    });
+    await this._appVm.upsertUserPractice(nextPr);
+    this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`);
+  }
+
+  /**
+   * Marca o desmarca localmente la pieza actual como verificada por el usuario o su profesor.
+   */
+  async toggleVerifiedCurrent() {
+    const pr = this.practice.value;
+    if (!pr) return;
+    const { UserProgress } = await import('../models/UserProgress.js');
+    const next = new UserProgress(this._appVm.progress.value.toJSON());
+    const currentlyVerified = next.isPracticeVerified(pr);
+    next.setPracticeVerified(pr.id, !currentlyVerified);
+    await this._appVm.replaceProgress(next);
+    this._appVm.showSnackbar(!currentlyVerified ? 'Transcripción marcada como verificada.' : 'Marcada como "A verificar".');
   }
 
   /**
@@ -420,7 +580,9 @@ export class PracticePlayerViewModel {
       melodyVolume: this.melodyVolume.value,
       chordsEnabled: this.chordsEnabled.value,
       chordsVolume: this.chordsVolume.value,
+      bassEnabled: this.bassEnabled.value,
       bassVolume: this.bassVolume.value,
+      voiceMode: this.voiceMode.value,
       metronomeEnabled: this.metronomeEnabled.value,
       metronomeVolume: this.metronomeVolume.value,
       comping: this.compingPattern.value,

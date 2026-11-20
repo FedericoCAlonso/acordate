@@ -20,15 +20,20 @@ async function readJsonFile(relativePath) {
 }
 
 /**
- * Carga y valida el catálogo inicial completo (prácticas de melodía, mixtas y armonía)
- * desde catalog.json y harmonyCatalog.json.
+ * Carga y valida el catálogo inicial completo (prácticas de melodía, mixtas, armonía y repertorio
+ * de jazz, tradicional/latinoamericano y guitarra clásica) desde sus archivos JSON.
  * @returns {Promise<Practice[]>} Lista combinada de instancias Practice (origin: "builtin").
  */
 export async function loadBuiltinCatalog() {
-  const [melodyList, harmonyList] = await Promise.all([
+  const [melodyList, harmonyList, jazzRep, tradRep, classicalRep] = await Promise.all([
     readJsonFile('./catalog.json'),
-    readJsonFile('./harmonyCatalog.json')
+    readJsonFile('./harmonyCatalog.json'),
+    readJsonFile('./repertoireJazz.json'),
+    readJsonFile('./repertoireTraditional.json'),
+    readJsonFile('./repertoireClassical.json')
   ]);
 
-  return [...melodyList, ...harmonyList].map((item) => new Practice(item));
+  return [...melodyList, ...harmonyList, ...jazzRep, ...tradRep, ...classicalRep].map(
+    (item) => new Practice(item)
+  );
 }

@@ -3,6 +3,12 @@ import { UserProgress } from '../models/UserProgress.js';
 import { extractTimeSignatureFromAbc } from '../core/MusicTheory.js';
 
 /**
+ * Aviso legal obligatorio al importar un archivo .abc del usuario (solo local en el dispositivo).
+ */
+export const ABC_IMPORT_RIGHTS_NOTICE =
+  'Asegurate de tener derecho a usar este material. Se guarda solo en tu dispositivo.';
+
+/**
  * Servicio puro para exportar e importar prácticas individuales (.json y .abc),
  * colecciones de prácticas (.json) y copias de seguridad del progreso (.json).
  */
@@ -85,50 +91,67 @@ export class ImportExportService {
   }
 
   /**
-   * Importa un archivo .abc plano y lo envuelve en una instancia Practice editable válida.
+   * Importa un archivo .abc plano (con soporte para varias voces V:, cifrado y digitaciones)
+   * y lo envuelve en una instancia Practice v3 editable marcada con rights: 'user_import'.
    * @param {string} abcText Contenido del archivo .abc.
    * @param {string} [filename='Práctica importada'] Nombre de archivo sugerido para el título.
-   * @returns {{ practice: Practice|null, errors: string[] }} Práctica creada o errores detectados.
+   * @returns {{ practice: Practice|null, errors: string[], notice: string }} Práctica creada, errores y aviso de derechos.
    */
   importPracticeFromAbc(abcText, filename = 'Práctica importada') {
     const cleaned = String(abcText || '').trim();
     if (!cleaned) {
-      return { practice: null, errors: ['El archivo .abc está vacío.'] };
+      return { practice: null, errors: ['El archivo .abc está vacío.'], notice: ABC_IMPORT_RIGHTS_NOTICE };
     }
 
     const titleMatch = cleaned.match(/^T:\s*(.+)$/m);
     const keyMatch = cleaned.match(/^K:\s*([A-G][#b]?m?)/m);
     const isBass = /clef\s*=\s*bass/i.test(cleaned);
+    const hasVoices = /^V:\s*\S+/m.test(cleaned);
+    const chordMatches = [...cleaned.matchAll(/"([A-G][#b]?[^"]*)"/g)]
+      .map((m) => m[1].trim())
+      .filter((c) => !/^[\^_<>@]/.test(c));
+    const hasChords = chordMatches.length > 0;
 
     const title = titleMatch ? titleMatch[1].trim() : filename.replace(/\.abc$/i, '').trim() || 'Práctica importada';
     const key = keyMatch ? keyMatch[1].trim() : 'C';
     const timeSignature = extractTimeSignatureFromAbc(cleaned, '4/4');
     const normalizedAbc = /^X:/m.test(cleaned) ? cleaned : `X:1\nT:${title}\nM:${timeSignature}\nL:1/4\nK:${key}\n${cleaned}`;
 
+    // Si tiene cifrado explícito, construye una progresión básica para mostrar diagramas de acorde
+    const progression = hasChords
+      ? chordMatches.slice(0, 64).map((chord) => ({ bars: 1, chord }))
+      : [];
+
     const candidate = {
       id: generatePracticeId(title),
-      version: 1,
+      version: 3,
+      type: hasChords ? 'mixed' : 'melody',
       title,
-      instruments: [isBass ? 'bajo' : 'guitarra'],
-      category: 'lectura',
-      level: 2,
-      tags: ['importada', 'abc'],
+      instruments: [isBass ? 'bajo' : hasVoices ? 'guitarra-clasica' : 'guitarra'],
+      category: 'repertorio',
+      level: hasVoices ? 3 : 2,
+      tags: ['importada', 'abc', ...(hasVoices ? ['polifonía'] : [])],
       key,
       timeSignature,
       tempo: { start: 70, target: 110, step: 5 },
       abc: normalizedAbc,
+      progression,
+      comping: hasVoices ? 'arpegio-pima' : 'negras-abajo',
+      rights: 'user_import',
+      sourceRef: `Archivo local: ${filename}`,
+      verified: false,
       fingerings: {},
-      goals: ['Leer con pulso estable'],
-      notes: 'Importada desde archivo .abc.',
+      goals: ['Leer con pulso estable', ...(hasVoices ? ['Equilibrar las voces por separado y juntas'] : [])],
+      notes: ABC_IMPORT_RIGHTS_NOTICE,
       origin: 'user',
       createdAt: new Date().toISOString()
     };
 
     const validation = validatePracticeSchema(candidate);
     if (!validation.valid) {
-      return { practice: null, errors: validation.errors };
+      return { practice: null, errors: validation.errors, notice: ABC_IMPORT_RIGHTS_NOTICE };
     }
-    return { practice: new Practice(candidate), errors: [] };
+    return { practice: new Practice(candidate), errors: [], notice: ABC_IMPORT_RIGHTS_NOTICE };
   }
 
   /**

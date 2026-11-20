@@ -1,0 +1,653 @@
+[
+  {
+    "id": "rep-clas-giuliani-op1a",
+    "version": 3,
+    "type": "melody",
+    "title": "Giuliani — Estudio de arpegios Op. 1a n.º 1 (C – G7)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 1,
+    "tags": ["repertorio", "clasica", "arpegio", "p-i-m-a", "dominio-publico"],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": { "start": 60, "target": 100, "step": 4 },
+    "form": "8 compases (arpegio p-i-m-a)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Mauro Giuliani (1781–1829), Studio per la chitarra Op. 1a (120 estudios de mano derecha, dominio público, IMSLP). Estudio base p–i–m–a sobre C y G7.",
+    "focus": {
+      "guitarra-clasica": "Mantené la mano derecha relajada y estable sobre la boca: pulgar (p) en bajos alternados y dedos i–m–a tirando sin tensión en cuerdas 3–2–1."
+    },
+    "harmonicAnalysis": ["I", "V7", "I", "V7", "I", "V7", "I", "I"],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:C clef=treble-8\nV:1 stem=up\nz \"i\"G \"m\"c \"a\"e z \"i\"G \"m\"c \"a\"e | z \"i\"G \"m\"B \"a\"f z \"i\"G \"m\"B \"a\"f |\nz \"i\"G \"m\"c \"a\"e z \"i\"G \"m\"c \"a\"e | z \"i\"G \"m\"d \"a\"f z \"i\"G \"m\"B \"a\"f |\nz \"i\"G \"m\"c \"a\"e z \"i\"G \"m\"c \"a\"e | z \"i\"G \"m\"B \"a\"f z \"i\"G \"m\"B \"a\"f |\nz \"i\"G \"m\"c \"a\"e z \"i\"G \"m\"c \"a\"e | \"i\"[Gce]8 |]\nV:2 stem=down\n\"p\"C4 \"p\"E4 | \"p\"G,4 \"p\"D4 | \"p\"C4 \"p\"E4 | \"p\"G,4 \"p\"B,4 |\n\"p\"C4 \"p\"E4 | \"p\"G,4 \"p\"D4 | \"p\"C4 \"p\"G,4 | \"p\"C8 |]",
+    "notes": "Dejá sonando los bajos mientras articulás el arpegio superior. Probá luego variar la fórmula a p–a–m–i y p–i–m–a–m–i.",
+    "goals": [
+      "Igualar el volumen y el timbre de los dedos i, m y a.",
+      "Cambiar entre C y G7 sin cortar la resonancia de las cuerdas."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-carulli-vals",
+    "version": 3,
+    "type": "melody",
+    "title": "Carulli — Vals en Do (Op. 241)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 1,
+    "tags": ["repertorio", "clasica", "vals", "3/4", "dos-voces", "dominio-publico"],
+    "key": "C",
+    "timeSignature": "3/4",
+    "tempo": { "start": 76, "target": 116, "step": 6 },
+    "form": "16 compases (AB, vals a 2 voces)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Ferdinando Carulli (1770–1841), Méthode complète Op. 241 — Vals en Do mayor (dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Separación clara entre el bajo con pulgar (p) en el tiempo 1 y la melodía cantable con índice y medio (i–m) en primera posición."
+    },
+    "harmonicAnalysis": ["I", "V7", "V7", "I", "I", "V7", "V7", "I", "V7", "I", "V7", "I", "IV", "I", "V7", "I"],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:C clef=treble-8\nV:1 stem=up\n\"m\"e \"i\"c \"m\"e | \"m\"d \"i\"B \"m\"d | \"m\"d \"i\"B \"m\"d | \"m\"c \"i\"G \"m\"c |\n\"m\"e \"i\"c \"m\"e | \"m\"d \"i\"B \"m\"f | \"m\"e \"i\"d \"m\"B | \"i\"c3 |\n\"m\"d \"i\"B \"m\"G | \"m\"e \"i\"c \"m\"G | \"m\"f \"i\"d \"m\"B | \"m\"e \"i\"c \"m\"G |\n\"m\"f \"i\"d \"m\"A | \"m\"e \"i\"c \"m\"G | \"m\"d \"i\"B \"m\"G | \"i\"c3 |]\nV:2 stem=down\n\"p\"C3 | \"p\"G,3 | \"p\"G,3 | \"p\"C3 |\n\"p\"C3 | \"p\"G,3 | \"p\"G,3 | \"p\"C3 |\n\"p\"G,3 | \"p\"C3 | \"p\"G,3 | \"p\"C3 |\n\"p\"F,3 | \"p\"C3 | \"p\"G,3 | \"p\"C3 |]",
+    "notes": "Usá el modo «Voces: Melodía / Bajo» para estudiar primero cada voz por separado antes de juntarlas.",
+    "goals": [
+      "Mantener el pulso ternario elegante sin acentuar el tiempo 3.",
+      "Sostener las blancas con puntillo del bajo durante todo el compás."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-sor-op31-n1",
+    "version": 3,
+    "type": "melody",
+    "title": "Sor — Lección Op. 31 n.º 1 en Do (2 voces)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 1,
+    "tags": ["repertorio", "clasica", "sor", "dos-voces", "primera-posicion", "dominio-publico"],
+    "key": "C",
+    "timeSignature": "3/4",
+    "tempo": { "start": 72, "target": 108, "step": 4 },
+    "form": "16 compases (AB, Andante)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Fernando Sor (1778–1839), 24 Lecciones progresivas Op. 31 n.º 1 en Do mayor (dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Practicá el equilibrio sonoro entre dos voces paralelas: el pulgar en la voz inferior no debe tapar la línea melódica superior."
+    },
+    "harmonicAnalysis": ["I", "V6", "I", "V", "I", "ii6", "V", "I", "V", "I", "V6", "I", "IV", "I6/4", "V7", "I"],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:C clef=treble-8\nV:1 stem=up\n\"m\"e2 \"i\"c | \"m\"d2 \"i\"B | \"m\"c2 \"i\"G | \"m\"B2 \"i\"G |\n\"m\"e2 \"i\"c | \"m\"f2 \"i\"d | \"m\"d2 \"i\"B | \"i\"c3 |\n\"m\"d2 \"i\"B | \"m\"e2 \"i\"c | \"m\"d2 \"i\"B | \"m\"c2 \"i\"G |\n\"m\"A2 \"i\"c | \"m\"G2 \"i\"e | \"m\"d2 \"i\"B | \"i\"c3 |]\nV:2 stem=down\n\"p\"C2 \"p\"E | \"p\"G,2 \"p\"D | \"p\"C2 \"p\"E | \"p\"G,3 |\n\"p\"C2 \"p\"E | \"p\"F,2 \"p\"D | \"p\"G,2 \"p\"G, | \"p\"C3 |\n\"p\"G,2 \"p\"D | \"p\"C2 \"p\"E | \"p\"G,2 \"p\"D | \"p\"C2 \"p\"E |\n\"p\"F,2 \"p\"A, | \"p\"C2 \"p\"C | \"p\"G,2 \"p\"G, | \"p\"C3 |]",
+    "notes": "Ideal como primer estudio polifónico formal de Fernando Sor en primera posición.",
+    "goals": [
+      "Tocar ambas voces simultáneamente sin arpegiar inadvertidamente las notas que caen juntas.",
+      "Respirar suavemente entre las frases de 4 compases."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-carcassi-op60-n3",
+    "version": 3,
+    "type": "melody",
+    "title": "Carcassi — Estudio Op. 60 n.º 3 en La mayor (inicio)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 2,
+    "tags": ["repertorio", "clasica", "carcassi", "arpegio", "6/8", "dominio-publico"],
+    "key": "A",
+    "timeSignature": "6/8",
+    "tempo": { "start": 66, "target": 100, "step": 4 },
+    "form": "8 compases iniciales (Andantino, 6/8)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Matteo Carcassi (1792–1853), 25 Estudios melódicos y progresivos Op. 60 n.º 3 en La mayor, cc. 1–8 (dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Destacá la melodía cantable en el dedo anular (a) o medio (m) mientras las notas intermedias del arpegio acompañan en plano piano."
+    },
+    "harmonicAnalysis": ["I", "V7", "I", "IV", "I", "ii", "V7", "I"],
+    "abc": "X:1\nM:6/8\nL:1/8\nK:A clef=treble-8\nV:1 stem=up\nz \"i\"c \"m\"e \"a\"a \"m\"e \"i\"c | z \"i\"B \"m\"e \"a\"g \"m\"e \"i\"B |\nz \"i\"c \"m\"e \"a\"a \"m\"e \"i\"c | z \"i\"d \"m\"f \"a\"a \"m\"f \"i\"d |\nz \"i\"c \"m\"e \"a\"a \"m\"e \"i\"c | z \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d |\nz \"i\"B \"m\"e \"a\"g \"m\"e \"i\"B | z \"i\"c \"m\"e \"a\"a3 |]\nV:2 stem=down\n\"p\"A,3 \"p\"E3 | \"p\"E,3 \"p\"E3 | \"p\"A,3 \"p\"E3 | \"p\"D3 \"p\"A,3 |\n\"p\"A,3 \"p\"E3 | \"p\"B,3 \"p\"D3 | \"p\"E,3 \"p\"E3 | \"p\"A,6 |]",
+    "notes": "Estudio fundamental para el control dinámico del dedo anular (a) dentro de un arpegio continuo en 6/8.",
+    "goals": [
+      "Hacer resaltar la línea superior a–g#–a–a–a–b–g#–a sobre el acompañamiento.",
+      "Mantener el pulso binario compuesto (dos pulsos de negra con puntillo por compás)."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-romance-anonimo",
+    "version": 3,
+    "type": "melody",
+    "title": "Romance anónimo (Sección A en Em)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 2,
+    "tags": ["repertorio", "clasica", "romance", "tresillos", "arpegio", "dominio-publico"],
+    "key": "Em",
+    "timeSignature": "3/4",
+    "tempo": { "start": 66, "target": 96, "step": 4 },
+    "form": "16 compases (Sección A en Mi menor)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Obra tradicional de autor anónimo del siglo XIX («Romance de amor» / «Jeux Interdits», dominio público, IMSLP). Sección A en Mi menor.",
+    "focus": {
+      "guitarra-clasica": "Arpegio clásico p+a – m – i en tresillos continuos: apoyá suavemente el anular (a) en la 1.ª cuerda para proyectar la melodía."
+    },
+    "harmonicAnalysis": ["i", "i", "i", "i", "i", "V/iv", "iv", "iv", "V7", "V7", "i", "i", "V7", "V7", "i", "i"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:Em clef=treble-8\nV:1 stem=up\n(3\"a\"b\"m\"g\"i\"e (3\"a\"b\"m\"g\"i\"e (3\"a\"b\"m\"g\"i\"e | (3\"a\"b\"m\"g\"i\"e (3\"a\"a\"m\"g\"i\"e (3\"a\"g\"m\"g\"i\"e |\n(3\"a\"g\"m\"g\"i\"e (3\"a\"f\"m\"g\"i\"e (3\"a\"e\"m\"g\"i\"e | (3\"a\"e\"m\"g\"i\"e (3\"a\"g\"m\"g\"i\"e (3\"a\"b\"m\"g\"i\"e |\n(3\"a\"e'\"m\"g\"i\"e (3\"a\"e'\"m\"g\"i\"e (3\"a\"e'\"m\"g\"i\"e | (3\"a\"e'\"m\"g\"i\"e (3\"a\"d'\"m\"g\"i\"e (3\"a\"c'\"m\"g\"i\"e |\n(3\"a\"c'\"m\"a\"i\"e (3\"a\"b\"m\"a\"i\"e (3\"a\"a\"m\"a\"i\"e | (3\"a\"a\"m\"a\"i\"e (3\"a\"b\"m\"a\"i\"e (3\"a\"c'\"m\"a\"i\"e |\n(3\"a\"b\"m\"a\"i\"^d (3\"a\"c'\"m\"a\"i\"^d (3\"a\"b\"m\"a\"i\"^d | (3\"a\"d'\"m\"a\"i\"^d (3\"a\"c'\"m\"a\"i\"^d (3\"a\"b\"m\"a\"i\"^d |\n(3\"a\"b\"m\"g\"i\"e (3\"a\"a\"m\"g\"i\"e (3\"a\"g\"m\"g\"i\"e | (3\"a\"g\"m\"g\"i\"e (3\"a\"f\"m\"g\"i\"e (3\"a\"e\"m\"g\"i\"e |\n(3\"a\"f\"m\"a\"i\"^d (3\"a\"f\"m\"a\"i\"^d (3\"a\"f\"m\"a\"i\"^d | (3\"a\"g\"m\"a\"i\"^d (3\"a\"f\"m\"a\"i\"^d (3\"a\"^d\"m\"a\"i\"B |\n(3\"a\"e\"m\"g\"i\"e (3\"a\"e\"m\"g\"i\"e (3\"a\"e\"m\"g\"i\"e | \"a\"e6 |]\nV:2 stem=down\n\"p\"E,6 | \"p\"E,6 | \"p\"E,6 | \"p\"E,6 |\n\"p\"E,6 | \"p\"E,6 | \"p\"A,6 | \"p\"A,6 |\n\"p\"B,6 | \"p\"B,6 | \"p\"E,6 | \"p\"E,6 |\n\"p\"B,6 | \"p\"B,6 | \"p\"E,6 | \"p\"E,6 |]",
+    "notes": "En los compases 7–10 prepará la media cejilla en traste 5 (Am) y traste 7 (B7) con anticipación para no cortar el legato.",
+    "goals": [
+      "Mantener el flujo constante de tresillos (9 notas por compás) con sonido uniforme.",
+      "Cambiar de la posición abierta a cejilla en traste 5 y 7 sin perder el pulso."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-noi-de-la-mare",
+    "version": 3,
+    "type": "melody",
+    "title": "El noi de la mare (tradicional catalán en D)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 2,
+    "tags": ["repertorio", "clasica", "tradicional", "catalan", "3/4", "dominio-publico"],
+    "key": "D",
+    "timeSignature": "3/4",
+    "tempo": { "start": 68, "target": 92, "step": 4 },
+    "form": "16 compases (AB, arrullo en 3/4)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Canción tradicional navideña catalana (dominio público). Arreglo propio a 2 voces en Re mayor (afinación estándar).",
+    "focus": {
+      "guitarra-clasica": "Buscá un timbre dulce (tasto, cerca del diapasón) y dejá resonar las notas largas de esta canción de cuna."
+    },
+    "harmonicAnalysis": ["I", "I", "V7", "I", "I", "IV", "V7", "I", "V", "I", "V", "I", "IV", "I", "V7", "I"],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:D clef=treble-8\nV:1 stem=up\n\"m\"A | \"a\"d2 \"m\"f | \"a\"a2 \"m\"f | \"a\"g \"m\"f \"i\"e | \"a\"f2 \"m\"d |\n\"a\"d2 \"m\"f | \"a\"a2 \"m\"g | \"a\"f \"m\"e \"i\"c | \"m\"d2 \"i\"A |\n\"a\"e2 \"m\"e | \"a\"f2 \"m\"d | \"a\"e \"m\"f \"i\"g | \"a\"f2 \"m\"d |\n\"a\"g2 \"m\"f | \"a\"e2 \"m\"d | \"a\"c \"m\"B \"i\"c | \"m\"d2 |]\nV:2 stem=down\nz | \"p\"D3 | \"p\"D3 | \"p\"A,3 | \"p\"D3 |\n\"p\"D3 | \"p\"G,3 | \"p\"A,3 | \"p\"D3 |\n\"p\"A,3 | \"p\"D3 | \"p\"A,3 | \"p\"D3 |\n\"p\"G,3 | \"p\"D3 | \"p\"A,3 | \"p\"D2 |]",
+    "notes": "Arreglado en afinación estándar (bajo en 4.ª cuerda Re al aire); si preferís mayor profundidad, podés bajar la 6.ª cuerda a Re (Drop D).",
+    "goals": [
+      "Tocar con carácter expresivo de arrullo y dinámicas en arco.",
+      "Conectar suavemente los cambios de registro entre primera y quinta posición."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-sanz-espanioletas",
+    "version": 3,
+    "type": "melody",
+    "title": "Gaspar Sanz — Españoletas (1674, en Dm)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 2,
+    "tags": ["repertorio", "clasica", "barroco", "sanz", "danza", "dominio-publico"],
+    "key": "Dm",
+    "timeSignature": "3/4",
+    "tempo": { "start": 76, "target": 112, "step": 4 },
+    "form": "16 compases (AB, danza barroca española)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Gaspar Sanz (1640–1710), Instrucción de música sobre la guitarra española (1674) — Españoletas (dominio público, IMSLP). Adaptación en Re menor.",
+    "focus": {
+      "guitarra-clasica": "Articulación nítida de danza barroca en 3/4, alternando i–m en la melodía y bajos claros en 4.ª y 5.ª cuerda."
+    },
+    "harmonicAnalysis": ["i", "V", "i", "III", "VII", "III", "V", "i", "III", "VII", "i", "V", "i", "iv", "V", "i"],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:Dm clef=treble-8\nV:1 stem=up\n\"m\"d \"i\"e \"m\"f | \"a\"e2 \"m\"^c | \"m\"d \"i\"e \"m\"f | \"a\"f2 \"m\"a |\n\"a\"g \"m\"f \"i\"e | \"a\"f \"m\"e \"i\"d | \"a\"e2 \"m\"^c | \"m\"d3 |\n\"a\"f \"m\"g \"a\"a | \"a\"g2 \"m\"e | \"a\"f \"m\"e \"i\"d | \"m\"^c2 \"i\"A |\n\"m\"d \"i\"e \"m\"f | \"a\"g \"m\"f \"i\"e | \"m\"d2 \"i\"^c | \"m\"d3 |]\nV:2 stem=down\n\"p\"D3 | \"p\"A,3 | \"p\"D3 | \"p\"F,3 |\n\"p\"C3 | \"p\"F,3 | \"p\"A,3 | \"p\"D3 |\n\"p\"F,3 | \"p\"C3 | \"p\"D3 | \"p\"A,3 |\n\"p\"D3 | \"p\"G,3 | \"p\"A,3 | \"p\"D3 |]",
+    "notes": "Obra emblemática del barroco español para guitarra. Prestá atención a la alternancia entre Do natural (sobre C mayor) y Do# (sensible sobre A).",
+    "goals": [
+      "Tocar con carácter noble y danzable de barroco español.",
+      "Leer con fluidez las alteraciones accidentales Do# en primera posición."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-minueto-sol",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach / Petzold — Minueto en Sol mayor BWV Anh. 114",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 2,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "minueto", "dos-voces", "dominio-publico"],
+    "key": "G",
+    "timeSignature": "3/4",
+    "tempo": { "start": 84, "target": 120, "step": 4 },
+    "form": "16 compases (Sección A a 2 voces)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Cuaderno de Anna Magdalena Bach (1725), Minueto en Sol mayor BWV Anh. 114 (atrib. C. Petzold, dominio público, IMSLP). Sección A arreglada a 2 voces para guitarra.",
+    "focus": {
+      "guitarra-clasica": "Practicá independencia contrapuntística: escuchá cómo la voz inferior responde y sostiene la melodía sin perder elegancia de minueto."
+    },
+    "harmonicAnalysis": ["I", "I", "IV", "I", "IV", "I", "ii", "V", "I", "I", "IV", "I", "ii6", "I6/4", "V", "I"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:G clef=treble-8\nV:1 stem=up\n\"m\"d2 \"i\"G \"m\"A \"i\"B \"m\"c | \"a\"d2 \"i\"G2 \"m\"G2 | \"a\"e2 \"i\"c \"m\"d \"a\"e \"m\"f | \"a\"g2 \"i\"G2 \"m\"G2 |\n\"a\"c2 \"m\"d \"i\"c \"m\"B \"i\"A | \"m\"B2 \"a\"c \"m\"B \"i\"A \"m\"G | \"i\"F2 \"m\"G \"i\"A \"m\"B \"i\"G | \"m\"A6 |\n\"m\"d2 \"i\"G \"m\"A \"i\"B \"m\"c | \"a\"d2 \"i\"G2 \"m\"G2 | \"a\"e2 \"i\"c \"m\"d \"a\"e \"m\"f | \"a\"g2 \"i\"G2 \"m\"G2 |\n\"a\"c2 \"m\"d \"i\"c \"m\"B \"i\"A | \"m\"B2 \"a\"c \"m\"B \"i\"A \"m\"G | \"i\"A2 \"m\"B \"i\"A \"m\"G \"i\"F | \"m\"G6 |]\nV:2 stem=down\n\"p\"G,4 \"p\"A,2 | \"p\"B,6 | \"p\"C6 | \"p\"B,6 |\n\"p\"A,6 | \"p\"G,6 | \"p\"D4 \"p\"B,2 | \"p\"D2 \"p\"C \"p\"B, \"p\"A,2 |\n\"p\"G,4 \"p\"A,2 | \"p\"B,6 | \"p\"C6 | \"p\"B,6 |\n\"p\"A,6 | \"p\"G,4 \"p\"B,2 | \"p\"C2 \"p\"D2 \"p\"D2 | \"p\"G,6 |]",
+    "notes": "Activá el botón «Grados» para ver el análisis armónico clásico (I–IV–ii–V–I) mientras seguís el contrapunto a dos voces.",
+    "goals": [
+      "Tocar las corcheas ligadas y las negras con articulación barroca ligeramente separada.",
+      "Estudiar V:1 y V:2 por separado antes de unirlas."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-musette",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Musette en Re mayor BWV Anh. 126",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "pedal", "dos-voces", "dominio-publico"],
+    "key": "D",
+    "timeSignature": "2/4",
+    "tempo": { "start": 76, "target": 116, "step": 4 },
+    "form": "8 compases (Sección A en 2/4)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Cuaderno de Anna Magdalena Bach (1725), Musette en Re mayor BWV Anh. 126 (dominio público, IMSLP). Sección A a 2 voces para guitarra.",
+    "focus": {
+      "guitarra-clasica": "Articulación vivaz en 2/4: el pulgar marca un bajo pedal rústico (imitando la gaita musette) mientras i–m cantan en corcheas ágiles."
+    },
+    "harmonicAnalysis": ["I", "I", "V7", "I", "I", "V", "V", "I"],
+    "abc": "X:1\nM:2/4\nL:1/8\nK:D clef=treble-8\nV:1 stem=up\n\"m\"a \"i\"f \"m\"d \"i\"f | \"m\"a \"i\"f \"m\"d \"i\"f | \"m\"g \"i\"e \"m\"c \"i\"e | \"m\"d2 \"i\"A2 |\n\"m\"a \"i\"f \"m\"d \"i\"f | \"m\"b \"i\"g \"m\"e \"i\"g | \"m\"f \"i\"e \"m\"d \"i\"c | \"m\"d4 |]\nV:2 stem=down\n\"p\"D2 \"p\"D2 | \"p\"D2 \"p\"D2 | \"p\"A,2 \"p\"A,2 | \"p\"D2 \"p\"D2 |\n\"p\"D2 \"p\"D2 | \"p\"G,2 \"p\"G,2 | \"p\"A,2 \"p\"A,2 | \"p\"D4 |]",
+    "notes": "Mantené un toque liviano y articulado en las corcheas sin perder la firmeza del bajo ostinato.",
+    "goals": [
+      "Sostener alternancia estricta i–m en la voz superior.",
+      "Mantener el pulso binario alegre y sin aceleraciones."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-tarrega-lagrima",
+    "version": 3,
+    "type": "melody",
+    "title": "Tárrega — Lágrima (Preludio en Mi mayor, sección A)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "tarrega", "romantico", "3/4", "dominio-publico"],
+    "key": "E",
+    "timeSignature": "3/4",
+    "tempo": { "start": 56, "target": 80, "step": 4 },
+    "form": "8 compases (Sección A en Mi mayor)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Francisco Tárrega (1852–1909), «Lágrima» (Preludio en Mi mayor, sección A, cc. 1–8, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Cuidá los traslados silenciosos a lo largo de la 1.ª cuerda y dejá cantar cada blanca de la melodía con vibrato sutil y rubato contenido."
+    },
+    "harmonicAnalysis": ["I", "V6", "vi", "V7", "I", "IV", "V7", "I"],
+    "abc": "X:1\nM:3/4\nL:1/4\nK:E clef=treble-8\nV:1 stem=up\n\"a\"g \"i\"B \"a\"a | \"a\"b \"i\"B \"a\"g | \"a\"f \"i\"B \"a\"e | \"a\"^d \"i\"B \"a\"f |\n\"a\"g \"i\"B \"a\"a | \"a\"c' \"i\"e \"a\"a | \"a\"g \"i\"B \"a\"f | \"a\"e3 |]\nV:2 stem=down\n\"p\"E,3 | \"p\"G,3 | \"p\"C3 | \"p\"B,3 |\n\"p\"E,3 | \"p\"A,3 | \"p\"B,3 | \"p\"E,3 |]",
+    "notes": "La cuerda al aire Si (2.ª cuerda) funciona como enlace tímbrico entre cada nota de la melodía mientras trasladás la mano izquierda sin arrastres.",
+    "goals": [
+      "Ejecutar cada cambio de posición sin ruidos de roce en las cuerdas entorchadas.",
+      "Proyectar la voz superior por encima del Si pedal intermedio."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-tarrega-adelita",
+    "version": 3,
+    "type": "melody",
+    "title": "Tárrega — Adelita (Mazurca en Mi menor, sección A)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "tarrega", "mazurca", "romantico", "dominio-publico"],
+    "key": "Em",
+    "timeSignature": "3/4",
+    "tempo": { "start": 60, "target": 88, "step": 4 },
+    "form": "8 compases (Sección A, mazurca en Em)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Francisco Tárrega (1852–1909), «Adelita» (Mazurca en Mi menor, sección A, cc. 1–8, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Carácter expresivo de mazurca romántica: leve acento lírico en el segundo tiempo y cuidado especial en los traslados al registro agudo."
+    },
+    "harmonicAnalysis": ["i", "i", "iv", "V7", "i", "ii°", "V7", "i"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:Em clef=treble-8\nV:1 stem=up\n\"a\"b2 \"m\"e'3 \"i\"d' | \"a\"c'2 \"m\"b2 \"i\"g2 | \"a\"a2 \"m\"c'3 \"i\"b | \"a\"f4 z2 |\n\"a\"g2 \"m\"b3 \"i\"a | \"a\"f2 \"m\"a3 \"i\"g | \"a\"f2 \"m\"^d2 \"i\"f2 | \"a\"e6 |]\nV:2 stem=down\n\"p\"E,2 \"i\"[GB]2 \"i\"[GB]2 | \"p\"E,2 \"i\"[GB]2 \"i\"[GB]2 | \"p\"A,2 \"i\"[Ec]2 \"i\"[Ec]2 | \"p\"B,2 \"i\"[FA]2 \"i\"[FA]2 |\n\"p\"E,2 \"i\"[GB]2 \"i\"[GB]2 | \"p\"F,2 \"i\"[Ac]2 \"i\"[Ac]2 | \"p\"B,2 \"i\"[FA]2 \"i\"[FA]2 | \"p\"E,6 |]",
+    "notes": "Contrastá esta sección A melancólica en Mi menor con la edición completa que modula a Mi mayor en la sección B.",
+    "goals": [
+      "Lograr una línea melódica cantabile sobre el acompañamiento suave de mazurca.",
+      "Controlar afinación y limpieza en trastes 7–12 de la 1.ª cuerda."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-bourree-996",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Bourrée en Mi menor BWV 996 (sección A)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "contrapunto", "dos-voces", "dominio-publico"],
+    "key": "Em",
+    "timeSignature": "4/4",
+    "tempo": { "start": 76, "target": 116, "step": 4 },
+    "form": "8 compases (Sección A, contrapunto a 2 voces)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "J. S. Bach (1685–1750), Suite para laúd en Mi menor BWV 996 — Bourrée, sección A cc. 1–8 (c. 1715, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Dos voces totalmente independientes en movimiento contrario: escuchá cómo el bajo asciende cromáticamente mientras la melodía responde con brío barroco."
+    },
+    "harmonicAnalysis": ["i", "V6", "i", "V/III", "III", "iv", "V", "III"],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:Em clef=treble-8\nV:1 stem=up\n\"i\"e \"m\"f | \"a\"g2 \"m\"f \"i\"e \"m\"^d2 \"i\"e \"m\"f | \"i\"B2 \"m\"^c \"i\"^d \"m\"e2 \"i\"d \"m\"c |\n\"i\"B2 \"m\"A \"i\"G \"m\"F2 \"i\"G \"m\"A | \"m\"G \"i\"F \"m\"E \"i\"F \"m\"B,2 \"i\"e \"m\"f |\n\"a\"g2 \"m\"f \"i\"e \"m\"d2 \"i\"c \"m\"B | \"a\"c2 \"m\"B \"i\"A \"m\"G2 \"i\"F \"m\"E |\n\"i\"F2 \"m\"G \"i\"A \"m\"B \"i\"A \"m\"G \"i\"F | \"m\"G6 |]\nV:2 stem=down\nz2 | \"p\"E,2 \"p\"G,2 \"p\"B,2 \"p\"A,2 | \"p\"G,2 \"p\"F,2 \"p\"E,2 \"p\"F,2 |\n\"p\"G,2 \"p\"A,2 \"p\"B,2 \"p\"B,2 | \"p\"E,2 \"p\"G,2 \"p\"B,2 z2 |\n\"p\"E,2 \"p\"G,2 \"p\"B,2 \"p\"G,2 | \"p\"A,2 \"p\"B,2 \"p\"C2 \"p\"A,2 |\n\"p\"D2 \"p\"E2 \"p\"D2 \"p\"D2 | \"p\"G,6 |]",
+    "notes": "Fijate en la modulación clásica de la sección A: comienza en Mi menor y cadencia en el relativo mayor (Sol mayor) en el compás 8.",
+    "goals": [
+      "Dominar cada voz por separado usando el modo «Voces» antes de tocarlas juntas.",
+      "Articular las negras del bajo con peso barroco y las corcheas con claridad."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-preludio-999",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Preludio en Re menor BWV 999 (fragmento inicial)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "arpegios", "dominio-publico"],
+    "key": "Dm",
+    "timeSignature": "3/4",
+    "tempo": { "start": 66, "target": 100, "step": 4 },
+    "form": "12 compases iniciales (arpegios barrocos en 3/4)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "J. S. Bach, Preludio para laúd en Do menor BWV 999 (transcrito a Re menor para guitarra clásica, cc. 1–12, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Arpegio continuo con bajos que dibujan una progresión tensa sobre pedal de Re (D); dejá sonar todas las notas del acorde como un clave/laúd."
+    },
+    "harmonicAnalysis": ["i", "i", "iv6/4", "iv6/4", "V7/4/2", "V7/4/2", "i", "i", "viio7", "viio7", "V", "i"],
+    "abc": "X:1\nM:3/4\nL:1/16\nK:Dm clef=treble-8\nV:1 stem=up\nz2 \"i\"A2 \"m\"d2 \"a\"f2 \"m\"d2 \"i\"A2 | z2 \"i\"A2 \"m\"d2 \"a\"f2 \"m\"d2 \"i\"A2 |\nz2 \"i\"B2 \"m\"d2 \"a\"g2 \"m\"d2 \"i\"B2 | z2 \"i\"B2 \"m\"d2 \"a\"g2 \"m\"d2 \"i\"B2 |\nz2 \"i\"G2 \"m\"^c2 \"a\"e2 \"m\"^c2 \"i\"G2 | z2 \"i\"G2 \"m\"^c2 \"a\"e2 \"m\"^c2 \"i\"G2 |\nz2 \"i\"A2 \"m\"d2 \"a\"f2 \"m\"d2 \"i\"A2 | z2 \"i\"A2 \"m\"d2 \"a\"f2 \"m\"d2 \"i\"A2 |\nz2 \"i\"B2 \"m\"e2 \"a\"g2 \"m\"e2 \"i\"B2 | z2 \"i\"A2 \"m\"^c2 \"a\"g2 \"m\"^c2 \"i\"A2 |\nz2 \"i\"A2 \"m\"^c2 \"a\"e2 \"m\"^c2 \"i\"A2 | \"a\"[Adf]12 |]\nV:2 stem=down\n\"p\"D4 z4 \"p\"A,4 | \"p\"D4 z4 \"p\"A,4 | \"p\"D4 z4 \"p\"G,4 | \"p\"D4 z4 \"p\"G,4 |\n\"p\"D4 z4 \"p\"A,4 | \"p\"D4 z4 \"p\"A,4 | \"p\"D4 z4 \"p\"A,4 | \"p\"D4 z4 \"p\"F,4 |\n\"p\"G,4 z4 \"p\"E,4 | \"p\"A,4 z4 \"p\"E,4 | \"p\"A,4 z4 \"p\"A,4 | \"p\"D12 |]",
+    "notes": "Transcrito en afinación estándar (pedal en 4.ª cuerda al aire D); en concierto suele tocarse con 6.ª en Re (Drop D).",
+    "goals": [
+      "Sostener las posiciones de mano izquierda completas para que el acorde resuene.",
+      "Mantener precisión mecánica y dinámica ascendente en el crescendo central."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-narvaez-emperador",
+    "version": 3,
+    "type": "melody",
+    "title": "Narváez — Canción del Emperador (fragmento inicial)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 3,
+    "tags": ["repertorio", "clasica", "renacimiento", "vihuela", "polifonia", "dominio-publico"],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": { "start": 60, "target": 88, "step": 4 },
+    "form": "8 compases iniciales (polifonía renacentista)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Luys de Narváez (fl. 1526–1549), Los seys libros del Delphín (1538) — «Canción del Emperador» (sobre «Mille Regretz» de Josquin, dominio público, IMSLP). Adaptación inicial a 2 voces.",
+    "focus": {
+      "guitarra-clasica": "Imitá la serenidad vocal del Renacimiento: ligá cada nota con el máximo legato posible y evitá acentos bruscos de compás."
+    },
+    "harmonicAnalysis": ["vi", "V", "vi", "III", "iv", "V", "vi", "V"],
+    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\nV:1 stem=up\n\"m\"e2 \"i\"e2 | \"m\"d \"i\"c \"m\"B2 | \"m\"c2 \"i\"d \"m\"e | \"a\"f \"m\"e \"i\"d2 |\n\"m\"e2 \"i\"c2 | \"m\"d \"i\"B \"m\"c \"i\"A | \"m\"B2 \"i\"A \"m\"^G | \"i\"A4 |]\nV:2 stem=down\n\"p\"A,2 \"p\"C2 | \"p\"B, \"p\"A, \"p\"E,2 | \"p\"A,2 \"p\"B, \"p\"C | \"p\"D \"p\"C \"p\"G,2 |\n\"p\"C2 \"p\"A,2 | \"p\"G,2 \"p\"A,2 | \"p\"E,2 \"p\"E,2 | \"p\"A,4 |]",
+    "notes": "Obra maestra de la vihuela española (1538). Para la transcripción integral a 4 voces (con 3.ª cuerda en Fa#), consultá la edición de referencia en IMSLP.",
+    "goals": [
+      "Escuchar y equilibrar la polifonía vocal de dos líneas independientes.",
+      "Lograr timbre redondo y cálido sin dureza en el ataque."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-sor-op35-n22",
+    "version": 3,
+    "type": "melody",
+    "title": "Sor — Estudio Op. 35 n.º 22 en Si menor (sección A)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 4,
+    "tags": ["repertorio", "clasica", "sor", "arpegio", "cejilla", "dominio-publico"],
+    "key": "Bm",
+    "timeSignature": "3/4",
+    "tempo": { "start": 68, "target": 100, "step": 4 },
+    "form": "16 compases (Sección A en Si menor)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Fernando Sor (1778–1839), 24 Estudios Op. 35 n.º 22 en Si menor (Estudio n.º 5 de Segovia), sección A (dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Uno de los estudios más bellos del repertorio: controlá la cejilla en traste 2 sin apretar de más y destacá la melodía en la voz superior del arpegio."
+    },
+    "harmonicAnalysis": ["i", "V7", "i", "iv", "i", "V", "i", "V", "III", "V/III", "III", "iv", "i6/4", "V7", "i", "i"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:Bm clef=treble-8\nV:1 stem=up\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | z \"i\"c \"m\"f \"a\"^a \"m\"f \"i\"c |\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | z \"i\"e \"m\"g \"a\"b \"m\"g \"i\"e |\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | z \"i\"^c \"m\"f \"a\"^a \"m\"f \"i\"^c |\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | \"a\"[f^a]4 z2 |\nz \"i\"f \"m\"a \"a\"d' \"m\"a \"i\"f | z \"i\"e \"m\"g \"a\"c' \"m\"g \"i\"e |\nz \"i\"f \"m\"a \"a\"d' \"m\"a \"i\"f | z \"i\"e \"m\"g \"a\"b \"m\"g \"i\"e |\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | z \"i\"e \"m\"f \"a\"^a \"m\"f \"i\"e |\nz \"i\"d \"m\"f \"a\"b \"m\"f \"i\"d | \"a\"[dfb]6 |]\nV:2 stem=down\n\"p\"B,6 | \"p\"F,6 | \"p\"B,6 | \"p\"E,6 |\n\"p\"B,6 | \"p\"F,6 | \"p\"B,6 | \"p\"F,6 |\n\"p\"D6 | \"p\"A,6 | \"p\"D6 | \"p\"E,6 |\n\"p\"F,6 | \"p\"F,6 | \"p\"B,6 | \"p\"B,6 |]",
+    "notes": "Relajá el pulgar izquierdo detrás del traste 2 en cada cambio hacia acordes abiertos (Em, D, A7) para evitar fatiga.",
+    "goals": [
+      "Mantener el flujo continuo de corcheas con sonoridad cálida y cantabile.",
+      "Sostener cejillas limpias en traste 2 sin trasteos."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-llobet-testament",
+    "version": 3,
+    "type": "melody",
+    "title": "Llobet — El testament d'Amelia (tema en Dm)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 4,
+    "tags": ["repertorio", "clasica", "llobet", "armonicos", "catalan", "dominio-publico"],
+    "key": "Dm",
+    "timeSignature": "3/4",
+    "tempo": { "start": 56, "target": 80, "step": 4 },
+    "form": "8 compases (tema inicial en Re menor)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Miguel Llobet (1878–1938), Canciones populares catalanas — «El testament d'Amelia» (tema principal en Re menor, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Cuidá el fraseo melancólico y probá sustituir las notas agudas de la repetición por armónicos octavados (técnica distintiva de Llobet)."
+    },
+    "harmonicAnalysis": ["i", "iv", "V7", "i", "III", "VI", "V7", "i"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:Dm clef=treble-8\nV:1 stem=up\n\"m\"A2 | \"a\"d3 \"m\"e \"i\"f2 | \"a\"g2 \"m\"f2 \"i\"e2 | \"a\"f2 \"m\"e2 \"i\"^c2 | \"m\"d4 \"i\"A2 |\n\"a\"f3 \"m\"g \"i\"a2 | \"a\"b2 \"m\"a2 \"i\"g2 | \"a\"f2 \"m\"e2 \"i\"^c2 | \"m\"d4 |]\nV:2 stem=down\nz2 | \"p\"D2 \"i\"[FA]2 \"i\"[FA]2 | \"p\"G,2 \"i\"[Bd]2 \"i\"[Bd]2 | \"p\"A,2 \"i\"[G^c]2 \"i\"[G^c]2 | \"p\"D2 \"i\"[FA]2 \"i\"[FA]2 |\n\"p\"F,2 \"i\"[Ac]2 \"i\"[Ac]2 | \"p\"B,2 \"i\"[df]2 \"i\"[df]2 | \"p\"A,2 \"i\"[G^c]2 \"i\"[G^c]2 | \"p\"D4 |]",
+    "notes": "En la edición de concierto de Llobet se utiliza 6.ª en Re (Drop D) y armónicos artificiales en la variación. Aquí suena en afinación estándar.",
+    "goals": [
+      "Cantar el tema con legato expresivo sobre los acordes suaves de acompañamiento.",
+      "Preparar la mano derecha para abordar la sección de armónicos octavados."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-cello-1007",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Suite para cello n.º 1, Preludio BWV 1007 (en D)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 4,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "arpegios", "dominio-publico"],
+    "key": "D",
+    "timeSignature": "4/4",
+    "tempo": { "start": 60, "target": 92, "step": 4 },
+    "form": "8 compases iniciales (Preludio en Re mayor)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "J. S. Bach, Suite n.º 1 para violonchelo BWV 1007, Preludio cc. 1–8 (transcripción estándar para guitarra clásica en Re mayor, dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "Alterná pulgar en las cuerdas graves y dedos i–m–a en las cuerdas agudas con semicorcheas parejas, haciendo sobresalir el contrapunto implícito."
+    },
+    "harmonicAnalysis": ["I", "IV6/4", "V7/4/2", "I", "vi6", "V/V", "V", "I"],
+    "abc": "X:1\nM:4/4\nL:1/16\nK:D clef=treble-8\n\"p\"D\"i\"A\"m\"f\"i\"e \"m\"f\"i\"A\"m\"f\"i\"A \"p\"D\"i\"A\"m\"f\"i\"e \"m\"f\"i\"A\"m\"f\"i\"A |\n\"p\"D\"i\"B\"m\"g\"i\"f \"m\"g\"i\"B\"m\"g\"i\"B \"p\"D\"i\"B\"m\"g\"i\"f \"m\"g\"i\"B\"m\"g\"i\"B |\n\"p\"D\"i\"c\"m\"g\"i\"f \"m\"g\"i\"c\"m\"g\"i\"c \"p\"D\"i\"c\"m\"g\"i\"f \"m\"g\"i\"c\"m\"g\"i\"c |\n\"p\"D\"i\"d\"m\"f\"i\"e \"m\"f\"i\"d\"m\"f\"i\"d \"p\"D\"i\"d\"m\"f\"i\"e \"m\"f\"i\"d\"m\"f\"i\"d |\n\"p\"D\"i\"B\"m\"f\"i\"e \"m\"f\"i\"d\"m\"c\"i\"d \"m\"B\"i\"d\"m\"c\"i\"d \"p\"F\"i\"A\"m\"^G\"i\"F |\n\"p\"D\"i\"^G\"m\"e\"i\"d \"m\"e\"i\"^G\"m\"e\"i\"^G \"p\"D\"i\"^G\"m\"e\"i\"d \"m\"e\"i\"^G\"m\"e\"i\"^G |\n\"p\"D\"i\"A\"m\"e\"i\"d \"m\"e\"i\"c\"m\"A\"i\"c \"p\"D\"i\"A\"m\"e\"i\"d \"m\"e\"i\"c\"m\"A\"i\"c |\n\"p\"D\"i\"A\"m\"f\"i\"e \"m\"f\"i\"A\"m\"f\"i\"A \"p\"D4 z4 |]",
+    "notes": "En guitarra clásica suele ejecutarse con 6.ª cuerda afinada en Re (Drop D); esta versión está escrita sobre la 4.ª cuerda al aire (D) para sonar en afinación estándar.",
+    "goals": [
+      "Mantener semicorcheas completamente regulares con sonido resonante (campanella cuando sea posible).",
+      "Destacar el arco melódico superior f#–g–g–f#–f#–e–e–f#."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-bach-gavotte-1006a",
+    "version": 3,
+    "type": "melody",
+    "title": "Bach — Gavotte en Rondeau BWV 1006a (tema en Mi mayor)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 4,
+    "tags": ["repertorio", "clasica", "barroco", "bach", "gavotte", "dos-voces", "dominio-publico"],
+    "key": "E",
+    "timeSignature": "4/4",
+    "tempo": { "start": 84, "target": 124, "step": 6 },
+    "form": "8 compases (Estribillo del rondó, 2 voces)",
+    "rights": "public_domain",
+    "style": "barroco",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "J. S. Bach, Suite para laúd en Mi mayor BWV 1006a (de la Partita n.º 3 para violín) — Gavotte en Rondeau, tema principal (dominio público, IMSLP).",
+    "focus": {
+      "guitarra-clasica": "La gavota entra siempre en anacrusa de dos negras (tiempos 3 y 4): articulá con espíritu danzable, saltos precisos y bajos ligeros."
+    },
+    "harmonicAnalysis": ["I", "V", "I", "V", "I", "IV", "V", "I"],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:E clef=treble-8\nV:1 stem=up\n\"a\"b2 \"m\"g2 | \"a\"e2 \"i\"B2 \"m\"g \"i\"f \"m\"e \"i\"f | \"m\"g2 \"i\"B2 \"a\"b2 \"m\"g2 |\n\"a\"e2 \"i\"B2 \"m\"g \"i\"f \"m\"e \"i\"f | \"m\"^d2 \"i\"B2 \"a\"b2 \"m\"g2 |\n\"a\"e2 \"m\"g2 \"a\"b2 \"m\"e'2 | \"a\"c'2 \"m\"a2 \"m\"f2 \"i\"a2 |\n\"a\"g \"m\"f \"i\"e \"m\"f \"i\"g2 \"m\"f2 | \"a\"e4 |]\nV:2 stem=down\nz4 | \"p\"E,4 \"p\"G,4 | \"p\"E,4 z4 |\n\"p\"E,4 \"p\"A,4 | \"p\"B,4 z4 |\n\"p\"E,4 \"p\"G,4 | \"p\"A,4 \"p\"D4 |\n\"p\"E,4 \"p\"B,4 | \"p\"E,4 |]",
+    "notes": "Asegurate de entrar siempre en los tiempos 3 y 4 (anacrusa de blanca) para conservar el balanceo propio de la gavota barroca francesa.",
+    "goals": [
+      "Tocar la anacrusa con impulso natural hacia el tiempo 1 del siguiente compás.",
+      "Mantener limpieza de articulación y contraste entre corcheas y negras."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-tarrega-alhambra",
+    "version": 3,
+    "type": "melody",
+    "title": "Tárrega — Recuerdos de la Alhambra (estudio de trémolo inicial)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 5,
+    "tags": ["repertorio", "clasica", "tarrega", "tremolo", "p-a-m-i", "dominio-publico"],
+    "key": "Am",
+    "timeSignature": "3/4",
+    "tempo": { "start": 56, "target": 96, "step": 4 },
+    "form": "8 compases iniciales (trémolo p-a-m-i en Am)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Francisco Tárrega (1852–1909), «Recuerdos de la Alhambra» (1896, dominio público, IMSLP). Esquema inicial de trémolo p–a–m–i en La menor.",
+    "focus": {
+      "guitarra-clasica": "El secreto del trémolo está en la equidistancia exacta entre los cuatro ataques (p–a–m–i): practicá muy lento a 56 BPM escuchando la regularidad de cada semicorchea."
+    },
+    "harmonicAnalysis": ["i", "i", "i", "V/III", "III", "III", "iv", "V7"],
+    "abc": "X:1\nM:3/4\nL:1/16\nK:Am clef=treble-8\nV:1 stem=up\nz \"a\"e\"m\"e\"i\"e z \"a\"e\"m\"e\"i\"e z \"a\"e\"m\"e\"i\"e | z \"a\"e\"m\"e\"i\"e z \"a\"f\"m\"f\"i\"f z \"a\"e\"m\"e\"i\"e |\nz \"a\"e\"m\"e\"i\"e z \"a\"d\"m\"d\"i\"d z \"a\"c\"m\"c\"i\"c | z \"a\"c\"m\"c\"i\"c z \"a\"B\"m\"B\"i\"B z \"a\"c\"m\"c\"i\"c |\nz \"a\"e\"m\"e\"i\"e z \"a\"e\"m\"e\"i\"e z \"a\"e\"m\"e\"i\"e | z \"a\"e\"m\"e\"i\"e z \"a\"g\"m\"g\"i\"g z \"a\"f\"m\"f\"i\"f |\nz \"a\"f\"m\"f\"i\"f z \"a\"e\"m\"e\"i\"e z \"a\"d\"m\"d\"i\"d | z \"a\"e\"m\"e\"i\"e z \"a\"^d\"m\"^d\"i\"^d z \"a\"e\"m\"e\"i\"e |]\nV:2 stem=down\n\"p\"A,4 \"p\"E4 \"p\"A4 | \"p\"A,4 \"p\"E4 \"p\"A4 |\n\"p\"A,4 \"p\"E4 \"p\"A4 | \"p\"G,4 \"p\"D4 \"p\"G4 |\n\"p\"C4 \"p\"G4 \"p\"c4 | \"p\"C4 \"p\"G4 \"p\"c4 |\n\"p\"D4 \"p\"A4 \"p\"d4 | \"p\"E,4 \"p\"B,4 \"p\"E4 |]",
+    "notes": "Usá el Entrenador de velocidad (+2 o +4 BPM cada 4 compases) y practicá el trémolo en bloques rítmicos (staccato y con acentos rotativos en a, m, i).",
+    "goals": [
+      "Lograr una ilusión de nota sostenida pareja en el trémolo a–m–i.",
+      "Conectar el pulgar en el arpegio grave sin desestabilizar la mano derecha."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-albeniz-asturias",
+    "version": 3,
+    "type": "melody",
+    "title": "Albéniz — Asturias (Leyenda) Op. 47 n.º 5 (ostinato inicial)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 5,
+    "tags": ["repertorio", "clasica", "albeniz", "ostinato", "espanol", "dominio-publico"],
+    "key": "Em",
+    "timeSignature": "3/4",
+    "tempo": { "start": 76, "target": 132, "step": 6 },
+    "form": "12 compases iniciales (Allegro ma non troppo en Em)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "waltz",
+    "verified": false,
+    "sourceRef": "Isaac Albéniz (1860–1909), Suite Española Op. 47 n.º 5 «Asturias (Leyenda)» (1892, dominio público, IMSLP). Motivo ostinato inicial en Mi menor.",
+    "focus": {
+      "guitarra-clasica": "Alternancia clásica p–i–m (pulgar en la melodía grave sobre la 5.ª/4.ª cuerda y dedos i–m alternados sobre la 2.ª cuerda al aire Si)."
+    },
+    "harmonicAnalysis": ["i", "i", "i", "i", "i", "i", "V", "V", "i", "i", "V", "i"],
+    "abc": "X:1\nM:3/4\nL:1/8\nK:Em clef=treble-8\nV:1 stem=up\nz \"i\"B z \"m\"B z \"i\"B | z \"m\"B z \"i\"B z \"m\"B |\nz \"i\"B z \"m\"B z \"i\"B | z \"m\"B z \"i\"B z \"m\"B |\nz \"i\"B z \"m\"B z \"i\"B | z \"m\"B z \"i\"B z \"m\"B |\nz \"i\"B z \"m\"B z \"i\"B | z \"m\"B z \"i\"B z \"m\"B |\nz \"i\"B z \"m\"B z \"i\"B | z \"m\"B z \"i\"B z \"m\"B |\nz \"i\"B z \"m\"B z \"i\"B | \"i\"[EGB]6 |]\nV:2 stem=down\n\"p\"E, z \"p\"G, z \"p\"B, z | \"p\"C z \"p\"B, z \"p\"A, z |\n\"p\"G, z \"p\"F, z \"p\"E, z | \"p\"F, z \"p\"G, z \"p\"A, z |\n\"p\"B, z \"p\"C z \"p\"B, z | \"p\"A, z \"p\"G, z \"p\"F, z |\n\"p\"E, z \"p\"F, z \"p\"G, z | \"p\"A, z \"p\"B, z \"p\"^D z |\n\"p\"E z \"p\"C z \"p\"B, z | \"p\"A, z \"p\"G, z \"p\"F, z |\n\"p\"G, z \"p\"F, z \"p\"^D z | \"p\"E,6 |]",
+    "notes": "Estudiá primero a tempo moderado (76 BPM) proyectando la melodía en el pulgar (p) mientras el pedal en Si (i–m) suena ligero y parejo.",
+    "goals": [
+      "Sostener la alternancia p–i–p–m con total economía de movimiento.",
+      "Subir gradualmente de 76 a 132 BPM manteniendo nitidez rítmica."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-clas-sor-op9-tema",
+    "version": 3,
+    "type": "melody",
+    "title": "Sor — Variaciones sobre un tema de Mozart Op. 9 (Tema en E)",
+    "instruments": ["guitarra-clasica"],
+    "category": "repertorio",
+    "level": 5,
+    "tags": ["repertorio", "clasica", "sor", "mozart", "clasicismo", "dos-voces", "dominio-publico"],
+    "key": "E",
+    "timeSignature": "4/4",
+    "tempo": { "start": 76, "target": 112, "step": 4 },
+    "form": "12 compases (Tema principal Andante en Mi mayor)",
+    "rights": "public_domain",
+    "style": "clasico-romantico",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Fernando Sor (1778–1839), Introducción y Variaciones sobre un tema de «La flauta mágica» de Mozart Op. 9 (1821, dominio público, IMSLP). Tema principal en Mi mayor.",
+    "focus": {
+      "guitarra-clasica": "Claridad mozartiana: articulación chispeante en corcheas con puntillo, bajos limpios y frases simétricas con contrastes piano/forte."
+    },
+    "harmonicAnalysis": ["I", "V7", "I", "V", "I", "IV", "V7", "I", "V", "I", "V7", "I"],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:E clef=treble-8\nV:1 stem=up\n\"m\"g2 \"i\"e2 \"m\"b2 \"a\"b2 | \"a\"a \"m\"g \"i\"f \"m\"e \"i\"f2 z2 |\n\"m\"a2 \"i\"f2 \"m\"b2 \"a\"b2 | \"a\"g \"m\"f \"i\"e \"m\"^d \"i\"e2 z2 |\n\"m\"g2 \"i\"e2 \"m\"b2 \"a\"e'2 | \"a\"c'2 \"m\"a2 \"i\"f2 \"m\"a2 |\n\"a\"g2 \"m\"e2 \"i\"f2 \"m\"^d2 | \"a\"e4 z4 |\n\"m\"f2 \"i\"^d2 \"m\"b2 \"a\"a2 | \"a\"g2 \"m\"e2 \"i\"b2 \"m\"g2 |\n\"a\"a \"m\"g \"i\"f \"m\"e \"i\"f2 \"m\"^d2 | \"a\"e4 z4 |]\nV:2 stem=down\n\"p\"E,4 \"p\"G,4 | \"p\"B,4 \"p\"B,2 z2 |\n\"p\"B,4 \"p\"^D4 | \"p\"E,4 \"p\"E,2 z2 |\n\"p\"E,4 \"p\"G,4 | \"p\"A,4 \"p\"F,4 |\n\"p\"B,4 \"p\"B,4 | \"p\"E,4 z4 |\n\"p\"B,4 \"p\"^D4 | \"p\"E,4 \"p\"G,4 |\n\"p\"A,4 \"p\"B,4 | \"p\"E,4 z4 |]",
+    "notes": "Tema de referencia del repertorio clásico de concierto; una vez dominado el tema a 2 voces, explorá las variaciones de arpegios y escalas en la partitura completa de IMSLP.",
+    "goals": [
+      "Tocar con articulación clásica elegante y balance limpio entre melodía y bajo.",
+      "Sostener el pulso estable en los desplazamientos hacia el traste 12."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  }
+]

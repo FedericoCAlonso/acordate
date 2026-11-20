@@ -32,7 +32,7 @@
   },
   {
     "id": "gc-n1-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Acordes abiertos arpegiados: C, Am, Em y G",
     "instruments": [
       "guitarra-clasica"
@@ -59,7 +59,51 @@
     ],
     "notes": "Usá pulgar (p) para el bajo y dedos i-m-a en las tres cuerdas agudas.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "mixed",
+    "comping": "arpegio-pima",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm",
+        "voicingId": "d-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      }
+    ]
   },
   {
     "id": "gc-n1-lectura-01",
@@ -156,7 +200,7 @@
   },
   {
     "id": "g-n1-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Cambios lentos: C, G, D, Em y Am",
     "instruments": [
       "guitarra"
@@ -168,22 +212,66 @@
       "cambios de acorde",
       "rasgueo"
     ],
-    "key": "G",
+    "key": "C",
     "timeSignature": "4/4",
     "tempo": {
       "start": 55,
       "target": 76,
       "step": 5
     },
-    "abc": "X:1\nT:Cambios de acordes abiertos\nM:4/4\nL:1/4\nK:G clef=treble-8\n\"G\"G2 G2 | \"Em\"E2 E2 | \"C\"C2 C2 | \"D\"D2 D2 |\n\"G\"G2 G2 | \"Am\"A2 A2 | \"D\"D2 D2 | \"G\"G4 |]",
+    "abc": null,
     "fingerings": {},
     "goals": [
       "Cambiar de acorde sin frenar la mano derecha",
       "Pisar cerca del traste para evitar trasteos"
     ],
-    "notes": "Rasgueá hacia abajo en los tiempos 1 y 3 mientras anticipás visualmente el acorde siguiente.",
+    "notes": "Practicá los cambios de C, G, D, Em y Am rasgueando parejo y sin cortar el pulso entre compases.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "harmony",
+    "comping": "negras-abajo",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      }
+    ]
   },
   {
     "id": "g-n1-lectura-01",
@@ -408,7 +496,7 @@
   },
   {
     "id": "gc-n2-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Progresión I–IV–V en Sol (vals en 3/4)",
     "instruments": [
       "guitarra-clasica"
@@ -435,7 +523,51 @@
     ],
     "notes": "Usá pulgar en el primer tiempo e índice-medio-anular juntos en tiempos 2 y 3.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "mixed",
+    "comping": "vals",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      }
+    ]
   },
   {
     "id": "gc-n2-lectura-01",
@@ -532,7 +664,7 @@
   },
   {
     "id": "g-n2-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Progresión I–vi–IV–V en Do mayor",
     "instruments": [
       "guitarra"
@@ -559,7 +691,56 @@
     ],
     "notes": "Probá transponer esta práctica a G, D y F para dominar el círculo en varias tonalidades.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "mixed",
+    "comping": "arpegio-asc",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      }
+    ]
   },
   {
     "id": "g-n2-lectura-01",
@@ -784,7 +965,7 @@
   },
   {
     "id": "gc-n3-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Progresión ii–V–I en Do con acordes de séptima",
     "instruments": [
       "guitarra-clasica"
@@ -811,7 +992,46 @@
     ],
     "notes": "Escuchá la conducción de las notas guía entre Dm7, G7 y Cmaj7.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "mixed",
+    "comping": "arpegio-pima",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Dm7",
+        "voicingId": "dm7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-open"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Dm7",
+        "voicingId": "dm7-open"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      }
+    ]
   },
   {
     "id": "gc-n3-lectura-01",
@@ -909,7 +1129,7 @@
   },
   {
     "id": "g-n3-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Progresión ii–V–I mayor en Do y Sol (acordes de 7ª)",
     "instruments": [
       "guitarra"
@@ -928,7 +1148,7 @@
       "target": 118,
       "step": 5
     },
-    "abc": "X:1\nT:ii-V-I en Do y Sol\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"Dm7\"F2 c2 | \"G7\"F2 B2 | \"Cmaj7\"E2 B2 | \"Cmaj7\"E2 G2 |\n\"Am7\"G2 c2 | \"D7\"^F2 c2 | \"Gmaj7\"^F2 B2 | \"Gmaj7\"D4 |]",
+    "abc": null,
     "fingerings": {},
     "goals": [
       "Armar los acordes con cejilla relajando el pulgar detrás del mango",
@@ -936,7 +1156,41 @@
     ],
     "notes": "Escuchá la línea superior de notas guía y acompañate con voicings drop-2 o cejilla.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "harmony",
+    "comping": "swing-negras",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Dm7",
+        "voicingId": "dm7-m7-shell-s5-f5"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-dom7-shell-s6-f3"
+      },
+      {
+        "bars": 2,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-maj7-shell-s5-f3"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-m7-shell-s6-f5"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-dom7-shell-s5-f5"
+      },
+      {
+        "bars": 2,
+        "chord": "Gmaj7",
+        "voicingId": "gmaj7-maj7-shell-s6-f3"
+      }
+    ]
   },
   {
     "id": "g-n3-lectura-01",
@@ -1285,7 +1539,7 @@
   },
   {
     "id": "g-n4-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Cambios jazz con extensiones (maj7, m7, 7, m7b5, dim7)",
     "instruments": [
       "guitarra"
@@ -1304,7 +1558,7 @@
       "target": 148,
       "step": 5
     },
-    "abc": "X:1\nT:Cambios jazz con extensiones en Fa\nM:4/4\nL:1/4\nK:F clef=treble-8\n\"Fmaj7\"A2 e2 | \"F#dim7\"A2 _e2 | \"Gm7\"B2 f2 | \"C7\"B2 e2 |\n\"Am7\"c2 g2 | \"D7\"c2 ^f2 | \"Gm7\"B2 f2 | \"C7\"B2 e2 |\n\"Cm7\"_e2 B2 | \"F7\"_e2 A2 | \"Bbmaj7\"d2 A2 | \"Bdim7\"d2 _A2 |\n\"Am7\"c2 g2 | \"Dm7\"c2 f2 | \"Gm7\"B2 \"C7\"e2 | \"Fmaj7\"A4 |]",
+    "abc": null,
     "fingerings": {},
     "goals": [
       "Enlazar voicings con mínimo movimiento de dedos",
@@ -1312,7 +1566,81 @@
     ],
     "notes": "Activá la vista Cifrado para practicar comping libre sobre la grilla completa.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "harmony",
+    "comping": "swing-negras",
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Fmaj7",
+        "section": "A"
+      },
+      {
+        "bars": 1,
+        "chord": "F#dim7"
+      },
+      {
+        "bars": 1,
+        "chord": "Gm7"
+      },
+      {
+        "bars": 1,
+        "chord": "C7"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7"
+      },
+      {
+        "bars": 1,
+        "chord": "D7"
+      },
+      {
+        "bars": 1,
+        "chord": "Gm7"
+      },
+      {
+        "bars": 1,
+        "chord": "C7"
+      },
+      {
+        "bars": 1,
+        "chord": "Cm7",
+        "section": "B"
+      },
+      {
+        "bars": 1,
+        "chord": "F7"
+      },
+      {
+        "bars": 1,
+        "chord": "Bbmaj7"
+      },
+      {
+        "bars": 1,
+        "chord": "Bdim7"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Gm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "C7"
+      },
+      {
+        "bars": 1,
+        "chord": "Fmaj7"
+      }
+    ]
   },
   {
     "id": "g-n4-lectura-01",
@@ -1693,7 +2021,7 @@
   },
   {
     "id": "g-n5-acordes-01",
-    "version": 1,
+    "version": 2,
     "title": "Rhythm Changes en Bb (Sección A y puente de dominantes)",
     "instruments": [
       "guitarra"
@@ -1712,7 +2040,7 @@
       "target": 176,
       "step": 5
     },
-    "abc": "X:1\nT:Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=treble-8\n\"Bbmaj7\"d2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 | \"Dm7\"c2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 |\n\"Fm7\"_A2 \"Bb7\"D2 | \"Ebmaj7\"G2 \"Edim7\"=G2 | \"Bbmaj7\"F2 \"F7\"E2 | \"Bbmaj7\"D4 |\n\"D7\"^F2 c2 | \"D7\"^F2 c2 | \"G7\"=F2 =B2 | \"G7\"=F2 =B2 |\n\"C7\"=E2 B2 | \"C7\"=E2 B2 | \"F7\"E2 A2 | \"F7\"E2 A2 |]",
+    "abc": null,
     "fingerings": {},
     "goals": [
       "Ejecutar cambios de dos acordes por compás con fluidez arriba de 165 BPM",
@@ -1720,7 +2048,89 @@
     ],
     "notes": "Subí gradualmente con el entrenador de velocidad hasta alcanzar tempo real de bebop.",
     "origin": "builtin",
-    "createdAt": "2026-11-19T00:00:00Z"
+    "createdAt": "2026-11-19T00:00:00Z",
+    "type": "harmony",
+    "comping": "swing-negras",
+    "progression": [
+      {
+        "bars": 0.5,
+        "chord": "Bbmaj7",
+        "section": "A"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Cm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Dm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Cm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Fm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Bb7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Ebmaj7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Edim7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Bbmaj7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F7"
+      },
+      {
+        "bars": 1,
+        "chord": "Bbmaj7"
+      },
+      {
+        "bars": 2,
+        "chord": "D7",
+        "section": "B"
+      },
+      {
+        "bars": 2,
+        "chord": "G7"
+      },
+      {
+        "bars": 2,
+        "chord": "C7"
+      },
+      {
+        "bars": 2,
+        "chord": "F7"
+      }
+    ]
   },
   {
     "id": "g-n5-lectura-01",

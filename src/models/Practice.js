@@ -7,12 +7,12 @@ import { Voicing } from './Voicing.js';
 export const VALID_INSTRUMENTS = ['guitarra-clasica', 'guitarra', 'bajo'];
 
 /**
- * Tipos principales de práctica en el esquema v2: Melodía, Armonía o Mixta (lead sheet).
+ * Tipos principales de práctica en los esquemas v2 y v3: Melodía, Armonía o Mixta (lead sheet).
  */
 export const VALID_PRACTICE_TYPES = ['melody', 'harmony', 'mixed'];
 
 /**
- * Categorías válidas admitidas por el esquema de prácticas (melódicas y armónicas).
+ * Categorías válidas admitidas por el esquema de prácticas (melódicas, armónicas y repertorio).
  */
 export const VALID_CATEGORIES = [
   'escala',
@@ -28,8 +28,19 @@ export const VALID_CATEGORIES = [
   'campo-armonico',
   'acompanamiento',
   'arpegios-de-acorde',
-  'oido'
+  'oido',
+  'repertorio'
 ];
+
+/**
+ * Estados de derechos de autor soportados por el esquema v3 para repertorio e importaciones.
+ */
+export const VALID_RIGHTS = ['public_domain', 'harmony_only', 'user_import'];
+
+/**
+ * Estilos musicales admitidos para filtrar el repertorio.
+ */
+export const VALID_STYLES = ['jazz', 'blues', 'bossa', 'barroco', 'clasico-romantico', 'tradicional', 'tango'];
 
 /**
  * Orígenes válidos de una práctica: incluida (solo lectura) o creada por el usuario.
@@ -49,7 +60,7 @@ export function inferPracticeType(data) {
   const hasAbc = typeof data?.abc === 'string' && data.abc.trim().length > 0;
   if (hasProg && hasAbc) return 'mixed';
   if (hasProg && !hasAbc) return 'harmony';
-  // En prácticas v1 con cifrado americano sobre la partitura ABC, se clasifican como 'mixed' si tienen acordes
+  // En prácticas v1 con cifrado americano sobre la partitura ABC, se clasifican como 'mixed' si son acordes
   if (hasAbc && /"[A-G][#b]?[^"]*"/.test(data.abc)) {
     return data.category === 'acordes' ? 'mixed' : 'melody';
   }
@@ -57,7 +68,7 @@ export function inferPracticeType(data) {
 }
 
 /**
- * Valida un objeto plano contra el esquema JSON oficial de una práctica (v1 y v2).
+ * Valida un objeto plano contra el esquema JSON oficial de una práctica (v1, v2 y v3).
  * Devuelve estado de validez y mensajes de error claros en español.
  * @param {object} data Objeto candidato a validar.
  * @returns {{ valid: boolean, errors: string[] }} Resultado de la validación.
@@ -98,6 +109,14 @@ export function validatePracticeSchema(data) {
 
   if (!VALID_CATEGORIES.includes(data.category)) {
     errors.push(`La categoría "${data.category}" no es válida.`);
+  }
+
+  if (data.rights !== undefined && data.rights !== null && !VALID_RIGHTS.includes(data.rights)) {
+    errors.push(`El campo "rights" debe ser uno de: ${VALID_RIGHTS.join(', ')}.`);
+  }
+
+  if (data.style !== undefined && data.style !== null && !VALID_STYLES.includes(data.style)) {
+    errors.push(`El estilo "${data.style}" no es válido.`);
   }
 
   if (typeof data.level !== 'number' || !Number.isInteger(data.level) || data.level < 1 || data.level > 5) {
@@ -210,22 +229,23 @@ export function generatePracticeId(title = 'practica') {
 }
 
 /**
- * Modelo de dominio puro que representa una práctica musical (Melodía, Armonía o Mixta).
- * Compatible hacia atrás con prácticas v1 y ampliado al esquema v2 con progresiones y voicings.
+ * Modelo de dominio puro que representa una práctica musical o pieza de repertorio
+ * (Melodía, Armonía o Mixta). Compatible hacia atrás con esquemas v1, v2 y v3.
  */
 export class Practice {
   /**
-   * Construye y valida una instancia de Practice a partir de datos crudos (v1 o v2).
+   * Construye y valida una instancia de Practice a partir de datos crudos (v1, v2 o v3).
    * @param {object} data Objeto conforme al esquema JSON de práctica.
    */
   constructor(data) {
     const inferredType = inferPracticeType(data);
     const hasProgression = Array.isArray(data.progression) && data.progression.length > 0;
     const rawAbc = typeof data.abc === 'string' && data.abc.trim() ? data.abc.trim() : null;
+    const isRepertoire = data.category === 'repertorio' || Boolean(data.rights);
 
     const normalized = {
       id: data.id || generatePracticeId(data.title),
-      version: data.version ?? (hasProgression ? 2 : 1),
+      version: data.version ?? (isRepertoire ? 3 : hasProgression ? 2 : 1),
       type: inferredType,
       title: (data.title || '').trim(),
       instruments: Array.isArray(data.instruments) ? [...data.instruments] : ['guitarra'],
@@ -249,7 +269,16 @@ export class Practice {
       goals: Array.isArray(data.goals) ? data.goals.map((g) => String(g).trim()).filter(Boolean) : [],
       notes: typeof data.notes === 'string' ? data.notes : '',
       origin: data.origin || 'user',
-      createdAt: data.createdAt || new Date().toISOString()
+      createdAt: data.createdAt || new Date().toISOString(),
+      // Campos v3 de repertorio y metadatos de estudio
+      form: typeof data.form === 'string' && data.form.trim() ? data.form.trim() : null,
+      rights: VALID_RIGHTS.includes(data.rights) ? data.rights : null,
+      sourceRef: typeof data.sourceRef === 'string' && data.sourceRef.trim() ? data.sourceRef.trim() : null,
+      verified: data.verified !== undefined ? Boolean(data.verified) : !isRepertoire,
+      focus: data.focus && typeof data.focus === 'object' && !Array.isArray(data.focus) ? { ...data.focus } : null,
+      style: VALID_STYLES.includes(data.style) ? data.style : null,
+      feeling: typeof data.feeling === 'string' && data.feeling.trim() ? data.feeling.trim() : null,
+      harmonicAnalysis: Array.isArray(data.harmonicAnalysis) ? [...data.harmonicAnalysis] : []
     };
 
     const validation = validatePracticeSchema(normalized);
@@ -259,7 +288,7 @@ export class Practice {
 
     /** Identificador único de la práctica. */
     this.id = normalized.id;
-    /** Versión del esquema de datos (1 o 2). */
+    /** Versión del esquema de datos (1, 2 o 3). */
     this.version = normalized.version;
     /** Tipo de práctica: 'melody', 'harmony' o 'mixed'. */
     this.type = normalized.type;
@@ -267,7 +296,7 @@ export class Practice {
     this.title = normalized.title;
     /** Lista de instrumentos para los que aplica la práctica. */
     this.instruments = normalized.instruments;
-    /** Categoría pedagógica. */
+    /** Categoría pedagógica (incluye 'repertorio'). */
     this.category = normalized.category;
     /** Nivel de dificultad entre 1 y 5. */
     this.level = normalized.level;
@@ -281,7 +310,7 @@ export class Practice {
     this.tempo = normalized.tempo;
     /** Partitura completa en notación ABC (o null en prácticas puras de armonía). */
     this.abc = normalized.abc;
-    /** Pasos de progresión armónica con acordes y voicings específicos. */
+    /** Pasos de progresión armónica con acordes, voicings y secciones. */
     this.progression = normalized.progression.map((s) => new ProgressionStep(s));
     /** Patrón rítmico predeterminado de acompañamiento (comping). */
     this.comping = normalized.comping;
@@ -297,6 +326,22 @@ export class Practice {
     this.origin = normalized.origin;
     /** Marca temporal ISO de creación. */
     this.createdAt = normalized.createdAt;
+    /** Forma estructural del tema (ej. "AABA, 32 compases", "Blues de 12"). */
+    this.form = normalized.form;
+    /** Estado de derechos ('public_domain' | 'harmony_only' | 'user_import' | null). */
+    this.rights = normalized.rights;
+    /** Referencia de fuente/edición consultada (IMSLP, urtext o progresión común). */
+    this.sourceRef = normalized.sourceRef;
+    /** Indica si la transcripción o cifrado fue verificado por el usuario/profesor. */
+    this.verified = normalized.verified;
+    /** Qué se practica en cada instrumento ({ guitarra, guitarra-clasica, bajo }). */
+    this.focus = normalized.focus;
+    /** Estilo musical del repertorio ('jazz', 'blues', 'bossa', 'barroco', 'clasico-romantico', 'tradicional', 'tango'). */
+    this.style = normalized.style;
+    /** Feeling rítmico sugerido para play-along ('swing', 'bossa', 'shuffle', 'ballad', 'tango', 'straight'). */
+    this.feeling = normalized.feeling;
+    /** Capa opcional de análisis armónico por compás (grados romanos y cadencias para guitarra clásica). */
+    this.harmonicAnalysis = normalized.harmonicAnalysis;
   }
 
   /**
@@ -305,6 +350,14 @@ export class Practice {
    */
   get isReadOnly() {
     return this.origin === 'builtin';
+  }
+
+  /**
+   * Indica si la práctica pertenece a la sección Repertorio.
+   * @returns {boolean} True si es categoría repertorio o tiene metadatos de derechos.
+   */
+  get isRepertoire() {
+    return this.category === 'repertorio' || Boolean(this.rights);
   }
 
   /**
@@ -320,8 +373,8 @@ export class Practice {
    * @returns {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} Clave del sintetizador.
    */
   getDefaultSynthInstrument() {
-    if (this.instruments.includes('bajo')) {
-      return this.category === 'walking' ? 'acoustic-bass' : 'electric-bass';
+    if (this.instruments.includes('bajo') && this.instruments.length === 1) {
+      return this.category === 'walking' || this.style === 'jazz' ? 'acoustic-bass' : 'electric-bass';
     }
     if (this.instruments.includes('guitarra-clasica')) {
       return 'nylon-guitar';
@@ -346,7 +399,7 @@ export class Practice {
   }
 
   /**
-   * Serializa la instancia a un objeto JSON plano acorde al esquema oficial.
+   * Serializa la instancia a un objeto JSON plano acorde al esquema oficial (v1/v2/v3).
    * @returns {object} Representación JSON pura.
    */
   toJSON() {
@@ -377,6 +430,16 @@ export class Practice {
     if (this.customVoicings.length > 0) {
       base.customVoicings = this.customVoicings.map((v) => v.toJSON());
     }
+    if (this.form) base.form = this.form;
+    if (this.rights) base.rights = this.rights;
+    if (this.sourceRef) base.sourceRef = this.sourceRef;
+    if (this.version >= 3 || this.rights || this.verified === false) {
+      base.verified = this.verified;
+    }
+    if (this.focus) base.focus = { ...this.focus };
+    if (this.style) base.style = this.style;
+    if (this.feeling) base.feeling = this.feeling;
+    if (this.harmonicAnalysis.length > 0) base.harmonicAnalysis = [...this.harmonicAnalysis];
     return base;
   }
 }
