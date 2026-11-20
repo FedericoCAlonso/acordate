@@ -98,6 +98,10 @@ export class AudioSynthService {
 
     /** Nodos de audio activos para silenciar inmediatamente al detener. */
     this._activeNodes = new Set();
+    /** Nodos activos del pedal armónico modal (drone) en la sección de Escalas. */
+    this._droneNodes = [];
+    /** Temporizadores activos de reproducción secuencial de escalas/patrones. */
+    this._scaleTimers = [];
     /** Cola de eventos visuales pendientes para sincronizar resaltado de notas. */
     this._visualQueue = [];
     /** Mapa voiceIndex -> nota activa actualmente sonando para resaltar múltiples voces a la vez. */
@@ -355,6 +359,7 @@ export class AudioSynthService {
     this._isPaused = false;
     this._pausedAtBeat = 0;
     this._stopTimersAndNodes();
+    this.stopScaleSequence();
   }
 
   /**
@@ -1190,5 +1195,126 @@ export class AudioSynthService {
         this.bassVolume * 0.38
       );
     }
+  }
+
+  /**
+   * Inicia un pedal armónico modal sostenido (drone) suave para escuchar el color de escalas y modos.
+   * @param {number[]} midis Alturas MIDI reales del pedal/acorde modal.
+   * @param {object} [options={}] Opciones de volumen.
+   */
+  startDrone(midis = [], options = {}) {
+    this.stopDrone();
+    const ctx = this._metronome.ensureAudioContext();
+    if (!ctx || !Array.isArray(midis) || midis.length === 0) return;
+
+    const vol = sanitizeVolume(options.volume, 0.24);
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(920, now);
+
+    master.gain.setValueAtTime(0.0005, now);
+    master.gain.linearRampToValueAtTime(vol / Math.max(2, midis.length), now + 0.35);
+    filter.connect(master);
+    master.connect(ctx.destination);
+
+    const oscs = midis.map((rawMidi, idx) => {
+      const finalMidi = applyListeningRegister(rawMidi, this.listeningRegister);
+      const osc = ctx.createOscillator();
+      osc.type = idx === 0 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(midiToFrequency(finalMidi), now);
+      osc.connect(filter);
+      osc.start(now);
+      return osc;
+    });
+
+    this._droneNodes.push(() => {
+      const t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setTargetAtTime(0.0001, t, 0.08);
+      for (const osc of oscs) {
+        try {
+          osc.stop(t + 0.22);
+        } catch {
+          // Oscilador ya detenido
+        }
+      }
+    });
+  }
+
+  /**
+   * Detiene con fade-out suave el pedal armónico modal (drone) si está activo.
+   */
+  stopDrone() {
+    for (const stopFn of this._droneNodes) {
+      try {
+        stopFn();
+      } catch {
+        // Ignora nodos cerrados
+      }
+    }
+    this._droneNodes = [];
+  }
+
+  /**
+   * Reproduce una secuencia de notas MIDI (escala, modo o patrón de estudio) con acompañamiento
+   * opcional de pedal modal (drone) y notificación paso a paso para iluminar el diapasón SVG.
+   * @param {number[]} midis Lista ordenada de notas MIDI reales.
+   * @param {object} [options={}] Opciones ({ bpm, instrument, droneMidis, useDrone, onStep, onEnd }).
+   */
+  playScaleSequence(midis = [], options = {}) {
+    this.stopScaleSequence();
+    const ctx = this._metronome.ensureAudioContext();
+    if (!ctx || !Array.isArray(midis) || midis.length === 0) return;
+
+    const bpm = Math.max(40, Math.min(220, Number(options.bpm) || 96));
+    const inst = options.instrument || this.instrument || 'nylon-guitar';
+    const stepSec = 60 / bpm / 2; // Corcheas fluidas al tempo elegido
+    const start0 = ctx.currentTime + 0.05;
+
+    if (options.useDrone && Array.isArray(options.droneMidis) && options.droneMidis.length > 0) {
+      this._scheduleVoicingAt(
+        ctx,
+        options.droneMidis,
+        start0,
+        Math.min(18, midis.length * stepSec + 0.8),
+        'block',
+        'nylon-guitar',
+        0.34,
+        14
+      );
+    }
+
+    midis.forEach((rawMidi, idx) => {
+      const t = start0 + idx * stepSec;
+      const finalMidi = applyListeningRegister(rawMidi, this.listeningRegister);
+      this._playPluckedNote(ctx, finalMidi, t, stepSec * 1.04, inst, 0.86, {
+        articulation: idx === midis.length - 1 ? 'tenuto' : 'normal'
+      });
+
+      if (typeof options.onStep === 'function') {
+        const delayMs = Math.max(0, Math.round((t - ctx.currentTime) * 1000));
+        this._scaleTimers.push(setTimeout(() => options.onStep(rawMidi, idx), delayMs));
+      }
+    });
+
+    const endMs = Math.max(50, Math.round((start0 + midis.length * stepSec + 0.25 - ctx.currentTime) * 1000));
+    this._scaleTimers.push(
+      setTimeout(() => {
+        this._scaleTimers = [];
+        if (typeof options.onEnd === 'function') options.onEnd();
+      }, endMs)
+    );
+  }
+
+  /**
+   * Cancela cualquier secuencia de escala en curso.
+   */
+  stopScaleSequence() {
+    for (const tid of this._scaleTimers) {
+      clearTimeout(tid);
+    }
+    this._scaleTimers = [];
   }
 }

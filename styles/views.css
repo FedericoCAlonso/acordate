@@ -1766,6 +1766,480 @@
   background: color-mix(in srgb, var(--md-sys-color-secondary-container) 35%, var(--md-sys-color-surface-container-low));
 }
 
+/* Acceso rápido a Ajustes en Top App Bar (visible en móvil < 600px donde la barra inferior prioriza 5 destinos de estudio) */
+@media (min-width: 600px) {
+  .top-bar-settings-btn {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Módulo Escalas y Modos (#/escalas)
+   ========================================================================== */
+
+.scales-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scales-controls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scales-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.scales-enh-wrap {
+  flex: 0 0 auto;
+}
+
+.scales-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.scales-title-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.scale-notes-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.scale-note-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding: 5px 8px;
+  border-radius: var(--md-sys-shape-sm);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  font-size: 0.86rem;
+  line-height: 1.15;
+}
+
+.scale-note-pill span {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.scale-note-pill--root {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.scale-note-pill--root span {
+  color: var(--md-sys-color-on-primary);
+  opacity: 0.9;
+}
+
+.scale-note-pill--char {
+  background: var(--md-sys-color-tertiary-container, var(--md-sys-color-secondary-container));
+  color: var(--md-sys-color-on-tertiary-container, var(--md-sys-color-on-secondary-container));
+  border-color: var(--md-sys-color-tertiary, var(--md-sys-color-primary));
+}
+
+.scale-note-pill--avoid {
+  border-style: dashed;
+  border-color: var(--md-sys-color-error);
+}
+
+.scale-melodic-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.scales-display-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.scales-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* Diapasón SVG interactivo horizontal (sin tablatura) */
+.scale-fretboard-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+  padding: 8px 4px;
+  border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.scale-fretboard-svg {
+  display: block;
+  width: 100%;
+  min-width: 680px;
+  height: auto;
+  user-select: none;
+}
+
+.scale-fretboard__wood {
+  fill: color-mix(in srgb, var(--md-sys-color-surface-container) 82%, var(--md-sys-color-surface-variant));
+  stroke: var(--md-sys-color-outline-variant);
+  stroke-width: 1;
+}
+
+.scale-fretboard__zone {
+  fill: color-mix(in srgb, var(--md-sys-color-primary) 13%, transparent);
+  stroke: color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent);
+  stroke-width: 1.4;
+}
+
+.scale-fretboard__inlay {
+  fill: var(--md-sys-color-outline-variant);
+  opacity: 0.72;
+}
+
+.scale-fretboard__nut {
+  stroke: var(--md-sys-color-on-surface);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+}
+
+.scale-fretboard__fret {
+  stroke: var(--md-sys-color-outline);
+  stroke-width: 1.4;
+  opacity: 0.7;
+}
+
+.scale-fretboard__string {
+  stroke: var(--md-sys-color-on-surface-variant);
+  opacity: 0.75;
+}
+
+.scale-fretboard__stringlabel {
+  fill: var(--md-sys-color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scale-fretboard__fretnum {
+  fill: var(--md-sys-color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.scale-fretboard__fretnum--accent {
+  fill: var(--md-sys-color-on-surface);
+  font-weight: 700;
+}
+
+.scale-dot {
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.scale-dot:focus-visible .scale-dot__circle {
+  stroke: var(--md-sys-color-on-surface);
+  stroke-width: 2.5;
+}
+
+.scale-dot__text {
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.scale-dot__text--sm {
+  font-size: 8.5px;
+}
+
+.scale-dot--root .scale-dot__circle {
+  fill: var(--md-sys-color-primary);
+  stroke: var(--md-sys-color-surface);
+  stroke-width: 1.5;
+}
+
+.scale-dot--root .scale-dot__text {
+  fill: var(--md-sys-color-on-primary);
+}
+
+.scale-dot--characteristic .scale-dot__circle {
+  fill: var(--md-sys-color-tertiary, #b06d00);
+  stroke: var(--md-sys-color-surface);
+  stroke-width: 1.6;
+}
+
+.scale-dot--characteristic .scale-dot__text {
+  fill: var(--md-sys-color-on-tertiary, #ffffff);
+}
+
+.scale-dot--chordtone .scale-dot__circle {
+  fill: var(--md-sys-color-secondary-container);
+  stroke: var(--md-sys-color-primary);
+  stroke-width: 1.4;
+}
+
+.scale-dot--chordtone .scale-dot__text {
+  fill: var(--md-sys-color-on-secondary-container);
+}
+
+.scale-dot--scale .scale-dot__circle {
+  fill: var(--md-sys-color-surface-container-high);
+  stroke: var(--md-sys-color-outline);
+  stroke-width: 1.2;
+}
+
+.scale-dot--scale .scale-dot__text {
+  fill: var(--md-sys-color-on-surface);
+}
+
+.scale-dot--avoid .scale-dot__circle {
+  fill: var(--md-sys-color-surface-container-high);
+  stroke: var(--md-sys-color-error);
+  stroke-width: 1.7;
+  stroke-dasharray: 3 2;
+}
+
+.scale-dot--avoid .scale-dot__text {
+  fill: var(--md-sys-color-error);
+}
+
+.scale-dot--dim {
+  opacity: 0.24;
+}
+
+.scale-dot--dim .scale-dot__circle {
+  fill: var(--md-sys-color-on-surface-variant);
+}
+
+.scale-dot--playing .scale-dot__circle {
+  fill: var(--md-sys-color-error);
+  stroke: var(--md-sys-color-on-error);
+  stroke-width: 2.5;
+}
+
+.scale-dot--playing .scale-dot__text {
+  fill: var(--md-sys-color-on-error);
+}
+
+/* Leyenda de colores del diapasón */
+.scale-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.scale-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scale-legend__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.scale-legend__swatch--root {
+  background: var(--md-sys-color-primary);
+}
+
+.scale-legend__swatch--char {
+  background: var(--md-sys-color-tertiary, #b06d00);
+}
+
+.scale-legend__swatch--chord {
+  background: var(--md-sys-color-secondary-container);
+  border: 1.5px solid var(--md-sys-color-primary);
+}
+
+.scale-legend__swatch--scale {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1.5px solid var(--md-sys-color-outline);
+}
+
+.scale-legend__swatch--avoid {
+  background: transparent;
+  border: 2px dashed var(--md-sys-color-error);
+}
+
+/* Grilla de teoría, acordes asociados y repertorio */
+.scale-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.scale-chords-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scale-chord-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--md-sys-shape-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  overflow: hidden;
+}
+
+.scale-chord-chip__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 12px 6px 4px;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.scale-chord-chip__main span {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.scale-repertoire-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scale-repertoire-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--md-sys-shape-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+}
+
+.scale-repertoire-item:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+/* Comparativa de 7 modos paralelos */
+.modes-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 12px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-card--active {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.mode-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mode-card__formula {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.mode-deg {
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.mode-deg--root {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-weight: 700;
+}
+
+.mode-deg--char {
+  background: var(--md-sys-color-tertiary-container, var(--md-sys-color-secondary-container));
+  color: var(--md-sys-color-on-tertiary-container, var(--md-sys-color-on-secondary-container));
+  font-weight: 700;
+}
+
+.mode-deg--avoid {
+  border: 1px dashed var(--md-sys-color-error);
+}
+
+.scale-score-preview {
+  min-height: 110px;
+  overflow-x: auto;
+}
+
+/* Entrenador de oído modal */
+.scale-ear-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.scale-ear-opt--correct {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.scale-ear-opt--wrong {
+  border-color: var(--md-sys-color-error);
+  color: var(--md-sys-color-error);
+}
+
+.scale-ear-feedback {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+
 
 
 

@@ -2,16 +2,18 @@ import { closeAllOverlays, createPopupMenu, el, icon } from './uiHelpers.js';
 
 /**
  * Destinos principales de navegación.
- * En barra inferior móvil se muestran exactamente 5 destinos (Prácticas, Acordes, Metrónomo, Progreso, Ajustes);
- * en rail de tablet y drawer de escritorio también se muestra Editor como acceso directo.
+ * En barra inferior móvil se muestran exactamente 5 destinos de estudio
+ * (Prácticas, Acordes, Escalas, Metrónomo, Progreso) y Ajustes se accede desde la Top App Bar;
+ * en rail de tablet y drawer de escritorio también se muestran Editor y Ajustes.
  */
 const NAV_ITEMS = [
   { route: 'practicas', hash: '#/practicas', label: 'Prácticas', iconName: 'music', desktopOnly: false },
   { route: 'acordes', hash: '#/acordes', label: 'Acordes', iconName: 'chords', desktopOnly: false },
+  { route: 'escalas', hash: '#/escalas', label: 'Escalas', iconName: 'scales', desktopOnly: false },
   { route: 'metronomo', hash: '#/metronomo', label: 'Metrónomo', iconName: 'metronome', desktopOnly: false },
   { route: 'editor', hash: '#/editor/nueva', label: 'Editor', iconName: 'edit', desktopOnly: true },
   { route: 'progreso', hash: '#/progreso', label: 'Progreso', iconName: 'chart', desktopOnly: false },
-  { route: 'ajustes', hash: '#/ajustes', label: 'Ajustes', iconName: 'settings', desktopOnly: false }
+  { route: 'ajustes', hash: '#/ajustes', label: 'Ajustes', iconName: 'settings', desktopOnly: true }
 ];
 
 /**
@@ -190,6 +192,24 @@ export class AppShellView {
     this._topActions.innerHTML = '';
     this._backBtn.style.display = isPracticeFull ? 'inline-flex' : 'none';
 
+    // En vistas que no son Ajustes ni reproductor full-screen, ofrece acceso directo a Ajustes en la Top App Bar
+    if (!isPracticeFull && route.name !== 'ajustes') {
+      this._topActions.appendChild(
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-icon-btn top-bar-settings-btn',
+            ripple: true,
+            'aria-label': 'Ajustes',
+            title: 'Ajustes',
+            onClick: () => this._appVm.navigate('#/ajustes')
+          },
+          [icon('settings', 22)]
+        )
+      );
+    }
+
     if (route.name === 'practicas') {
       this._topTitle.textContent = 'Prácticas';
       const useDualPane = sizeClass === 'expanded' && !isLandscapePhone;
@@ -267,6 +287,18 @@ export class AppShellView {
         this._activeLayoutKey = 'acordes';
       }
       if (route.params?.tab) this._views.chords.openTab(route.params.tab);
+      return;
+    }
+
+    if (route.name === 'escalas') {
+      this._topTitle.textContent = 'Escalas y modos';
+      if (this._activeLayoutKey !== 'escalas') {
+        this._cleanupActiveViews();
+        this._contentHost.innerHTML = '';
+        this._views.scales.mount(this._contentHost);
+        this._activeLayoutKey = 'escalas';
+      }
+      if (route.params?.tab) this._views.scales.openTab(route.params.tab);
       return;
     }
 
@@ -364,6 +396,7 @@ export class AppShellView {
     this._views.list.unmount?.();
     this._views.player.unmount?.();
     this._views.chords?.unmount?.();
+    this._views.scales?.unmount?.();
     this._views.metronome.unmount?.();
     this._views.editor.unmount?.();
     this._views.progress.unmount?.();

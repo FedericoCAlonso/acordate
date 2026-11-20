@@ -7,6 +7,7 @@ import { HarmonyService } from './services/HarmonyService.js';
 import { ImportExportService } from './services/ImportExportService.js';
 import { MetronomeService } from './services/MetronomeService.js';
 import { ProgressionGenerator } from './services/ProgressionGenerator.js';
+import { ScaleCatalogService } from './services/ScaleCatalogService.js';
 import { ScaleGenerator } from './services/ScaleGenerator.js';
 import { StorageService } from './services/StorageService.js';
 import { ThemeService } from './services/ThemeService.js';
@@ -20,6 +21,7 @@ import { MetronomeViewModel } from './viewmodels/MetronomeViewModel.js';
 import { PracticeListViewModel } from './viewmodels/PracticeListViewModel.js';
 import { PracticePlayerViewModel } from './viewmodels/PracticePlayerViewModel.js';
 import { ProgressViewModel } from './viewmodels/ProgressViewModel.js';
+import { ScalesHubViewModel } from './viewmodels/ScalesHubViewModel.js';
 import { SettingsViewModel } from './viewmodels/SettingsViewModel.js';
 import { AppShellView } from './views/AppShellView.js';
 import { ChordsHubView } from './views/ChordsHubView.js';
@@ -28,6 +30,7 @@ import { MetronomeView } from './views/MetronomeView.js';
 import { PracticeListView } from './views/PracticeListView.js';
 import { PracticePlayerView } from './views/PracticePlayerView.js';
 import { ProgressView } from './views/ProgressView.js';
+import { ScalesHubView } from './views/ScalesHubView.js';
 import { SettingsView } from './views/SettingsView.js';
 
 /**
@@ -61,6 +64,7 @@ async function bootstrap() {
   const audioService = new AudioSynthService(metronomeService);
   const abcService = new AbcService();
   const scaleGenerator = new ScaleGenerator();
+  const scaleCatalogService = new ScaleCatalogService();
   const progressionGenerator = new ProgressionGenerator();
   const walkingBassGenerator = new WalkingBassGenerator();
   const voicingGenerator = new VoicingGenerator();
@@ -85,12 +89,24 @@ async function bootstrap() {
     wakeLockService,
     importExportService
   });
+  /** Referencias diferidas para los enlaces bidireccionales Acordes ↔ Escalas sin acoplar vistas. */
+  let scalesHubVm = null;
   const chordsHubVm = new ChordsHubViewModel({
     appVm,
     voicingGenerator,
     harmonyService,
     audioService,
-    metronomeService
+    metronomeService,
+    onOpenScaleForChord: (chordSymbol) => scalesHubVm?.openForChord(chordSymbol)
+  });
+  scalesHubVm = new ScalesHubViewModel({
+    appVm,
+    scaleCatalogService,
+    audioService,
+    onOpenChord: (chordSymbol) => {
+      chordsHubVm.selectChordBySymbol(chordSymbol);
+      appVm.navigate('#/acordes/biblioteca');
+    }
   });
   const metronomeVm = new MetronomeViewModel(metronomeService, appVm);
   const editorVm = new EditorViewModel({
@@ -111,6 +127,7 @@ async function bootstrap() {
     list: new PracticeListView(practiceListVm, appVm, importExportService),
     player: new PracticePlayerView(practicePlayerVm, appVm, abcService),
     chords: new ChordsHubView(chordsHubVm, appVm, abcService),
+    scales: new ScalesHubView(scalesHubVm, appVm, abcService),
     metronome: new MetronomeView(metronomeVm),
     editor: new EditorView(editorVm, appVm, abcService),
     progress: new ProgressView(progressVm),

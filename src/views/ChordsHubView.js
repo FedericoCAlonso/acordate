@@ -620,6 +620,10 @@ export class ChordsHubView {
         type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
         onClick: () => this._vm.generateSuggestedVoicings()
       }, [icon('wand', 18), 'Generar voicings']),
+      el('button', {
+        type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
+        onClick: () => this._vm.openCompatibleScale()
+      }, [icon('scales', 18), 'Escalas compatibles']),
       currentVoicing
         ? el('button', {
             type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,

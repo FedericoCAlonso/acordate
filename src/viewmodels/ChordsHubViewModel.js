@@ -20,7 +20,7 @@ export class ChordsHubViewModel {
    * Construye el ViewModel inyectando los servicios puros de armonía y audio.
    * @param {object} deps Dependencias inyectadas manualmente.
    */
-  constructor({ appVm, voicingGenerator, harmonyService, audioService, metronomeService }) {
+  constructor({ appVm, voicingGenerator, harmonyService, audioService, metronomeService, onOpenScaleForChord = null }) {
     /** ViewModel global de la app. */
     this._appVm = appVm;
     /** Generador puro de voicings y conducción de voces. */
@@ -31,6 +31,8 @@ export class ChordsHubViewModel {
     this._audio = audioService;
     /** Metrónomo Web Audio para el entrenador de cambios. */
     this._metronome = metronomeService;
+    /** Callback opcional para saltar al módulo Escalas con la escala compatible del acorde activo. */
+    this._onOpenScaleForChord = onOpenScaleForChord;
 
     /** Pestaña activa del módulo ('biblioteca' | 'campo' | 'cambios' | 'oido'). */
     this.activeTab = new Observable('biblioteca');
@@ -261,6 +263,38 @@ export class ChordsHubViewModel {
     if (patch.bass !== undefined) this.selectedBass.set(patch.bass);
     this.generatedVoicings.set([]);
     this.activeVoicingIndex.set(0);
+  }
+
+  /**
+   * Selecciona un acorde completo a partir de su símbolo americano (ej. "Dm7", "G7", "C/E")
+   * y enfoca la pestaña Biblioteca (puente desde Escalas → Acordes).
+   * @param {string} chordSymbol Símbolo americano del acorde.
+   */
+  selectChordBySymbol(chordSymbol) {
+    try {
+      const parsed = Chord.parse(chordSymbol);
+      this.selectChord({
+        root: parsed.root,
+        quality: parsed.quality.id,
+        bass: parsed.bass || ''
+      });
+      this.activeTab.set('biblioteca');
+    } catch {
+      // Mantiene el acorde previo si el símbolo no es válido
+    }
+  }
+
+  /**
+   * Abre el módulo Escalas precargado con la escala más compatible para el acorde activo
+   * (puente Acordes → Escalas).
+   */
+  openCompatibleScale() {
+    const sym = this.activeChord.value?.americanSymbol || 'C';
+    if (typeof this._onOpenScaleForChord === 'function') {
+      this._onOpenScaleForChord(sym);
+    } else {
+      this._appVm.navigate('#/escalas/explorador');
+    }
   }
 
   /**

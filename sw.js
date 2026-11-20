@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v9: Auto-scroll de lectura anticipada y envolvente ADSR para ligaduras largas).
+ * Versión del caché estático de la PWA Acordate (v10: Nueva sección Escalas y Modos con diapasón SVG interactivo, digitaciones por instrumento, drone modal y oído).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v9';
+const CACHE_NAME = 'acordate-static-v10';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -47,6 +47,7 @@ const PRECACHE_ASSETS = [
   './src/services/AudioSynthService.js',
   './src/services/AbcService.js',
   './src/services/ScaleGenerator.js',
+  './src/services/ScaleCatalogService.js',
   './src/services/ProgressionGenerator.js',
   './src/services/WalkingBassGenerator.js',
   './src/services/VoicingGenerator.js',
@@ -64,16 +65,19 @@ const PRECACHE_ASSETS = [
   './src/viewmodels/PracticeListViewModel.js',
   './src/viewmodels/PracticePlayerViewModel.js',
   './src/viewmodels/ChordsHubViewModel.js',
+  './src/viewmodels/ScalesHubViewModel.js',
   './src/viewmodels/MetronomeViewModel.js',
   './src/viewmodels/EditorViewModel.js',
   './src/viewmodels/ProgressViewModel.js',
   './src/viewmodels/SettingsViewModel.js',
   './src/views/uiHelpers.js',
   './src/views/ChordDiagramView.js',
+  './src/views/ScaleFretboardView.js',
   './src/views/AppShellView.js',
   './src/views/PracticeListView.js',
   './src/views/PracticePlayerView.js',
   './src/views/ChordsHubView.js',
+  './src/views/ScalesHubView.js',
   './src/views/MetronomeView.js',
   './src/views/EditorView.js',
   './src/views/ProgressView.js',
