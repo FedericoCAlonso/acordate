@@ -517,18 +517,29 @@ export class AudioSynthService {
 
               // Respeta ligaduras de prolongación (ties): soundNotes omite notas ya ligadas desde el pulso anterior
               // y contiene la duración total acumulada en la nota de inicio de la ligadura.
-              const playableNotes = Array.isArray(noteEv.soundNotes)
-                ? noteEv.soundNotes
-                : noteEv.midis.map((midi) => ({ midi, durationBeats: noteEv.durationBeats }));
+              // Si el bucle arranca justo en una continuación ligada (cuyo inicio quedó antes de _rangeStartBeat),
+              // se dispara normalmente para no dejar silencio al comenzar el bucle.
+              const startedBeforeRange =
+                noteEv.isTiedContinuation &&
+                Math.abs(noteEv.beat - this._rangeStartBeat) < 0.02;
+              const playableNotes = startedBeforeRange
+                ? noteEv.midis.map((midi) => ({ midi, durationBeats: noteEv.durationBeats }))
+                : Array.isArray(noteEv.soundNotes)
+                  ? noteEv.soundNotes
+                  : noteEv.midis.map((midi) => ({ midi, durationBeats: noteEv.durationBeats }));
 
               const expr = {
                 articulation: noteEv.articulation || 'normal',
                 accent: Boolean(noteEv.accent)
               };
 
+              const maxRemainingBeats = Math.max(0.25, this._rangeEndBeat - noteEv.beat);
               for (const sn of playableNotes) {
                 const playbackMidi = applyListeningRegister(sn.midi, this.listeningRegister);
-                const snDurSec = Math.max(0.06, (sn.durationBeats || noteEv.durationBeats) * secPerBeat);
+                const boundedBeats = this.loopEnabled
+                  ? Math.min(sn.durationBeats || noteEv.durationBeats, maxRemainingBeats)
+                  : (sn.durationBeats || noteEv.durationBeats);
+                const snDurSec = Math.max(0.06, boundedBeats * secPerBeat);
                 this._playPluckedNote(ctx, playbackMidi, t, snDurSec, voiceInst, vol, expr);
               }
             }
@@ -744,8 +755,8 @@ export class AudioSynthService {
 
     const effectiveVol = Math.min(1.25, volume * volScale);
     const effectiveDur = Math.max(0.05, duration * durScale);
-    // Permite notas largas ligadas de hasta 9 s sin cortarse prematuramente
-    const totalDur = Math.min(9.0, Math.max(0.09, effectiveDur + release));
+    // Permite ligaduras muy largas (hasta 20 s en tempos lentos) sin cortar antes de tiempo
+    const totalDur = Math.min(20.0, Math.max(0.09, effectiveDur + release));
 
     const masterGain = ctx.createGain();
     const filter = ctx.createBiquadFilter();
@@ -755,39 +766,84 @@ export class AudioSynthService {
     const osc2 = ctx.createOscillator();
     const osc2Gain = ctx.createGain();
 
+    // Envolvente ADSR acústica de 4 etapas: ataque -> decaimiento inicial de pulsación ->
+    // sostén audible durante TODA la duración (crítico en ligaduras largas) -> release limpio.
+    const scheduleAdsr = ({ peak, atk, sustainStartRatio, sustainEndRatio, filterOpen, filterMid, filterClose }) => {
+      const atkEnd = safeStart + atk;
+      const holdEnd = Math.max(atkEnd + 0.02, safeStart + effectiveDur);
+      const decayDur = Math.min(0.28, Math.max(0.03, (holdEnd - atkEnd) * 0.32));
+      const decayEnd = Math.min(holdEnd, atkEnd + decayDur);
+      const releaseEnd = Math.max(holdEnd + 0.03, safeStart + totalDur);
+
+      const safePeak = Math.max(0.002, peak * effectiveVol);
+      const sustainStart = Math.max(0.002, safePeak * sustainStartRatio);
+      const sustainEnd = Math.max(0.002, safePeak * sustainEndRatio);
+
+      filter.frequency.setValueAtTime(filterOpen, safeStart);
+      if (decayEnd > atkEnd + 0.005) {
+        filter.frequency.exponentialRampToValueAtTime(Math.max(160, filterMid), decayEnd);
+      }
+      if (holdEnd > decayEnd + 0.005) {
+        filter.frequency.exponentialRampToValueAtTime(Math.max(150, filterClose), holdEnd);
+      }
+      filter.frequency.exponentialRampToValueAtTime(Math.max(140, filterClose * 0.85), releaseEnd);
+
+      masterGain.gain.setValueAtTime(0.001, safeStart);
+      masterGain.gain.linearRampToValueAtTime(safePeak, atkEnd);
+      if (decayEnd > atkEnd + 0.005) {
+        masterGain.gain.exponentialRampToValueAtTime(sustainStart, decayEnd);
+      }
+      if (holdEnd > decayEnd + 0.005) {
+        masterGain.gain.exponentialRampToValueAtTime(sustainEnd, holdEnd);
+      }
+      masterGain.gain.exponentialRampToValueAtTime(0.001, releaseEnd);
+    };
+
     if (instrument === 'nylon-guitar') {
       const atk = Math.min(0.045, 0.012 * attackScale);
       osc1.type = 'triangle';
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
       osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.16 : 0.24, safeStart);
-      filter.frequency.setValueAtTime(Math.min(3800, freq * 5.2 * brightScale), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(460, freq * 1.55), safeStart + totalDur);
-      masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.28 * effectiveVol, safeStart + atk);
-      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
+      scheduleAdsr({
+        peak: 0.28,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.45 : 0.66,
+        sustainEndRatio: articulation === 'staccato' ? 0.15 : 0.34,
+        filterOpen: Math.min(3800, freq * 5.2 * brightScale),
+        filterMid: Math.max(620, freq * 2.8),
+        filterClose: Math.max(460, freq * 1.75)
+      });
     } else if (instrument === 'acoustic-guitar') {
       const atk = Math.min(0.038, 0.006 * attackScale);
       osc1.type = 'sawtooth';
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
       osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.2 : 0.32, safeStart);
-      filter.frequency.setValueAtTime(Math.min(5600, freq * 7.5 * brightScale), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(620, freq * 1.85), safeStart + totalDur);
-      masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.2 * effectiveVol, safeStart + atk);
-      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
+      scheduleAdsr({
+        peak: 0.2,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.42 : 0.58,
+        sustainEndRatio: articulation === 'staccato' ? 0.14 : 0.28,
+        filterOpen: Math.min(5600, freq * 7.5 * brightScale),
+        filterMid: Math.max(820, freq * 3.4),
+        filterClose: Math.max(620, freq * 2.0)
+      });
     } else if (instrument === 'electric-bass') {
       const atk = Math.min(0.04, 0.01 * attackScale);
       osc1.type = 'triangle';
       osc2.type = 'sawtooth';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
       osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.14 : 0.22, safeStart);
-      filter.frequency.setValueAtTime(Math.min(1800, freq * 5.2 * brightScale), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(220, freq * 1.9), safeStart + totalDur);
-      masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.38 * effectiveVol, safeStart + atk);
-      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
+      scheduleAdsr({
+        peak: 0.38,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.48 : 0.72,
+        sustainEndRatio: articulation === 'staccato' ? 0.16 : 0.42,
+        filterOpen: Math.min(1800, freq * 5.2 * brightScale),
+        filterMid: Math.max(320, freq * 2.9),
+        filterClose: Math.max(220, freq * 1.95)
+      });
     } else {
       // acoustic-bass
       const atk = Math.min(0.05, 0.018 * attackScale);
@@ -795,11 +851,15 @@ export class AudioSynthService {
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
       osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.18 : 0.26, safeStart);
-      filter.frequency.setValueAtTime(Math.min(1200, freq * 3.8 * brightScale), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(170, freq * 1.45), safeStart + totalDur * 0.88);
-      masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.42 * effectiveVol, safeStart + atk);
-      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur * 0.88);
+      scheduleAdsr({
+        peak: 0.42,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.45 : 0.68,
+        sustainEndRatio: articulation === 'staccato' ? 0.15 : 0.36,
+        filterOpen: Math.min(1200, freq * 3.8 * brightScale),
+        filterMid: Math.max(240, freq * 2.2),
+        filterClose: Math.max(170, freq * 1.5)
+      });
     }
 
     osc1.frequency.setValueAtTime(freq, safeStart);

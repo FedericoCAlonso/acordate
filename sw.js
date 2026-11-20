@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v8: Auditoría musicológica del repertorio y diseñador multi-criterio de digitaciones).
+ * Versión del caché estático de la PWA Acordate (v9: Auto-scroll de lectura anticipada y envolvente ADSR para ligaduras largas).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v8';
+const CACHE_NAME = 'acordate-static-v9';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

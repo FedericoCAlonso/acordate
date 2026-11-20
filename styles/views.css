@@ -1758,6 +1758,15 @@
   max-width: 100%;
 }
 
+/* Anticipación visual del próximo acorde / compás durante la reproducción */
+.harmony-step-card--next,
+.chord-bar-cell--next {
+  border-color: var(--md-sys-color-tertiary, var(--md-sys-color-primary));
+  border-style: dashed;
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container) 35%, var(--md-sys-color-surface-container-low));
+}
+
+
 
 
 

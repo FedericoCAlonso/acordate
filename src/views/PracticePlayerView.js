@@ -68,6 +68,8 @@ export class PracticePlayerView {
     this._lastScoreWidth = 0;
     /** Nodos SVG actualmente resaltados. */
     this._highlightedSvgNodes = [];
+    /** Clave vertical del último sistema/fila encuadrado para evitar re-disparar scroll en cada nota. */
+    this._lastScrolledSystemKey = null;
     /** Referencia al sheet modal abierto (si existe). */
     this._activeSheet = null;
 
@@ -235,6 +237,7 @@ export class PracticePlayerView {
   _bindObservables() {
     this._unsubs = [
       this._vm.practice.subscribe(() => {
+        this._lastScrolledSystemKey = null;
         this._renderHeaderAndGuide();
         this._syncTransportDom();
       }),
@@ -969,22 +972,40 @@ export class PracticePlayerView {
   }
 
   /**
-   * Resalta el diagrama del acorde que suena actualmente en la fila de armonía.
+   * Resalta el diagrama del acorde que suena actualmente (y anticipa visualmente el siguiente)
+   * acomodando la vista horizontal o vertical para ver el acorde actual y los próximos.
    * @param {number} stepIndex Índice del paso activo (-1 si detenido).
    */
   _highlightActiveHarmonyStep(stepIndex) {
     if (!this._harmonyEl) return;
+    if (stepIndex < 0) {
+      this._lastScrolledSystemKey = null;
+    }
     const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
     if ((vInst === 'bajo' || vInst === 'bajo-5') && stepIndex >= 0) {
       // En bajo actualiza el mapa del diapasón para mostrar las notas del acorde que suena
       this._renderHarmonyDiagrams();
     }
+    const strip = this._harmonyEl.querySelector('.harmony-strip');
     const cards = this._harmonyEl.querySelectorAll('.harmony-step-card');
+    const total = cards.length;
+    const nextIdx = stepIndex >= 0 && total > 1 ? (stepIndex + 1) % total : -1;
+
     cards.forEach((card) => {
-      const match = Number(card.dataset.stepIndex) === stepIndex;
+      const idx = Number(card.dataset.stepIndex);
+      const match = idx === stepIndex;
       card.classList.toggle('harmony-step-card--active', match);
+      card.classList.toggle('harmony-step-card--next', !match && idx === nextIdx);
       if (match) {
-        card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+        const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const behavior = reduced ? 'auto' : 'smooth';
+        // En tira horizontal (móvil), ubica el acorde actual cerca del borde izquierdo para ver los 2-3 que vienen
+        if (strip && strip.scrollWidth > strip.clientWidth + 8) {
+          const targetLeft = Math.max(0, card.offsetLeft - 12);
+          strip.scrollTo({ left: targetLeft, behavior });
+        }
+        // En vertical (grilla de escritorio o móvil), deja espacio debajo para ver las filas siguientes
+        this._scrollToFollowReading(card, { systemQuantizePx: 60 });
       }
     });
   }
@@ -1539,7 +1560,7 @@ export class PracticePlayerView {
 
   /**
    * Resalta simultáneamente en tiempo real los elementos SVG de todas las voces/notas
-   * activas en el pulso actual y realiza scroll suave a la línea correspondiente.
+   * activas en el pulso actual y acomoda suavemente la vista para ver la línea actual y las siguientes.
    * @param {Array<object>} noteEvents Lista de eventos de nota activos en este pulso.
    */
   _highlightActiveNotes(noteEvents) {
@@ -1549,6 +1570,7 @@ export class PracticePlayerView {
     this._highlightedSvgNodes = [];
 
     if (!Array.isArray(noteEvents) || noteEvents.length === 0) {
+      this._lastScrolledSystemKey = null;
       return;
     }
 
@@ -1567,28 +1589,99 @@ export class PracticePlayerView {
       }
     }
 
-    if (anchor && typeof anchor.scrollIntoView === 'function') {
-      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      anchor.scrollIntoView({
-        block: 'center',
-        inline: 'nearest',
-        behavior: reduced ? 'auto' : 'smooth'
-      });
+    if (anchor) {
+      this._scrollToFollowReading(anchor, { systemQuantizePx: 44 });
     }
   }
 
   /**
-   * Resalta el compás activo dentro de la grilla de Cifrado cuando está visible.
+   * Busca el ancestro con desplazamiento vertical activo (o null para usar window).
+   * @param {Element} elNode Nodo de referencia dentro del reproductor.
+   * @returns {HTMLElement|null} Contenedor scrollable vertical o null.
+   */
+  _findVerticalScrollContainer(elNode) {
+    let cur = elNode?.parentElement || null;
+    while (cur && cur !== document.body && cur !== document.documentElement) {
+      const style = window.getComputedStyle ? window.getComputedStyle(cur) : null;
+      const oy = style ? style.overflowY : '';
+      if ((oy === 'auto' || oy === 'scroll') && cur.scrollHeight > cur.clientHeight + 12) {
+        return cur;
+      }
+      cur = cur.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Acomoda la vista durante la reproducción ubicando la línea/compás actual en el tercio superior
+   * libre (debajo de la barra superior y por encima del dock fijo de transporte), dejando ~75 %
+   * del espacio visible debajo para leer con anticipación los compases que vienen.
+   * Solo dispara scroll al cambiar de sistema o salir de la zona cómoda, evitando tirones.
+   * @param {Element} targetEl Elemento activo (nota SVG, tarjeta de acorde o compás).
+   * @param {{ force?: boolean, systemQuantizePx?: number }} [options={}] Opciones de encuadre.
+   */
+  _scrollToFollowReading(targetEl, { force = false, systemQuantizePx = 44 } = {}) {
+    if (!targetEl || typeof targetEl.getBoundingClientRect !== 'function') return;
+
+    const scrollParent = this._findVerticalScrollContainer(targetEl);
+    const topBar = document.querySelector('.m3-top-bar');
+    const topBarRect = topBar ? topBar.getBoundingClientRect() : null;
+    const dockRect = this._transportDock ? this._transportDock.getBoundingClientRect() : null;
+
+    const viewportTop = scrollParent ? scrollParent.getBoundingClientRect().top : 0;
+    const viewportBottom = scrollParent ? scrollParent.getBoundingClientRect().bottom : window.innerHeight;
+    const topSafe = Math.max(viewportTop, topBarRect ? topBarRect.bottom : 0) + 16;
+    const bottomSafe =
+      Math.min(viewportBottom, dockRect && dockRect.top > topSafe + 120 ? dockRect.top : viewportBottom) - 20;
+    const visibleHeight = Math.max(140, bottomSafe - topSafe);
+
+    const rect = targetEl.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+
+    const currentScrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
+    const absoluteTop = rect.top + currentScrollTop;
+    const systemKey = Math.round(absoluteTop / systemQuantizePx);
+
+    // Tercio superior (~22 % desde topSafe): muestra claramente lo que suena y 1-3 sistemas siguientes debajo
+    const idealTop = topSafe + Math.min(54, Math.max(16, visibleHeight * 0.22));
+    const comfortLowerBound = topSafe + visibleHeight * 0.48;
+    const isOutOfComfortBand = rect.top < topSafe || rect.bottom > comfortLowerBound;
+
+    if (!force && systemKey === this._lastScrolledSystemKey && !isOutOfComfortBand) {
+      return;
+    }
+    if (!force && !isOutOfComfortBand && Math.abs(rect.top - idealTop) < 34) {
+      this._lastScrolledSystemKey = systemKey;
+      return;
+    }
+
+    this._lastScrolledSystemKey = systemKey;
+    const deltaY = rect.top - idealTop;
+    const nextScrollTop = Math.max(0, currentScrollTop + deltaY);
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const behavior = reduced ? 'auto' : 'smooth';
+
+    if (scrollParent) {
+      scrollParent.scrollTo({ top: nextScrollTop, behavior });
+    } else if (typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: nextScrollTop, behavior });
+    }
+  }
+
+  /**
+   * Resalta el compás activo (y anticipa el siguiente) dentro de la grilla de Cifrado cuando está visible.
    * @param {number} measureIndex Número de compás (1-based).
    */
   _highlightActiveChartBar(measureIndex) {
     if (!this._chartEl || this._vm.viewMode.value !== 'cifrado') return;
     const cells = this._chartEl.querySelectorAll('.chord-bar-cell');
     cells.forEach((cell) => {
-      const isMatch = Number(cell.dataset.measure) === measureIndex;
+      const num = Number(cell.dataset.measure);
+      const isMatch = num === measureIndex;
       cell.classList.toggle('chord-bar-cell--active', isMatch);
+      cell.classList.toggle('chord-bar-cell--next', measureIndex > 0 && num === measureIndex + 1);
       if (isMatch) {
-        cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        this._scrollToFollowReading(cell, { systemQuantizePx: 54 });
       }
     });
   }

@@ -859,8 +859,10 @@ export class AbcService {
     let currentBeat = 0;
     let measureIndex = 1;
     let barAcc = {};
+    /** Ligadura de prolongación abierta en el parser de respaldo (midi -> soundNote). */
+    let activeTie = null;
 
-    const tokenRegex = /"([^"]+)"|(\|)|(z|x)(\d*\/?\d*)|(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)(\d*\/?\d*)/g;
+    const tokenRegex = /"([^"]+)"|(\|)|(z|x)(\d*\/?\d*)|(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)(\d*\/?\d*)(-)?/g;
     let match;
     while ((match = tokenRegex.exec(musicBody)) !== null) {
       if (match[1]) {
@@ -872,23 +874,48 @@ export class AbcService {
         barAcc = {};
         if (currentBeat > 0) measureIndex += 1;
       } else if (match[3]) {
+        activeTie = null;
         const dur = unitBeats * this._parseAbcDurationFactor(match[4]);
-        notes.push({ beat: currentBeat, durationBeats: dur, midis: [], isRest: true, measureIndex, svgElements: [] });
+        notes.push({ beat: currentBeat, durationBeats: dur, midis: [], soundNotes: [], isRest: true, measureIndex, svgElements: [] });
         currentBeat += dur;
       } else if (match[6]) {
         const pitchStr = `${match[5] || ''}${match[6]}${match[7] || ''}`;
         const writtenMidi = abcPitchToMidi(pitchStr, keyMap, barAcc);
         const soundingMidi = writtenMidi !== null ? writtenMidiToSoundingMidi(writtenMidi, policyTarget, 'real') : null;
         const dur = unitBeats * this._parseAbcDurationFactor(match[8]);
-        notes.push({
-          beat: currentBeat,
-          durationBeats: dur,
-          midis: soundingMidi !== null ? [soundingMidi] : [],
-          isRest: false,
-          measureIndex,
-          isBassVoice: isBassPiece,
-          svgElements: []
-        });
+        const hasNextTie = Boolean(match[9]);
+
+        if (activeTie && soundingMidi !== null && (activeTie.midi === soundingMidi || activeTie.letter === match[6])) {
+          activeTie.soundNote.durationBeats += dur;
+          notes.push({
+            noteId: `raw-${notes.length}`,
+            beat: currentBeat,
+            durationBeats: dur,
+            midis: [activeTie.midi],
+            soundNotes: [],
+            isTiedContinuation: true,
+            isRest: false,
+            measureIndex,
+            isBassVoice: isBassPiece,
+            svgElements: []
+          });
+          if (!hasNextTie) activeTie = null;
+        } else {
+          const soundNote = soundingMidi !== null ? { midi: soundingMidi, durationBeats: dur } : null;
+          notes.push({
+            noteId: `raw-${notes.length}`,
+            beat: currentBeat,
+            durationBeats: dur,
+            midis: soundingMidi !== null ? [soundingMidi] : [],
+            soundNotes: soundNote ? [soundNote] : [],
+            isTiedContinuation: false,
+            isRest: false,
+            measureIndex,
+            isBassVoice: isBassPiece,
+            svgElements: []
+          });
+          activeTie = hasNextTie && soundNote ? { midi: soundingMidi, letter: match[6], soundNote } : null;
+        }
         currentBeat += dur;
       }
     }

@@ -616,4 +616,35 @@ test('Expresiones melódicas: ligaduras de prolongación (ties), fraseo legato (
   assert.ok(calls.some((c) => c.expr?.articulation === 'staccato'), 'Debe enviar articulación staccato');
   assert.ok(calls.some((c) => c.expr?.articulation === 'grace' && c.midi === 59), 'Debe disparar nota de gracia antes del ataque');
   assert.ok(calls.some((c) => c.expr?.accent === true), 'Debe propagar acento !>!');
+
+  // 5) Ligadura muy larga (3 compases = 12 negras = 12 s) y parser de respaldo sin visualObj:
+  const longTieAbc = 'X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\nC4- | C4- | C4 | D4 |]';
+  const rawTl = svc.extractTimeline(null, longTieAbc, { instrument: 'guitarra', timeSignature: '4/4' });
+  assert.equal(rawTl.notes[0].soundNotes[0].durationBeats, 12, 'El parser de respaldo debe sumar ligaduras largas (12 negras)');
+  assert.equal(rawTl.notes[1].soundNotes.length, 0);
+  assert.equal(rawTl.notes[2].soundNotes.length, 0);
+
+  // Verifica que la envolvente ADSR sostiene ganancia audible hasta el final de los 12 s antes del release
+  const gainEvents = [];
+  const mockGainParam = {
+    setValueAtTime: (v, t) => gainEvents.push({ op: 'set', v, t }),
+    linearRampToValueAtTime: (v, t) => gainEvents.push({ op: 'lin', v, t }),
+    exponentialRampToValueAtTime: (v, t) => gainEvents.push({ op: 'exp', v, t }),
+    cancelScheduledValues() {},
+    setTargetAtTime() {}
+  };
+  const noopParam = { setValueAtTime() {}, exponentialRampToValueAtTime() {} };
+  const mockAudioCtx = {
+    currentTime: 0,
+    destination: {},
+    createGain: () => ({ gain: mockGainParam, connect() {} }),
+    createBiquadFilter: () => ({ type: 'lowpass', frequency: noopParam, connect() {} }),
+    createOscillator: () => ({ type: 'triangle', frequency: noopParam, connect() {}, start() {}, stop() {} })
+  };
+  const realSynth = new AudioSynthService({ ensureAudioContext: () => mockAudioCtx, playClickAt() {} });
+  realSynth._playPluckedNote(mockAudioCtx, 48, 0, 12.0, 'nylon-guitar', 1.0, { articulation: 'normal' });
+  const holdEvent = gainEvents.find((e) => Math.abs(e.t - 12.0) < 0.05);
+  assert.ok(holdEvent && holdEvent.v > 0.05, 'Al final de una ligadura de 12 s la nota debe seguir audible antes del release');
+  const releaseEvent = gainEvents[gainEvents.length - 1];
+  assert.ok(releaseEvent.t > 12.1 && releaseEvent.v <= 0.002, 'El release debe caer a silencio después de los 12 s');
 });

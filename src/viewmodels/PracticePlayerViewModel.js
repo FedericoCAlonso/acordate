@@ -713,6 +713,7 @@ export class PracticePlayerViewModel {
    */
   registerVisualTimeline(timeline) {
     if (!timeline) return;
+    this._enrichTimelineWithHarmonyVoicings(timeline);
     this.measureCount.set(timeline.measureCount);
     if (timeline.hasMultipleVoices !== undefined) {
       this.hasMultipleVoices.set(Boolean(timeline.hasMultipleVoices));
