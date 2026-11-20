@@ -247,7 +247,7 @@ export class PracticePlayerView {
       this._vm.loopEnabled.subscribe(() => this._syncTransportDom()),
       this._vm.metronomeEnabled.subscribe(() => this._syncTransportDom()),
       this._vm.countInStatus.subscribe((st) => this._renderCountIn(st)),
-      this._vm.activeNoteEvent.subscribe((ev) => this._highlightActiveNote(ev)),
+      this._vm.activeNoteEvents.subscribe((events) => this._highlightActiveNotes(events)),
       this._vm.activeMeasure.subscribe((m) => this._highlightActiveChartBar(m)),
       this._vm.activeChordStepIndex.subscribe((idx) => this._highlightActiveHarmonyStep(idx)),
       this._vm.harmonySteps.subscribe(() => this._renderNotationSurface()),
@@ -1329,27 +1329,35 @@ export class PracticePlayerView {
   }
 
   /**
-   * Resalta en tiempo real los elementos SVG de la nota que suena y realiza scroll suave a la línea activa.
-   * @param {object|null} noteEvent Evento de nota emitido por AudioSynthService.
+   * Resalta simultáneamente en tiempo real los elementos SVG de todas las voces/notas
+   * activas en el pulso actual y realiza scroll suave a la línea correspondiente.
+   * @param {Array<object>} noteEvents Lista de eventos de nota activos en este pulso.
    */
-  _highlightActiveNote(noteEvent) {
+  _highlightActiveNotes(noteEvents) {
     for (const node of this._highlightedSvgNodes) {
       node.classList?.remove('acordate-note-active');
     }
     this._highlightedSvgNodes = [];
 
-    if (!noteEvent || !Array.isArray(noteEvent.svgElements) || noteEvent.svgElements.length === 0) {
+    if (!Array.isArray(noteEvents) || noteEvents.length === 0) {
       return;
     }
 
-    for (const node of noteEvent.svgElements) {
-      if (node && node.classList) {
-        node.classList.add('acordate-note-active');
-        this._highlightedSvgNodes.push(node);
+    const seen = new Set();
+    let anchor = null;
+
+    for (const noteEvent of noteEvents) {
+      if (!noteEvent || !Array.isArray(noteEvent.svgElements)) continue;
+      for (const node of noteEvent.svgElements) {
+        if (node && node.classList && !seen.has(node)) {
+          seen.add(node);
+          node.classList.add('acordate-note-active');
+          this._highlightedSvgNodes.push(node);
+          if (!anchor) anchor = node;
+        }
       }
     }
 
-    const anchor = noteEvent.svgElements[0];
     if (anchor && typeof anchor.scrollIntoView === 'function') {
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       anchor.scrollIntoView({

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 import { loadBuiltinCatalog } from '../src/data/catalog.js';
 import { validatePracticeSchema } from '../src/models/Practice.js';
@@ -11,6 +12,7 @@ import { formatVoicingTag, splitChordTypography } from '../src/core/i18n.js';
 import { EventBus } from '../src/core/EventBus.js';
 import { Router } from '../src/core/Router.js';
 import { AbcService, validateAbcInstrumentRange, validateAbcMeasures } from '../src/services/AbcService.js';
+import { AudioSynthService } from '../src/services/AudioSynthService.js';
 import { ABC_IMPORT_RIGHTS_NOTICE, ImportExportService } from '../src/services/ImportExportService.js';
 import { ScaleGenerator } from '../src/services/ScaleGenerator.js';
 import { ProgressionGenerator } from '../src/services/ProgressionGenerator.js';
@@ -325,4 +327,126 @@ test('Parte A (A1.1, A1.3, A1.4, A2): regresiones de armonía, editor, bibliotec
   assert.deepEqual(splitChordTypography('Am'), { base: 'Am', ext: '', bass: '' });
   assert.deepEqual(splitChordTypography('Am7'), { base: 'Am', ext: '7', bass: '' });
   assert.deepEqual(splitChordTypography('Cmaj7/G'), { base: 'C', ext: 'maj7', bass: 'G' });
+});
+
+test('Multi-voz: todas las obras polifónicas alinean sistemas/duraciones y AudioSynthService suena y marca todas las voces juntas', async () => {
+  const abcjsCode = await readFile(new URL('../vendor/abcjs/abcjs-basic-min.js', import.meta.url), 'utf-8');
+  const sandbox = { window: {}, navigator: { userAgent: 'node' }, document: {} };
+  vm.runInNewContext(abcjsCode, sandbox);
+  const ABCJS = sandbox.window.ABCJS || sandbox.ABCJS;
+
+  const catalog = await loadBuiltinCatalog();
+  const abcSvc = new AbcService();
+  const multiVoicePractices = catalog.filter((p) => p.abc && /^V:\s*2\b/m.test(p.abc));
+  assert.ok(multiVoicePractices.length >= 20, 'Debe haber al menos 20 obras polifónicas en el catálogo');
+
+  for (const p of multiVoicePractices) {
+    const prepared = abcSvc.prepareAbcForRender(p.abc, { viewMode: 'mixto' });
+    const vo = ABCJS.parseOnly(prepared)[0];
+    const tl = abcSvc.extractTimeline(vo, p.abc, {
+      instrument: p.instruments[0],
+      timeSignature: p.timeSignature
+    });
+    assert.equal(tl.hasMultipleVoices, true, `${p.id} debe marcar hasMultipleVoices=true`);
+
+    const endByVoice = {};
+    for (const n of tl.notes) {
+      endByVoice[n.voiceIndex] = Math.max(endByVoice[n.voiceIndex] || 0, n.beat + n.durationBeats);
+    }
+    assert.ok(
+      Math.abs((endByVoice[0] || 0) - (endByVoice[1] || 0)) < 0.2,
+      `${p.id}: V:1 (${endByVoice[0]}) y V:2 (${endByVoice[1]}) deben coincidir en duración total`
+    );
+    for (const line of vo.lines) {
+      if (line.staff?.[0]?.voices) {
+        assert.equal(line.staff[0].voices.length, 2, `${p.id}: cada sistema debe mantener ambas voces alineadas`);
+      }
+    }
+  }
+
+  // Prueba de 3 voces simultáneas (V:1 melodía móvil, V:2 voz intermedia sostenida, V:3 bajo sostenido)
+  const threeVoiceAbc = [
+    'X:1',
+    'M:3/4',
+    'L:1/4',
+    'K:C clef=treble-8',
+    'V:1 stem=up',
+    'e c e | d B d |]',
+    'V:2 stem=down',
+    'G3 | G3 |]',
+    'V:3 stem=down',
+    'C3 | G,3 |]'
+  ].join('\n');
+
+  const prep3 = abcSvc.prepareAbcForRender(threeVoiceAbc, { viewMode: 'mixto' });
+  assert.ok(prep3.includes('%%score (1 2 3)'), 'Debe combinar automáticamente las 3 voces en %%score (1 2 3)');
+  const vo3 = ABCJS.parseOnly(prep3)[0];
+  const tl3 = abcSvc.extractTimeline(vo3, threeVoiceAbc, {
+    instrument: 'guitarra-clasica',
+    timeSignature: '3/4'
+  });
+
+  // Simula AudioSynthService con reloj virtual (60 BPM => 1 pulso = 1 segundo)
+  let fakeNow = 0;
+  const fakeCtx = { get currentTime() { return fakeNow; } };
+  const played = [];
+  const visualFrames = [];
+  const synth = new AudioSynthService({
+    ensureAudioContext: () => fakeCtx,
+    playClickAt() {},
+    soundType: 'woodblock'
+  });
+  synth._playPluckedNote = (_ctx, midi, startTime, dur, inst, vol) => {
+    played.push({ midi, startTime, dur, inst, vol });
+  };
+  synth.onVisualEvent = (ev) => visualFrames.push(ev);
+  synth.configure({
+    bpm: 60,
+    instrument: 'nylon-guitar',
+    countInMeasures: 0,
+    metronomeEnabled: false,
+    chordsEnabled: false,
+    bassEnabled: false, // Incluso si el acompañamiento de bajo está silenciado, las voces escritas de guitarra deben sonar
+    melodyVolume: 1.0,
+    voiceMode: 'both'
+  });
+  synth.loadTimeline(tl3);
+
+  // Arranca el scheduler manualmente en pulso 0 (sin setTimeout pendiente)
+  synth._recomputeRangeBeats();
+  synth._anchorAudioTime = 0;
+  synth._anchorBeat = 0;
+  synth._scheduledUntilBeat = -0.0001;
+  synth._isPlaying = true;
+  fakeNow = 0;
+  synth._schedulerLoop();
+  clearTimeout(synth._schedulerTimer);
+
+  // En pulso 0 (t=0) deben sonar las 3 voces: e (64), G (55) y C (48) con timbre nylon-guitar
+  const atBeat0 = played.filter((n) => Math.abs(n.startTime - 0) < 0.01);
+  assert.deepEqual(
+    atBeat0.map((n) => n.midi).sort((a, b) => a - b),
+    [48, 55, 64],
+    'Deben sonar simultáneamente las 3 voces en el pulso 1'
+  );
+  assert.ok(atBeat0.every((n) => n.inst === 'nylon-guitar' && n.vol > 0.8), 'Todas las voces de guitarra clásica deben usar nylon-guitar con buen volumen');
+
+  // En t=0 deben quedar marcadas visualmente las 3 voces simultáneamente
+  synth._processVisualFrame(0);
+  const frame0 = visualFrames[visualFrames.length - 1];
+  assert.equal(frame0.activeNotes.length, 3, 'Debe marcar las 3 voces activas a la vez en el pulso 1');
+
+  // Avanza al pulso 2 (t=1s): V:1 pasa a c (60), mientras V:2 (G3) y V:3 (C3) siguen sosteniendo y marcadas
+  fakeNow = 1.0;
+  synth._schedulerLoop();
+  clearTimeout(synth._schedulerTimer);
+  synth._processVisualFrame(1.0);
+  const frame1 = visualFrames[visualFrames.length - 1];
+  assert.equal(frame1.activeNotes.length, 3, 'Las voces sostenidas (V:2 y V:3) deben permanecer marcadas mientras avanza V:1');
+  assert.deepEqual(
+    frame1.activeNotes.map((n) => n.midis[0]).sort((a, b) => a - b),
+    [48, 55, 60],
+    'En el pulso 2 deben estar activas C (V:3), G (V:2) y c (V:1)'
+  );
+  synth.stop();
 });

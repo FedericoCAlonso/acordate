@@ -223,9 +223,14 @@ export class AbcService {
         .join('\n');
     }
 
-    // Combina V:1 y V:2 en un único pentagrama polifónico de guitarra clásica si no se especificó %%score
-    if (/^V:\s*1\b/m.test(result) && /^V:\s*2\b/m.test(result) && !/^%%score/m.test(result)) {
-      result = result.replace(/^(K:[^\n]*)/m, '$1\n%%score (1 2)');
+    // Detecta todas las voces declaradas (V:1, V:2, V:3...) y las alinea por sistema
+    const declaredVoices = [...new Set([...result.matchAll(/^V:\s*(\S+)/gm)].map((m) => m[1]))];
+    if (declaredVoices.length >= 2) {
+      result = this._alignMultiVoiceLines(result);
+      const hasExplicitBassVoice = /^V:\s*\S+[^\n]*clef\s*=\s*bass/im.test(result);
+      if (!/^%%score/m.test(result) && !hasExplicitBassVoice) {
+        result = result.replace(/^(K:[^\n]*)/m, `$1\n%%score (${declaredVoices.join(' ')})`);
+      }
     }
 
     // Capa opcional de análisis armónico (grados romanos / cadencias para guitarra clásica)
@@ -256,6 +261,80 @@ export class AbcService {
     }
 
     return result;
+  }
+
+  /**
+   * Alinea los saltos de línea entre voces (V:1, V:2, V:3...) escritas en bloques consecutivos
+   * para que todas compartan la misma cantidad de compases por sistema al renderizar con abcjs.
+   * @param {string} abcText Partitura ABC multi-voz.
+   * @returns {string} Partitura con líneas alineadas por voz.
+   */
+  _alignMultiVoiceLines(abcText) {
+    const lines = String(abcText || '').split('\n');
+    const headerLines = [];
+    const blocks = [];
+    let currentBlock = null;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const vMatch = trimmed.match(/^V:\s*(\S+)/);
+      if (vMatch) {
+        currentBlock = { id: vMatch[1], header: line, bodyLines: [] };
+        blocks.push(currentBlock);
+        continue;
+      }
+      if (!currentBlock) {
+        headerLines.push(line);
+      } else if (trimmed) {
+        currentBlock.bodyLines.push(trimmed);
+      }
+    }
+
+    // Solo re-alinea si cada voz aparece una única vez en bloques completos (no ya intercalada)
+    const uniqueIds = new Set(blocks.map((b) => b.id));
+    if (blocks.length < 2 || uniqueIds.size !== blocks.length) {
+      return abcText;
+    }
+
+    const lineCounts = blocks.map((b) => b.bodyLines.length);
+    if (new Set(lineCounts).size === 1) {
+      return abcText;
+    }
+
+    // Divide cada voz en segmentos de compás conservando su barra final (|, |], :|, ||)
+    const splitVoiceBars = (bodyLines) => {
+      const joined = bodyLines.join(' ');
+      const bars = [];
+      const re = /([^|]+?(?::\|\||\|\||:\||\|\]|\|))/g;
+      let match;
+      let lastIdx = 0;
+      while ((match = re.exec(joined)) !== null) {
+        const seg = match[1].trim();
+        if (seg) bars.push(seg);
+        lastIdx = re.lastIndex;
+      }
+      const tail = joined.slice(lastIdx).trim();
+      if (tail) bars.push(tail);
+      return bars;
+    };
+
+    const voiceBars = blocks.map((b) => splitVoiceBars(b.bodyLines));
+    const firstCount = voiceBars[0].length;
+    if (firstCount === 0 || voiceBars.some((bars) => bars.length !== firstCount)) {
+      return abcText;
+    }
+
+    // Toma los compases por línea de la primera línea de V:1 como referencia de sistema
+    const refBarsPerLine = Math.max(1, splitVoiceBars([blocks[0].bodyLines[0]]).length);
+    const rebuilt = [...headerLines];
+    blocks.forEach((b, idx) => {
+      rebuilt.push(b.header);
+      const bars = voiceBars[idx];
+      for (let i = 0; i < bars.length; i += refBarsPerLine) {
+        rebuilt.push(bars.slice(i, i + refBarsPerLine).join(' '));
+      }
+    });
+    return rebuilt.join('\n');
   }
 
   /**
@@ -300,6 +379,8 @@ export class AbcService {
     const effectiveWidth = availableWidth / zoom;
     const preferredMeasuresPerLine = this.computeMeasuresPerLine(effectiveWidth);
 
+    const isMultiVoice = [...new Set([...String(abcText || '').matchAll(/^V:\s*(\S+)/gm)].map((m) => m[1]))].length >= 2;
+
     const visualParams = {
       add_classes: true,
       responsive: 'resize',
@@ -310,13 +391,17 @@ export class AbcService {
       paddingtop: 16,
       paddingbottom: 36,
       paddingleft: 6,
-      paddingright: 6,
-      wrap: {
+      paddingright: 6
+    };
+
+    // El ajuste automático wrap de abcjs es solo para una voz; en obras polifónicas desalinea voces
+    if (!isMultiVoice) {
+      visualParams.wrap = {
         preferredMeasuresPerLine,
         minSpacing: 1.35,
         maxSpacing: 2.7
-      }
-    };
+      };
+    }
 
     if (typeof options.clickListener === 'function') {
       visualParams.clickListener = options.clickListener;
@@ -482,10 +567,13 @@ export class AbcService {
           let currentBeat = voiceCursors.get(vKey);
           let measureIndex = voiceMeasures.get(vKey);
           let barAcc = voiceBarAcc.get(vKey);
+          /** Multiplicador activo de tresillo/tuplet (abcjs deja elem.duration sin multiplicar). */
+          let activeTripletMult = 1;
 
           for (const elem of voice) {
             if (elem.el_type === 'bar') {
               barAcc = {};
+              activeTripletMult = 1;
               voiceBarAcc.set(vKey, barAcc);
               if (currentBeat > 0.01) {
                 measureIndex += 1;
@@ -495,7 +583,20 @@ export class AbcService {
 
             if (elem.el_type !== 'note') continue;
 
-            const durBeats = (elem.duration || 0.25) * 4;
+            if (elem.startTriplet) {
+              activeTripletMult =
+                typeof elem.tripletMultiplier === 'number' && elem.tripletMultiplier > 0
+                  ? elem.tripletMultiplier
+                  : elem.startTriplet === 3
+                    ? 2 / 3
+                    : elem.startTriplet === 2
+                      ? 3 / 2
+                      : 1;
+            }
+            const durBeats = (elem.duration || 0.25) * 4 * activeTripletMult;
+            if (elem.endTriplet) {
+              activeTripletMult = 1;
+            }
             const isRest = Boolean(elem.rest);
 
             if (logicalVoice === 0 && Array.isArray(elem.chord)) {
@@ -538,12 +639,14 @@ export class AbcService {
             }
 
             notes.push({
+              noteId: `${vKey}-${notes.length}`,
               beat: currentBeat,
               durationBeats: durBeats,
               midis,
               isRest,
               measureIndex,
               voiceIndex: logicalVoice,
+              isBassStaff: isStaffBass,
               isBassVoice: isStaffBass || logicalVoice > 0,
               svgElements
             });

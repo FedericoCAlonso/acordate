@@ -52,8 +52,10 @@ export class PracticePlayerViewModel {
     this.activeChordStepIndex = new Observable(-1);
     /** Patrón rítmico de acompañamiento (comping) editable en vivo sin modificar la práctica. */
     this.compingPattern = new Observable('negras-abajo');
-    /** Último evento de nota visual para resaltar el SVG correspondiente. */
+    /** Último evento de nota visual (primera voz activa) para compatibilidad. */
     this.activeNoteEvent = new Observable(null);
+    /** Lista simultánea de eventos de nota activos en todas las voces del pulso actual. */
+    this.activeNoteEvents = new Observable([]);
 
     /** Bucle activado. */
     this.loopEnabled = new Observable(false);
@@ -246,7 +248,13 @@ export class PracticePlayerViewModel {
       this.countInStatus.set(null);
       if (ev.measureIndex) this.activeMeasure.set(ev.measureIndex);
       if (ev.chordStepIndex !== undefined) this.activeChordStepIndex.set(ev.chordStepIndex);
-      if (ev.noteEvent) this.activeNoteEvent.set(ev.noteEvent, true);
+      if (Array.isArray(ev.activeNotes)) {
+        this.activeNoteEvents.set(ev.activeNotes, true);
+        this.activeNoteEvent.set(ev.activeNotes[0] || null, true);
+      } else if (ev.noteEvent) {
+        this.activeNoteEvents.set([ev.noteEvent], true);
+        this.activeNoteEvent.set(ev.noteEvent, true);
+      }
     };
 
     this._audio.onPassComplete = () => {
@@ -259,6 +267,7 @@ export class PracticePlayerViewModel {
       this.isPaused.set(false);
       this.countInStatus.set(null);
       this.activeNoteEvent.set(null);
+      this.activeNoteEvents.set([]);
       this._wakeLock.release();
     };
 
@@ -665,6 +674,7 @@ export class PracticePlayerViewModel {
     this.activeMeasure.set(0);
     this.activeChordStepIndex.set(-1);
     this.activeNoteEvent.set(null);
+    this.activeNoteEvents.set([]);
     this._wakeLock.release();
   }
 

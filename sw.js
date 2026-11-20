@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v6: Correcciones v4, editor armónico completo y módulo de repertorio).
+ * Versión del caché estático de la PWA Acordate (v7: Reproducción y resaltado simultáneo de todas las voces).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v6';
+const CACHE_NAME = 'acordate-static-v7';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

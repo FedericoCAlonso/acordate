@@ -100,6 +100,10 @@ export class AudioSynthService {
     this._activeNodes = new Set();
     /** Cola de eventos visuales pendientes para sincronizar resaltado de notas. */
     this._visualQueue = [];
+    /** Mapa voiceIndex -> nota activa actualmente sonando para resaltar múltiples voces a la vez. */
+    this._activeVisualByVoice = new Map();
+    /** Última firma de notas resaltadas para evitar emisiones visuales duplicadas. */
+    this._lastVisualFingerprint = '';
 
     /** Callback disparado cuando suena una nota o compás ({ noteEvent, measureIndex, isCountIn, countInBeat }). */
     this.onVisualEvent = null;
@@ -308,6 +312,8 @@ export class AudioSynthService {
 
     this._recomputeRangeBeats();
     this._visualQueue = [];
+    this._activeVisualByVoice.clear();
+    this._lastVisualFingerprint = '';
 
     const beatsPerMeasure = this._timeline.beatsPerMeasure || 4;
     const startingFresh = !this._isPaused;
@@ -372,6 +378,8 @@ export class AudioSynthService {
     }
     this._activeNodes.clear();
     this._visualQueue = [];
+    this._activeVisualByVoice.clear();
+    this._lastVisualFingerprint = '';
   }
 
   /**
@@ -471,25 +479,26 @@ export class AudioSynthService {
           const t = this._beatToAudioTime(noteEv.beat);
           const durSec = Math.max(0.06, noteEv.durationBeats * secPerBeat);
 
-          if (!noteEv.isRest && noteEv.midis.length > 0) {
-            // Respeta el modo de voces en piezas polifónicas clásicas ('both' | 'v1' melodía | 'v2' bajo)
-            const isSecondVoice = (noteEv.voiceIndex ?? 0) > 0 || (noteEv.isBassVoice && !tl.isBassPiece);
-            const skipForVoiceMode =
-              (this.voiceMode === 'v1' && isSecondVoice) ||
-              (this.voiceMode === 'v2' && !isSecondVoice);
+          // Respeta el modo de voces en piezas polifónicas ('both' | 'v1' melodía | 'v2' voces inferiores)
+          const vIdx = noteEv.voiceIndex ?? 0;
+          const isLowerVoice = vIdx > 0;
+          const skipForVoiceMode =
+            (this.voiceMode === 'v1' && isLowerVoice) ||
+            (this.voiceMode === 'v2' && !isLowerVoice);
 
-            if (!skipForVoiceMode) {
-              // En prácticas de guitarra/clásica la voz principal siempre usa melodyVolume;
-              // en prácticas de bajo usa bassVolume (respetando bassEnabled para modo play-along).
-              const isBassVoice = noteEv.isBassVoice || tl.isBassPiece;
+          if (!skipForVoiceMode) {
+            if (!noteEv.isRest && noteEv.midis.length > 0) {
+              // En partituras polifónicas de guitarra/clásica todas las voces escritas (V:1, V:2, V:3...)
+              // suenan con el instrumento principal; solo pentagramas en clave de fa usan timbre de bajo.
+              const usesBassTimbre = Boolean(tl.isBassPiece || noteEv.isBassStaff);
               const effectiveBassVol = this.bassEnabled ? this.bassVolume : 0;
               const vol = tl.isBassPiece
                 ? (this.bassEnabled ? Math.max(this.melodyVolume, effectiveBassVol) : 0)
-                : isBassVoice
+                : noteEv.isBassStaff
                   ? effectiveBassVol
-                  : this.melodyVolume;
-              const voiceInst = isBassVoice
-                ? (this.instrument.includes('bass') ? this.instrument : 'acoustic-bass')
+                  : this.melodyVolume * (vIdx === 0 ? 1.0 : 0.92);
+              const voiceInst = usesBassTimbre
+                ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
                 : this.instrument;
 
               for (const midi of noteEv.midis) {
@@ -497,14 +506,15 @@ export class AudioSynthService {
                 this._playPluckedNote(ctx, playbackMidi, t, durSec, voiceInst, vol);
               }
             }
-          }
 
-          this._visualQueue.push({
-            time: t,
-            isCountIn: false,
-            noteEvent: noteEv,
-            measureIndex: noteEv.measureIndex
-          });
+            this._visualQueue.push({
+              time: t,
+              endTime: t + durSec,
+              isCountIn: false,
+              noteEvent: noteEv,
+              measureIndex: noteEv.measureIndex
+            });
+          }
         }
       }
 
@@ -549,7 +559,8 @@ export class AudioSynthService {
   }
 
   /**
-   * Bucle visual sincronizado con audioCtx.currentTime para resaltar la nota activa.
+   * Bucle visual sincronizado con audioCtx.currentTime para resaltar simultáneamente
+   * todas las notas activas de todas las voces en el pulso correspondiente.
    */
   _visualLoop() {
     if (!this._isPlaying) return;
@@ -557,9 +568,31 @@ export class AudioSynthService {
     if (!ctx) return;
 
     const now = ctx.currentTime;
+    this._processVisualFrame(now);
+
+    if (this._isPlaying && typeof requestAnimationFrame !== 'undefined') {
+      this._rafId = requestAnimationFrame(() => this._visualLoop());
+    }
+  }
+
+  /**
+   * Procesa un instante de tiempo de audio para actualizar el conjunto de voces/notas resaltadas
+   * y despachar eventos de conteo previo, compás y paso armónico.
+   * @param {number} now Instante actual en audioCtx.currentTime.
+   */
+  _processVisualFrame(now) {
+    if (this._visualQueue.length > 1) {
+      this._visualQueue.sort((a, b) => a.time - b.time);
+    }
+
+    let latestMeasure = 0;
+    let hadNoteUpdate = false;
+
     while (this._visualQueue.length > 0 && this._visualQueue[0].time <= now + 0.015) {
       const ev = this._visualQueue.shift();
       if (ev.isPassComplete) {
+        this._activeVisualByVoice.clear();
+        this._lastVisualFingerprint = '';
         if (typeof this.onPassComplete === 'function') this.onPassComplete();
         continue;
       }
@@ -569,13 +602,56 @@ export class AudioSynthService {
         if (typeof this.onPlaybackEnd === 'function') this.onPlaybackEnd();
         return;
       }
-      if (typeof this.onVisualEvent === 'function') {
-        this.onVisualEvent(ev);
+      if (ev.isCountIn || ev.chordStepIndex !== undefined) {
+        if (typeof this.onVisualEvent === 'function') {
+          this.onVisualEvent(ev);
+        }
+        continue;
+      }
+      if (ev.noteEvent) {
+        const vIdx = ev.noteEvent.voiceIndex ?? 0;
+        if (ev.measureIndex) latestMeasure = Math.max(latestMeasure, ev.measureIndex);
+        if (ev.noteEvent.isRest) {
+          this._activeVisualByVoice.delete(vIdx);
+        } else {
+          this._activeVisualByVoice.set(vIdx, {
+            noteEvent: ev.noteEvent,
+            endTime: ev.endTime ?? (ev.time + 0.25),
+            measureIndex: ev.measureIndex || 0
+          });
+        }
+        hadNoteUpdate = true;
       }
     }
 
-    if (typeof requestAnimationFrame !== 'undefined') {
-      this._rafId = requestAnimationFrame(() => this._visualLoop());
+    // Expira notas de cualquier voz que ya terminaron de sonar antes de este instante
+    for (const [vIdx, entry] of this._activeVisualByVoice.entries()) {
+      if (entry.endTime <= now + 0.005) {
+        this._activeVisualByVoice.delete(vIdx);
+        hadNoteUpdate = true;
+      } else if (entry.measureIndex) {
+        latestMeasure = Math.max(latestMeasure, entry.measureIndex);
+      }
+    }
+
+    if (hadNoteUpdate) {
+      const activeNotes = [...this._activeVisualByVoice.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([, entry]) => entry.noteEvent);
+      const fingerprint = activeNotes
+        .map((n) => n.noteId || `${n.voiceIndex ?? 0}:${n.beat}`)
+        .join('|');
+      if (fingerprint !== this._lastVisualFingerprint) {
+        this._lastVisualFingerprint = fingerprint;
+        if (typeof this.onVisualEvent === 'function') {
+          this.onVisualEvent({
+            isCountIn: false,
+            measureIndex: latestMeasure,
+            activeNotes,
+            noteEvent: activeNotes[0] || null
+          });
+        }
+      }
     }
   }
 
