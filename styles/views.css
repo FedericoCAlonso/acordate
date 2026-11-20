@@ -292,7 +292,7 @@
 
 .app-shell--atril-fullscreen .app-content {
   max-width: 100%;
-  padding: max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px));
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) calc(var(--transport-dock-height, 176px) + env(safe-area-inset-bottom, 0px) + 24px) max(10px, env(safe-area-inset-left, 0px));
 }
 
 /* Top App Bar compacta a todo el ancho sin cortes */
@@ -345,12 +345,12 @@
 }
 
 .app-shell--practicing .app-content {
-  padding-bottom: calc(134px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--transport-dock-height, 176px) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 
 @media (orientation: landscape) and (max-height: 540px) {
   .app-shell--practicing .app-content {
-    padding: 6px max(10px, env(safe-area-inset-right, 0px)) calc(74px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+    padding: 6px max(10px, env(safe-area-inset-right, 0px)) calc(var(--transport-dock-height, 92px) + env(safe-area-inset-bottom, 0px) + 20px) max(10px, env(safe-area-inset-left, 0px));
   }
 }
 
@@ -612,6 +612,15 @@
   min-width: 0;
 }
 
+/* Margen de desplazamiento inferior para que la Guía de estudio nunca quede tapada por la barra fija */
+.player-guide-host {
+  scroll-margin-bottom: calc(var(--transport-dock-height, 176px) + env(safe-area-inset-bottom, 0px) + 28px);
+}
+
+.app-shell--practicing .player-layout {
+  padding-bottom: 12px;
+}
+
 /* En escritorio amplio en vista de detalle completa, partitura izquierda + panel lateral opcional */
 .meta-strip {
   display: flex;
@@ -833,6 +842,42 @@
 .transport-dock__bpm-row .m3-slider {
   flex: 1 1 auto;
   min-width: 80px;
+}
+
+/* En móvil vertical compacto, mantiene la fila de controles en una sola línea limpia */
+@media (max-width: 599px) {
+  .transport-dock {
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    gap: 4px;
+  }
+
+  .transport-dock__row {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .transport-dock__group {
+    flex-wrap: nowrap;
+    gap: 2px;
+  }
+
+  .transport-dock .m3-icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .transport-dock .m3-fab--round {
+    width: 46px;
+    height: 46px;
+  }
+
+  .transport-dock .m3-btn--compact {
+    padding: 0 10px;
+    min-height: 38px;
+    font-size: 0.8rem;
+  }
 }
 
 /* En apaisado compacto, toda la barra de transporte en una sola fila delgada */

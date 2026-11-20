@@ -125,6 +125,11 @@ export class PracticePlayerView {
       this._resizeObserver.disconnect();
       this._resizeObserver = null;
     }
+    if (this._dockResizeObserver) {
+      this._dockResizeObserver.disconnect();
+      this._dockResizeObserver = null;
+    }
+    document.documentElement.style.removeProperty('--transport-dock-height');
     for (const unsub of this._unsubs) unsub();
     this._unsubs = [];
     this._highlightedSvgNodes = [];
@@ -144,7 +149,7 @@ export class PracticePlayerView {
     this._scoreEl = el('div', { className: 'score-surface', 'aria-label': 'Partitura en pentagrama' });
     this._harmonyEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
     this._chartEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Grilla de cifrado de acordes' });
-    this._guideHost = el('div');
+    this._guideHost = el('div', { className: 'player-guide-host' });
     this._transportDock = el('div', { className: 'transport-dock', role: 'region', 'aria-label': 'Controles de reproducción' });
 
     const scoreWrap = el('div', { className: 'score-wrap' }, [
@@ -173,9 +178,27 @@ export class PracticePlayerView {
         }
       });
       this._resizeObserver.observe(scoreWrap);
+
+      // Mide en vivo la altura real de la barra de transporte fija para no tapar la Guía de estudio
+      this._dockResizeObserver = new ResizeObserver(() => this._syncDockClearance());
+      this._dockResizeObserver.observe(this._transportDock);
     }
 
     this._buildTransportDock();
+    this._syncDockClearance();
+  }
+
+  /**
+   * Actualiza la variable CSS --transport-dock-height según la altura real de la barra inferior
+   * para asegurar que la Guía de estudio y la partitura nunca queden cubiertas en móvil.
+   */
+  _syncDockClearance() {
+    if (!this._transportDock) return;
+    const rect = this._transportDock.getBoundingClientRect();
+    const h = Math.ceil(rect.height || this._transportDock.offsetHeight || 0);
+    if (h > 40) {
+      document.documentElement.style.setProperty('--transport-dock-height', `${h}px`);
+    }
   }
 
   /**
@@ -302,6 +325,15 @@ export class PracticePlayerView {
         ])
       ])
     ]);
+
+    details.addEventListener('toggle', () => {
+      if (details.open) {
+        this._syncDockClearance();
+        requestAnimationFrame(() => {
+          details.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+      }
+    });
 
     this._guideHost.innerHTML = '';
     this._guideHost.appendChild(details);
