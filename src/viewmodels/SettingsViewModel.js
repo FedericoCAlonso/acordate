@@ -148,4 +148,11 @@ export class SettingsViewModel {
     this._appVm.updateSettings({ ...DEFAULT_SETTINGS });
     this._appVm.showSnackbar('Ajustes restablecidos a los valores predeterminados.');
   }
+
+  /**
+   * Contrato uniforme de ciclo de vida del ViewModel.
+   */
+  dispose() {
+    // Sin suscripciones ni temporizadores propios
+  }
 }

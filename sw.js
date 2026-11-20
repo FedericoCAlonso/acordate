@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v10: Nueva sección Escalas y Modos con diapasón SVG interactivo, digitaciones por instrumento, drone modal y oído).
+ * Versión del caché estático de la PWA Acordate (v11: Refactorización arquitectónica MVVM — Stores de dominio, sub-ViewModels cohesivos y ciclo de vida dispose).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v10';
+const CACHE_NAME = 'acordate-static-v11';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -29,6 +29,7 @@ const PRECACHE_ASSETS = [
   './src/core/MusicTheory.js',
   './src/core/PitchPolicy.js',
   './src/models/Practice.js',
+  './src/models/PracticeMix.js',
   './src/models/Level.js',
   './src/models/Exercise.js',
   './src/models/ChordProgression.js',
@@ -40,6 +41,11 @@ const PRECACHE_ASSETS = [
   './src/models/Chord.js',
   './src/models/Voicing.js',
   './src/models/ProgressionStep.js',
+  './src/stores/PracticeCatalogStore.js',
+  './src/stores/PracticeMixStore.js',
+  './src/stores/ProgressStore.js',
+  './src/stores/SettingsStore.js',
+  './src/stores/StudySessionRunner.js',
   './src/services/StorageService.js',
   './src/services/ThemeService.js',
   './src/services/WakeLockService.js',
@@ -51,8 +57,12 @@ const PRECACHE_ASSETS = [
   './src/services/ProgressionGenerator.js',
   './src/services/WalkingBassGenerator.js',
   './src/services/VoicingGenerator.js',
+  './src/services/ChordLibraryService.js',
   './src/services/FingeringDesignService.js',
   './src/services/HarmonyService.js',
+  './src/services/HarmonyTimelineService.js',
+  './src/services/PracticeFactoryService.js',
+  './src/services/StudyRoutineService.js',
   './src/services/ImportExportService.js',
   './src/data/catalog.js',
   './src/data/catalog.json',
@@ -61,13 +71,26 @@ const PRECACHE_ASSETS = [
   './src/data/repertoireTraditional.json',
   './src/data/repertoireClassical.json',
   './src/data/voicings.js',
+  './src/viewmodels/AppShellViewModel.js',
   './src/viewmodels/AppViewModel.js',
   './src/viewmodels/PracticeListViewModel.js',
   './src/viewmodels/PracticePlayerViewModel.js',
+  './src/viewmodels/player/PlayerTransportViewModel.js',
+  './src/viewmodels/player/PlayerMixerViewModel.js',
+  './src/viewmodels/player/FingeringDesignerViewModel.js',
+  './src/viewmodels/player/PracticeSessionTracker.js',
   './src/viewmodels/ChordsHubViewModel.js',
+  './src/viewmodels/chords/ChordLibraryViewModel.js',
+  './src/viewmodels/chords/HarmonicFieldViewModel.js',
+  './src/viewmodels/chords/ChordChangesViewModel.js',
+  './src/viewmodels/chords/ChordEarTrainerViewModel.js',
   './src/viewmodels/ScalesHubViewModel.js',
+  './src/viewmodels/scales/ScaleAudioController.js',
+  './src/viewmodels/scales/ScaleEarTrainerViewModel.js',
   './src/viewmodels/MetronomeViewModel.js',
   './src/viewmodels/EditorViewModel.js',
+  './src/viewmodels/editor/EditorProgressionViewModel.js',
+  './src/viewmodels/editor/EditorImportExportViewModel.js',
   './src/viewmodels/ProgressViewModel.js',
   './src/viewmodels/SettingsViewModel.js',
   './src/views/uiHelpers.js',

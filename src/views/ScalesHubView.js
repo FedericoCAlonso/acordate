@@ -135,6 +135,7 @@ export class ScalesHubView {
    */
   unmount() {
     this._vm.stopAudio();
+    this._fretboardView.dispose();
     for (const unsub of this._unsubs) unsub();
     this._unsubs = [];
     this._container = null;

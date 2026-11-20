@@ -3,6 +3,8 @@ import { Router } from './core/Router.js';
 import { loadBuiltinCatalog } from './data/catalog.js';
 import { AbcService } from './services/AbcService.js';
 import { AudioSynthService } from './services/AudioSynthService.js';
+import { ChordLibraryService } from './services/ChordLibraryService.js';
+import { FingeringDesignService } from './services/FingeringDesignService.js';
 import { HarmonyService } from './services/HarmonyService.js';
 import { ImportExportService } from './services/ImportExportService.js';
 import { MetronomeService } from './services/MetronomeService.js';
@@ -68,6 +70,8 @@ async function bootstrap() {
   const progressionGenerator = new ProgressionGenerator();
   const walkingBassGenerator = new WalkingBassGenerator();
   const voicingGenerator = new VoicingGenerator();
+  const fingeringDesignService = new FingeringDesignService();
+  const chordLibraryService = new ChordLibraryService();
   const harmonyService = new HarmonyService();
   const importExportService = new ImportExportService();
 
@@ -87,7 +91,9 @@ async function bootstrap() {
     audioService,
     abcService,
     wakeLockService,
-    importExportService
+    importExportService,
+    walkingBassGenerator,
+    fingeringDesignService
   });
   /** Referencias diferidas para los enlaces bidireccionales Acordes ↔ Escalas sin acoplar vistas. */
   let scalesHubVm = null;
@@ -97,6 +103,7 @@ async function bootstrap() {
     harmonyService,
     audioService,
     metronomeService,
+    chordLibraryService,
     onOpenScaleForChord: (chordSymbol) => scalesHubVm?.openForChord(chordSymbol)
   });
   scalesHubVm = new ScalesHubViewModel({

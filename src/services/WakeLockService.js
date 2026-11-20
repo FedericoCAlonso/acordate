@@ -14,12 +14,25 @@ export class WakeLockService {
     /** Indica si el usuario habilitó la función en Ajustes. */
     this._enabled = true;
 
+    /** Listener de visibilidad guardado para poder removerlo en dispose(). */
+    this._onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && this._shouldHold && this._enabled) {
+        this._acquire();
+      }
+    };
+
     if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && this._shouldHold && this._enabled) {
-          this._acquire();
-        }
-      });
+      document.addEventListener('visibilitychange', this._onVisibilityChange);
+    }
+  }
+
+  /**
+   * Libera el Wake Lock activo y remueve el listener de visibilidad del documento.
+   */
+  dispose() {
+    this.release();
+    if (typeof document !== 'undefined' && this._onVisibilityChange) {
+      document.removeEventListener('visibilitychange', this._onVisibilityChange);
     }
   }
 

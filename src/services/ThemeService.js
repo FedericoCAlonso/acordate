@@ -165,12 +165,24 @@ export class ThemeService {
       ? window.matchMedia('(prefers-color-scheme: dark)')
       : null;
 
+    /** Listener guardado para liberar la suscripción del esquema de color del SO en dispose(). */
+    this._onSchemeChange = () => {
+      if (this._mode === 'auto') {
+        this.apply(this._mode, this._seedColor);
+      }
+    };
+
     if (this._mediaQuery) {
-      this._mediaQuery.addEventListener('change', () => {
-        if (this._mode === 'auto') {
-          this.apply(this._mode, this._seedColor);
-        }
-      });
+      this._mediaQuery.addEventListener('change', this._onSchemeChange);
+    }
+  }
+
+  /**
+   * Libera el listener de prefers-color-scheme al destruir el servicio.
+   */
+  dispose() {
+    if (this._mediaQuery && this._onSchemeChange) {
+      this._mediaQuery.removeEventListener('change', this._onSchemeChange);
     }
   }
 

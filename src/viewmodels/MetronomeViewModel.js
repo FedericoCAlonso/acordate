@@ -70,8 +70,9 @@ export class MetronomeViewModel {
     /** Mensaje informativo de tap tempo. */
     this.tapHint = new Observable('Tocá varias veces al ritmo deseado');
 
-    // Vincula callbacks del servicio de audio hacia los observables
-    this._metronome.onBeat = (ev) => {
+    // Handlers ligados a esta instancia para re-vincular en start() y limpiar solo los propios en dispose()
+    /** Handler propio de pulso principal del metrónomo. */
+    this._onBeatHandler = (ev) => {
       if (ev.isMainBeat) {
         this.currentBeat.set(ev.beat, true);
         this.totalBeats.set(ev.totalBeats);
@@ -80,20 +81,30 @@ export class MetronomeViewModel {
         this.barCounter.set(ev.barIndex);
       }
     };
-
-    this._metronome.onBpmChanged = (nextBpm) => {
+    /** Handler propio de cambio de BPM del entrenador de velocidad. */
+    this._onBpmChangedHandler = (nextBpm) => {
       this.bpm.set(nextBpm);
     };
+    this._bindMetronomeCallbacks();
 
-    if (appVm?.settings) {
-      appVm.settings.subscribe((s) => {
-        if (s?.metronomeSound) {
-          this.setSoundType(s.metronomeSound);
-        }
-      });
-    }
+    /** Desuscripción guardada de `appVm.settings`. */
+    this._unsubSettings = appVm?.settings
+      ? appVm.settings.subscribe((s) => {
+          if (s?.metronomeSound) {
+            this.setSoundType(s.metronomeSound);
+          }
+        })
+      : null;
 
     this._syncService();
+  }
+
+  /**
+   * Registra los callbacks de esta instancia en `MetronomeService` (evita quedar roto si otro módulo usó el metrónomo).
+   */
+  _bindMetronomeCallbacks() {
+    this._metronome.onBeat = this._onBeatHandler;
+    this._metronome.onBpmChanged = this._onBpmChangedHandler;
   }
 
   /**
@@ -118,9 +129,10 @@ export class MetronomeViewModel {
   }
 
   /**
-   * Inicia el metrónomo independiente.
+   * Inicia el metrónomo independiente re-vinculando sus callbacks visuales.
    */
   start() {
+    this._bindMetronomeCallbacks();
     this._syncService();
     this._metronome.start();
     this.isRunning.set(true);
@@ -264,5 +276,18 @@ export class MetronomeViewModel {
     if (cfg.playBars !== undefined) this.silentPlayBars.set(Math.max(1, Math.min(16, Number(cfg.playBars))));
     if (cfg.muteBars !== undefined) this.silentMuteBars.set(Math.max(1, Math.min(8, Number(cfg.muteBars))));
     this._syncService();
+  }
+
+  /**
+   * Detiene el metrónomo y libera suscripciones y callbacks propios del servicio singleton.
+   */
+  dispose() {
+    this.stop();
+    if (this._unsubSettings) {
+      this._unsubSettings();
+      this._unsubSettings = null;
+    }
+    if (this._metronome.onBeat === this._onBeatHandler) this._metronome.onBeat = null;
+    if (this._metronome.onBpmChanged === this._onBpmChangedHandler) this._metronome.onBpmChanged = null;
   }
 }

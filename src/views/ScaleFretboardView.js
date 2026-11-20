@@ -63,6 +63,8 @@ export class ScaleFretboardView {
     this._dotsByMidi = new Map();
     /** Último MIDI resaltado durante reproducción. */
     this._highlightedMidi = null;
+    /** Temporizador de destello breve al tocar un punto del diapasón. */
+    this._clickFlashTimer = null;
   }
 
   /**
@@ -78,9 +80,8 @@ export class ScaleFretboardView {
    */
   render(container, layout, opts = {}) {
     if (!container || !layout) return null;
+    this.dispose();
     container.innerHTML = '';
-    this._dotsByMidi.clear();
-    this._highlightedMidi = null;
 
     const labelMode = opts.labelMode || 'note';
     const notation = opts.notation || 'americano';
@@ -295,7 +296,9 @@ export class ScaleFretboardView {
 
       const triggerPlay = () => {
         this.highlightMidi(dot.midi);
-        setTimeout(() => {
+        if (this._clickFlashTimer) clearTimeout(this._clickFlashTimer);
+        this._clickFlashTimer = setTimeout(() => {
+          this._clickFlashTimer = null;
           if (this._highlightedMidi === dot.midi) this.highlightMidi(null);
         }, 420);
         if (typeof this._onNoteClick === 'function') {
@@ -338,5 +341,18 @@ export class ScaleFretboardView {
     const inPos = candidates.filter((n) => n.getAttribute('data-in-pos') === '1');
     const targets = inPos.length > 0 ? inPos : candidates;
     for (const n of targets) n.classList.add('scale-dot--playing');
+  }
+
+  /**
+   * Cancela temporizadores de resaltado y limpia referencias del diapasón SVG.
+   */
+  dispose() {
+    if (this._clickFlashTimer) {
+      clearTimeout(this._clickFlashTimer);
+      this._clickFlashTimer = null;
+    }
+    this._dotsByMidi.clear();
+    this._highlightedMidi = null;
+    this._svg = null;
   }
 }

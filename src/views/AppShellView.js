@@ -56,12 +56,19 @@ export class AppShellView {
     this._snackbarHost = null;
     /** Última clave de layout renderizada. */
     this._activeLayoutKey = null;
+    /** Lista de desuscripciones activas del shell. */
+    this._unsubs = [];
+    /** Referencias a listeners de ventana y timer de orientación para limpieza en unmount/dispose. */
+    this._onWindowResize = null;
+    this._onOrientationChange = null;
+    this._orientationTimer = null;
   }
 
   /**
    * Monta la estructura del App Shell y se suscribe a ruta, tamaño de ventana, sesión y snackbar.
    */
   mount() {
+    this.unmount();
     this._root.innerHTML = '';
 
     const skipLink = el('a', { href: '#main-content', className: 'skip-link' }, ['Ir al contenido principal']);
@@ -130,38 +137,77 @@ export class AppShellView {
     this._shellEl = el('div', { className: 'app-shell' }, [skipLink, nav, mainWrap, this._snackbarHost]);
     this._root.appendChild(this._shellEl);
 
-    // Suscripciones reactivas
-    this._appVm.currentRoute.subscribe(() => this._renderRoute());
-    this._appVm.windowSizeClass.subscribe(() => this._renderRoute());
-    this._appVm.isMobileLandscape.subscribe(() => this._renderRoute());
-    this._appVm.isReady.subscribe((ready) => {
-      if (ready) this._renderRoute();
-    });
-    this._appVm.activePracticeId.subscribe((id) => {
-      if (
-        this._appVm.currentRoute.value.name === 'practicas' &&
-        this._appVm.windowSizeClass.value === 'expanded' &&
-        !this._appVm.isMobileLandscape.value &&
-        id
-      ) {
-        const pr = this._appVm.findPracticeById(id);
-        if (pr) this._views.player.showPractice(pr);
-      }
-    });
-    this._appVm.activeStudySession.subscribe((ses) => this._renderSessionBanner(ses));
-    this._appVm.snackbar.subscribe((sb) => this._renderSnackbar(sb));
+    // Suscripciones reactivas registradas para liberación limpia en unmount()
+    this._unsubs = [
+      this._appVm.currentRoute.subscribe(() => this._renderRoute()),
+      this._appVm.windowSizeClass.subscribe(() => this._renderRoute()),
+      this._appVm.isMobileLandscape.subscribe(() => this._renderRoute()),
+      this._appVm.isReady.subscribe((ready) => {
+        if (ready) this._renderRoute();
+      }),
+      this._appVm.activePracticeId.subscribe((id) => {
+        if (
+          this._appVm.currentRoute.value.name === 'practicas' &&
+          this._appVm.windowSizeClass.value === 'expanded' &&
+          !this._appVm.isMobileLandscape.value &&
+          id
+        ) {
+          const pr = this._appVm.findPracticeById(id);
+          if (pr) this._views.player.showPractice(pr);
+        }
+      }),
+      this._appVm.activeStudySession.subscribe((ses) => this._renderSessionBanner(ses)),
+      this._appVm.snackbar.subscribe((sb) => this._renderSnackbar(sb))
+    ];
 
     if (this._playerVm?.isAtrilFullscreen) {
-      this._playerVm.isAtrilFullscreen.subscribe((full) => {
-        this._shellEl.classList.toggle('app-shell--atril-fullscreen', Boolean(full));
-      });
+      this._unsubs.push(
+        this._playerVm.isAtrilFullscreen.subscribe((full) => {
+          this._shellEl.classList.toggle('app-shell--atril-fullscreen', Boolean(full));
+        })
+      );
     }
 
     // Actualiza geometría sin recargar al cambiar tamaño o rotar el dispositivo
     const syncViewport = () => this._appVm.updateWindowWidth(window.innerWidth, window.innerHeight);
-    window.addEventListener('resize', syncViewport);
-    window.addEventListener('orientationchange', () => setTimeout(syncViewport, 120));
+    this._onWindowResize = syncViewport;
+    this._onOrientationChange = () => {
+      if (this._orientationTimer) clearTimeout(this._orientationTimer);
+      this._orientationTimer = setTimeout(() => {
+        this._orientationTimer = null;
+        syncViewport();
+      }, 120);
+    };
+    window.addEventListener('resize', this._onWindowResize);
+    window.addEventListener('orientationchange', this._onOrientationChange);
     syncViewport();
+  }
+
+  /**
+   * Desmonta el App Shell liberando suscripciones, vistas hijas, timers y listeners de ventana.
+   */
+  unmount() {
+    this._cleanupActiveViews();
+    for (const unsub of this._unsubs) unsub();
+    this._unsubs = [];
+    if (this._onWindowResize) {
+      window.removeEventListener('resize', this._onWindowResize);
+      this._onWindowResize = null;
+    }
+    if (this._onOrientationChange) {
+      window.removeEventListener('orientationchange', this._onOrientationChange);
+      this._onOrientationChange = null;
+    }
+    if (this._orientationTimer) {
+      clearTimeout(this._orientationTimer);
+      this._orientationTimer = null;
+    }
+    this._activeLayoutKey = null;
+  }
+
+  /** Alias estándar de limpieza del shell. */
+  dispose() {
+    this.unmount();
   }
 
   /**

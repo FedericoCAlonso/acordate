@@ -118,4 +118,15 @@ export class ProgressViewModel {
     this._appVm.activePracticeId.set(practiceId);
     this._appVm.navigate(`#/practica/${encodeURIComponent(practiceId)}`);
   }
+
+  /**
+   * Libera todos los `ComputedObservable` suscriptos al progreso y catálogo global.
+   */
+  dispose() {
+    this.studiedPractices.dispose();
+    this.levelsOverview.dispose();
+    this.weeklySummary.dispose();
+    this.streakDays.dispose();
+    this.totals.dispose();
+  }
 }

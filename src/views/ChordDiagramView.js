@@ -1,5 +1,5 @@
 import { formatChordSymbol, splitChordTypography } from '../core/i18n.js';
-import { mod12, pcToNoteName, prefersFlats } from '../core/MusicTheory.js';
+import { mod12, pcToNoteName } from '../core/MusicTheory.js';
 import { Chord } from '../models/Chord.js';
 import { Tuning } from '../models/Tuning.js';
 import { Voicing } from '../models/Voicing.js';

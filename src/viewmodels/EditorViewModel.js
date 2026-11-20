@@ -1,115 +1,26 @@
 import { Observable } from '../core/Observable.js';
 import { Practice, generatePracticeId, validatePracticeSchema } from '../models/Practice.js';
-import { Tuning } from '../models/Tuning.js';
-import { Voicing } from '../models/Voicing.js';
-import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
-import { extractMeasuresFromAbc, parseTimeSignature } from '../core/MusicTheory.js';
+import {
+  EDITOR_TEMPLATES,
+  QUICK_CHORDS,
+  createBlankEditorForm,
+  editorFormToCandidate,
+  practiceToEditorForm
+} from '../services/PracticeFactoryService.js';
+import { EditorImportExportViewModel } from './editor/EditorImportExportViewModel.js';
+import { EditorProgressionViewModel } from './editor/EditorProgressionViewModel.js';
+
+export { EDITOR_TEMPLATES, QUICK_CHORDS };
 
 /**
- * Plantillas iniciales listas para usar al crear una nueva práctica desde el editor.
- */
-export const EDITOR_TEMPLATES = {
-  escala: {
-    label: 'Escala',
-    category: 'escala',
-    level: 2,
-    key: 'C',
-    timeSignature: '4/4',
-    tempo: { start: 70, target: 110, step: 5 },
-    goals: ['Mantener pulso parejo en corcheas', 'Alternar dedos limpiamente'],
-    notes: 'Practicá lento y subí de a 5 BPM.',
-    abc: 'X:1\nT:Escala mayor en Do\nM:4/4\nL:1/8\nK:C clef=treble-8\nCD EF GA Bc | cB AG FE DC |]'
-  },
-  arpegio: {
-    label: 'Arpegio',
-    category: 'arpegio',
-    level: 3,
-    key: 'Am',
-    timeSignature: '4/4',
-    tempo: { start: 75, target: 115, step: 5 },
-    goals: ['Dejar resonar las notas del acorde', 'Patrón p-i-m-a estable'],
-    notes: 'Relajá la mano derecha y marcá suavemente el bajo.',
-    abc: 'X:1\nT:Arpegio p-i-m-a\nM:4/4\nL:1/8\nK:C clef=treble-8\n"Am"A,E Ac A,E Ac | "Dm"DA df DA df | "E7"E,^G Be E,G Be | "Am"A,E Ac A,4 |]'
-  },
-  progresion: {
-    label: 'Progresión de acordes',
-    type: 'harmony',
-    category: 'cambios',
-    level: 2,
-    key: 'G',
-    timeSignature: '4/4',
-    comping: 'rasgueo-balada',
-    tempo: { start: 70, target: 105, step: 5 },
-    goals: ['Cambiar de acorde sin cortar el pulso', 'Conducir notas guía'],
-    notes: 'Elegí la digitación de cada acorde desde la biblioteca o creá una propia en 6×5.',
-    progression: [
-      { bars: 1, chord: 'G', voicingId: 'g-major-open', section: 'A' },
-      { bars: 1, chord: 'Em', voicingId: 'e-minor-open' },
-      { bars: 1, chord: 'C', voicingId: 'c-major-open' },
-      { bars: 1, chord: 'D7', voicingId: 'd7-open' }
-    ],
-    abc: null
-  },
-  walking: {
-    label: 'Walking bass',
-    category: 'walking',
-    level: 4,
-    key: 'F',
-    timeSignature: '4/4',
-    tempo: { start: 95, target: 140, step: 5 },
-    instruments: ['bajo'],
-    goals: ['Raíz firme en el tiempo 1', 'Aproximación cromática en el tiempo 4'],
-    notes: 'Conectá las negras con legato suave.',
-    abc: 'X:1\nT:Walking ii-V-I en Fa\nM:4/4\nL:1/4\nK:F clef=bass\n"Gm7"G,, B,, D, ^C, | "C7"C, E, G, E, | "Fmaj7"F, A, C B, | "D7"D, ^F, A, _A, |]'
-  },
-  lectura: {
-    label: 'Lectura a primera vista',
-    category: 'lectura',
-    level: 2,
-    key: 'C',
-    timeSignature: '4/4',
-    tempo: { start: 65, target: 95, step: 5 },
-    goals: ['Leer un compás adelante', 'No detenerse ante un error'],
-    notes: 'Mirá primero la armadura y el compás antes de contar.',
-    abc: 'X:1\nT:Lectura melódica en Do\nM:4/4\nL:1/4\nK:C clef=treble-8\nC E G F | E D C2 | G A B c | d B G2 |\nc B A G | F E D F | E G D B, | C4 |]'
-  },
-  blanco: {
-    label: 'En blanco',
-    category: 'lectura',
-    level: 1,
-    key: 'C',
-    timeSignature: '4/4',
-    tempo: { start: 70, target: 100, step: 5 },
-    goals: ['Mantener el pulso constante'],
-    notes: '',
-    abc: 'X:1\nT:Nueva práctica\nM:4/4\nL:1/4\nK:C clef=treble-8\n"C"C E G c | "G7"B G F D | "C"C4 |]'
-  }
-};
-
-/**
- * Acordes frecuentes ofrecidos como botones de inserción rápida en el editor.
- */
-export const QUICK_CHORDS = [
-  'C', 'Cm', 'C7', 'Cmaj7', 'Dm7', 'Em7', 'F', 'Fmaj7', 'G', 'G7', 'Am', 'Am7', 'Bm7b5', 'Bb7', 'Eb7', 'D7'
-];
-
-/**
- * ViewModel del Editor y Creador de Prácticas (#/editor/ID).
- * Gestiona el formulario reactivo, validación en vivo de esquema y ABC, plantillas,
- * generadores de dominio, grilla de cifrado por compás, borradores automáticos e importar/exportar.
+ * ViewModel coordinador del Editor y Creador de Prácticas (#/editor/ID).
+ * Compone `EditorProgressionViewModel` y `EditorImportExportViewModel`, delegando
+ * mapeos puros de formulario en `PracticeFactoryService`.
  */
 export class EditorViewModel {
   /**
-   * Construye el ViewModel del editor con todos los servicios inyectados manualmente.
+   * Construye el ViewModel del editor inyectando todos los servicios por constructor.
    * @param {object} deps Dependencias inyectadas.
-   * @param {import('./AppViewModel.js').AppViewModel} deps.appVm ViewModel raíz.
-   * @param {import('../services/StorageService.js').StorageService} deps.storageService Almacenamiento para borradores.
-   * @param {import('../services/AbcService.js').AbcService} deps.abcService Validador/renderizador ABC.
-   * @param {import('../services/AudioSynthService.js').AudioSynthService} deps.audioService Reproducción inmediata de vista previa.
-   * @param {import('../services/ScaleGenerator.js').ScaleGenerator} deps.scaleGenerator Generador de escalas y arpegios.
-   * @param {import('../services/ProgressionGenerator.js').ProgressionGenerator} deps.progressionGenerator Generador de progresiones.
-   * @param {import('../services/WalkingBassGenerator.js').WalkingBassGenerator} deps.walkingBassGenerator Generador de walking bass.
-   * @param {import('../services/ImportExportService.js').ImportExportService} deps.importExportService Exportación/importación.
    */
   constructor({
     appVm,
@@ -125,88 +36,69 @@ export class EditorViewModel {
     this._appVm = appVm;
     /** Servicio de persistencia para borradores automáticos. */
     this._storage = storageService;
-    /** Servicio ABC para diagnóstico en vivo y timeline. */
+    /** Servicio ABC para diagnóstico en vivo. */
     this._abc = abcService;
-    /** Sintetizador offline para escucha inmediata en el editor. */
-    this._audio = audioService;
     /** Generador puro de escalas y arpegios. */
     this.scaleGenerator = scaleGenerator;
     /** Generador puro de progresiones de acordes. */
     this.progressionGenerator = progressionGenerator;
-    /** Generador puro de líneas de walking bass. */
+    /** Generador puro de walking bass. */
     this.walkingBassGenerator = walkingBassGenerator;
-    /** Servicio de importación y exportación JSON/.abc. */
-    this._io = importExportService;
 
     /** Modo actual del editor ('new' | 'edit'). */
     this.mode = new Observable('new');
-    /** Clave de borrador actual en IndexedDB/localStorage. */
+    /** Clave de borrador actual en almacenamiento. */
     this._draftKey = 'nueva';
-    /** Indica si la práctica cargada proviene del catálogo incluido (se guardará como copia). */
+    /** Indica si la práctica proviene del catálogo incluido. */
     this.isBuiltinSource = new Observable(false);
     /** Indica si se recuperó un borrador guardado automáticamente. */
     this.draftRecovered = new Observable(false);
-    /** Estado mutable del formulario de la práctica en edición. */
-    this.form = new Observable(this._createBlankForm());
-    /** Errores de validación del esquema de práctica. */
+    /** Estado del formulario de la práctica en edición. */
+    this.form = new Observable(createBlankEditorForm());
+    /** Errores de validación del esquema. */
     this.validationErrors = new Observable([]);
-    /** Advertencias de sintaxis ABC detectadas en vivo. */
+    /** Advertencias sintácticas ABC en vivo. */
     this.abcWarnings = new Observable([]);
-    /** Grilla de acordes por compás para ingreso visual rápido. */
-    this.chordGridBars = new Observable(['C', 'Am', 'Dm7', 'G7']);
-    /** Indica si la vista previa está reproduciéndose. */
-    this.isPreviewPlaying = new Observable(false);
-    /** Estado del último autoguardado de borrador. */
+    /** Etiqueta de estado del autoguardado. */
     this.autosaveLabel = new Observable('');
-
     /** Temporizador de debounce para autoguardado de borrador. */
     this._draftTimer = null;
+
+    /** Sub-ViewModel de edición de progresiones, grilla de compases y voicings 6×5. */
+    this.progressionEditor = new EditorProgressionViewModel({
+      appVm,
+      form: this.form,
+      progressionGenerator,
+      audioService,
+      onUpdateField: (field, val) => this.updateField(field, val),
+      onCommitForm: (nextForm) => {
+        this.form.set(nextForm, true);
+        this._scheduleDraftSave(nextForm);
+      }
+    });
+
+    /** Sub-ViewModel de vista previa de audio e importación/exportación. */
+    this.ioPreview = new EditorImportExportViewModel({
+      appVm,
+      form: this.form,
+      validationErrors: this.validationErrors,
+      abcService,
+      audioService,
+      importExportService,
+      validateFormFn: () => this.validateForm(),
+      buildCandidateFn: () => this.buildCandidateObject(),
+      onReloadPractice: (id) => this.loadForEdit(id)
+    });
+
+    // Alias observables hacia sub-ViewModels para compatibilidad con EditorView y tests
+    this.chordGridBars = this.progressionEditor.chordGridBars;
+    this.isPreviewPlaying = this.ioPreview.isPreviewPlaying;
   }
 
-  /**
-   * Crea un objeto de formulario en blanco con valores iniciales válidos.
-   * @returns {object} Formulario inicial.
-   */
-  _createBlankForm() {
-    const tpl = EDITOR_TEMPLATES.blanco;
-    return {
-      id: '',
-      version: 2,
-      type: 'melody',
-      title: 'Mi nueva práctica',
-      instruments: ['guitarra'],
-      category: tpl.category,
-      level: tpl.level,
-      tagsText: 'propia',
-      key: tpl.key,
-      timeSignature: tpl.timeSignature,
-      tempoStart: tpl.tempo.start,
-      tempoTarget: tpl.tempo.target,
-      tempoStep: tpl.tempo.step,
-      goalsText: tpl.goals.join('\n'),
-      notes: tpl.notes,
-      abc: tpl.abc,
-      comping: 'negras-abajo',
-      progression: [
-        { bars: 1, chord: 'G', voicingId: 'g-major-open' },
-        { bars: 1, chord: 'C', voicingId: 'c-major-open' },
-        { bars: 1, chord: 'Am', voicingId: 'a-minor-open' },
-        { bars: 1, chord: 'D', voicingId: 'd-major-open' }
-      ],
-      customVoicings: [],
-      fingerings: {},
-      createdAt: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Carga una práctica existente por ID o inicializa el editor para crear una nueva.
-   * Si existe un borrador automático previo, lo restaura para no perder trabajo.
-   * @param {string} idOrNew ID de práctica o 'nueva'.
-   * @returns {Promise<void>}
-   */
+  /** Carga una práctica existente por ID o inicializa el editor para crear una nueva. */
   async loadForEdit(idOrNew = 'nueva') {
-    this.stopPreview();
+    this._cancelDraftSave();
+    this.ioPreview.stopPreview();
     this.validationErrors.set([]);
     this.draftRecovered.set(false);
     this.autosaveLabel.set('');
@@ -215,15 +107,10 @@ export class EditorViewModel {
       this.mode.set('new');
       this.isBuiltinSource.set(false);
       this._draftKey = 'nueva';
-
       const savedDraft = await this._storage.loadDraft('nueva');
-      if (savedDraft?.data) {
-        this.form.set({ ...this._createBlankForm(), ...savedDraft.data }, true);
-        this.draftRecovered.set(true);
-      } else {
-        this.form.set(this._createBlankForm(), true);
-      }
-      this._syncChordGridFromAbc();
+      this.form.set(savedDraft?.data ? { ...createBlankEditorForm(), ...savedDraft.data } : createBlankEditorForm(), true);
+      this.draftRecovered.set(Boolean(savedDraft?.data));
+      this.progressionEditor.syncChordGridFromAbc();
       this._validateAbcLive();
       return;
     }
@@ -240,71 +127,28 @@ export class EditorViewModel {
     this.isBuiltinSource.set(isBuiltin);
     this.mode.set(isBuiltin ? 'new' : 'edit');
 
-    const baseForm = {
-      id: isBuiltin ? '' : existing.id,
-      version: existing.version || 2,
-      type: existing.type || 'melody',
-      title: isBuiltin ? `${existing.title} (copia)` : existing.title,
-      instruments: [...existing.instruments],
-      category: existing.category,
-      level: existing.level,
-      tagsText: existing.tags.join(', '),
-      key: existing.key,
-      timeSignature: existing.timeSignature,
-      tempoStart: existing.tempo.start,
-      tempoTarget: existing.tempo.target,
-      tempoStep: existing.tempo.step,
-      goalsText: existing.goals.join('\n'),
-      notes: existing.notes,
-      abc: existing.abc || '',
-      comping: existing.comping || 'negras-abajo',
-      progression: existing.progression?.length > 0
-        ? existing.progression.map((s) => s.toJSON())
-        : [
-            { bars: 1, chord: existing.key || 'C', voicingId: null },
-            { bars: 1, chord: 'G', voicingId: null }
-          ],
-      customVoicings: (existing.customVoicings || []).map((v) => v.toJSON()),
-      fingerings: { ...existing.fingerings },
-      createdAt: isBuiltin ? new Date().toISOString() : existing.createdAt
-    };
-
+    const baseForm = practiceToEditorForm(existing, isBuiltin);
     const savedDraft = await this._storage.loadDraft(this._draftKey);
-    if (savedDraft?.data) {
-      this.form.set({ ...baseForm, ...savedDraft.data }, true);
-      this.draftRecovered.set(true);
-    } else {
-      this.form.set(baseForm, true);
-    }
-
-    this._syncChordGridFromAbc();
+    this.form.set(savedDraft?.data ? { ...baseForm, ...savedDraft.data } : baseForm, true);
+    this.draftRecovered.set(Boolean(savedDraft?.data));
+    this.progressionEditor.syncChordGridFromAbc();
     this._validateAbcLive();
   }
 
-  /**
-   * Actualiza un campo del formulario, revalida ABC si corresponde y agenda autoguardado de borrador.
-   * @param {string} field Nombre del campo del formulario.
-   * @param {*} value Nuevo valor.
-   */
+  /** Actualiza un campo del formulario, revalida ABC si corresponde y agenda autoguardado. */
   updateField(field, value) {
     const next = { ...this.form.value, [field]: value };
     this.form.set(next, true);
-
-    if (field === 'abc') {
-      this._validateAbcLive();
-    }
+    if (field === 'abc') this._validateAbcLive();
     this._scheduleDraftSave(next);
   }
 
-  /**
-   * Alterna la selección de un instrumento en el formulario (asegurando siempre al menos uno).
-   * @param {'guitarra-clasica'|'guitarra'|'bajo'} instrument Instrumento a alternar.
-   */
+  /** Alterna un instrumento asegurando siempre al menos uno activo. */
   toggleInstrument(instrument) {
     const current = [...this.form.value.instruments];
     const idx = current.indexOf(instrument);
     if (idx >= 0) {
-      if (current.length === 1) return; // Siempre debe haber al menos uno
+      if (current.length === 1) return;
       current.splice(idx, 1);
     } else {
       current.push(instrument);
@@ -312,10 +156,7 @@ export class EditorViewModel {
     this.updateField('instruments', current);
   }
 
-  /**
-   * Aplica una de las 6 plantillas predefinidas al formulario actual.
-   * @param {keyof typeof EDITOR_TEMPLATES} templateId Clave de plantilla.
-   */
+  /** Aplica una de las plantillas predefinidas al formulario actual. */
   applyTemplate(templateId) {
     const tpl = EDITOR_TEMPLATES[templateId];
     if (!tpl) return;
@@ -337,62 +178,13 @@ export class EditorViewModel {
       instruments: tpl.instruments ? [...tpl.instruments] : this.form.value.instruments
     };
     this.form.set(next, true);
-    this._syncChordGridFromAbc();
+    this.progressionEditor.syncChordGridFromAbc();
     this._validateAbcLive();
     this._scheduleDraftSave(next);
     this._appVm.showSnackbar(`Plantilla "${tpl.label}" aplicada.`);
   }
 
-  /**
-   * Actualiza el acorde asignado a un compás específico dentro de la grilla visual de cifrado.
-   * @param {number} barIndex Índice de compás (0-based).
-   * @param {string} chordText Símbolo de acorde americano.
-   */
-  updateChordGridBar(barIndex, chordText) {
-    const bars = [...this.chordGridBars.value];
-    bars[barIndex] = chordText;
-    this.chordGridBars.set(bars, true);
-  }
-
-  /**
-   * Agrega o quita un compás al final de la grilla de cifrado del editor.
-   * @param {number} delta +1 para agregar, -1 para quitar.
-   */
-  resizeChordGrid(delta) {
-    const bars = [...this.chordGridBars.value];
-    if (delta > 0 && bars.length < 32) {
-      bars.push(bars[bars.length - 1] || 'C');
-    } else if (delta < 0 && bars.length > 1) {
-      bars.pop();
-    }
-    this.chordGridBars.set(bars, true);
-  }
-
-  /**
-   * Convierte la grilla actual de acordes por compás en notación ABC e inserta notas guía editables.
-   */
-  applyChordGridToAbc() {
-    const chords = this.chordGridBars.value.map((c) => c.trim()).filter(Boolean);
-    if (chords.length === 0) return;
-
-    const f = this.form.value;
-    const isBass = f.instruments.includes('bajo') && f.instruments.length === 1;
-    const generated = this.progressionGenerator.generate({
-      customChords: chords,
-      key: f.key || 'C',
-      instrument: isBass ? 'bajo' : 'guitarra',
-      pattern: 'blancas',
-      title: f.title || 'Progresión personalizada'
-    });
-
-    this.updateField('abc', generated.abc);
-    this._appVm.showSnackbar(`Grilla de ${chords.length} compases insertada en el ABC.`);
-  }
-
-  /**
-   * Ejecuta el generador de escalas y arpegios y vuelca el ABC resultante al editor para ajuste manual.
-   * @param {object} options Parámetros del ScaleGenerator.
-   */
+  /** Ejecuta el generador de escalas y arpegios volcando el ABC al formulario. */
   runScaleGenerator(options) {
     const res = this.scaleGenerator.generate(options);
     const next = {
@@ -405,16 +197,13 @@ export class EditorViewModel {
       abc: res.abc
     };
     this.form.set(next, true);
-    this._syncChordGridFromAbc();
+    this.progressionEditor.syncChordGridFromAbc();
     this._validateAbcLive();
     this._scheduleDraftSave(next);
     this._appVm.showSnackbar('Escala/arpegio generado. Ya podés ajustarlo a mano.');
   }
 
-  /**
-   * Ejecuta el generador de progresiones armónicas y vuelca el ABC resultante al editor.
-   * @param {object} options Parámetros del ProgressionGenerator.
-   */
+  /** Ejecuta el generador de progresiones armónicas volcando el ABC al formulario. */
   runProgressionGenerator(options) {
     const res = this.progressionGenerator.generate(options);
     const next = {
@@ -427,16 +216,13 @@ export class EditorViewModel {
       abc: res.abc
     };
     this.form.set(next, true);
-    this.chordGridBars.set([...res.chords], true);
+    this.progressionEditor.chordGridBars.set([...res.chords], true);
     this._validateAbcLive();
     this._scheduleDraftSave(next);
     this._appVm.showSnackbar('Progresión generada con notas guía.');
   }
 
-  /**
-   * Ejecuta el generador de walking bass sobre un cifrado y vuelca el ABC al editor.
-   * @param {object} options Parámetros del WalkingBassGenerator.
-   */
+  /** Ejecuta el generador de walking bass volcando el ABC al formulario. */
   runWalkingBassGenerator(options) {
     const res = this.walkingBassGenerator.generate(options);
     const next = {
@@ -450,179 +236,18 @@ export class EditorViewModel {
       abc: res.abc
     };
     this.form.set(next, true);
-    this.chordGridBars.set(res.measures.map((m) => m.chord), true);
+    this.progressionEditor.chordGridBars.set(res.measures.map((m) => m.chord), true);
     this._validateAbcLive();
     this._scheduleDraftSave(next);
     this._appVm.showSnackbar('Línea de walking bass generada.');
   }
 
-  /**
-   * Actualiza un paso de la progresión armónica del formulario.
-   * @param {number} idx Índice del paso.
-   * @param {{ bars?: number, chord?: string, voicingId?: string|null }} patch Cambios del paso.
-   */
-  updateProgressionStep(idx, patch) {
-    const steps = [...(this.form.value.progression || [])];
-    if (!steps[idx]) return;
-    steps[idx] = { ...steps[idx], ...patch };
-    this.updateField('progression', steps);
-  }
-
-  /**
-   * Agrega o quita un paso de la progresión armónica del formulario.
-   * @param {number} delta +1 para agregar, -1 para quitar el último.
-   */
-  resizeProgressionSteps(delta) {
-    const steps = [...(this.form.value.progression || [])];
-    if (delta > 0 && steps.length < 32) {
-      const last = steps[steps.length - 1] || { bars: 1, chord: 'C', voicingId: null };
-      steps.push({ bars: 1, chord: last.chord, voicingId: last.voicingId });
-    } else if (delta < 0 && steps.length > 1) {
-      steps.pop();
-    }
-    this.updateField('progression', steps);
-  }
-
-  /**
-   * Divide un paso de la progresión en dos acordes dentro del mismo compás (ej. ii–V de 0.5 c. cada uno).
-   * @param {number} idx Índice del paso a dividir.
-   */
-  splitProgressionStep(idx) {
-    const steps = [...(this.form.value.progression || [])];
-    const target = steps[idx];
-    if (!target || steps.length >= 64) return;
-    const half = Math.max(0.25, Number(((Number(target.bars) || 1) / 2).toFixed(2)));
-    steps.splice(idx, 1, { ...target, bars: half }, { bars: half, chord: target.chord, voicingId: target.voicingId });
-    this.updateField('progression', steps);
-  }
-
-  /**
-   * Elimina o reordena un paso puntual de la progresión armónica.
-   * @param {number} idx Índice del paso.
-   * @param {'left'|'right'|'remove'} action Acción.
-   */
-  editProgressionStepOrder(idx, action) {
-    const steps = [...(this.form.value.progression || [])];
-    if (action === 'remove' && steps.length > 1) {
-      steps.splice(idx, 1);
-    } else if (action === 'left' && idx > 0) {
-      [steps[idx - 1], steps[idx]] = [steps[idx], steps[idx - 1]];
-    } else if (action === 'right' && idx < steps.length - 1) {
-      [steps[idx], steps[idx + 1]] = [steps[idx + 1], steps[idx]];
-    }
-    this.updateField('progression', steps);
-  }
-
-  /**
-   * Duplica el bloque completo de la progresión actual (repetición ×2, ideal para formas AABA o vueltas).
-   */
-  repeatProgressionBlock() {
-    const steps = [...(this.form.value.progression || [])];
-    if (steps.length === 0 || steps.length * 2 > 64) return;
-    const clone = steps.map((s) => ({ ...s, section: s.section ? undefined : undefined }));
-    this.updateField('progression', [...steps, ...clone]);
-    this._appVm.showSnackbar(`Se repitió la progresión (ahora ${steps.length * 2} pasos).`);
-  }
-
-  /**
-   * Reproduce un voicing de vista previa desde el selector de acordes del editor.
-   * @param {Voicing} voicing Voicing a escuchar.
-   * @param {Tuning} tuning Afinación activa.
-   */
-  playVoicingPreview(voicing, tuning) {
-    if (!voicing) return;
-    const isBass = tuning.instrument === 'bass';
-    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
-    this._audio.playVoicing(voicing, {
-      mode: isBass ? 'block' : 'strum-down',
-      instrument: isBass ? 'electric-bass' : this.form.value.instruments.includes('guitarra-clasica') ? 'nylon-guitar' : 'acoustic-guitar',
-      tuning,
-      duration: 1.4
-    });
-  }
-
-  /**
-   * Guarda un voicing personalizado (creado en la grilla 6×5), lo asigna al paso indicado
-   * y lo persiste también en "Mis acordes" del progreso del usuario para reutilizarlo.
-   * @param {number} stepIdx Índice del paso destino.
-   * @param {Voicing} voicing Instancia Voicing personalizada.
-   * @param {boolean} [saveToMyChords=true] Si true, guarda en "Mis acordes".
-   */
-  async attachCustomVoicingToStep(stepIdx, voicing, saveToMyChords = true) {
-    const vJson = voicing instanceof Voicing ? voicing.toJSON() : new Voicing(voicing).toJSON();
-    vJson.tags = [...new Set([...(vJson.tags || []), 'propio'])];
-    const customList = [
-      ...(this.form.value.customVoicings || []).filter((v) => v.id !== vJson.id),
-      vJson
-    ];
-    const steps = [...(this.form.value.progression || [])];
-    if (steps[stepIdx]) {
-      steps[stepIdx] = { ...steps[stepIdx], chord: vJson.chord, voicingId: vJson.id };
-    }
-    const next = { ...this.form.value, customVoicings: customList, progression: steps };
-    this.form.set(next, true);
-    this._scheduleDraftSave(next);
-
-    if (saveToMyChords && this._appVm?.progress?.value && typeof this._appVm.replaceProgress === 'function') {
-      const { UserProgress } = await import('../models/UserProgress.js');
-      const nextProg = new UserProgress(this._appVm.progress.value.toJSON());
-      nextProg.saveCustomChord(vJson);
-      await this._appVm.replaceProgress(nextProg);
-      this._appVm.showSnackbar(`Digitación de ${vJson.chord} guardada en "Mis acordes".`);
-    }
-  }
-
-  /**
-   * Construye el objeto candidato JSON a partir del formulario actual (esquema v2).
-   * @returns {object} Objeto candidato para validación o guardado.
-   */
+  /** Construye el objeto candidato JSON a partir del formulario actual. */
   buildCandidateObject() {
-    const f = this.form.value;
-    const type = f.type || 'melody';
-    const id = this.mode.value === 'edit' && f.id ? f.id : generatePracticeId(f.title);
-    const tags = String(f.tagsText || '')
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    const goals = String(f.goalsText || '')
-      .split('\n')
-      .map((g) => g.trim())
-      .filter(Boolean);
-
-    const isHarmony = type === 'harmony';
-    const includeProg = type === 'harmony' || type === 'mixed';
-
-    return {
-      id,
-      version: includeProg ? 2 : Number(f.version) || 1,
-      type,
-      title: String(f.title || '').trim(),
-      instruments: [...(f.instruments || [])],
-      category: f.category,
-      level: Number(f.level),
-      tags,
-      key: String(f.key || '').trim(),
-      timeSignature: String(f.timeSignature || '').trim(),
-      tempo: {
-        start: Number(f.tempoStart),
-        target: Number(f.tempoTarget),
-        step: Number(f.tempoStep)
-      },
-      abc: isHarmony ? null : String(f.abc || '').trim(),
-      ...(includeProg ? { progression: f.progression || [], comping: f.comping || 'negras-abajo' } : {}),
-      ...(includeProg && f.customVoicings?.length ? { customVoicings: f.customVoicings } : {}),
-      fingerings: f.fingerings || {},
-      goals,
-      notes: String(f.notes || ''),
-      origin: 'user',
-      createdAt: f.createdAt || new Date().toISOString()
-    };
+    return editorFormToCandidate(this.form.value, this.mode.value);
   }
 
-  /**
-   * Valida el formulario actual contra el esquema oficial de Practice.
-   * @returns {{ valid: boolean, errors: string[], candidate: object }} Resultado de validación.
-   */
+  /** Valida el formulario contra el esquema oficial de `Practice`. */
   validateForm() {
     const candidate = this.buildCandidateObject();
     const res = validatePracticeSchema(candidate);
@@ -630,17 +255,14 @@ export class EditorViewModel {
     return { ...res, candidate };
   }
 
-  /**
-   * Guarda la práctica en IndexedDB tras validar el esquema, limpia el borrador y navega al reproductor.
-   * @returns {Promise<Practice|null>} Práctica guardada o null si hubo errores de validación.
-   */
+  /** Valida, persiste la práctica, cancela el debounce de borrador y abre el Reproductor. */
   async savePractice() {
     const { valid, candidate } = this.validateForm();
     if (!valid) {
       this._appVm.showSnackbar('Revisá los errores antes de guardar.');
       return null;
     }
-
+    this._cancelDraftSave();
     const practice = new Practice(candidate);
     await this._appVm.upsertUserPractice(practice);
     await this._storage.clearDraft(this._draftKey);
@@ -649,16 +271,12 @@ export class EditorViewModel {
     this.isBuiltinSource.set(false);
     this._draftKey = practice.id;
     this.form.set({ ...this.form.value, id: practice.id }, true);
-
     this._appVm.showSnackbar(`Práctica "${practice.title}" guardada.`);
     this._appVm.navigate(`#/practica/${encodeURIComponent(practice.id)}`);
     return practice;
   }
 
-  /**
-   * Duplica la práctica actualmente en edición como una nueva práctica independiente.
-   * @returns {Promise<Practice|null>} Nueva práctica guardada.
-   */
+  /** Duplica la práctica en edición como nueva copia independiente. */
   async duplicateCurrent() {
     const { valid, candidate } = this.validateForm();
     if (!valid) {
@@ -666,231 +284,82 @@ export class EditorViewModel {
       return null;
     }
     const copyTitle = `${candidate.title} (copia)`;
-    const copy = new Practice({
-      ...candidate,
-      id: generatePracticeId(copyTitle),
-      title: copyTitle,
-      origin: 'user',
-      createdAt: new Date().toISOString()
-    });
+    const copy = new Practice({ ...candidate, id: generatePracticeId(copyTitle), title: copyTitle, origin: 'user', createdAt: new Date().toISOString() });
     await this._appVm.upsertUserPractice(copy);
     this._appVm.showSnackbar(`Copia "${copy.title}" guardada.`);
     this._appVm.navigate(`#/editor/${encodeURIComponent(copy.id)}`);
     return copy;
   }
 
-  /**
-   * Elimina la práctica actual si es propiedad del usuario y vuelve a la lista.
-   * @returns {Promise<boolean>} True si se eliminó correctamente.
-   */
+  /** Elimina la práctica actual si es del usuario y vuelve a la lista. */
   async deleteCurrent() {
     const id = this.form.value.id;
     if (!id || this.mode.value !== 'edit') return false;
+    this._cancelDraftSave();
     const deleted = await this._appVm.deleteUserPractice(id);
     if (deleted) {
       await this._storage.clearDraft(id);
-      this.stopPreview();
+      this.ioPreview.stopPreview();
       this._appVm.showSnackbar('Práctica eliminada.');
       this._appVm.navigate('#/practicas');
     }
     return deleted;
   }
 
-  /**
-   * Descarta el borrador automático guardado y recarga limpio.
-   * @returns {Promise<void>}
-   */
+  /** Descarta el borrador automático cancelando cualquier debounce pendiente. */
   async discardDraft() {
+    this._cancelDraftSave();
     await this._storage.clearDraft(this._draftKey);
     this.draftRecovered.set(false);
     await this.loadForEdit(this._draftKey === 'nueva' ? 'nueva' : this._draftKey);
     this._appVm.showSnackbar('Borrador descartado.');
   }
 
-  /**
-   * Exporta la práctica actual en formato JSON descargable.
-   */
-  exportCurrentJson() {
-    const { valid, candidate } = this.validateForm();
-    if (!valid) {
-      this._appVm.showSnackbar('Corregí los errores antes de exportar.');
-      return;
-    }
-    const content = this._io.exportPracticeJson(candidate);
-    this._io.triggerBrowserDownload(`${candidate.id}.json`, content, 'application/json');
-    this._appVm.showSnackbar('Práctica exportada en JSON.');
-  }
+  // --- Delegación limpia hacia sub-ViewModels ---
+  updateChordGridBar(i, c) { this.progressionEditor.updateChordGridBar(i, c); }
+  resizeChordGrid(d) { this.progressionEditor.resizeChordGrid(d); }
+  applyChordGridToAbc() { this.progressionEditor.applyChordGridToAbc(); }
+  updateProgressionStep(i, p) { this.progressionEditor.updateProgressionStep(i, p); }
+  resizeProgressionSteps(d) { this.progressionEditor.resizeProgressionSteps(d); }
+  splitProgressionStep(i) { this.progressionEditor.splitProgressionStep(i); }
+  editProgressionStepOrder(i, a) { this.progressionEditor.editProgressionStepOrder(i, a); }
+  repeatProgressionBlock() { this.progressionEditor.repeatProgressionBlock(); }
+  playVoicingPreview(v, t) { this.progressionEditor.playVoicingPreview(v, t); }
+  attachCustomVoicingToStep(i, v, s = true) { return this.progressionEditor.attachCustomVoicingToStep(i, v, s); }
 
-  /**
-   * Exporta únicamente la partitura ABC en un archivo .abc.
-   */
-  exportCurrentAbc() {
-    const candidate = this.buildCandidateObject();
-    const content = this._io.exportPracticeAbc(candidate);
-    this._io.triggerBrowserDownload(`${candidate.id}.abc`, content, 'text/vnd.abc');
-    this._appVm.showSnackbar('Partitura exportada en formato .abc.');
-  }
+  exportCurrentJson() { this.ioPreview.exportCurrentJson(); }
+  exportCurrentAbc() { this.ioPreview.exportCurrentAbc(); }
+  exportUserCollection() { this.ioPreview.exportUserCollection(); }
+  importFileContent(t, f) { return this.ioPreview.importFileContent(t, f); }
+  togglePreviewPlay(v) { this.ioPreview.togglePreviewPlay(v); }
+  stopPreview() { this.ioPreview.stopPreview(); }
 
-  /**
-   * Exporta todas las prácticas creadas por el usuario como una colección JSON.
-   */
-  exportUserCollection() {
-    const userPractices = this._appVm.allPractices.value.filter((p) => p.origin === 'user');
-    if (userPractices.length === 0) {
-      this._appVm.showSnackbar('Todavía no tenés prácticas propias para exportar.');
-      return;
-    }
-    const content = this._io.exportCollectionJson(userPractices, 'Mis prácticas de Acordate');
-    this._io.triggerBrowserDownload('acordate-coleccion.json', content, 'application/json');
-    this._appVm.showSnackbar(`Colección exportada (${userPractices.length} prácticas).`);
-  }
-
-  /**
-   * Importa una o varias prácticas desde contenido JSON o archivo .abc.
-   * @param {string} text Contenido del archivo leído.
-   * @param {string} filename Nombre del archivo original.
-   * @returns {Promise<{ importedCount: number, errors: string[] }>} Resultado de la importación.
-   */
-  async importFileContent(text, filename = 'import.json') {
-    const lower = filename.toLowerCase();
-    if (lower.endsWith('.abc')) {
-      const { practice, errors, notice } = this._io.importPracticeFromAbc(text, filename);
-      if (errors.length > 0 || !practice) {
-        this.validationErrors.set(errors, true);
-        this._appVm.showSnackbar('Error al importar archivo .abc.');
-        return { importedCount: 0, errors };
-      }
-      await this._appVm.upsertUserPractice(practice);
-      await this.loadForEdit(practice.id);
-      this._appVm.showSnackbar(`Importada "${practice.title}". ${notice}`);
-      return { importedCount: 1, errors: [] };
-    }
-
-    const { practices, errors } = this._io.importPracticesFromJson(text);
-    if (practices.length === 0) {
-      this.validationErrors.set(errors, true);
-      this._appVm.showSnackbar('No se pudo importar el JSON.');
-      return { importedCount: 0, errors };
-    }
-
-    const count = await this._appVm.importUserPractices(practices);
-    await this.loadForEdit(practices[0].id);
-    this._appVm.showSnackbar(
-      count === 1
-        ? `Práctica "${practices[0].title}" importada.`
-        : `${count} prácticas importadas correctamente.`
-    );
-    return { importedCount: count, errors };
-  }
-
-  /**
-   * Reproduce o detiene una vista previa inmediata del ABC actual del editor.
-   * @param {object|null} [visualObj=null] Objeto visual de abcjs si se renderizó en pantalla.
-   */
-  togglePreviewPlay(visualObj = null) {
-    if (this.isPreviewPlaying.value) {
-      this.stopPreview();
-      return;
-    }
-    const f = this.form.value;
-    const isBass = f.instruments.includes('bajo') && f.instruments.length === 1;
-    const fam = isBass ? 'bass' : 'guitar';
-    const tuning = Tuning.defaultForInstrument(fam);
-    let timeline;
-
-    if (f.type === 'harmony') {
-      const { beats, beatUnit } = parseTimeSignature(f.timeSignature || '4/4');
-      const beatsPerMeasure = beats * (4 / beatUnit);
-      let cursor = 0;
-      const chords = (f.progression || []).map((st, idx) => {
-        const dur = (Number(st.bars) || 1) * beatsPerMeasure;
-        const v = findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
-          getCuratedVoicingsForChord(st.chord, fam, tuning)[0];
-        const ev = {
-          beat: cursor,
-          durationBeats: dur,
-          symbol: st.chord,
-          measureIndex: Math.floor(cursor / beatsPerMeasure) + 1,
-          stepIndex: idx,
-          voicingMidis: v ? v.getMidiNotes(tuning) : [],
-          rhythm: st.rhythm || null
-        };
-        cursor += dur;
-        return ev;
-      });
-      timeline = {
-        notes: [],
-        chords,
-        totalBeats: Math.max(beatsPerMeasure, cursor),
-        beatsPerMeasure,
-        beatUnit,
-        measureCount: Math.max(1, Math.ceil(cursor / beatsPerMeasure)),
-        isBassPiece: isBass,
-        isHarmonyOnly: true
-      };
-    } else {
-      timeline = this._abc.extractTimeline(visualObj, f.abc, {
-        instrument: f.instruments[0] || 'guitarra',
-        isBass,
-        timeSignature: f.timeSignature
-      });
-    }
-
-    this._audio.loadTimeline(timeline);
-    this._audio.configure({
-      bpm: Number(f.tempoStart) || 85,
-      instrument: isBass ? 'electric-bass' : f.instruments.includes('guitarra-clasica') ? 'nylon-guitar' : 'acoustic-guitar',
-      comping: f.comping || 'negras-abajo',
-      countInMeasures: 0,
-      loopEnabled: false,
-      metronomeEnabled: true,
-      chordsEnabled: true
-    });
-    this._audio.onPlaybackEnd = () => {
-      this.isPreviewPlaying.set(false);
-    };
-    this._audio.play();
-    this.isPreviewPlaying.set(true);
-  }
-
-  /**
-   * Detiene la reproducción de vista previa del editor.
-   */
-  stopPreview() {
-    if (this.isPreviewPlaying.value) {
-      this._audio.stop();
-      this.isPreviewPlaying.set(false);
-    }
-  }
-
-  /**
-   * Extrae los acordes actuales del ABC para sincronizar la grilla visual de compases.
-   */
-  _syncChordGridFromAbc() {
-    const measures = extractMeasuresFromAbc(this.form.value.abc);
-    const chords = measures.map((m) => m.chords[0] || '');
-    if (chords.some(Boolean)) {
-      this.chordGridBars.set(chords, true);
-    }
-  }
-
-  /**
-   * Ejecuta el diagnóstico sintáctico ABC en vivo y actualiza el observable abcWarnings.
-   */
   _validateAbcLive() {
-    const res = this._abc.validateAbcSyntax(this.form.value.abc);
-    this.abcWarnings.set(res.warnings, true);
+    this.abcWarnings.set(this._abc.validateAbcSyntax(this.form.value.abc).warnings, true);
   }
 
-  /**
-   * Guarda el borrador automáticamente con un breve debounce para evitar escrituras excesivas.
-   * @param {object} formState Estado actual del formulario.
-   */
+  _cancelDraftSave() {
+    if (this._draftTimer !== null) {
+      clearTimeout(this._draftTimer);
+      this._draftTimer = null;
+    }
+  }
+
   _scheduleDraftSave(formState) {
-    if (this._draftTimer) clearTimeout(this._draftTimer);
+    this._cancelDraftSave();
+    const targetKey = this._draftKey;
     this._draftTimer = setTimeout(async () => {
-      await this._storage.saveDraft(this._draftKey, formState);
+      this._draftTimer = null;
+      if (targetKey !== this._draftKey) return;
+      await this._storage.saveDraft(targetKey, formState);
       this.autosaveLabel.set('Borrador guardado automáticamente');
     }, 450);
+  }
+
+  /** Libera timers de autoguardado, vista previa de audio y sub-ViewModels. */
+  dispose() {
+    this._cancelDraftSave();
+    this.ioPreview.dispose();
+    this.progressionEditor.dispose();
   }
 }
