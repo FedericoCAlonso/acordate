@@ -122,6 +122,7 @@ export class Chord {
 
   /**
    * Determina el número de inversión (0 = fundamental, 1 = 1ª, 2 = 2ª, 3 = 3ª) dada la clase de altura más grave.
+   * Reconoce además bajos en 7ª (b7/7) en acordes con bajo agregado como Am/G.
    * @param {number} lowestPc Clase de altura de la nota más grave que suena.
    * @returns {number} Índice de inversión (0..3).
    */
@@ -129,7 +130,9 @@ export class Chord {
     const diff = mod12(lowestPc - this.rootPc);
     if (diff === 0) return 0;
     const idx = this.quality.intervals.findIndex((iv) => mod12(iv) === diff);
-    return idx > 0 ? idx : 0;
+    if (idx > 0) return Math.min(3, idx);
+    if (diff === 10 || diff === 11) return 3;
+    return 0;
   }
 
   /**

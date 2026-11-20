@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v3: Módulo de Armonía).
+ * Versión del caché estático de la PWA Acordate (v4: Auditoría musical, acordes de bajo y herramientas armónicas editables).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v3';
+const CACHE_NAME = 'acordate-static-v4';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

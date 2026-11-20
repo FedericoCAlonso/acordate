@@ -250,7 +250,7 @@
   {
     "id": "b-n1-escala-01",
     "version": 1,
-    "title": "Escala mayor de Do en primera posición (bajo)",
+    "title": "Escala mayor de Do en posición II (bajo)",
     "instruments": [
       "bajo"
     ],
@@ -427,7 +427,7 @@
       "target": 98,
       "step": 5
     },
-    "abc": "X:1\nT:Vals I-IV-V en Sol\nM:3/4\nL:1/4\nK:G clef=treble-8\n\"G\"G, [B,DG] [B,DG] | \"C\"C [EGc] [EGc] | \"D\"D [FAc] [FAc] | \"G\"G, [B,DG]2 |\n\"G\"G, [B,DG] [B,DG] | \"Em\"E, [B,EG] [B,EG] | \"D7\"D [FAc] [FAc] | \"G\"G,3 |]",
+    "abc": "X:1\nT:Vals I-IV-V en Sol\nM:3/4\nL:1/4\nK:G clef=treble-8\n\"G\"G, [B,DG] [B,DG] | \"C\"C [EGc] [EGc] | \"D\"D [Adf] [Adf] | \"G\"G, [B,DG]2 |\n\"G\"G, [B,DG] [B,DG] | \"Em\"E, [B,EG] [B,EG] | \"D7\"D [Acf] [Acf] | \"G\"G,3 |]",
     "fingerings": {},
     "goals": [
       "Diferenciar el peso del bajo en el tiempo 1 y los acordes livianos en 2 y 3",
@@ -440,7 +440,7 @@
   {
     "id": "gc-n2-lectura-01",
     "version": 1,
-    "title": "Estudio melódico en Fa mayor con ligaduras",
+    "title": "Estudio melódico en Fa mayor (fraseo legato)",
     "instruments": [
       "guitarra-clasica"
     ],
@@ -489,7 +489,7 @@
       "target": 100,
       "step": 5
     },
-    "abc": "X:1\nT:Patrón p-i-m-i en Am\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Am\"A,EAE A,EAE | \"Dm\"DAfA DAfA | \"E7\"E,^GBG E,GBG | \"Am\"A,EAE A,2 z2 |\n\"F\"F,AcA \"C\"CEGE | \"E7\"E,^GBG \"Am\"A,4 |]",
+    "abc": "X:1\nT:Patrón p-i-m-i en Am\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Am\"A,EcE A,EcE | \"Dm\"DAdA DAdA | \"E7\"E,^GdG E,^GdG | \"Am\"A,EcE A,2 z2 |\n\"F\"F,AcA \"C\"CEGE | \"E7\"E,^GdG \"Am\"A,4 |]",
     "fingerings": {},
     "goals": [
       "Mantener la mano derecha estable sin rebotar",
@@ -551,7 +551,7 @@
       "target": 100,
       "step": 5
     },
-    "abc": "X:1\nT:Progresión I-vi-IV-V en Do\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"C\"C2 EG c2 GE | \"Am\"A,2 CE A2 EC | \"F\"F,2 AC F2 CA, | \"G\"G,2 B,D G2 DB, |\n\"C\"C2 EG c2 G2 | \"Am\"A,2 CE A2 E2 | \"F\"F,2 A,C \"G\"G,2 B,D | \"C\"C6 z2 |]",
+    "abc": "X:1\nT:Progresión I-vi-IV-V en Do\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"C\"C2 EG c2 GE | \"Am\"A,2 CE A2 EC | \"F\"F,2 A,C F2 CA, | \"G\"G,2 B,D G2 DB, |\n\"C\"C2 EG c2 G2 | \"Am\"A,2 CE A2 E2 | \"F\"F,2 A,C \"G\"G,2 B,D | \"C\"C6 z2 |]",
     "fingerings": {},
     "goals": [
       "Enlazar los cuatro acordes sin pausas",
@@ -772,7 +772,7 @@
     "fingerings": {
       "1": "0⑤",
       "6": "4④",
-      "15": "4①"
+      "15": "1①"
     },
     "goals": [
       "Subir con 6º y 7º grados ascendidos (Fa# y Sol#) y bajar natural",
@@ -803,7 +803,7 @@
       "target": 115,
       "step": 5
     },
-    "abc": "X:1\nT:ii-V-I en Do (clásica)\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"DA cf DA cf | \"G7\"G,F BG G,F BG | \"Cmaj7\"CE BG CE BG | \"Am7\"A,E Gc A,E Gc |\n\"Dm7\"DF Ac \"G7\"G,F Bd | \"Cmaj7\"CE GB c4 |]",
+    "abc": "X:1\nT:ii-V-I en Do (clásica)\nM:4/4\nL:1/8\nK:C clef=treble-8\n\"Dm7\"DA cf DA cf | \"G7\"G,F BG G,F BG | \"Cmaj7\"CE BG CE BG | \"Am7\"A,E Gc A,E Gc |\n\"Dm7\"DA cf \"G7\"G,F Bg | \"Cmaj7\"CE GB c4 |]",
     "fingerings": {},
     "goals": [
       "Escuchar la resolución de la 7ª de Dm7 (Do) hacia la 3ª de G7 (Si)",
@@ -865,7 +865,7 @@
       "target": 120,
       "step": 5
     },
-    "abc": "X:1\nT:Arpegio de tríadas en 6/8\nM:6/8\nL:1/8\nK:G clef=treble-8\n\"Em\"E,B,E GEB, | \"Am\"A,EA cAE | \"B7\"B,^DF BFD | \"Em\"E,B,E GEB, |\n\"C\"CEG cGE | \"G\"G,B,D GDB, | \"B7\"B,^DF AFD | \"Em\"E,3- E,2 z |]",
+    "abc": "X:1\nT:Arpegio de tríadas en 6/8\nM:6/8\nL:1/8\nK:G clef=treble-8\n\"Em\"E,B,E GEB, | \"Am\"A,EA cAE | \"B7\"B,^DA BA^D | \"Em\"E,B,E GEB, |\n\"C\"CEG cGE | \"G\"G,B,D GDB, | \"B7\"B,^DA fA^D | \"Em\"E,3- E,2 z |]",
     "fingerings": {},
     "goals": [
       "Sentir el compás compuesto en dos pulsos grandes (1-2-3, 4-5-6)",
@@ -878,7 +878,7 @@
   {
     "id": "g-n3-escala-01",
     "version": 1,
-    "title": "Modo Dórico de Re y Mixolidio de Sol (2 octavas)",
+    "title": "Modo Dórico de Re y Mixolidio de Sol",
     "instruments": [
       "guitarra"
     ],
@@ -1052,7 +1052,7 @@
       "target": 118,
       "step": 5
     },
-    "abc": "X:1\nT:Arpegios ii-V-I en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Cm7\"C, E, G, B, | \"F7\"F, A, C E | \"Bbmaj7\"B,, D, F, A, | \"Bbmaj7\"B, A, F, D, |\n\"Cm7\"C, G, E, C, | \"F7\"F,, A,, C, E, | \"Bbmaj7\"B,, F, D, B,, | \"G7\"G,, B,, D, F, |]",
+    "abc": "X:1\nT:Arpegios ii-V-I en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Cm7\"C, E, G, B, | \"F7\"F, A, C E | \"Bbmaj7\"B,, D, F, A, | \"Bbmaj7\"B, A, F, D, |\n\"Cm7\"C, G, E, C, | \"F7\"F,, A,, C, E, | \"Bbmaj7\"B,, F, D, B,, | \"G7\"G,, =B,, D, F, |]",
     "fingerings": {},
     "goals": [
       "Memorizar las formas de arpegio m7, 7 y maj7 en el bajo",
@@ -1148,8 +1148,8 @@
     "abc": "X:1\nT:Escala de Mi mayor (2 octavas)\nM:4/4\nL:1/8\nK:E clef=treble-8\nE,F, G,A, B,C DE | FG AB cd e2 |\ndc BA GF ED | CB, A,G, F,E, E,2 |]",
     "fingerings": {
       "1": "0⑥",
-      "9": "2④",
-      "15": "4①"
+      "8": "2④",
+      "15": "0①"
     },
     "goals": [
       "Mantener relajación total a más de 130 BPM",
@@ -1211,11 +1211,11 @@
       "target": 136,
       "step": 5
     },
-    "abc": "X:1\nT:Contrapunto a 2 voces en Dm\nM:4/4\nL:1/8\nK:Dm clef=treble-8\nV:1\nd2 ef g2 fe | f2 ed ^c2 A2 | d2 fe d2 cB | A4- A2 z2 |\nB2 AG A2 GF | G2 FE F2 D2 | E2 ^FG A2 ^c2 | d6 z2 |]\nV:2\nD4 B,4 | A,4 A,4 | F,4 G,4 | A,4 G,2 F,2 |\nG,4 F,4 | E,4 D4 | A,4 A,4 | D6 z2 |]",
+    "abc": "X:1\nT:Contrapunto a 2 voces en Dm\nM:4/4\nL:1/8\nK:Dm clef=treble-8\nV:1\nd2 ef g2 fe | f2 ed ^c2 A2 | d2 fe d2 cB | A4- A2 z2 |\nB2 AG A2 GF | G2 FE F2 D2 | E2 FG A2 ^c2 | d6 z2 |]\nV:2\nD4 B,4 | A,4 A,4 | F,4 G,4 | A,4 G,2 F,2 |\nG,4 F,4 | E,4 F,4 | A,4 A,4 | D6 z2 |]",
     "fingerings": {},
     "goals": [
       "Mantener independencia rítmica y dinámica entre melodía y bajo",
-      "Leer las alteraciones de Do# y Fa# con fluidez"
+      "Leer con fluidez la sensible Do# en Re menor armónica"
     ],
     "notes": "Practicá en bucle de 4 compases hasta que ambas voces respiren con naturalidad.",
     "origin": "builtin",
@@ -1242,7 +1242,7 @@
       "target": 148,
       "step": 5
     },
-    "abc": "X:1\nT:Milonga en Mi menor\nM:4/4\nL:1/8\nK:G clef=treble-8\n\"Em\"E,2 B,E G2 EB, | \"Am\"A,2 EA c2 AE | \"B7\"B,2 ^DF B2 FD | \"Em\"E,2 B,E G2 EB, |\n\"C\"C2 Gc e2 cG | \"Am\"A,2 EA \"B7\"B,2 ^DF | \"Em\"E,2 B,E G2 B2 | \"Em\"E,6 z2 |]",
+    "abc": "X:1\nT:Milonga en Mi menor\nM:4/4\nL:1/8\nK:G clef=treble-8\n\"Em\"E,B,E G,B,E GE | \"Am\"A,EA CEA cE | \"B7\"B,^DA F,^DA BA | \"Em\"E,B,E G,B,E GE |\n\"C\"CEG G,EG cG | \"Am\"A,EA \"B7\"B,^DA BA | \"Em\"E,B,E G,B,E GB | \"Em\"E,6 z2 |]",
     "fingerings": {},
     "goals": [
       "Marcar la acentuación característica 3+3+2 de la milonga rioplatense",
@@ -1366,7 +1366,7 @@
       "target": 155,
       "step": 5
     },
-    "abc": "X:1\nT:Comping Charleston sobre blues en Bb\nM:4/4\nL:1/8\nK:Bb clef=treble-8\n\"Bb7\"D2 z A- A4 | \"Eb7\"G2 z c- c4 | \"Bb7\"D2 z A- A2 G2 | \"Fm7\"A2 z2 \"Bb7\"D4 |\n\"Eb7\"G2 z c- c4 | \"Edim7\"G2 z _d- d4 | \"Bb7\"F2 z A- A4 | \"G7\"F2 z B- B4 |\n\"Cm7\"E2 z B- B4 | \"F7\"E2 z A- A4 | \"Bb7\"D2 z A \"G7\"F2 z B | \"Cm7\"E2 z2 \"F7\"A4 |]",
+    "abc": "X:1\nT:Comping Charleston sobre blues en Bb\nM:4/4\nL:1/8\nK:Bb clef=treble-8\n\"Bb7\"D2 z _A- _A4 | \"Eb7\"G2 z c- c4 | \"Bb7\"D2 z _A- _A2 G2 | \"Fm7\"_A2 z2 \"Bb7\"D4 |\n\"Eb7\"G2 z c- c4 | \"Edim7\"G2 z _d- _d4 | \"Bb7\"F2 z _A- _A4 | \"G7\"F2 z =B- =B4 |\n\"Cm7\"E2 z B- B4 | \"F7\"E2 z A- A4 | \"Bb7\"D2 z _A \"G7\"F2 z =B | \"Cm7\"E2 z2 \"F7\"A4 |]",
     "fingerings": {},
     "goals": [
       "Acentuar el tiempo 1 y el \"y\" del tiempo 2 (ritmo Charleston)",
@@ -1398,7 +1398,7 @@
       "target": 145,
       "step": 5
     },
-    "abc": "X:1\nT:Blues en F (Walking bass)\nM:4/4\nL:1/4\nK:F clef=bass\n\"F7\"F, A, C _E | \"Bb7\"B,, D, F, A, | \"F7\"F, A, C B, | \"Cm7\"C, _E, \"F7\"F, =E, |\n\"Bb7\"B,, D, F, _A, | \"Bdim7\"B,, D, F, =E, | \"F7\"F, A, C B, | \"D7\"D, ^F, A, _A, |\n\"Gm7\"G,, B,, D, F, | \"C7\"C, E, G, B, | \"F7\"F, A, \"D7\"D, ^F, | \"Gm7\"G,, B,, \"C7\"C, E, |]",
+    "abc": "X:1\nT:Blues en F (Walking bass)\nM:4/4\nL:1/4\nK:F clef=bass\n\"F7\"F, A, C _E | \"Bb7\"B,, D, F, _A, | \"F7\"F, A, C B, | \"Cm7\"C, _E, \"F7\"F, =E, |\n\"Bb7\"B,, D, F, _A, | \"Bdim7\"=B,, D, F, =E, | \"F7\"F, A, C B, | \"D7\"D, ^F, A, _A,, |\n\"Gm7\"G,, B,, D, F, | \"C7\"C, E, G, B, | \"F7\"F, A, \"D7\"D, ^F, | \"Gm7\"G,, B,, \"C7\"C, E, |]",
     "fingerings": {
       "1": "1",
       "4": "3",
@@ -1464,7 +1464,7 @@
       "target": 148,
       "step": 5
     },
-    "abc": "X:1\nT:Walking ii-V-I en F, Bb y Eb\nM:4/4\nL:1/4\nK:F clef=bass\n\"Gm7\"G,, B,, D, ^C, | \"C7\"C, E, G, E, | \"Fmaj7\"F, A, C B, | \"Fmaj7\"A, G, F, D, |\n\"Cm7\"C, _E, G, ^F, | \"F7\"F, A, C A, | \"Bbmaj7\"B,, D, F, E, | \"Bbmaj7\"D, C, B,, G, |\n\"Fm7\"F, _A, C B, | \"Bb7\"B,, D, F, D, | \"Ebmaj7\"_E, G, B, A, | \"Ebmaj7\"G, F, _E, =E, |]",
+    "abc": "X:1\nT:Walking ii-V-I en F, Bb y Eb\nM:4/4\nL:1/4\nK:F clef=bass\n\"Gm7\"G,, B,, D, ^C, | \"C7\"C, E, G, E, | \"Fmaj7\"F, A, C B, | \"Fmaj7\"A, G, F, D, |\n\"Cm7\"C, _E, G, ^F, | \"F7\"F, A, C A, | \"Bbmaj7\"B,, D, F, E, | \"Bbmaj7\"D, C, B,, G, |\n\"Fm7\"F, _A, C A, | \"Bb7\"B,, D, F, D, | \"Ebmaj7\"_E, G, B, A, | \"Ebmaj7\"G, F, _E, ^F,, |]",
     "fingerings": {},
     "goals": [
       "Respetar las notas guía y aproximaciones cromáticas en cada modulación",
@@ -1529,7 +1529,7 @@
     "abc": "X:1\nT:Groove bossa nova en Do\nM:4/4\nL:1/8\nK:C clef=bass\n\"Cmaj7\"C,3 G,- G,2 G,2 | \"A7\"A,,3 E,- E,2 E,2 | \"Dm7\"D,3 A,- A,2 A,2 | \"G7\"G,,3 D,- D,2 D,2 |\n\"Em7\"E,3 B,- B,2 B,2 | \"A7\"A,,3 E,- E,2 E,2 | \"Dm7\"D,3 A, \"G7\"G,,3 D, | \"Cmaj7\"C,6 z2 |]",
     "fingerings": {},
     "goals": [
-      "Acentuar el patrón blanca con puntillo + negra ligada a la quinta",
+      "Acentuar el patrón negra con puntillo + corchea ligada a negra + negra (bajo en 2)",
       "Mantener un sonido cálido y profundo tipo contrabajo"
     ],
     "notes": "Tocá cerca del mástil para lograr el timbre redondo típico de la bossa nova.",
@@ -1557,7 +1557,7 @@
       "target": 168,
       "step": 5
     },
-    "abc": "X:1\nT:Estudio cromático ágil\nM:4/4\nL:1/8\nK:C clef=treble-8\nE,F, ^F,G, ^G,A, _B,B, | C^C D^D EF ^FG |\n^GA _BB c^c d^d | ed _dc B_B A_A | G_G FE _ED _DC | B,_B, A,_A, G,^F, =F,E, |]",
+    "abc": "X:1\nT:Estudio cromático ágil\nM:4/4\nL:1/8\nK:C clef=treble-8\nE,F, ^F,G, ^G,A, _B,B, | C^C D^D EF ^FG |\n^GA _BB c^c d^d | ed _dc B_B A_A | G_G FE _ED _DC | B,_B, A,_A, G,_G, F,E, |]",
     "fingerings": {},
     "goals": [
       "Mantener la mano izquierda completamente pegada a las cuerdas",
@@ -1588,7 +1588,7 @@
       "target": 164,
       "step": 5
     },
-    "abc": "X:1\nT:Secuencia romántica en Mi\nM:4/4\nL:1/8\nK:E clef=treble-8\n\"E\"E,B,EG BGEB, | \"G#7\"^G,^DFB =dBF^D | \"C#m\"CGce gecG | \"A\"A,EAE cAEA |\n\"F#m7\"^F,CAF cAFC | \"B7\"B,^DFA BAFD | \"E\"E,B,EG B4 |]",
+    "abc": "X:1\nT:Secuencia romántica en Mi\nM:4/4\nL:1/8\nK:E clef=treble-8\n\"E\"E,B,EG BGEB, | \"G#7\"G,^B,DF cFD^B, | \"C#m\"CGce gecG | \"A\"A,EAE cAEA |\n\"F#m7\"F,CAE cAEC | \"B7\"B,DAf BAFD | \"E\"E,B,EG B4 |]",
     "fingerings": {},
     "goals": [
       "Sostener claridad polifónica en cambios de cejilla a alta velocidad",
@@ -1601,7 +1601,7 @@
   {
     "id": "gc-n5-lectura-01",
     "version": 1,
-    "title": "Preludio completo a tres planos (bajo, armonía y canto)",
+    "title": "Preludio polifónico a dos voces (bajo y canto)",
     "instruments": [
       "guitarra-clasica"
     ],
@@ -1712,7 +1712,7 @@
       "target": 176,
       "step": 5
     },
-    "abc": "X:1\nT:Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=treble-8\n\"Bbmaj7\"d2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 | \"Dm7\"c2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 |\n\"Fm7\"_A2 \"Bb7\"D2 | \"Ebmaj7\"G2 \"Edim7\"_G2 | \"Bbmaj7\"F2 \"F7\"E2 | \"Bbmaj7\"D4 |\n\"D7\"^F2 c2 | \"D7\"^F2 c2 | \"G7\"=F2 =B2 | \"G7\"=F2 =B2 |\n\"C7\"E2 B2 | \"C7\"E2 B2 | \"F7\"E2 A2 | \"F7\"E2 A2 |]",
+    "abc": "X:1\nT:Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=treble-8\n\"Bbmaj7\"d2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 | \"Dm7\"c2 \"G7\"=B2 | \"Cm7\"c2 \"F7\"A2 |\n\"Fm7\"_A2 \"Bb7\"D2 | \"Ebmaj7\"G2 \"Edim7\"=G2 | \"Bbmaj7\"F2 \"F7\"E2 | \"Bbmaj7\"D4 |\n\"D7\"^F2 c2 | \"D7\"^F2 c2 | \"G7\"=F2 =B2 | \"G7\"=F2 =B2 |\n\"C7\"=E2 B2 | \"C7\"=E2 B2 | \"F7\"E2 A2 | \"F7\"E2 A2 |]",
     "fingerings": {},
     "goals": [
       "Ejecutar cambios de dos acordes por compás con fluidez arriba de 165 BPM",
@@ -1774,7 +1774,7 @@
       "target": 166,
       "step": 5
     },
-    "abc": "X:1\nT:Groove fusión en 7/8 (2+2+3)\nM:7/8\nL:1/8\nK:Dm clef=treble-8\n\"Dm7\"DF AG FGA | \"G7\"GB dc Bcd | \"Bbmaj7\"DF BA GFE | \"A7\"^CE GA GFE |\n\"Dm7\"D2 F2 AGF | \"Gm7\"G2 B2 dcB | \"A7\"A2 ^c2 efe | \"Dm7\"d4- d3 |]",
+    "abc": "X:1\nT:Groove fusión en 7/8 (2+2+3)\nM:7/8\nL:1/8\nK:Dm clef=treble-8\n\"Dm7\"DF AG FGA | \"G7\"G=B dc =Bcd | \"Bbmaj7\"DF BA GFE | \"A7\"^CE GA GFE |\n\"Dm7\"D2 F2 AGF | \"Gm7\"G2 B2 dcB | \"A7\"A2 ^c2 efe | \"Dm7\"d4- d3 |]",
     "fingerings": {},
     "goals": [
       "Internalizar el ciclo asimétrico 1-2, 1-2, 1-2-3 sin cortar el pulso",
@@ -1805,7 +1805,7 @@
       "target": 176,
       "step": 5
     },
-    "abc": "X:1\nT:Walking Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Bbmaj7\"B,, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, A,, | \"Dm7\"D, F, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, =E, |\n\"Fm7\"F, _A, \"Bb7\"B,, D, | \"Ebmaj7\"E, G, \"Edim7\"=E, G, | \"Dm7\"F, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, ^C, |\n\"D7\"D, ^F, A, C | \"D7\"B, A, ^F, _A, | \"G7\"G, =B, D F | \"G7\"E D =B, _D |\n\"C7\"C, E, G, B, | \"C7\"A, G, E, _G, | \"F7\"F, A, C E | \"F7\"D C A, =B, |]",
+    "abc": "X:1\nT:Walking Rhythm Changes en Bb\nM:4/4\nL:1/4\nK:Bb clef=bass\n\"Bbmaj7\"B,, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, A,, | \"Dm7\"D, F, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, =E, |\n\"Fm7\"F, _A, \"Bb7\"B,, D, | \"Ebmaj7\"E, G, \"Edim7\"=E, G, | \"Dm7\"F, D, \"G7\"G, =B,, | \"Cm7\"C, E, \"F7\"F, ^C, |\n\"D7\"D, ^F, A, C | \"D7\"B, A, ^F, _A, | \"G7\"G, =B, D F | \"G7\"=E D =B, _D, |\n\"C7\"C, =E, G, B, | \"C7\"A, G, =E, _G, | \"F7\"F, A, C E | \"F7\"D C A, =B,, |]",
     "fingerings": {},
     "goals": [
       "Resolver cambios de dos tiempos con raíz y aproximación precisa",
@@ -1836,10 +1836,10 @@
       "target": 168,
       "step": 5
     },
-    "abc": "X:1\nT:Línea melódica con cambios de posición\nM:4/4\nL:1/8\nK:F clef=bass\n\"Gm7\"G,A, B,C DF GA | \"C7alt\"B_A _G=E _D_B, _A,G, |\n\"Fmaj7\"F,A, CE GA cA | \"D7alt\"D_E F^F _AB c_A |]",
+    "abc": "X:1\nT:Línea melódica con cambios de posición\nM:4/4\nL:1/8\nK:F clef=bass\n\"Gm7\"G,A, B,C DF GA | \"C7alt\"B_A _G=E _D_B, _A,_G, |\n\"Fmaj7\"F,A, CE GA cA | \"D7alt\"D_E F^F _AB c_A |]",
     "fingerings": {},
     "goals": [
-      "Trasladar la mano limpiamente desde posición III hasta posición XII",
+      "Trasladar la mano limpiamente desde posición III hasta el registro agudo (trastes XII–XVII)",
       "Mantener afinación y ataque parejos en el registro agudo del bajo"
     ],
     "notes": "Practicá despacio buscando que los traslados no generen cortes de sonido.",
@@ -1911,7 +1911,7 @@
   {
     "id": "b-n5-ritmo-01",
     "version": 1,
-    "title": "Groove fusión en 5/4 (3+2 con notas fantasmas)",
+    "title": "Groove fusión en 5/4 (subdivisión 3+2)",
     "instruments": [
       "bajo"
     ],

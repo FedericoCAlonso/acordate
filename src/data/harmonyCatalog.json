@@ -441,35 +441,43 @@
     "progression": [
       {
         "bars": 1,
-        "chord": "C"
+        "chord": "C",
+        "voicingId": "c-triad-maj-432-inv2-f5"
       },
       {
         "bars": 1,
-        "chord": "F"
+        "chord": "F",
+        "voicingId": "f-triad-maj-432-inv1-f6"
       },
       {
         "bars": 1,
-        "chord": "G"
+        "chord": "G",
+        "voicingId": "g-triad-maj-432-root-f5"
       },
       {
         "bars": 1,
-        "chord": "C"
+        "chord": "C",
+        "voicingId": "c-triad-maj-321-root-f5"
       },
       {
         "bars": 1,
-        "chord": "Am"
+        "chord": "Am",
+        "voicingId": "am-triad-min-321-inv1-f5"
       },
       {
         "bars": 1,
-        "chord": "Dm"
+        "chord": "Dm",
+        "voicingId": "dm-triad-min-321-root-f7"
       },
       {
         "bars": 1,
-        "chord": "G"
+        "chord": "G",
+        "voicingId": "g-triad-maj-321-inv2-f8"
       },
       {
         "bars": 1,
-        "chord": "C"
+        "chord": "C",
+        "voicingId": "c-triad-maj-321-inv1-f8"
       }
     ],
     "comping": "negras-abajo",
@@ -583,27 +591,33 @@
     "progression": [
       {
         "bars": 1,
-        "chord": "Gm7"
+        "chord": "Gm7",
+        "voicingId": "gm7-m7-shell-s6-f3"
       },
       {
         "bars": 1,
-        "chord": "C7"
+        "chord": "C7",
+        "voicingId": "c7-dom7-shell-s5-f3"
       },
       {
         "bars": 2,
-        "chord": "Fmaj7"
+        "chord": "Fmaj7",
+        "voicingId": "fmaj7-maj7-shell-s6-f1"
       },
       {
         "bars": 1,
-        "chord": "Am7b5"
+        "chord": "Am7b5",
+        "voicingId": "am7b5-m7b5-s6-f5"
       },
       {
         "bars": 1,
-        "chord": "D7b9"
+        "chord": "D7b9",
+        "voicingId": "d7b9-7b9-s5-f5"
       },
       {
         "bars": 2,
-        "chord": "Gm7"
+        "chord": "Gm7",
+        "voicingId": "gm7-m7-shell-s6-f3"
       }
     ],
     "comping": "swing-negras",
@@ -642,19 +656,23 @@
     "progression": [
       {
         "bars": 2,
-        "chord": "Cmaj7"
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-maj7-drop2-s5-f3"
       },
       {
         "bars": 2,
-        "chord": "A7"
+        "chord": "A7",
+        "voicingId": "a7-dom7-drop3-s6-f5"
       },
       {
         "bars": 2,
-        "chord": "Dm7"
+        "chord": "Dm7",
+        "voicingId": "dm7-m7-drop2-s5-f5"
       },
       {
         "bars": 2,
-        "chord": "G7"
+        "chord": "G7",
+        "voicingId": "g7-dom7-drop2-s4-f5"
       }
     ],
     "comping": "bossa",
@@ -694,35 +712,43 @@
     "progression": [
       {
         "bars": 1,
-        "chord": "Dm9"
+        "chord": "Dm9",
+        "voicingId": "dm9-m9-s5-f5"
       },
       {
         "bars": 1,
-        "chord": "Db7"
+        "chord": "Db7",
+        "voicingId": "db7-dom7-shell-s5-f4"
       },
       {
         "bars": 1,
-        "chord": "Cmaj9"
+        "chord": "Cmaj9",
+        "voicingId": "cmaj9-maj9-s5-f3"
       },
       {
         "bars": 1,
-        "chord": "A7alt"
+        "chord": "A7alt",
+        "voicingId": "a7alt-7alt-s6-f5"
       },
       {
         "bars": 1,
-        "chord": "Dm9"
+        "chord": "Dm9",
+        "voicingId": "dm9-m9-s5-f5"
       },
       {
         "bars": 1,
-        "chord": "G13"
+        "chord": "G13",
+        "voicingId": "g13-dom13-s6-f3"
       },
       {
         "bars": 1,
-        "chord": "G7b9"
+        "chord": "G7b9",
+        "voicingId": "g7b9-7b9-s6-f3"
       },
       {
         "bars": 1,
-        "chord": "Cmaj9"
+        "chord": "Cmaj9",
+        "voicingId": "cmaj9-maj9-s5-f3"
       }
     ],
     "comping": "swing-negras",
@@ -815,7 +841,7 @@
     "id": "gc-armon-n2-cadencias",
     "version": 2,
     "type": "harmony",
-    "title": "Cadencias clásicas I–IV–V7–I e i–iv–V7–i en vals",
+    "title": "Cadencias clásicas menores i–iv–V7–i y VI–iv–V7–i en vals",
     "instruments": [
       "guitarra-clasica"
     ],
@@ -1073,8 +1099,13 @@
       },
       {
         "bars": 1,
-        "chord": "F",
-        "voicingId": "f-major-barre"
+        "chord": "F/A",
+        "voicingId": "f-over-a-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em/B",
+        "voicingId": "em-over-b-open"
       },
       {
         "bars": 1,
@@ -1083,18 +1114,13 @@
       },
       {
         "bars": 1,
-        "chord": "Em7",
-        "voicingId": "em7-open"
-      },
-      {
-        "bars": 1,
         "chord": "Cmaj7",
         "voicingId": "cmaj7-open"
       },
       {
         "bars": 1,
-        "chord": "F",
-        "voicingId": "f-major-easy"
+        "chord": "F/A",
+        "voicingId": "f-over-a-open"
       },
       {
         "bars": 1,
@@ -1106,10 +1132,10 @@
     "abc": null,
     "fingerings": {},
     "goals": [
-      "Escuchar el color expresivo del acorde napolitano (F sobre Em) resolviendo en B7",
-      "Sostener claridad contrapuntística en las voces medias"
+      "Escuchar el color expresivo de la sexta napolitana (F/A, bII6) enlazando por grado conjunto a Em/B y B7",
+      "Sostener claridad contrapuntística en el bajo A → B → E"
     ],
-    "notes": "El acorde de Fa mayor (bII) en Mi menor genera una tensión dramática clásica antes de la dominante B7.",
+    "notes": "La sexta napolitana (F/A = bII6 en Mi menor) evita el salto de tritono en el bajo y resuelve con fuerza hacia la cadencial Em/B y la dominante B7.",
     "origin": "builtin",
     "createdAt": "2026-11-19T00:00:00Z"
   },
@@ -1442,6 +1468,279 @@
       "Practicar díadas (R+3 / R+7) en trastes 7–12"
     ],
     "notes": "Combiná este análisis armónico con la práctica de Walking Bass sobre Rhythm Changes.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n2-decimas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Acordes en bajo: décimas (R–10 / R–b10) sobre I–vi–IV–V",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "formas",
+    "level": 2,
+    "tags": [
+      "acordes en bajo",
+      "décimas",
+      "I-vi-IV-V",
+      "Low Interval Limit"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 68,
+      "target": 96,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-bass-10th-maj-f3"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "em-bass-10th-min-f0"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-bass-10th-maj-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-bass-10th-maj-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-bass-10th-maj-f3"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "am-bass-10th-min-f5"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-bass-10th-maj-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-bass-10th-maj-f10"
+      }
+    ],
+    "comping": "bloque",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Pulsar simultáneamente cuerda 4 (pulgar) y cuerda 1 (índice o medio) con sonido limpio",
+      "Comprobar por qué la décima suena clara en todo el registro del bajo"
+    ],
+    "notes": "Las décimas (raíz + 3ª una octava arriba) son el acorde más emblemático y resonante del bajo eléctrico.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n3-triadas-abiertas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Acordes en bajo: tríadas abiertas (R–5–10) y registro agudo",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "formas",
+    "level": 3,
+    "tags": [
+      "acordes en bajo",
+      "tríadas abiertas",
+      "registro agudo"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 80,
+      "target": 112,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-bass-triad-open-maj-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-bass-triad-hi-maj-root-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "am-bass-triad-open-min-f5"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-bass-triad-hi-maj-root-f8"
+      }
+    ],
+    "comping": "bloque",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Sostener tres cuerdas limpias con pulgar, índice y medio de mano derecha",
+      "Alternar tríadas abiertas (R-5-10) con tríadas cerradas en registro agudo (trastes 5–10)"
+    ],
+    "notes": "A partir del traste 5–7 el bajo admite tríadas completas de 3 notas sin empastar el registro grave.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n4-shells-ii-v-i",
+    "version": 2,
+    "type": "harmony",
+    "title": "Acordes en bajo: shell voicings (R–7–10 / R–3–7) sobre ii–V–I",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 4,
+    "tags": [
+      "acordes en bajo",
+      "shell",
+      "ii-V-I",
+      "conducción"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 94,
+      "target": 132,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Dm7",
+        "voicingId": "dm7-bass-shell-m7-e-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-bass-shell-7-a-f10"
+      },
+      {
+        "bars": 2,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-bass-shell-maj7-e-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "Gm7",
+        "voicingId": "gm7-bass-shell-m7-a-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "C7",
+        "voicingId": "c7-bass-shell-7-e-f8"
+      },
+      {
+        "bars": 2,
+        "chord": "Fmaj7",
+        "voicingId": "fmaj7-bass-shell-maj7-a-f8"
+      }
+    ],
+    "comping": "bossa",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Escuchar cómo la 7ª de Dm7 (Do) baja un semitono a la 3ª de G7 (Si) y se mantiene en Cmaj7",
+      "Acompañar en formato dúo o chord melody sin salir de los trastes 7–10"
+    ],
+    "notes": "Los shell voicings de 3 notas permiten armonizar cualquier estándar de jazz o bossa directamente en el bajo.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n5-chord-melody",
+    "version": 2,
+    "type": "harmony",
+    "title": "Acordes en bajo: extensiones (9, m9, 13, m7b5) y comping solista",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "acompanamiento",
+    "level": 5,
+    "tags": [
+      "acordes en bajo",
+      "chord melody",
+      "extensiones",
+      "jazz"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 106,
+      "target": 144,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Fmaj7",
+        "voicingId": "fmaj7-bass-shell-maj7-a-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm9",
+        "voicingId": "dm9-bass-m9-full-e-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "Gm7",
+        "voicingId": "gm7-bass-shell-m7-a-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "C9",
+        "voicingId": "c9-bass-9-full-e-f8"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7b5",
+        "voicingId": "am7b5-bass-shell-m7b5-a-f12"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-bass-shell-7-e-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "G13",
+        "voicingId": "g13-bass-13-rootless-a-f10"
+      },
+      {
+        "bars": 1,
+        "chord": "C9",
+        "voicingId": "c9-bass-9-full-e-f8"
+      }
+    ],
+    "comping": "swing-negras",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Equilibrar la presión en acordes de 4 cuerdas en trastes 7–13 (C9, Dm9)",
+      "Combinar voicings con fundamental y rootless (G13) manteniendo el groove"
+    ],
+    "notes": "Estudio avanzado de bajo cordal estilo jazz/neo-soul respetando el Low Interval Limit en todo el recorrido.",
     "origin": "builtin",
     "createdAt": "2026-11-19T00:00:00Z"
   }

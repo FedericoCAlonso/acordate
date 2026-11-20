@@ -380,10 +380,15 @@ export class PracticePlayerViewModel {
   playStepVoicing(step) {
     if (!step) return;
     const isBass = this.practice.value?.instruments?.includes('bajo');
+    const comping = this.compingPattern.value || this.practice.value?.comping || 'negras-abajo';
+    const isArpComping = comping.startsWith('arpegio');
+    const mode = isBass
+      ? (isArpComping ? 'arpeggio-asc' : 'block')
+      : (comping === 'arpegio-pima' ? 'arpeggio-pima' : 'strum-down');
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     if (step.voicing) {
       this._audio.playVoicing(step.voicing, {
-        mode: isBass ? 'arpeggio-asc' : 'strum-down',
+        mode,
         instrument: this.synthInstrument.value,
         tuning: Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar'),
         duration: 1.5

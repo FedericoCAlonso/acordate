@@ -5,12 +5,16 @@ import { ChordQuality } from '../src/models/ChordQuality.js';
 import { Chord } from '../src/models/Chord.js';
 import { Voicing } from '../src/models/Voicing.js';
 import { Practice, validatePracticeSchema } from '../src/models/Practice.js';
-import { CURATED_OPEN_VOICINGS, findVoicingById, getCuratedVoicingsForChord } from '../src/data/voicings.js';
+import { CURATED_OPEN_VOICINGS, MOVABLE_BASS_TEMPLATES, MOVABLE_GUITAR_TEMPLATES, findVoicingById, getCuratedVoicingsForChord } from '../src/data/voicings.js';
 import { loadBuiltinCatalog } from '../src/data/catalog.js';
 import { VoicingGenerator } from '../src/services/VoicingGenerator.js';
 import { HarmonyService } from '../src/services/HarmonyService.js';
 import { ImportExportService } from '../src/services/ImportExportService.js';
-import { ALL_KEYS } from '../src/core/MusicTheory.js';
+import { ChordsHubViewModel } from '../src/viewmodels/ChordsHubViewModel.js';
+import { ALL_KEYS, mod12 } from '../src/core/MusicTheory.js';
+import { Observable } from '../src/core/Observable.js';
+import { Settings } from '../src/models/Settings.js';
+import { UserProgress } from '../src/models/UserProgress.js';
 
 test('Voicing + Tuning produce exactamente los números MIDI esperados en los 4 casos de referencia (4.4)', () => {
   const guitar = Tuning.byId('guitar-standard');
@@ -169,4 +173,115 @@ test('Esquema de práctica v2 con voicings personalizados se valida, exporta e i
   assert.equal(reimported.practices[0].type, 'harmony');
   assert.equal(reimported.practices[0].customVoicings.length, 1);
   assert.deepEqual(reimported.practices[0].customVoicings[0].frets, [null, 3, 2, 0, 3, 0]);
+});
+
+test('Auditoría matemática: todos los voicings de guitarra y acordes de bajo (4 y 5 cuerdas) producen intervalos válidos', () => {
+  const guitar = Tuning.byId('guitar-standard');
+  const bass4 = Tuning.byId('bass-4-standard');
+  const bass5 = Tuning.byId('bass-5-standard');
+
+  // Todos los voicings abiertos curados
+  for (const raw of CURATED_OPEN_VOICINGS) {
+    const v = new Voicing(raw);
+    const c = Chord.parse(raw.chord);
+    const allowed = new Set(c.getPitchClasses());
+    if (c.bassPc !== null) allowed.add(c.bassPc);
+    const midis = v.getMidiNotes(guitar);
+    assert.ok(midis.length >= 2, `Voicing vacío: ${raw.id}`);
+    for (const m of midis) {
+      assert.ok(allowed.has(mod12(m)), `Nota fuera del acorde en ${raw.id}: MIDI ${m}`);
+    }
+  }
+
+  // Acordes al estilo del bajo en 4 y 5 cuerdas (décimas, shells, tríadas abiertas y slash chords)
+  const bassSamples = ['C', 'Am', 'Dm7', 'G7', 'Cmaj7', 'C/E', 'G/B', 'Am/G', 'D/F#', 'C9', 'Dm9', 'G13'];
+  for (const sym of bassSamples) {
+    const list4 = getCuratedVoicingsForChord(sym, 'bass', bass4);
+    const list5 = getCuratedVoicingsForChord(sym, 'bass', bass5);
+    assert.ok(list4.length >= 1, `Falta acorde de bajo 4c para ${sym}`);
+    assert.ok(list5.length >= 1, `Falta acorde de bajo 5c para ${sym}`);
+    assert.equal(list4[0].frets.length, 4);
+    assert.equal(list5[0].frets.length, 5);
+  }
+
+  // Verifica que las décimas en bajo produzcan exactamente 16 (M) y 15 (m) semitonos
+  const g10 = getCuratedVoicingsForChord('G', 'bass', bass4).find((v) => v.id.includes('bass-10th-maj'));
+  assert.ok(g10);
+  const g10Midis = g10.getMidiNotes(bass4);
+  assert.equal(g10Midis[1] - g10Midis[0], 16, 'Décima mayor en bajo debe ser 16 semitonos');
+
+  const am10 = getCuratedVoicingsForChord('Am', 'bass', bass4).find((v) => v.id.includes('bass-10th-min'));
+  assert.ok(am10);
+  const am10Midis = am10.getMidiNotes(bass4);
+  assert.equal(am10Midis[1] - am10Midis[0], 15, 'Décima menor en bajo debe ser 15 semitonos');
+
+  assert.ok(MOVABLE_GUITAR_TEMPLATES.length >= 40);
+  assert.ok(MOVABLE_BASS_TEMPLATES.length >= 25);
+});
+
+test('HarmonyService usa ortografía diatónica correcta y soporta los 4 modos armónicos', () => {
+  const svc = new HarmonyService();
+  const fSharpMajor = svc.getDiatonicField('F#', 'major', false);
+  assert.equal(fSharpMajor[6].symbol, 'E#dim', 'El vii° de F# mayor debe escribirse E#dim');
+
+  const dHarm = svc.getDiatonicField('D', 'harmonic-minor', true);
+  assert.equal(dHarm[4].symbol, 'A7', 'El V7 de Dm armónica debe ser A7');
+  assert.equal(dHarm[6].symbol, 'C#dim7', 'El vii°7 de Dm armónica debe escribirse C#dim7');
+
+  const cMel = svc.getDiatonicField('C', 'melodic-minor', true);
+  assert.equal(cMel[3].symbol, 'F7', 'El IV7 de Cm melódica debe ser F7');
+
+  const randSeq = svc.generateRandomDiatonicSequence({ key: 'G', mode: 'major', length: 4, seed: 42 });
+  assert.equal(randSeq.length, 4);
+  for (let i = 1; i < randSeq.length; i++) {
+    assert.notEqual(randSeq[i], randSeq[i - 1], 'No debe repetir el mismo acorde consecutivo');
+  }
+});
+
+test('ChordsHubViewModel permite personalizar libremente Entrenador, Conducción de voces e Inversiones (guitarra y bajo)', () => {
+  const mockAppVm = {
+    settings: new Observable(new Settings()),
+    progress: new Observable(new UserProgress()),
+    isReady: new Observable(true),
+    showSnackbar: () => {},
+    triggerHaptic: () => {},
+    navigate: () => {},
+    upsertUserPractice: async () => {},
+    replaceProgress: async () => {}
+  };
+  const mockAudio = { configure: () => {}, playVoicing: () => {}, playChordSequence: () => {} };
+  const mockMetro = { configure: () => {}, start: () => {}, stop: () => {}, onBeat: null };
+
+  const vm = new ChordsHubViewModel({
+    appVm: mockAppVm,
+    voicingGenerator: new VoicingGenerator(),
+    harmonyService: new HarmonyService(),
+    audioService: mockAudio,
+    metronomeService: mockMetro
+  });
+
+  // 1) Entrenador de cambios editable + aleatorio
+  vm.addTrainerChord('Bm7');
+  assert.ok(vm.trainerChords.value.includes('Bm7'));
+  vm.randomizeTrainerChords({ key: 'D', length: 4 });
+  assert.equal(vm.trainerChords.value.length, 4);
+
+  // 2) Conducción de voces editable + zonas + estilos en guitarra y bajo
+  vm.setVoiceLeadingChords(['Em7', 'A7', 'Dmaj7']);
+  assert.equal(vm.voiceLedSequence.value.length, 3);
+  vm.setVoiceLeadingZone('medio');
+  vm.setVoiceLeadingStyle('shell');
+  assert.equal(vm.voiceLedSequence.value.length, 3);
+
+  // 3) Inversiones editables por acorde + soporte completo de acordes en bajo
+  vm.selectInversionChord({ root: 'G', quality: 'm7' });
+  assert.equal(vm.inversionChord.value.americanSymbol, 'Gm7');
+  assert.ok(vm.getInversionWalkVoicings().length >= 1);
+
+  vm.setInstrument('bajo');
+  assert.equal(vm.playMode.value, 'block');
+  assert.ok(vm.getInversionWalkVoicings().length >= 1, 'Inversiones/posiciones de bajo deben generar voicings');
+  vm.recomputeVoiceLeading();
+  assert.equal(vm.voiceLedSequence.value.length, 3);
+  assert.equal(vm.voiceLedSequence.value[0].voicing.instrument, 'bass');
 });
