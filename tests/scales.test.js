@@ -225,3 +225,18 @@ test('ScalesHubViewModel: modos paralelos por brillo, drone, cruce Acordes↔Esc
   assert.equal(saved.length, 1);
   assert.ok(navigated.at(-1).startsWith('#/practica/'));
 });
+
+test('Integridad de módulos ESM: todas las vistas y servicios de Escalas importan sin errores de exportación', async () => {
+  const mods = [
+    '../src/views/ScaleFretboardView.js',
+    '../src/views/ScalesHubView.js',
+    '../src/views/AppShellView.js',
+    '../src/views/ChordsHubView.js',
+    '../src/viewmodels/ScalesHubViewModel.js',
+    '../src/services/ScaleCatalogService.js'
+  ];
+  for (const modPath of mods) {
+    const m = await import(modPath);
+    assert.ok(Object.keys(m).length > 0, `${modPath} debe exportar símbolos válidos`);
+  }
+});

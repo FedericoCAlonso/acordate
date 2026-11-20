@@ -1,6 +1,6 @@
 import { formatChordSymbol } from '../core/i18n.js';
 import { FLAT_NOTES, SHARP_NOTES } from '../core/MusicTheory.js';
-import { VOICING_INSTRUMENTS } from '../services/FingeringDesignService.js';
+import { VOICING_INSTRUMENT_OPTIONS } from '../services/FingeringDesignService.js';
 import { ScaleFretboardView } from './ScaleFretboardView.js';
 import { el, icon } from './uiHelpers.js';
 
@@ -190,7 +190,7 @@ export class ScalesHubView {
     const instSeg = el(
       'div',
       { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Instrumento de digitación' },
-      VOICING_INSTRUMENTS.map((inst) =>
+      VOICING_INSTRUMENT_OPTIONS.map((inst) =>
         el(
           'button',
           {
@@ -200,7 +200,7 @@ export class ScalesHubView {
             'aria-pressed': String(activeInst === inst.id),
             onClick: () => this._vm.setVoicingInstrument(inst.id)
           },
-          [inst.shortLabel]
+          [inst.id === 'guitarra-clasica' ? 'Clásica' : inst.label]
         )
       )
     );
