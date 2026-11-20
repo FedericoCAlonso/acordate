@@ -10,7 +10,11 @@ import {
   formatKeyName
 } from '../core/i18n.js';
 import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
-import { Tuning } from '../models/Tuning.js';
+import {
+  VOICING_INSTRUMENT_OPTIONS,
+  getTuningForVoicingInstrument,
+  normalizeVoicingInstrument
+} from '../services/FingeringDesignService.js';
 import {
   createBassFretboardMapElement,
   createChordColorLegendElement,
@@ -251,6 +255,8 @@ export class PracticePlayerView {
       this._vm.activeMeasure.subscribe((m) => this._highlightActiveChartBar(m)),
       this._vm.activeChordStepIndex.subscribe((idx) => this._highlightActiveHarmonyStep(idx)),
       this._vm.harmonySteps.subscribe(() => this._renderNotationSurface()),
+      this._vm.voicingInstrument.subscribe(() => this._renderNotationSurface()),
+      this._vm.fingeringDesignId.subscribe(() => this._renderNotationSurface()),
       this._vm.compingPattern.subscribe(() => {
         this._renderViewBar();
         this._renderNotationSurface();
@@ -601,14 +607,17 @@ export class PracticePlayerView {
    */
   _renderHarmonyDiagrams() {
     const pr = this._vm.practice.value;
+    const plan = this._vm.fingeringDesignPlan.value;
     const steps = this._vm.harmonySteps.value;
     const notation = this._appVm.settings.value.chordNotation;
-    const isBass = pr?.instruments?.includes('bajo') && !pr?.instruments?.includes('guitarra');
-    const supportsBass = pr?.instruments?.includes('bajo');
-    const tuning = Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar');
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const tuning = plan?.tuning || getTuningForVoicingInstrument(vInst);
+    const isBass = tuning.instrument === 'bass';
+    const supportsBass = pr?.instruments?.includes('bajo') || isBass;
     const activeIdx = this._vm.activeChordStepIndex.value;
     const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
     const sections = this._vm.getFormSections();
+    const criteria = this._vm.getAvailableFingeringCriteria();
 
     this._harmonyEl.innerHTML = '';
     if (steps.length === 0) {
@@ -678,6 +687,75 @@ export class PracticePlayerView {
       ])
     ]);
     this._harmonyEl.appendChild(rhythmBar);
+
+    // 1b) Selector de instrumento de digitación + Diseño de digitación por criterios musicales
+    const criterionSelect = el(
+      'select',
+      {
+        className: 'm3-field__select fingering-design-select',
+        'aria-label': 'Criterio de diseño de digitación',
+        title: 'Elegí el criterio musical y técnico para digitar esta progresión',
+        onChange: (e) => this._vm.setFingeringDesign(e.target.value)
+      },
+      criteria.map((c) => el('option', { value: c.id }, [c.label]))
+    );
+    criterionSelect.value = this._vm.fingeringDesignId.value;
+
+    const designBar = el('div', { className: 'fingering-design-bar' }, [
+      el('div', { className: 'fingering-design-bar__row' }, [
+        el('div', { className: 'm3-chip-row', role: 'group', 'aria-label': 'Instrumento para digitación de acordes' }, [
+          el('span', { className: 'm3-label', style: 'align-self:center' }, ['Digitación para:']),
+          ...VOICING_INSTRUMENT_OPTIONS.map((opt) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-chip',
+                ripple: true,
+                'aria-pressed': String(vInst === opt.id),
+                title: `Ver y diseñar digitaciones de acordes para ${opt.label}`,
+                onClick: () => this._vm.setVoicingInstrument(opt.id)
+              },
+              [opt.label]
+            )
+          )
+        ]),
+        el('div', { className: 'fingering-design-bar__controls' }, [
+          criterionSelect,
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              title: 'Comparar varios criterios musicales de digitación sobre este mismo tema',
+              onClick: () => this._openCompareDesignsModal()
+            },
+            ['Comparar criterios']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--outlined',
+              ripple: true,
+              title: 'Guardar esta digitación personalizada como práctica propia',
+              onClick: () => this._vm.saveFingeringDesignAsPractice()
+            },
+            ['Guardar diseño']
+          )
+        ])
+      ]),
+      plan
+        ? el('div', { className: 'fingering-design-bar__meta' }, [
+            el('span', { className: 'm3-badge m3-badge--primary' }, [plan.metrics.summaryLabel]),
+            el('span', { className: 'm3-body-md' }, [
+              `${plan.criterion.description} ${plan.criterion.pedagogicalTip || ''}`.trim()
+            ])
+          ])
+        : null
+    ]);
+    this._harmonyEl.appendChild(designBar);
     this._harmonyEl.appendChild(createChordColorLegendElement());
 
     // 2) Si el bajista generó un walking bass sugerido sobre esta progresión, mostrar pentagrama + botón guardar
@@ -706,7 +784,7 @@ export class PracticePlayerView {
       }, 0);
     }
 
-    // 3) En bajo puro, muestra además el mapa del diapasón para el acorde activo
+    // 3) Cuando se eligió Bajo (4c o 5c), muestra además el mapa del diapasón para el acorde activo
     if (isBass) {
       const focusStep = steps[activeIdx >= 0 ? activeIdx : 0] || steps[0];
       this._harmonyEl.appendChild(
@@ -750,7 +828,23 @@ export class PracticePlayerView {
                   type: 'button',
                   className: 'm3-btn m3-btn--compact m3-btn--tonal',
                   onClick: () => this._vm.playStepVoicing(step)
-                }, [createChordSymbolElement(step.chord, notation)])
+                }, [createChordSymbolElement(step.chord, notation)]),
+            step.rationale
+              ? el('span', { className: 'm3-label harmony-step-card__rationale', title: step.rationale }, [step.rationale])
+              : null,
+            step.candidates && step.candidates.length > 1
+              ? el(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'm3-btn m3-btn--compact m3-btn--text',
+                    style: 'width:100%; min-height:32px; padding:2px 6px; font-size:0.76rem',
+                    title: `Elegir otra digitación para ${formatChordSymbol(step.chord, notation)}`,
+                    onClick: () => this._openStepVoicingPickerModal(idx, step, tuning, notation)
+                  },
+                  [step.isManualOverride ? 'Forma manual · cambiar' : `Cambiar forma (${step.candidates.length})`]
+                )
+              : null
           ]
         )
       )
@@ -760,13 +854,128 @@ export class PracticePlayerView {
   }
 
   /**
+   * Abre un modal comparativo con todos los diseños de digitación propuestos por el especialista
+   * en teoría y técnica para la progresión actual y el instrumento elegido.
+   */
+  _openCompareDesignsModal() {
+    const plans = this._vm.compareFingeringDesigns();
+    if (!plans.length) return;
+    const notation = this._appVm.settings.value.chordNotation;
+    const activeId = this._vm.fingeringDesignId.value;
+    const instLabel =
+      VOICING_INSTRUMENT_OPTIONS.find((o) => o.id === normalizeVoicingInstrument(this._vm.voicingInstrument.value))?.label ||
+      'Guitarra';
+
+    let closeFn = null;
+    const cards = plans.map((plan) => {
+      const isActive = plan.criterion.id === activeId;
+      const previewChips = plan.steps.slice(0, 6).map((st) =>
+        el('span', { className: 'm3-badge' }, [
+          `${formatChordSymbol(st.chord, notation)} · ${st.voicing ? st.voicing.getPositionLabel() : '—'}`
+        ])
+      );
+      return el('div', { className: `m3-card ${isActive ? 'm3-card--elevated' : ''}`, style: 'display:flex; flex-direction:column; gap:8px' }, [
+        el('div', { className: 'player-toolbar' }, [
+          el('strong', {}, [plan.criterion.label]),
+          el('span', { className: `m3-badge ${isActive ? 'm3-badge--success' : 'm3-badge--primary'}` }, [
+            isActive ? 'Activo' : plan.metrics.summaryLabel
+          ])
+        ]),
+        el('p', { className: 'm3-body-md' }, [plan.criterion.description]),
+        el('p', { className: 'm3-label' }, [
+          `Traste medio: ${plan.metrics.averageFret || 1} · Salto máx.: ${Math.round(plan.metrics.maxShiftFrets)} trastes · Enlace prom.: ${plan.metrics.avgVoiceLeadingSemitones} st · Notas comunes: ${plan.metrics.commonTonesTotal}`
+        ]),
+        el('div', { className: 'm3-chip-row' }, previewChips),
+        el('div', { className: 'm3-chip-row', style: 'justify-content:flex-end' }, [
+          el(
+            'button',
+            {
+              type: 'button',
+              className: `m3-btn m3-btn--compact ${isActive ? 'm3-btn--outlined' : 'm3-btn--filled'}`,
+              ripple: true,
+              onClick: () => {
+                this._vm.setFingeringDesign(plan.criterion.id);
+                closeFn?.();
+              }
+            },
+            [isActive ? 'Diseño activo' : 'Aplicar este diseño']
+          )
+        ])
+      ]);
+    });
+
+    const body = el('div', { style: 'display:flex; flex-direction:column; gap:10px; max-height:70dvh; overflow-y:auto' }, [
+      el('p', { className: 'm3-body-md' }, [
+        `Distintas soluciones técnicas y armónicas para digitar esta progresión en ${instLabel}. Elegí la que mejor se adapte a tu objetivo musical:`
+      ]),
+      ...cards
+    ]);
+
+    const dlg = openModalDialog({
+      title: `Diseños de digitación — ${instLabel}`,
+      body,
+      actions: [{ label: 'Cerrar', variant: 'text' }]
+    });
+    closeFn = dlg.close;
+  }
+
+  /**
+   * Abre un selector puntual para cambiar el voicing de un solo compás/paso dentro del diseño activo.
+   * @param {number} stepIndex Índice del paso.
+   * @param {object} step Paso enriquecido con candidatos.
+   * @param {import('../models/Tuning.js').Tuning} tuning Afinación activa.
+   * @param {'americano'|'latino'} notation Sistema de cifrado.
+   */
+  _openStepVoicingPickerModal(stepIndex, step, tuning, notation) {
+    let closeFn = null;
+    const grid = el(
+      'div',
+      { className: 'voicing-group-grid', style: 'max-height:65dvh; overflow-y:auto' },
+      step.candidates.map((v) => {
+        const isCurrent = step.voicing && v.id === step.voicing.id;
+        return el('div', { className: `m3-card ${isCurrent ? 'm3-card--elevated' : ''}`, style: 'display:flex; flex-direction:column; gap:6px; align-items:center' }, [
+          el('span', { className: 'm3-label' }, [`${v.getPositionLabel()} · ${v.getUsedStringsLabel(tuning)}`]),
+          createChordDiagramElement(v, {
+            tuning,
+            notation,
+            size: 'sm',
+            showTitle: false,
+            labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+            onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
+          }),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: `m3-btn m3-btn--compact ${isCurrent ? 'm3-btn--outlined' : 'm3-btn--filled'}`,
+              ripple: true,
+              onClick: () => {
+                this._vm.setStepVoicingOverride(stepIndex, v);
+                closeFn?.();
+              }
+            },
+            [isCurrent ? 'Seleccionada' : 'Usar esta forma']
+          )
+        ]);
+      })
+    );
+
+    const dlg = openModalDialog({
+      title: `Elegir forma para ${formatChordSymbol(step.chord, notation)} (paso ${stepIndex + 1})`,
+      body: grid,
+      actions: [{ label: 'Cerrar', variant: 'text' }]
+    });
+    closeFn = dlg.close;
+  }
+
+  /**
    * Resalta el diagrama del acorde que suena actualmente en la fila de armonía.
    * @param {number} stepIndex Índice del paso activo (-1 si detenido).
    */
   _highlightActiveHarmonyStep(stepIndex) {
     if (!this._harmonyEl) return;
-    const pr = this._vm.practice.value;
-    if (pr?.instruments?.includes('bajo') && stepIndex >= 0) {
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    if ((vInst === 'bajo' || vInst === 'bajo-5') && stepIndex >= 0) {
       // En bajo actualiza el mapa del diapasón para mostrar las notas del acorde que suena
       this._renderHarmonyDiagrams();
     }

@@ -545,6 +545,23 @@ export class AbcService {
     const voiceBarAcc = new Map();
     /** Asigna índice lógico estable 0, 1, ... a cada voz (funciona con o sin %%score (1 2)). */
     const voiceLogicalIndex = new Map();
+    /** Ligaduras de prolongación (ties) abiertas por voz: vKey -> Map<key, { soundNote, diatonicPitch }>. */
+    const voicePendingTies = new Map();
+    /** Profundidad activa de ligadura de expresión (slur) por voz para articulación legato. */
+    const voiceSlurDepth = new Map();
+    /** Dinámica vigente por voz (pp..ff -> multiplicador de volumen). */
+    const voiceDynamicGain = new Map();
+
+    const DYNAMIC_MAP = {
+      ppp: 0.36,
+      pp: 0.5,
+      p: 0.64,
+      mp: 0.78,
+      mf: 0.92,
+      f: 1.08,
+      ff: 1.22,
+      fff: 1.32
+    };
 
     for (const line of visualObj.lines) {
       if (!Array.isArray(line.staff)) continue;
@@ -563,10 +580,16 @@ export class AbcService {
           if (!voiceCursors.has(vKey)) voiceCursors.set(vKey, 0);
           if (!voiceMeasures.has(vKey)) voiceMeasures.set(vKey, 1);
           if (!voiceBarAcc.has(vKey)) voiceBarAcc.set(vKey, {});
+          if (!voicePendingTies.has(vKey)) voicePendingTies.set(vKey, new Map());
+          if (!voiceSlurDepth.has(vKey)) voiceSlurDepth.set(vKey, 0);
+          if (!voiceDynamicGain.has(vKey)) voiceDynamicGain.set(vKey, 1.0);
 
           let currentBeat = voiceCursors.get(vKey);
           let measureIndex = voiceMeasures.get(vKey);
           let barAcc = voiceBarAcc.get(vKey);
+          const pendingTies = voicePendingTies.get(vKey);
+          let slurDepth = voiceSlurDepth.get(vKey);
+          let dynamicGain = voiceDynamicGain.get(vKey);
           /** Multiplicador activo de tresillo/tuplet (abcjs deja elem.duration sin multiplicar). */
           let activeTripletMult = 1;
 
@@ -619,14 +642,98 @@ export class AbcService {
               }
             }
 
-            // Altura escrita -> altura MIDI real usando únicamente PitchPolicy
+            // Expresiones: dinámicas, acentos, staccato, tenuto, fermata y ligaduras de expresión (slurs)
+            const decs = Array.isArray(elem.decoration) ? elem.decoration : [];
+            for (const d of decs) {
+              if (DYNAMIC_MAP[d] !== undefined) {
+                dynamicGain = DYNAMIC_MAP[d];
+              }
+            }
+            const accent = decs.includes('accent') || decs.includes('emphasis') || decs.includes('marcato') || decs.includes('sfz');
+            const sfzBoost = decs.includes('sfz') ? 1.12 : 1.0;
+
+            const pitchStartSlurs = Array.isArray(elem.pitches)
+              ? elem.pitches.reduce((acc, p) => acc + (Array.isArray(p.startSlur) ? p.startSlur.length : 0), 0)
+              : 0;
+            const pitchEndSlurs = Array.isArray(elem.pitches)
+              ? elem.pitches.reduce((acc, p) => acc + (Array.isArray(p.endSlur) ? p.endSlur.length : 0), 0)
+              : 0;
+            const startSlurCount = (Array.isArray(elem.startSlur) ? elem.startSlur.length : 0) + pitchStartSlurs;
+            const endSlurCount = (Array.isArray(elem.endSlur) ? elem.endSlur.length : 0) + pitchEndSlurs;
+
+            const wasInSlur = slurDepth > 0;
+            if (startSlurCount > 0) slurDepth += startSlurCount;
+
+            let articulation = 'normal';
+            if (decs.includes('staccato') || decs.includes('wedge')) {
+              articulation = 'staccato';
+            } else if (wasInSlur) {
+              articulation = 'legato';
+            } else if (startSlurCount > 0) {
+              articulation = 'legato-start';
+            } else if (decs.includes('fermata')) {
+              articulation = 'fermata';
+            } else if (decs.includes('tenuto')) {
+              articulation = 'tenuto';
+            }
+
+            if (endSlurCount > 0) {
+              slurDepth = Math.max(0, slurDepth - endSlurCount);
+            }
+
+            // Notas de gracia (appoggiaturas / mordentes {g}a)
+            const graceMidis = [];
+            if (!isRest && Array.isArray(elem.gracenotes)) {
+              for (const g of elem.gracenotes) {
+                const gWritten = this._abcjsPitchToWrittenMidi(g, keyMap, barAcc);
+                const gSounding = writtenMidiToSoundingMidi(gWritten, policyTarget, 'real');
+                if (Number.isFinite(gSounding)) graceMidis.push(gSounding);
+              }
+            }
+
+            // Altura escrita -> altura MIDI real usando PitchPolicy + resolución de ligaduras de prolongación (ties)
             const midis = [];
-            if (!isRest && Array.isArray(elem.pitches)) {
+            const soundNotes = [];
+            let isTiedContinuation = false;
+
+            if (isRest) {
+              // Un silencio cierra cualquier tie huérfana en esta voz
+              pendingTies.clear();
+            } else if (Array.isArray(elem.pitches)) {
               for (const p of elem.pitches) {
                 const writtenMidi = this._abcjsPitchToWrittenMidi(p, keyMap, barAcc);
-                const soundingMidi = writtenMidiToSoundingMidi(writtenMidi, policyTarget, 'real');
-                if (Number.isFinite(soundingMidi)) {
-                  midis.push(soundingMidi);
+                let soundingMidi = writtenMidiToSoundingMidi(writtenMidi, policyTarget, 'real');
+                if (!Number.isFinite(soundingMidi)) continue;
+
+                if (p.endTie) {
+                  // Busca tie activa exacta o por misma altura diatónica (mantiene alteración tras barra de compás)
+                  let tieKey = pendingTies.has(soundingMidi) ? soundingMidi : null;
+                  if (tieKey === null) {
+                    for (const [k, rec] of pendingTies.entries()) {
+                      if (rec.diatonicPitch === p.pitch) {
+                        tieKey = k;
+                        break;
+                      }
+                    }
+                  }
+                  if (tieKey !== null) {
+                    const rec = pendingTies.get(tieKey);
+                    soundingMidi = rec.soundNote.midi;
+                    rec.soundNote.durationBeats += durBeats;
+                    midis.push(soundingMidi);
+                    isTiedContinuation = true;
+                    if (!p.startTie) {
+                      pendingTies.delete(tieKey);
+                    }
+                    continue;
+                  }
+                }
+
+                midis.push(soundingMidi);
+                const soundNote = { midi: soundingMidi, durationBeats: durBeats };
+                soundNotes.push(soundNote);
+                if (p.startTie) {
+                  pendingTies.set(soundingMidi, { soundNote, diatonicPitch: p.pitch });
                 }
               }
             }
@@ -643,6 +750,12 @@ export class AbcService {
               beat: currentBeat,
               durationBeats: durBeats,
               midis,
+              soundNotes,
+              graceMidis,
+              articulation,
+              accent,
+              dynamicGain: Math.round(dynamicGain * sfzBoost * 100) / 100,
+              isTiedContinuation: isTiedContinuation && soundNotes.length === 0,
               isRest,
               measureIndex,
               voiceIndex: logicalVoice,
@@ -656,6 +769,8 @@ export class AbcService {
 
           voiceCursors.set(vKey, currentBeat);
           voiceMeasures.set(vKey, measureIndex);
+          voiceSlurDepth.set(vKey, slurDepth);
+          voiceDynamicGain.set(vKey, dynamicGain);
         });
       });
     }

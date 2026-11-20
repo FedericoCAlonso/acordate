@@ -492,18 +492,44 @@ export class AudioSynthService {
               // suenan con el instrumento principal; solo pentagramas en clave de fa usan timbre de bajo.
               const usesBassTimbre = Boolean(tl.isBassPiece || noteEv.isBassStaff);
               const effectiveBassVol = this.bassEnabled ? this.bassVolume : 0;
-              const vol = tl.isBassPiece
+              const baseVol = tl.isBassPiece
                 ? (this.bassEnabled ? Math.max(this.melodyVolume, effectiveBassVol) : 0)
                 : noteEv.isBassStaff
                   ? effectiveBassVol
                   : this.melodyVolume * (vIdx === 0 ? 1.0 : 0.92);
+              const vol = Math.min(1.25, baseVol * (noteEv.dynamicGain ?? 1.0));
               const voiceInst = usesBassTimbre
                 ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
                 : this.instrument;
 
-              for (const midi of noteEv.midis) {
-                const playbackMidi = applyListeningRegister(midi, this.listeningRegister);
-                this._playPluckedNote(ctx, playbackMidi, t, durSec, voiceInst, vol);
+              // Notas de gracia ({A}B): se disparan brevemente antes del ataque principal con ligado suave
+              if (Array.isArray(noteEv.graceMidis) && noteEv.graceMidis.length > 0) {
+                const graceStep = 0.055;
+                const graceStart0 = Math.max(ctx.currentTime, t - graceStep * noteEv.graceMidis.length);
+                noteEv.graceMidis.forEach((gMidi, gIdx) => {
+                  const playbackGrace = applyListeningRegister(gMidi, this.listeningRegister);
+                  this._playPluckedNote(ctx, playbackGrace, graceStart0 + gIdx * graceStep, graceStep * 1.15, voiceInst, vol * 0.72, {
+                    articulation: 'grace',
+                    accent: false
+                  });
+                });
+              }
+
+              // Respeta ligaduras de prolongación (ties): soundNotes omite notas ya ligadas desde el pulso anterior
+              // y contiene la duración total acumulada en la nota de inicio de la ligadura.
+              const playableNotes = Array.isArray(noteEv.soundNotes)
+                ? noteEv.soundNotes
+                : noteEv.midis.map((midi) => ({ midi, durationBeats: noteEv.durationBeats }));
+
+              const expr = {
+                articulation: noteEv.articulation || 'normal',
+                accent: Boolean(noteEv.accent)
+              };
+
+              for (const sn of playableNotes) {
+                const playbackMidi = applyListeningRegister(sn.midi, this.listeningRegister);
+                const snDurSec = Math.max(0.06, (sn.durationBeats || noteEv.durationBeats) * secPerBeat);
+                this._playPluckedNote(ctx, playbackMidi, t, snDurSec, voiceInst, vol, expr);
               }
             }
 
@@ -656,21 +682,70 @@ export class AudioSynthService {
   }
 
   /**
-   * Sintetiza una nota pulsada en Web Audio API modelada según el instrumento elegido.
+   * Sintetiza una nota pulsada en Web Audio API modelada según el instrumento elegido
+   * y la articulación/expresión musical (normal, legato/ligado, staccato, tenuto, fermata, acento, gracia).
    * No realiza desplazamientos de octava propios: reproduce exactamente la altura MIDI recibida.
    * @param {AudioContext} ctx Contexto Web Audio activo.
    * @param {number} midi Nota MIDI exacta a sintetizar.
    * @param {number} startTime Instante exacto de ataque.
-   * @param {number} duration Duración en segundos.
+   * @param {number} duration Duración en segundos (ya incluye ligaduras de prolongación).
    * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} instrument Timbre.
-   * @param {number} volume Volumen del canal (0 a 1).
+   * @param {number} volume Volumen del canal (0 a 1.25).
+   * @param {{ articulation?: string, accent?: boolean }} [expression={}] Expresión y articulación.
    */
-  _playPluckedNote(ctx, midi, startTime, duration, instrument, volume) {
+  _playPluckedNote(ctx, midi, startTime, duration, instrument, volume, expression = {}) {
     if (volume <= 0.005) return;
     const safeStart = Math.max(ctx.currentTime, startTime);
     const freq = midiToFrequency(midi);
-    const release = instrument.includes('bass') ? 0.14 : 0.22;
-    const totalDur = Math.min(3.2, Math.max(0.14, duration + release));
+    const articulation = expression?.articulation || 'normal';
+    const isAccent = Boolean(expression?.accent);
+
+    // Modela duración, ataque y brillo según articulación (ligado, staccato, tenuto, fermata, acento)
+    let durScale = 1.0;
+    let release = instrument.includes('bass') ? 0.14 : 0.22;
+    let attackScale = 1.0;
+    let brightScale = 1.0;
+    let volScale = 1.0;
+
+    if (articulation === 'staccato') {
+      durScale = 0.42;
+      release = 0.045;
+      attackScale = 0.75;
+      brightScale = 1.12;
+    } else if (articulation === 'legato') {
+      // Ligado (hammer-on / pull-off / fraseo): ataque suave sin chasquido, timbre más cálido y sostén continuo
+      durScale = 1.05;
+      release = 0.18;
+      attackScale = 2.4;
+      brightScale = 0.74;
+      volScale = 0.88;
+    } else if (articulation === 'legato-start') {
+      durScale = 1.05;
+      release = 0.2;
+    } else if (articulation === 'tenuto') {
+      durScale = 1.06;
+      release = 0.24;
+      volScale = 1.06;
+    } else if (articulation === 'fermata') {
+      durScale = 1.55;
+      release = 0.36;
+    } else if (articulation === 'grace') {
+      durScale = 1.0;
+      release = 0.035;
+      attackScale = 1.2;
+      brightScale = 0.85;
+    }
+
+    if (isAccent) {
+      volScale *= 1.2;
+      brightScale *= 1.22;
+      attackScale = Math.min(attackScale, 0.85);
+    }
+
+    const effectiveVol = Math.min(1.25, volume * volScale);
+    const effectiveDur = Math.max(0.05, duration * durScale);
+    // Permite notas largas ligadas de hasta 9 s sin cortarse prematuramente
+    const totalDur = Math.min(9.0, Math.max(0.09, effectiveDur + release));
 
     const masterGain = ctx.createGain();
     const filter = ctx.createBiquadFilter();
@@ -681,46 +756,50 @@ export class AudioSynthService {
     const osc2Gain = ctx.createGain();
 
     if (instrument === 'nylon-guitar') {
+      const atk = Math.min(0.045, 0.012 * attackScale);
       osc1.type = 'triangle';
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.24, safeStart);
-      filter.frequency.setValueAtTime(Math.min(3400, freq * 5.2), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(520, freq * 1.6), safeStart + totalDur);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.16 : 0.24, safeStart);
+      filter.frequency.setValueAtTime(Math.min(3800, freq * 5.2 * brightScale), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(460, freq * 1.55), safeStart + totalDur);
       masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.28 * volume, safeStart + 0.012);
+      masterGain.gain.linearRampToValueAtTime(0.28 * effectiveVol, safeStart + atk);
       masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
     } else if (instrument === 'acoustic-guitar') {
+      const atk = Math.min(0.038, 0.006 * attackScale);
       osc1.type = 'sawtooth';
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.32, safeStart);
-      filter.frequency.setValueAtTime(Math.min(5200, freq * 7.5), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(680, freq * 1.9), safeStart + totalDur);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.2 : 0.32, safeStart);
+      filter.frequency.setValueAtTime(Math.min(5600, freq * 7.5 * brightScale), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(620, freq * 1.85), safeStart + totalDur);
       masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.2 * volume, safeStart + 0.006);
+      masterGain.gain.linearRampToValueAtTime(0.2 * effectiveVol, safeStart + atk);
       masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
     } else if (instrument === 'electric-bass') {
+      const atk = Math.min(0.04, 0.01 * attackScale);
       osc1.type = 'triangle';
       osc2.type = 'sawtooth';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.22, safeStart);
-      filter.frequency.setValueAtTime(Math.min(1600, freq * 5.2), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(240, freq * 2.0), safeStart + totalDur);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.14 : 0.22, safeStart);
+      filter.frequency.setValueAtTime(Math.min(1800, freq * 5.2 * brightScale), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(220, freq * 1.9), safeStart + totalDur);
       masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.38 * volume, safeStart + 0.01);
+      masterGain.gain.linearRampToValueAtTime(0.38 * effectiveVol, safeStart + atk);
       masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur);
     } else {
       // acoustic-bass
+      const atk = Math.min(0.05, 0.018 * attackScale);
       osc1.type = 'sine';
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 2, safeStart);
-      osc2Gain.gain.setValueAtTime(0.26, safeStart);
-      filter.frequency.setValueAtTime(Math.min(1050, freq * 3.8), safeStart);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(180, freq * 1.5), safeStart + totalDur * 0.85);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.18 : 0.26, safeStart);
+      filter.frequency.setValueAtTime(Math.min(1200, freq * 3.8 * brightScale), safeStart);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(170, freq * 1.45), safeStart + totalDur * 0.88);
       masterGain.gain.setValueAtTime(0.001, safeStart);
-      masterGain.gain.linearRampToValueAtTime(0.42 * volume, safeStart + 0.018);
-      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur * 0.85);
+      masterGain.gain.linearRampToValueAtTime(0.42 * effectiveVol, safeStart + atk);
+      masterGain.gain.exponentialRampToValueAtTime(0.001, safeStart + totalDur * 0.88);
     }
 
     osc1.frequency.setValueAtTime(freq, safeStart);

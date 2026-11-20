@@ -13,6 +13,7 @@ import { EventBus } from '../src/core/EventBus.js';
 import { Router } from '../src/core/Router.js';
 import { AbcService, validateAbcInstrumentRange, validateAbcMeasures } from '../src/services/AbcService.js';
 import { AudioSynthService } from '../src/services/AudioSynthService.js';
+import { FingeringDesignService } from '../src/services/FingeringDesignService.js';
 import { ABC_IMPORT_RIGHTS_NOTICE, ImportExportService } from '../src/services/ImportExportService.js';
 import { ScaleGenerator } from '../src/services/ScaleGenerator.js';
 import { ProgressionGenerator } from '../src/services/ProgressionGenerator.js';
@@ -449,4 +450,170 @@ test('Multi-voz: todas las obras polifónicas alinean sistemas/duraciones y Audi
     'En el pulso 2 deben estar activas C (V:3), G (V:2) y c (V:1)'
   );
   synth.stop();
+});
+
+test('FingeringDesignService y PracticePlayerViewModel: selección de instrumento y diseños de digitación multi-criterio', async () => {
+  const designer = new FingeringDesignService();
+  const sampleSteps = [
+    { chord: 'Cm7', bars: 1 },
+    { chord: 'F7', bars: 1 },
+    { chord: 'Bbmaj7', bars: 1 },
+    { chord: 'Ebmaj7', bars: 1 }
+  ];
+
+  // Compara múltiples criterios sobre la misma progresión en guitarra
+  const guitarPlans = designer.compareDesigns({ steps: sampleSteps, voicingInstrument: 'guitarra' });
+  assert.ok(guitarPlans.length >= 5, 'Guitarra debe ofrecer al menos 5 criterios musicales de digitación');
+  const openPlan = guitarPlans.find((p) => p.criterion.id === 'posicion-abierta');
+  const zonePlan = guitarPlans.find((p) => p.criterion.id === 'zona-fija-media');
+  const shellPlan = guitarPlans.find((p) => p.criterion.id === 'shell-guia');
+  assert.ok(openPlan && zonePlan && shellPlan);
+  assert.ok(shellPlan.steps.every((s) => s.voicing && s.rationale), 'Cada paso debe tener voicing y justificación');
+
+  // En bajo 4c y bajo 5c genera voicings con la cantidad exacta de cuerdas
+  const bass4 = designer.designProgression({
+    steps: sampleSteps,
+    voicingInstrument: 'bajo',
+    criterionId: 'bajo-acordes-altos'
+  });
+  assert.equal(bass4.tuning.stringCount, 4);
+  assert.ok(bass4.steps.every((s) => s.voicing && s.voicing.frets.length === 4));
+
+  const bass5 = designer.designProgression({
+    steps: sampleSteps,
+    voicingInstrument: 'bajo-5',
+    criterionId: 'bajo-acordes-altos'
+  });
+  assert.equal(bass5.tuning.stringCount, 5);
+  assert.ok(bass5.steps.every((s) => s.voicing && s.voicing.frets.length === 5));
+
+  // Integración en PracticePlayerViewModel: cambiar instrumento, criterio, forma puntual y guardar diseño
+  const { appVm } = await createTestAppVm();
+  const playerVm = new PracticePlayerViewModel({
+    appVm,
+    abcService: new AbcService(),
+    audioService: {
+      configure() {},
+      loadTimeline() {},
+      setTempo() {},
+      setLoop() {},
+      stop() {},
+      pause() {},
+      playVoicing() {}
+    },
+    wakeLockService: { request() {}, release() {} }
+  });
+
+  const autumn = appVm.allPractices.value.find((p) => p.id === 'rep-jazz-autumn-leaves');
+  playerVm.loadPractice(autumn);
+  assert.equal(playerVm.voicingInstrument.value, 'guitarra');
+
+  // Cambia a bajo de 5 cuerdas y aplica criterio de conducción mínima
+  playerVm.setVoicingInstrument('bajo-5');
+  assert.equal(playerVm.voicingInstrument.value, 'bajo-5');
+  assert.equal(playerVm.harmonySteps.value[0].voicing.frets.length, 5);
+
+  // Vuelve a guitarra clásica, compara criterios y aplica Zona fija
+  playerVm.setVoicingInstrument('guitarra-clasica');
+  const compared = playerVm.compareFingeringDesigns();
+  assert.ok(compared.length >= 4);
+  playerVm.setFingeringDesign('zona-fija-media');
+  assert.equal(playerVm.fingeringDesignId.value, 'zona-fija-media');
+
+  // Anulación puntual de un paso y guardado como práctica propia
+  const step0 = playerVm.harmonySteps.value[0];
+  if (step0.candidates.length > 1) {
+    const alt = step0.candidates.find((c) => c.id !== step0.voicing.id) || step0.candidates[0];
+    playerVm.setStepVoicingOverride(0, alt);
+    assert.equal(playerVm.harmonySteps.value[0].voicing.id, alt.id);
+    assert.equal(playerVm.harmonySteps.value[0].isManualOverride, true);
+  }
+
+  const savedDesign = await playerVm.saveFingeringDesignAsPractice();
+  assert.ok(savedDesign && savedDesign.origin === 'user');
+  assert.ok(savedDesign.progression.every((s) => Boolean(s.voicingId)));
+});
+
+test('Expresiones melódicas: ligaduras de prolongación (ties), fraseo legato (slurs), staccato, acentos, dinámicas y notas de gracia', async () => {
+  const abcjsCode = await readFile(new URL('../vendor/abcjs/abcjs-basic-min.js', import.meta.url), 'utf-8');
+  const sandbox = { window: {}, navigator: { userAgent: 'node' }, document: {} };
+  vm.runInNewContext(abcjsCode, sandbox);
+  const ABCJS = sandbox.window.ABCJS || sandbox.ABCJS;
+
+  const exprAbc = [
+    'X:1',
+    'M:4/4',
+    'L:1/4',
+    'K:C clef=treble-8',
+    '!p!C2- C2 | ^F2- F2 | (D E F) .G | !f!!>!A {B}c !tenuto!d !fermata!e |]'
+  ].join('\n');
+
+  const svc = new AbcService();
+  const vo = ABCJS.parseOnly(exprAbc)[0];
+  const tl = svc.extractTimeline(vo, exprAbc, { instrument: 'guitarra-clasica', timeSignature: '4/4' });
+
+  // 1) Tie C2- C2: un solo ataque de 4 negras, la segunda es continuación sin re-ataque
+  assert.equal(tl.notes[0].soundNotes.length, 1);
+  assert.equal(tl.notes[0].soundNotes[0].durationBeats, 4, 'C2- C2 debe sostener 4 negras en un solo ataque');
+  assert.equal(tl.notes[0].dynamicGain, 0.64, '!p! debe ajustar dinámica');
+  assert.equal(tl.notes[1].soundNotes.length, 0, 'La nota ligada de continuación no debe volver a atacarse');
+  assert.equal(tl.notes[1].isTiedContinuation, true);
+
+  // 2) Tie con alteración cruzando compás ^F2- F2: conserva MIDI 54 (Fa#) sin re-atacar
+  assert.equal(tl.notes[2].soundNotes[0].midi, 54);
+  assert.equal(tl.notes[2].soundNotes[0].durationBeats, 4);
+  assert.equal(tl.notes[3].soundNotes.length, 0);
+  assert.equal(tl.notes[3].midis[0], 54, 'La continuación ligada conserva la alteración tras la barra');
+
+  // 3) Slur (D E F) + staccato .G
+  assert.equal(tl.notes[4].articulation, 'legato-start');
+  assert.equal(tl.notes[5].articulation, 'legato');
+  assert.equal(tl.notes[6].articulation, 'legato');
+  assert.equal(tl.notes[7].articulation, 'staccato');
+
+  // 4) !f!!>!A, {B}c, !tenuto!d, !fermata!e
+  assert.equal(tl.notes[8].accent, true);
+  assert.equal(tl.notes[8].dynamicGain, 1.08);
+  assert.deepEqual(tl.notes[9].graceMidis, [59], 'Nota de gracia {B} debe resolverse a MIDI real 59');
+  assert.equal(tl.notes[10].articulation, 'tenuto');
+  assert.equal(tl.notes[11].articulation, 'fermata');
+
+  // Verifica que AudioSynthService dispara una sola nota para cada tie y envía articulaciones + gracia
+  let fakeNow = 0;
+  const fakeCtx = { get currentTime() { return fakeNow; } };
+  const calls = [];
+  const synth = new AudioSynthService({
+    ensureAudioContext: () => fakeCtx,
+    playClickAt() {},
+    soundType: 'woodblock'
+  });
+  synth._playPluckedNote = (_ctx, midi, startTime, dur, _inst, vol, expr) => {
+    calls.push({ midi, startTime, dur, vol, expr });
+  };
+  synth.configure({ bpm: 60, instrument: 'nylon-guitar', countInMeasures: 0, metronomeEnabled: false, chordsEnabled: false });
+  synth.loadTimeline(tl);
+  synth._recomputeRangeBeats();
+  synth._anchorAudioTime = 0;
+  synth._anchorBeat = 0;
+  synth._scheduledUntilBeat = -0.0001;
+  synth._isPlaying = true;
+  for (const t of [0, 4, 8, 12, 15.5]) {
+    fakeNow = t;
+    synth._schedulerLoop();
+    clearTimeout(synth._schedulerTimer);
+  }
+  synth.stop();
+
+  const cCalls = calls.filter((c) => c.midi === 48);
+  assert.equal(cCalls.length, 1, 'C2- C2 debe sintetizarse una sola vez');
+  assert.equal(cCalls[0].dur, 4, 'C2- C2 a 60 BPM debe durar 4 segundos continuos');
+
+  const fSharpCalls = calls.filter((c) => c.midi === 54);
+  assert.equal(fSharpCalls.length, 1, '^F2- F2 debe sintetizarse una sola vez');
+  assert.equal(fSharpCalls[0].dur, 4);
+
+  assert.ok(calls.some((c) => c.expr?.articulation === 'legato'), 'Debe enviar articulación legato en notas con slur');
+  assert.ok(calls.some((c) => c.expr?.articulation === 'staccato'), 'Debe enviar articulación staccato');
+  assert.ok(calls.some((c) => c.expr?.articulation === 'grace' && c.midi === 59), 'Debe disparar nota de gracia antes del ataque');
+  assert.ok(calls.some((c) => c.expr?.accent === true), 'Debe propagar acento !>!');
 });

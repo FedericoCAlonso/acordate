@@ -1703,5 +1703,61 @@
   }
 }
 
+/* Barra de diseño de digitación y selector de instrumento en prácticas armónicas/mixtas */
+.fingering-design-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: var(--md-sys-shape-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.fingering-design-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.fingering-design-bar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.fingering-design-select {
+  padding: 6px 10px;
+  min-height: 36px;
+  font-size: 0.85rem;
+  min-width: 210px;
+}
+
+.fingering-design-bar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.harmony-step-card__rationale {
+  display: block;
+  margin-top: 4px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+
 
 

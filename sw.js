@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v7: Reproducción y resaltado simultáneo de todas las voces).
+ * Versión del caché estático de la PWA Acordate (v8: Auditoría musicológica del repertorio y diseñador multi-criterio de digitaciones).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v7';
+const CACHE_NAME = 'acordate-static-v8';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -50,6 +50,7 @@ const PRECACHE_ASSETS = [
   './src/services/ProgressionGenerator.js',
   './src/services/WalkingBassGenerator.js',
   './src/services/VoicingGenerator.js',
+  './src/services/FingeringDesignService.js',
   './src/services/HarmonyService.js',
   './src/services/ImportExportService.js',
   './src/data/catalog.js',

@@ -344,14 +344,9 @@
         "section": "A"
       },
       {
-        "chord": "E7",
+        "chord": "A7",
         "bars": 1,
         "section": "A"
-      },
-      {
-        "chord": "Am6",
-        "bars": 2,
-        "section": "B"
       },
       {
         "chord": "Dm7",
@@ -370,8 +365,23 @@
       },
       {
         "chord": "Am6",
-        "bars": 2,
-        "section": "C"
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Am6",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "E7",
+        "bars": 1,
+        "section": "A2"
       },
       {
         "chord": "Cmaj7",
@@ -1531,7 +1541,17 @@
       },
       {
         "chord": "Cmaj7",
-        "bars": 2,
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Dm7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
         "section": "A"
       },
       {
@@ -1697,7 +1717,7 @@
       },
       {
         "chord": "F7",
-        "bars": 0.5,
+        "bars": 1,
         "section": "B"
       },
       {
@@ -1707,7 +1727,7 @@
       },
       {
         "chord": "D7",
-        "bars": 1,
+        "bars": 0.5,
         "section": "B"
       },
       {
@@ -2794,7 +2814,7 @@
         "section": "A3"
       },
       {
-        "chord": "G7",
+        "chord": "Gm7b5",
         "bars": 0.5,
         "section": "A3"
       },

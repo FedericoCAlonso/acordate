@@ -52,5 +52,15 @@ Usá este rol y protocolo cuando haya que auditar ejercicios existentes, validar
    * Revisar tonalidad (`key`), compás, rango de tempo (`start`/`target`), coherencia entre cifrado y notas ABC, digitaciones y objetivos de estudio.
 3. **Revisión de motores armónicos** (`src/services/VoicingGenerator.js` y `src/services/HarmonyService.js`):
    * Verificar generación sin saltos imposibles, respeto al Low Interval Limit en bajo, conducción de voces real (notas comunes + grados conjuntos) y correcta enarmonía en las 12 tonalidades mayores y menores.
-4. **Validación automatizada**:
-   * Ejecutar `npm test` para verificar tests unitarios de afinación, MIDI exacto, voicings, armonía y ausencia total de tablatura.
+4. **Diseño de digitaciones por criterios múltiples (`src/services/FingeringDesignService.js`)**:
+   * Para cualquier progresión o tema, plantear distintas soluciones técnicas y armónicas según el instrumento elegido (`guitarra`, `guitarra-clasica`, `bajo` 4 cuerdas, `bajo-5` 5 cuerdas):
+     * **Conducción mínima de voces** (notas comunes + enlaces de 1–2 semitonos).
+     * **Posición abierta / primera posición** (resonancia de cuerdas al aire, arpegios `p-i-m-a`).
+     * **Zona fija del mango (trastes 5–9)** (ergonomía con mínimo desplazamiento horizontal).
+     * **Acordes Shell / Notas guía (3.ª y 7.ª)** (comping ágil en jazz/bossa y espacio grupal).
+     * **Drop 2 / Voz superior cantable** (línea melódica superior fluida / chord-melody).
+     * **Bajo enlazado por grado conjunto** (inversiones que forman una línea de bajo caminante).
+     * **Acordes de bajo en registro medio-agudo** (décimas, shells en cuerdas A–D–G y tríadas desde traste 5+ respetando LIL).
+   * Permitir siempre comparar métricas (traste medio, salto máximo, movimiento en semitonos, notas comunes), anular cualquier paso individual y guardar el diseño como práctica propia.
+5. **Validación automatizada**:
+   * Ejecutar `npm test` para verificar tests unitarios de afinación, MIDI exacto, voicings, armonía, diseños de digitación y ausencia total de tablatura.

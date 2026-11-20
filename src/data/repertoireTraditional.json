@@ -81,22 +81,17 @@
         "section": "B"
       },
       {
-        "chord": "G",
-        "bars": 1,
-        "section": "B"
-      },
-      {
         "chord": "D7",
         "bars": 1,
         "section": "B"
       },
       {
         "chord": "G",
-        "bars": 1,
+        "bars": 2,
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=treble-8\nD | \"G\"G2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"G\"G2 B/G/ | \"G\"B2 A | \"D7\"d3- | \"D7\"d2 B |\n\"G\"d2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"Em\"G2 B/G/ | \"G\"B2 A | \"D7\"G3- | \"G\"G2 |]",
+    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=treble-8\nD | \"G\"G2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"G\"G2 B/G/ | \"G\"B2 A | \"D7\"d3- | \"D7\"d2 B |\n\"G\"d2 B/G/ | \"G\"B2 A | \"C\"G2 E | \"G\"D2 D | \"Em\"G2 B/G/ | \"D7\"B2 A | \"G\"G3- | \"G\"G2 |]",
     "notes": "Prestá atención a la anacrusa inicial en el tiempo 3 (Re) y a las corcheas ligadas de la melodía tradicional.",
     "goals": [
       "Tocar los 16 compases ligando las notas con sonido cantable.",
@@ -192,7 +187,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\nz C E F | \"C\"G4- | \"C\"G C E F | \"C\"G4- | \"C\"G C E F | \"C\"G2 E2 | \"C\"C2 E2 | \"G7\"D4- | \"G7\"D z E D |\n\"C\"C3 E | \"C7\"G2 G F | \"F\"E4- | \"F\"E z E F | \"C\"G2 E2 | \"G7\"D2 D2 | \"C\"C4- | \"C\"C4 |]",
+    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\nz C E F | \"C\"G4- | \"C\"G C E F | \"C\"G4- | \"C\"G C E F | \"C\"G2 E2 | \"C\"C2 E2 | \"G7\"D4- | \"G7\"D z E D |\n\"C\"C3 E | \"C7\"G2 G G | \"F\"F4- | \"F\"F z E F | \"C\"G2 E2 | \"G7\"D2 D2 | \"C\"C4- | \"C\"C4 |]",
     "notes": "Las entradas en anacrusa (silencio en el tiempo 1, entrada en 2–3–4) son la clave rítmica del tema.",
     "goals": [
       "Entrar con precisión tras el silencio del primer tiempo en cada frase.",
@@ -253,7 +248,7 @@
         "section": "A"
       },
       {
-        "chord": "F",
+        "chord": "Am",
         "bars": 1,
         "section": "A"
       },
@@ -273,8 +268,13 @@
         "section": "A"
       },
       {
+        "chord": "Am",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
         "chord": "E7",
-        "bars": 1,
+        "bars": 0.5,
         "section": "A"
       },
       {
@@ -293,7 +293,7 @@
         "section": "B"
       },
       {
-        "chord": "F",
+        "chord": "Am",
         "bars": 1,
         "section": "B"
       },
@@ -313,8 +313,13 @@
         "section": "B"
       },
       {
+        "chord": "Am",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
         "chord": "E7",
-        "bars": 1,
+        "bars": 0.5,
         "section": "B"
       },
       {
@@ -323,7 +328,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nA | \"Am\"c2 d e2 f/e/ | \"G\"d2 B G2 A/B/ | \"F\"c2 A A2 ^G/A/ | \"E7\"B2 ^G E2 A |\n\"Am\"c2 d e2 f/e/ | \"G\"d2 B G2 A/B/ | \"E7\"c2 B/A/ ^G2 ^F/^G/ | \"Am\"A3 A3 |\n\"C\"g3 g2 ^f/e/ | \"G\"d2 B G2 A/B/ | \"F\"c2 A A2 ^G/A/ | \"E7\"B2 ^G E3 |\n\"C\"g3 g2 ^f/e/ | \"G\"d2 B G2 A/B/ | \"E7\"c2 B/A/ ^G2 ^F/^G/ | \"Am\"A3 A2 |]",
+    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nA | \"Am\"c2 d e3/2 ^f/ e | \"G\"d2 B G3/2 A/ B | \"Am\"c2 A A3/2 ^G/ A | \"E7\"B2 ^G E2 A |\n\"Am\"c2 d e3/2 ^f/ e | \"G\"d2 B G3/2 A/ B | \"Am\"c3/2 B/ A \"E7\"^G3/2 ^F/ ^G | \"Am\"A3 A3 |\n\"C\"g3 g3/2 ^f/ e | \"G\"d2 B G3/2 A/ B | \"Am\"c2 A A3/2 ^G/ A | \"E7\"B2 ^G E3 |\n\"C\"g3 g3/2 ^f/ e | \"G\"d2 B G3/2 A/ B | \"Am\"c3/2 B/ A \"E7\"^G3/2 ^F/ ^G | \"Am\"A3 A2 |]",
     "notes": "Observá el uso clásico de las notas alteradas ^F y ^G (escala menor melódica) en las cadencias hacia E7 y Am.",
     "goals": [
       "Leer con soltura las alteraciones accidentales Fa# y Sol# en primera posición.",
@@ -443,7 +448,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nE | \"Am\"A2 A B2 c | \"C\"e2 d c2 A | \"D\"d3 ^f2 d | \"F\"c3 A2 c |\n\"Am\"e2 e e2 d | \"C\"c2 A G2 E | \"E7\"B6- | \"E7\"B3 z2 e |\n\"Am\"a2 a a2 g | \"C\"e2 d c2 A | \"D\"d3 ^f2 d | \"F\"c3 A2 c |\n\"Am\"e2 c A2 A | \"E7\"B2 ^G E2 E | \"Am\"A6- | \"Am\"A3 z2 |]",
+    "abc": "X:1\nM:6/8\nL:1/8\nK:Am clef=treble-8\nA | \"Am\"A2 A c2 c | \"C\"e3 e2 d | \"D\"d3- d2 A | \"F\"c3 A2 c |\n\"Am\"e3 e2 d | \"C\"c2 A G2 E | \"E7\"B6- | \"E7\"B3 z2 e |\n\"Am\"a2 a a2 g | \"C\"e2 d c2 A | \"D\"d3- d2 A | \"F\"c3 A2 c |\n\"Am\"e2 c A2 A | \"E7\"B2 A ^G2 B | \"Am\"A6- | \"Am\"A3 z2 |]",
     "notes": "Prestá atención al acorde D mayor (IV mayor prestado del modo dórico) antes de bajar a F mayor (bVI).",
     "goals": [
       "Tocar el ciclo de acordes en arpegio de 6 corcheas sin cortar el sonido entre cambios.",
@@ -484,7 +489,7 @@
     "verified": false,
     "sourceRef": "Balada tradicional inglesa (dominio público). Transcripción propia en Mi dórico (sexta mayor Do#).",
     "focus": {
-      "guitarra-clasica": "Destacá el color medieval del modo dórico (nota Do# sobre el acorde A mayor en el compás 8) con sonido cálido cerca de la boca.",
+      "guitarra-clasica": "Destacá el color medieval del modo dórico (nota Do# sobre el acorde A mayor en el compás 7) con sonido cálido cerca de la boca.",
       "guitarra": "Practicá arpegios en 3/4 manteniendo la relación modal Em–D–G–A."
     },
     "comping": {
@@ -500,7 +505,7 @@
       },
       {
         "chord": "D",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
@@ -515,8 +520,23 @@
       },
       {
         "chord": "Em",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
+      },
+      {
+        "chord": "A",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Em",
+        "bars": 1,
+        "section": "B"
       },
       {
         "chord": "G",
@@ -525,11 +545,6 @@
       },
       {
         "chord": "D",
-        "bars": 1,
-        "section": "B"
-      },
-      {
-        "chord": "Em",
         "bars": 1,
         "section": "B"
       },
@@ -549,7 +564,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:3/4\nL:1/4\nK:Em clef=treble-8\n\"Em\"E2 E | \"Em\"B2 B | \"D\"F>G F | \"D\"E3 | \"Em\"z B d | \"G\"e2 d | \"Em\"B ^c A | \"Em\"B3 |\n\"G\"z e e | \"G\"e2 d | \"D\"B A G | \"Em\"F D2 | \"Em\"E2 B | \"D\"A2 G | \"D\"F E D | \"Em\"E3 |]",
+    "abc": "X:1\nM:3/4\nL:1/4\nK:Em clef=treble-8\n\"Em\"E2 E | \"Em\"B2 B | \"D\"F>G F | \"Em\"E3 | \"G\"z B d | \"Em\"e2 d | \"A\"B ^c A | \"Em\"B3 |\n\"Em\"z e e | \"G\"e2 d | \"G\"B A G | \"D\"F D2 | \"Em\"E2 B | \"D\"A2 G | \"D\"F E D | \"Em\"E3 |]",
     "notes": "El modo dórico se distingue por la sexta mayor (Do#) en lugar de la sexta menor, creando un carácter modal muy claro.",
     "goals": [
       "Reconocer auditivamente el color del modo dórico en Mi.",
@@ -599,26 +614,16 @@
     "progression": [
       {
         "chord": "C",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "F",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "C",
-        "bars": 1,
-        "section": "A"
-      },
-      {
-        "chord": "Am",
-        "bars": 1,
-        "section": "A"
-      },
-      {
-        "chord": "Dm7",
         "bars": 1,
         "section": "A"
       },
@@ -629,16 +634,31 @@
       },
       {
         "chord": "C",
-        "bars": 2,
-        "section": "B"
+        "bars": 1,
+        "section": "A"
       },
       {
         "chord": "F",
         "bars": 1,
-        "section": "B"
+        "section": "A"
       },
       {
-        "chord": "Dm7",
+        "chord": "C",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "F",
         "bars": 1,
         "section": "B"
       },
@@ -655,6 +675,31 @@
       {
         "chord": "G7",
         "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "F",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 1,
+        "section": "B"
+      },
+      {
+        "chord": "C",
+        "bars": 0.5,
+        "section": "B"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
         "section": "B"
       },
       {
@@ -663,7 +708,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:4/4\nL:1/8\nK:C clef=treble-8\nB,CD | \"C\"E3 D E A G E | \"C\"D C A,2 z C E F | \"F\"G3 A G E C E | \"F\"D4 z B, C D |\n\"C\"E3 D E A G E | \"Am\"D C A,2 z B, C D | \"Dm7\"E3 F E D C D | \"G7\"C4 z G A B |\n\"C\"c3 B B A G A | \"C\"G E C2 z G A B | \"F\"c3 B B A G E | \"Dm7\"D4 z G G G |\n\"C\"e3 d d c A c | \"Am\"G E C2 z B, C D | \"G7\"E A G E D C B, D | \"C\"C4 z |]",
+    "abc": "X:1\nM:4/4\nL:1/8\nK:C clef=treble-8\nB,CD | \"C\"E3 D E A G E | \"F\"D C A,2 z C E F | \"C\"G3 A G E C E | \"G7\"D4 z B, C D |\n\"C\"E3 D E A G E | \"F\"D C A,2 z B, C D | \"C\"E3 F \"G7\"E D C D | \"C\"C4 z G A B |\n\"F\"c3 B B A G A | \"C\"G E C2 z G A B | \"Am\"c3 B B A G E | \"G7\"D4 z G G G |\n\"C\"e3 d \"F\"d c A c | \"C\"G E C2 z B, C D | \"C\"E A G E \"G7\"D C B, D | \"C\"C4 z |]",
     "notes": "Cuidado con el salto de rango desde las notas graves en 5.ª cuerda hasta el Mi agudo (1.ª cuerda al aire) en la sección B.",
     "goals": [
       "Conectar los cambios de posición del mango sin cortar la línea cantable.",
@@ -718,42 +763,67 @@
       },
       {
         "chord": "C",
-        "bars": 2,
-        "section": "A"
-      },
-      {
-        "chord": "C",
-        "bars": 2,
+        "bars": 0.5,
         "section": "A"
       },
       {
         "chord": "G7",
-        "bars": 2,
+        "bars": 0.5,
         "section": "A"
       },
       {
         "chord": "C",
-        "bars": 2,
-        "section": "A2"
-      },
-      {
-        "chord": "F",
-        "bars": 2,
-        "section": "A2"
-      },
-      {
-        "chord": "C",
-        "bars": 1,
-        "section": "A2"
+        "bars": 3,
+        "section": "A"
       },
       {
         "chord": "D7",
         "bars": 1,
-        "section": "A2"
+        "section": "A"
       },
       {
         "chord": "G7",
         "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 2,
+        "section": "A2"
+      },
+      {
+        "chord": "D7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "C",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "G7",
+        "bars": 0.5,
         "section": "A2"
       },
       {
@@ -762,7 +832,7 @@
         "section": "A2"
       }
     ],
-    "abc": "X:1\nM:2/4\nL:1/16\nK:C clef=treble-8\n=D^D | \"C\"E c2 E c2 E c- | \"C\"c6 c d | \"C\"^d e c d e B d c- | \"C\"c6 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c6 A G | \"G7\"^F A c e d c A d- | \"G7\"d6 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c6 c d | \"F\"^d e c d e B d c- | \"F\"c6 c d |\n\"C\"e c d e c d e c | \"D7\"^F A c e d c A c | \"G7\"G B d f e d B G | \"C\"c4 z2 |]",
+    "abc": "X:1\nM:2/4\nL:1/16\nK:C clef=treble-8\nD^D | \"C\"E c2 E c2 E c- | \"C\"c4 z c d ^d | \"C\"e c d e- \"G7\"e B d c- | \"C\"c4 z2 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c4 z2 A G | \"D7\"^F A c e2 d c A | \"G7\"d4 z2 D ^D |\n\"C\"E c2 E c2 E c- | \"C\"c4 z c d ^d | \"C\"e c d e- \"G7\"e B d c- | \"C\"c4 z2 c d |\n\"C\"e c d e2 c d e | \"D7\"a g ^f a \"C\"g e c d | \"C\"e c d e- \"G7\"e B d c- | \"C\"c4 z2 |]",
     "notes": "Indicación original de Joplin: «Not fast». Dominá primero las síncopas de semicorchea a 66 BPM antes de subir.",
     "goals": [
       "Leer con precisión las ligaduras sincopadas en 2/4.",
@@ -812,32 +882,67 @@
     "progression": [
       {
         "chord": "Ab",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "Eb7",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "Ab",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "Eb7",
-        "bars": 2,
+        "bars": 1,
         "section": "A"
       },
       {
         "chord": "Ab",
-        "bars": 2,
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "E",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Ab",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 0.5,
+        "section": "A"
+      },
+      {
+        "chord": "Ab",
+        "bars": 1,
+        "section": "A"
+      },
+      {
+        "chord": "Ab",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Ab7",
+        "bars": 1,
         "section": "A2"
       },
       {
         "chord": "Db",
-        "bars": 2,
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "Dbm",
+        "bars": 1,
         "section": "A2"
       },
       {
@@ -852,11 +957,21 @@
       },
       {
         "chord": "Ab",
-        "bars": 2,
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Eb7",
+        "bars": 0.5,
+        "section": "A2"
+      },
+      {
+        "chord": "Ab",
+        "bars": 1,
         "section": "A2"
       }
     ],
-    "abc": "X:1\nM:2/4\nL:1/16\nK:Ab clef=treble-8\n\"Ab\"z A c e z A c e | \"Ab\"A c e a g e c A | \"Eb7\"z G B e z G B e | \"Eb7\"G B e g f d B G |\n\"Ab\"z A c e A c e a | \"Ab\"g e c A E c A E | \"Eb7\"z G B d e d B G | \"Eb7\"B d e g f d B G |\n\"Ab\"z A c e c A e c | \"Ab\"A c e a c' a e c | \"Db\"z A d f d A f d | \"Db\"A d f a g f d A |\n\"Ab\"e c A c e c A E | \"Eb7\"G B d e g e d B | \"Ab\"A c e a e c A c | \"Ab\"A4 z4 |]",
+    "abc": "X:1\nM:2/4\nL:1/16\nK:Ab clef=treble-8\n\"Ab\"z E A c e2 c A | \"Eb7\"z G B e g2 e B | \"Ab\"z E A c e2 c A | \"Eb7\"z G B e g2 f d |\n\"Ab\"z E A c e c A c | \"E\"z =E A =B =e =B A =E | \"Ab\"z E A c \"Eb7\"d B G B | \"Ab\"A4 z4 |\n\"Ab\"z A c e2 c A c | \"Ab7\"z A c _g2 e c A | \"Db\"z A d f2 d A d | \"Dbm\"z A d =e2 d A d |\n\"Ab\"e c A c2 e c A | \"Eb7\"B G E G2 B d B | \"Ab\"c A E A \"Eb7\"G B d e | \"Ab\"A4 z4 |]",
     "notes": "Trabajá en posición IV (dedo 1 en traste 4) para cubrir Lab mayor con comodidad y mínima traslación.",
     "goals": [
       "Leer con seguridad en armadura de 4 bemoles (Ab mayor).",
@@ -957,7 +1072,7 @@
         "section": "B"
       }
     ],
-    "abc": "X:1\nM:4/4\nL:1/8\nK:Dm clef=treble-8\n\"Dm\"z A d e f2 e d | \"Dm\"f2 e d A4 | \"A7\"z A ^c d e2 d ^c | \"A7\"e2 d ^c A4 |\n\"A7\"z A ^c e g2 f e | \"A7\"g2 f e ^c4 | \"Dm\"z A d e f2 e d | \"Dm\"d6 z2 |\n\"Dm\"z d f g a2 g f | \"D7\"^f2 a g f2 d2 | \"Gm\"z G B c d2 c B | \"Gm\"d2 c B G4 |\n\"Dm\"z A d e f2 e d | \"A7\"e2 d ^c A2 ^c2 | \"Dm\"d2 A2 F2 A2 | \"Dm\"d4 z4 |]",
+    "abc": "X:1\nM:4/4\nL:1/8\nK:Dm clef=treble-8\n\"Dm\"z A d f a2 a2 | \"Dm\"z a b a g2 f2 | \"A7\"e2 g2 e2 ^c2 | \"A7\"e6 z2 |\n\"A7\"z A ^c e g2 g2 | \"A7\"z g a g f2 e2 | \"Dm\"d2 f2 d2 A2 | \"Dm\"d6 z2 |\n\"Dm\"z A d f a2 a2 | \"D7\"c'2 a2 ^f2 d2 | \"Gm\"z G B d g2 g2 | \"Gm\"z g a g f2 d2 |\n\"Dm\"z f e d f2 d2 | \"A7\"e2 d ^c e2 A2 | \"Dm\"d2 A2 F2 A2 | \"Dm\"d4 z4 |]",
     "notes": "Clásico del tango rioplatense. Prestá atención a las entradas acéfalas (silencio de corchea en el primer tiempo) y a la sensible Do#.",
     "goals": [
       "Tocar con fraseo de tango (entradas definidas, marcato firme y fraseo con intención).",
@@ -1122,17 +1237,27 @@
         "section": "A"
       },
       {
+        "chord": "G",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
         "chord": "G7",
-        "bars": 2,
+        "bars": 1,
         "section": "A2"
       },
       {
         "chord": "C",
-        "bars": 2,
+        "bars": 1,
         "section": "A2"
       },
       {
-        "chord": "Am",
+        "chord": "Cm",
+        "bars": 1,
+        "section": "A2"
+      },
+      {
+        "chord": "G",
         "bars": 1,
         "section": "A2"
       },
@@ -1188,7 +1313,12 @@
       },
       {
         "chord": "Gm",
-        "bars": 2,
+        "bars": 1,
+        "section": "B2"
+      },
+      {
+        "chord": "D7",
+        "bars": 1,
         "section": "B2"
       }
     ],
@@ -1219,32 +1349,32 @@
       "dominio-publico"
     ],
     "key": "D",
-    "timeSignature": "3/4",
+    "timeSignature": "6/8",
     "tempo": {
       "start": 56,
       "target": 80,
       "step": 4
     },
-    "form": "8 compases (tema inicial, 2 voces)",
+    "form": "8 compases (tema inicial en 6/8, 2 voces)",
     "rights": "public_domain",
     "style": "clasico-romantico",
     "feeling": "waltz",
     "verified": false,
-    "sourceRef": "Agustín Barrios Mangoré (1885–1944), «Julia Florida — Barcarola» (1938, dominio público; fragmento introductorio en Re mayor).",
+    "sourceRef": "Agustín Barrios Mangoré (1885–1944), «Julia Florida — Barcarola» (1938, dominio público). Adaptación didáctica del aire de barcarola en Re mayor (6/8) a 2 voces.",
     "focus": {
-      "guitarra-clasica": "Separá con total claridad el canto lírico superior (m–a con apoyando/tirando cantable) del acompañamiento de barcarola y el bajo (p)."
+      "guitarra-clasica": "Separá con total claridad el canto lírico superior (m–a con apoyando/tirando cantable) del balanceo de barcarola en 6/8 y el bajo (p)."
     },
     "harmonicAnalysis": [
       "I",
-      "I",
+      "vi",
       "ii7",
       "V7",
       "I",
-      "vi",
-      "ii",
-      "V7"
+      "IV",
+      "V7",
+      "I"
     ],
-    "abc": "X:1\nM:3/4\nL:1/8\nK:D clef=treble-8\nV:1 stem=up\n\"a\"f2 \"m\"d2 \"i\"A2 | \"a\"f4 \"m\"e d | \"m\"e2 \"i\"c2 \"m\"B2 | \"a\"A4 z2 |\n\"a\"a2 \"m\"f2 \"i\"d2 | \"a\"g2 \"m\"e2 \"i\"B2 | \"a\"f2 \"m\"e2 \"i\"d2 | \"m\"c4 z2 |]\nV:2 stem=down\n\"p\"D4 A2 | \"p\"D4 A2 | \"p\"E4 B2 | \"p\"A4 E2 |\n\"p\"D4 A2 | \"p\"B,4 G2 | \"p\"E4 B2 | \"p\"A4 E2 |]",
+    "abc": "X:1\nM:6/8\nL:1/8\nK:D clef=treble-8\nV:1 stem=up\n\"a\"f3 \"a\"a2 \"a\"f | \"a\"e3 \"m\"d2 \"m\"B | \"a\"g3 \"a\"f2 \"a\"e | \"a\"e3 \"m\"c3 |\n\"a\"a3 \"a\"b2 \"a\"a | \"a\"g3 \"a\"f2 \"a\"e | \"a\"f2 \"a\"e \"m\"d2 \"m\"c | \"m\"d6 |]\nV:2 stem=down\n\"p\"D2 \"i\"A \"p\"D2 \"i\"A | \"p\"D2 \"i\"A \"p\"B,2 \"i\"F | \"p\"E,2 \"i\"B, \"p\"E2 \"i\"G | \"p\"A,2 \"i\"E \"p\"G2 \"i\"E |\n\"p\"D2 \"i\"A \"p\"D2 \"i\"A | \"p\"G,2 \"i\"D \"p\"G,2 \"i\"B, | \"p\"E,2 \"i\"G \"p\"A,2 \"i\"G | \"p\"D2 \"i\"A \"p\"D3 |]",
     "notes": "Estudio introductorio basado en el carácter y el lenguaje armónico de la barcarola en Re mayor (contrastar contra edición urtext/IMSLP para la obra completa).",
     "goals": [
       "Escuchar ambas voces por separado usando el selector «Voces: Melodía / Bajo».",
@@ -1297,7 +1427,7 @@
       "V",
       "I"
     ],
-    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=bass\nG,, B,, D, | F,, A,, D, | E,, G,, B,, | B,, A,, G,, |\nC, B,, A,, | B,, G,, E,, | D, C, A,, | G,,3 |]",
+    "abc": "X:1\nM:3/4\nL:1/4\nK:G clef=bass\nG,, B,, D, | F,, A,, D, | E,, G,, B,, | B,, A,, G,, |\nC, B,, A,, | B,, G,, E,, | D, C, F,, | G,,3 |]",
     "notes": "Recordá que el bajo suena una octava más grave de lo escrito: G,, corresponde al Sol grave de la 4.ª cuerda traste 3 (MIDI 31) y D, a la 2.ª cuerda al aire (MIDI 38).",
     "goals": [
       "Leer toda la línea de corrido en clave de fa sin perder el fraseo legato.",
@@ -1354,7 +1484,7 @@
     "notes": "Transcrito al rango real del bajo de 4 cuerdas (G,, = 4.ª cuerda traste 3, MIDI 31, hasta C = 1.ª cuerda traste 5, MIDI 48). Confirmar articulación con tu edición IMSLP.",
     "goals": [
       "Tocar los 8 compases con semicorcheas parejas y sin ruidos de cruce de cuerda.",
-      "Hacer cantar la voz superior cambiante (B–c–c–B–c–A–A–B) sobre el pedal en Sol."
+      "Hacer cantar la voz superior cambiante (B–c–c–B–B–A–A–B) sobre el pedal en Sol."
     ],
     "origin": "builtin",
     "createdAt": "2026-04-01T00:00:00.000Z"

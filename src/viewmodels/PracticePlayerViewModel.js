@@ -4,6 +4,11 @@ import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js
 import { Exercise } from '../models/Exercise.js';
 import { Practice, generatePracticeId } from '../models/Practice.js';
 import { Tuning } from '../models/Tuning.js';
+import {
+  FingeringDesignService,
+  getTuningForVoicingInstrument,
+  normalizeVoicingInstrument
+} from '../services/FingeringDesignService.js';
 import { WalkingBassGenerator } from '../services/WalkingBassGenerator.js';
 
 /**
@@ -88,6 +93,14 @@ export class PracticePlayerViewModel {
     this.generatedWalkingAbc = new Observable('');
     /** Generador puro de líneas de walking bass sobre progresiones. */
     this._walkingGen = new WalkingBassGenerator();
+    /** Servicio especialista de diseño de digitaciones por criterios musicales y técnicos. */
+    this._fingeringDesigner = new FingeringDesignService();
+    /** Instrumento seleccionado para visualizar y diseñar digitaciones de acordes ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5'). */
+    this.voicingInstrument = new Observable(normalizeVoicingInstrument(appVm.settings.value.defaultInstrument || 'guitarra'));
+    /** Criterio activo de diseño de digitación ('original' o clave en FINGERING_DESIGN_CRITERIA). */
+    this.fingeringDesignId = new Observable('conduccion-minima');
+    /** Anulaciones puntuales de voicing elegidas por el usuario para pasos concretos (stepIndex -> Voicing). */
+    this.stepVoicingOverrides = new Observable({});
     /** Metrónomo integrado activado durante la reproducción. */
     this.metronomeEnabled = new Observable(true);
     /** Volumen del metrónomo integrado (0-1). */
@@ -132,24 +145,36 @@ export class PracticePlayerViewModel {
       }
     );
 
-    /** Pasos de progresión armónica resueltos con su acorde transpuesto y su Voicing exacto. */
-    this.harmonySteps = new ComputedObservable(
-      [this.practice, this.transposeSemitones],
+    /** Diseño completo de digitación resuelto (pasos, voicings, candidatos, justificación y métricas). */
+    this.fingeringDesignPlan = new ComputedObservable(
+      [
+        this.practice,
+        this.transposeSemitones,
+        this.voicingInstrument,
+        this.fingeringDesignId,
+        this.stepVoicingOverrides,
+        this._appVm.progress
+      ],
       () => {
         const pr = this.practice.value;
-        if (!pr || !Array.isArray(pr.progression) || pr.progression.length === 0) return [];
+        if (!pr || !Array.isArray(pr.progression) || pr.progression.length === 0) return null;
+
         const semi = this.transposeSemitones.value;
-        const isBass = pr.instruments.includes('bajo');
+        const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+        const tuning = getTuningForVoicingInstrument(vInst);
+        const isBass = tuning.instrument === 'bass';
         const fam = isBass ? 'bass' : 'guitar';
-        const tuning = Tuning.defaultForInstrument(fam);
         const useFlats = prefersFlats(this.transposedKey?.value || pr.key);
+        const customChords = [
+          ...(pr.customVoicings || []),
+          ...(this._appVm.progress.value?.customChords || [])
+        ];
+        const overrides = this.stepVoicingOverrides.value || {};
+        const designId = this.fingeringDesignId.value || 'original';
 
         let barCursor = 1;
-        return pr.progression.map((step, idx) => {
+        const baseSteps = pr.progression.map((step, idx) => {
           const chordSymbol = semi ? transposeChordSymbol(step.chord, semi, useFlats) : step.chord;
-          const voicing = !semi && step.voicingId
-            ? findVoicingById(step.voicingId, pr.customVoicings, chordSymbol, fam)
-            : (getCuratedVoicingsForChord(chordSymbol, fam, tuning)[0] || findVoicingById(null, pr.customVoicings, chordSymbol, fam));
           const startMeasure = Math.floor(barCursor);
           barCursor += Number(step.bars) || 1;
           return {
@@ -158,12 +183,75 @@ export class PracticePlayerViewModel {
             startMeasure,
             section: step.section || null,
             chord: chordSymbol,
-            voicing,
-            rhythm: step.rhythm || null,
-            midis: voicing ? voicing.getMidiNotes(tuning) : []
+            voicingId: step.voicingId || null,
+            rhythm: step.rhythm || null
           };
         });
+
+        // Si el usuario eligió 'original' y la práctica tiene voicingIds explícitos para este instrumento
+        const hasExplicitForInst =
+          designId === 'original' &&
+          !semi &&
+          baseSteps.some((s) => Boolean(s.voicingId)) &&
+          ((isBass && pr.instruments.includes('bajo')) || (!isBass && !pr.instruments.every((i) => i === 'bajo')));
+
+        if (hasExplicitForInst) {
+          const explicitOverrides = { ...overrides };
+          baseSteps.forEach((s, idx) => {
+            if (!explicitOverrides[idx] && s.voicingId) {
+              const found = findVoicingById(s.voicingId, customChords, s.chord, fam);
+              if (found && found.frets.length === tuning.stringCount) {
+                explicitOverrides[idx] = found;
+              }
+            }
+          });
+          const plan = this._fingeringDesigner.designProgression({
+            steps: baseSteps,
+            voicingInstrument: vInst,
+            criterionId: this._fingeringDesigner.getRecommendedCriterion(vInst, pr),
+            customChords,
+            overrides: explicitOverrides
+          });
+          return {
+            ...plan,
+            criterion: {
+              id: 'original',
+              label: 'Digitación original de la práctica',
+              shortLabel: 'Original',
+              description: 'Respeta las digitaciones previstas originalmente por esta práctica.',
+              pedagogicalTip: 'Probá cambiar de criterio para comparar posiciones alternativas sobre el mismo tema.'
+            },
+            steps: plan.steps.map((st, idx) => ({
+              ...st,
+              index: idx,
+              midis: st.voicing ? st.voicing.getMidiNotes(tuning) : []
+            }))
+          };
+        }
+
+        const plan = this._fingeringDesigner.designProgression({
+          steps: baseSteps,
+          voicingInstrument: vInst,
+          criterionId: designId === 'original' ? this._fingeringDesigner.getRecommendedCriterion(vInst, pr) : designId,
+          customChords,
+          overrides
+        });
+
+        return {
+          ...plan,
+          steps: plan.steps.map((st, idx) => ({
+            ...st,
+            index: idx,
+            midis: st.voicing ? st.voicing.getMidiNotes(tuning) : []
+          }))
+        };
       }
+    );
+
+    /** Pasos de progresión armónica resueltos con su acorde transpuesto y su Voicing exacto. */
+    this.harmonySteps = new ComputedObservable(
+      [this.fingeringDesignPlan],
+      () => this.fingeringDesignPlan.value?.steps || []
     );
 
     /** Tonalidad visible luego de la transposición. */
@@ -303,6 +391,18 @@ export class PracticePlayerViewModel {
     this.synthInstrument.set(practice.getDefaultSynthInstrument());
     this.compingPattern.set(practice.comping || 'negras-abajo');
     this.activeChordStepIndex.set(-1);
+    this.stepVoicingOverrides.set({});
+
+    // Elige instrumento de digitación inicial respetando el instrumento activo del usuario si coincide
+    const preferredInst = normalizeVoicingInstrument(this._appVm.settings.value.defaultInstrument || 'guitarra');
+    const resolvedVoicingInst = practice.instruments.includes(preferredInst)
+      ? preferredInst
+      : normalizeVoicingInstrument(practice.instruments[0] || 'guitarra');
+    this.voicingInstrument.set(resolvedVoicingInst);
+
+    const hasExplicitVoicings = Array.isArray(practice.progression) && practice.progression.some((s) => Boolean(s.voicingId));
+    const recommendedDesign = this._fingeringDesigner.getRecommendedCriterion(resolvedVoicingInst, practice);
+    this.fingeringDesignId.set(hasExplicitVoicings ? 'original' : recommendedDesign);
 
     // Ajusta vista inicial idónea según tipo de práctica (Armonía muestra diagramas; Melodía/Mixta muestra Mixto)
     if (practice.type === 'harmony') {
@@ -356,7 +456,8 @@ export class PracticePlayerViewModel {
     const { beats, beatUnit } = parseTimeSignature(pr?.timeSignature || '4/4');
     const beatsPerMeasure = beats * (4 / beatUnit);
     const steps = this.harmonySteps.value;
-    const isBassPiece = Boolean(pr?.instruments?.includes('bajo'));
+    const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const isBassPiece = vInst === 'bajo' || vInst === 'bajo-5';
 
     let cursorBeat = 0;
     const chords = steps.map((step, idx) => {
@@ -410,12 +511,186 @@ export class PracticePlayerViewModel {
   }
 
   /**
+   * Cambia el instrumento de digitación de acordes ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5')
+   * y recalcula de inmediato los diagramas y el audio de la progresión.
+   * @param {'guitarra'|'guitarra-clasica'|'bajo'|'bajo-5'} inst Nuevo instrumento de digitación.
+   */
+  setVoicingInstrument(inst) {
+    const norm = normalizeVoicingInstrument(inst);
+    this.voicingInstrument.set(norm);
+    this.stepVoicingOverrides.set({});
+
+    const available = this.getAvailableFingeringCriteria();
+    const current = this.fingeringDesignId.value;
+    if (!available.some((c) => c.id === current)) {
+      this.fingeringDesignId.set(this._fingeringDesigner.getRecommendedCriterion(norm, this.practice.value));
+    }
+
+    // Ajusta el timbre del sintetizador para que suene coherente con el instrumento elegido
+    if (norm === 'bajo' || norm === 'bajo-5') {
+      this.synthInstrument.set('electric-bass');
+    } else if (norm === 'guitarra-clasica') {
+      this.synthInstrument.set('nylon-guitar');
+    } else {
+      this.synthInstrument.set('acoustic-guitar');
+    }
+
+    this._refreshHarmonyAudioTimeline();
+    this._syncAudioConfig();
+  }
+
+  /**
+   * Aplica un criterio de diseño de digitación distinto sobre la progresión actual
+   * ('original', 'conduccion-minima', 'posicion-abierta', 'zona-fija-media', 'shell-guia',
+   * 'drop-2-cantable', 'bajo-enlazado' o 'bajo-acordes-altos').
+   * @param {string} criterionId Identificador del criterio elegido.
+   */
+  setFingeringDesign(criterionId) {
+    if (!criterionId) return;
+    this.stepVoicingOverrides.set({});
+    this.fingeringDesignId.set(criterionId);
+    this._refreshHarmonyAudioTimeline();
+  }
+
+  /**
+   * Permite al usuario sustituir manualmente la digitación de un paso puntual dentro del diseño actual.
+   * @param {number} stepIndex Índice del paso en harmonySteps.
+   * @param {import('../models/Voicing.js').Voicing} voicing Nuevo voicing elegido.
+   */
+  setStepVoicingOverride(stepIndex, voicing) {
+    if (stepIndex < 0 || !voicing) return;
+    const next = { ...(this.stepVoicingOverrides.value || {}), [stepIndex]: voicing };
+    this.stepVoicingOverrides.set(next);
+    this._refreshHarmonyAudioTimeline();
+  }
+
+  /**
+   * Devuelve los criterios de diseño disponibles para el instrumento de digitación activo.
+   * @returns {Array<object>} Criterios seleccionables.
+   */
+  getAvailableFingeringCriteria() {
+    const pr = this.practice.value;
+    const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const list = this._fingeringDesigner.getAvailableCriteria(vInst);
+    const hasExplicit = Boolean(pr?.progression?.some((s) => Boolean(s.voicingId)));
+    const isBass = vInst === 'bajo' || vInst === 'bajo-5';
+    const matchesOriginal =
+      hasExplicit &&
+      this.transposeSemitones.value === 0 &&
+      ((isBass && pr.instruments.includes('bajo')) || (!isBass && !pr.instruments.every((i) => i === 'bajo')));
+
+    if (matchesOriginal) {
+      return [
+        {
+          id: 'original',
+          label: 'Original de la práctica',
+          shortLabel: 'Original',
+          description: 'Mantiene las digitaciones originales guardadas en la práctica.',
+          pedagogicalTip: 'Probá otro criterio para explorar enlaces alternativos en el mango.'
+        },
+        ...list
+      ];
+    }
+    return list;
+  }
+
+  /**
+   * Compara todos los criterios de diseño de digitación aplicables a la progresión actual
+   * para el instrumento elegido (usado por el modal «Comparar digitaciones»).
+   * @returns {Array<object>} Lista de planes diseñados con sus métricas comparativas.
+   */
+  compareFingeringDesigns() {
+    const pr = this.practice.value;
+    const steps = this.harmonySteps.value;
+    if (!pr || steps.length === 0) return [];
+    const customChords = [
+      ...(pr.customVoicings || []),
+      ...(this._appVm.progress.value?.customChords || [])
+    ];
+    return this._fingeringDesigner.compareDesigns({
+      steps: steps.map((s) => ({
+        chord: s.chord,
+        bars: s.bars,
+        section: s.section,
+        startMeasure: s.startMeasure
+      })),
+      voicingInstrument: this.voicingInstrument.value,
+      customChords
+    });
+  }
+
+  /**
+   * Guarda el diseño de digitación actual (con su instrumento y todas las formas elegidas)
+   * como una práctica propia editable del usuario.
+   * @returns {Promise<Practice|null>} Práctica creada o null si no había progresión.
+   */
+  async saveFingeringDesignAsPractice() {
+    const pr = this.practice.value;
+    const plan = this.fingeringDesignPlan.value;
+    if (!pr || !plan || plan.steps.length === 0) return null;
+
+    const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const instKey = vInst === 'bajo-5' ? 'bajo' : vInst;
+    const title = `${pr.title} — ${plan.criterion.shortLabel} (${vInst === 'bajo-5' ? 'Bajo 5c' : vInst === 'bajo' ? 'Bajo 4c' : vInst === 'guitarra-clasica' ? 'Clásica' : 'Guitarra'})`;
+
+    const customVoicings = [];
+    const seen = new Set();
+    const progression = plan.steps.map((st) => {
+      if (st.voicing && !seen.has(st.voicing.id)) {
+        seen.add(st.voicing.id);
+        customVoicings.push(st.voicing.toJSON());
+      }
+      return {
+        chord: st.chord,
+        bars: st.bars,
+        section: st.section || undefined,
+        voicingId: st.voicing?.id || undefined,
+        rhythm: st.rhythm || undefined
+      };
+    });
+
+    const nextPr = new Practice({
+      ...pr.toJSON(),
+      id: generatePracticeId(title),
+      version: 3,
+      title,
+      instruments: [instKey],
+      key: this.transposedKey.value || pr.key,
+      progression,
+      customVoicings,
+      comping: this.compingPattern.value || pr.comping,
+      notes: `Diseño de digitación: ${plan.criterion.label} (${plan.metrics.summaryLabel}). ${plan.criterion.description}`,
+      origin: 'user',
+      createdAt: new Date().toISOString()
+    });
+
+    await this._appVm.upsertUserPractice(nextPr);
+    this._appVm.showSnackbar(`Diseño guardado en «Mis prácticas»: ${plan.criterion.shortLabel}.`);
+    return nextPr;
+  }
+
+  /**
+   * Actualiza la línea de tiempo del sintetizador cuando cambia el diseño o el instrumento de digitación.
+   */
+  _refreshHarmonyAudioTimeline() {
+    const pr = this.practice.value;
+    if (!pr || this.harmonySteps.value.length === 0) return;
+    if (pr.type === 'harmony') {
+      const harmonyTl = this.buildHarmonyTimeline();
+      this.measureCount.set(harmonyTl.measureCount);
+      this._audio.loadTimeline(harmonyTl);
+    }
+  }
+
+  /**
    * Reproduce un voicing puntual al tocar su diagrama dentro de la pantalla de práctica.
    * @param {object} step Paso de harmonySteps.
    */
   playStepVoicing(step) {
     if (!step) return;
-    const isBass = this.practice.value?.instruments?.includes('bajo');
+    const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const tuning = getTuningForVoicingInstrument(vInst);
+    const isBass = tuning.instrument === 'bass';
     const comping = this.compingPattern.value || this.practice.value?.comping || 'negras-abajo';
     const isArpComping = comping.startsWith('arpegio');
     const mode = isBass
@@ -425,8 +700,8 @@ export class PracticePlayerViewModel {
     if (step.voicing) {
       this._audio.playVoicing(step.voicing, {
         mode,
-        instrument: this.synthInstrument.value,
-        tuning: Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar'),
+        instrument: isBass ? 'electric-bass' : vInst === 'guitarra-clasica' ? 'nylon-guitar' : this.synthInstrument.value,
+        tuning,
         duration: 1.5
       });
     }
