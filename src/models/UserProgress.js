@@ -69,6 +69,21 @@ export class UserProgress {
       data.lastPracticeByInstrument && typeof data.lastPracticeByInstrument === 'object'
         ? { ...data.lastPracticeByInstrument }
         : {};
+
+    /**
+     * Lista de símbolos de acordes marcados como favoritos en la Biblioteca de Acordes.
+     */
+    this.favoriteChords = Array.isArray(data.favoriteChords)
+      ? [...new Set(data.favoriteChords.map(String))]
+      : [];
+
+    /**
+     * Mapa clave de par/secuencia de acordes -> mejor marca de cambios limpios por minuto (CPM).
+     */
+    this.changeTrainerCpm =
+      data.changeTrainerCpm && typeof data.changeTrainerCpm === 'object'
+        ? { ...data.changeTrainerCpm }
+        : {};
   }
 
   /**
@@ -202,30 +217,37 @@ export class UserProgress {
     const status = {};
     for (const lvl of LEVELS) {
       const levelPractices = practices.filter((p) => p.level === lvl.number);
-      const completedCount = levelPractices.filter((p) => {
+      const completedPractices = levelPractices.filter((p) => {
         const stats = this.byPractice[p.id];
         return stats && (stats.completedTarget || stats.bestBpm >= (p.tempo?.target || 0));
-      }).length;
+      });
+      const completedCount = completedPractices.length;
+      const levelHasHarmony = levelPractices.some((p) => p.type === 'harmony');
+      const harmonyCompleted = completedPractices.some((p) => p.type === 'harmony');
 
       const requiredCount = Math.min(lvl.minKeyPracticesToUnlock, Math.max(1, levelPractices.length));
+      const levelRequirementMet =
+        completedCount >= requiredCount && (!levelHasHarmony || harmonyCompleted);
       const skipped = this.skippedLevels.includes(lvl.number);
       let unlocked = lvl.number === 1 || skipped;
       let remainingToUnlock = 0;
 
       if (!unlocked && lvl.number > 1) {
         const prev = status[lvl.number - 1];
-        if (prev && prev.completedCount >= prev.requiredCount) {
+        if (prev && prev.completed) {
           unlocked = true;
         } else if (prev) {
-          remainingToUnlock = Math.max(0, prev.requiredCount - prev.completedCount);
+          remainingToUnlock = Math.max(1, prev.requiredCount - prev.completedCount);
         }
       }
 
       status[lvl.number] = {
         unlocked,
-        completed: completedCount >= requiredCount && levelPractices.length > 0,
+        completed: levelRequirementMet && levelPractices.length > 0,
         completedCount,
         requiredCount,
+        harmonyCompleted,
+        needsHarmony: levelHasHarmony && !harmonyCompleted,
         remainingToUnlock,
         totalPractices: levelPractices.length,
         skipped
@@ -312,6 +334,41 @@ export class UserProgress {
   }
 
   /**
+   * Alterna un símbolo de acorde como favorito en la Biblioteca de Acordes.
+   * @param {string} chordSymbol Símbolo americano (ej. "Cmaj7").
+   * @returns {boolean} True si quedó marcado como favorito.
+   */
+  toggleFavoriteChord(chordSymbol) {
+    const clean = String(chordSymbol || '').trim();
+    if (!clean) return false;
+    const set = new Set(this.favoriteChords);
+    let fav;
+    if (set.has(clean)) {
+      set.delete(clean);
+      fav = false;
+    } else {
+      set.add(clean);
+      fav = true;
+    }
+    this.favoriteChords = [...set];
+    return fav;
+  }
+
+  /**
+   * Registra una marca de cambios limpios por minuto (CPM) del Entrenador de Cambios.
+   * @param {string} sequenceKey Clave de la secuencia (ej. "G-C").
+   * @param {number} cpm Cambios limpios por minuto logrados.
+   * @returns {number} Mejor marca CPM actualizada.
+   */
+  recordChangeTrainerCpm(sequenceKey, cpm) {
+    const safeCpm = Math.max(0, Math.round(Number(cpm) || 0));
+    const prev = Number(this.changeTrainerCpm[sequenceKey] || 0);
+    const best = Math.max(prev, safeCpm);
+    this.changeTrainerCpm[sequenceKey] = best;
+    return best;
+  }
+
+  /**
    * Serializa el progreso del usuario a JSON plano para almacenamiento o exportación.
    * @returns {object} Objeto JSON serializable.
    */
@@ -322,7 +379,9 @@ export class UserProgress {
       dailyLog: JSON.parse(JSON.stringify(this.dailyLog)),
       skippedLevels: [...this.skippedLevels],
       checkedGoals: JSON.parse(JSON.stringify(this.checkedGoals)),
-      lastPracticeByInstrument: { ...this.lastPracticeByInstrument }
+      lastPracticeByInstrument: { ...this.lastPracticeByInstrument },
+      favoriteChords: [...this.favoriteChords],
+      changeTrainerCpm: { ...this.changeTrainerCpm }
     };
   }
 }

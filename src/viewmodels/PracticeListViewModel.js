@@ -2,9 +2,24 @@ import { ComputedObservable, Observable } from '../core/Observable.js';
 import { LEVELS } from '../models/Level.js';
 
 /**
- * Orden pedagógico de áreas dentro de cada nivel.
+ * Orden pedagógico de áreas (melódicas y armónicas) dentro de cada nivel.
  */
-export const AREA_ORDER = ['escala', 'acordes', 'lectura', 'ritmo', 'walking', 'arpegio'];
+export const AREA_ORDER = [
+  'escala',
+  'acordes',
+  'formas',
+  'cambios',
+  'inversiones',
+  'conduccion-de-voces',
+  'campo-armonico',
+  'acompanamiento',
+  'arpegios-de-acorde',
+  'lectura',
+  'ritmo',
+  'walking',
+  'arpegio',
+  'oido'
+];
 
 /**
  * ViewModel de la pantalla de Prácticas organizada como "Ruta".
@@ -23,6 +38,8 @@ export class PracticeListViewModel {
 
     /** Instrumento activo fijo en la parte superior ('guitarra-clasica' | 'guitarra' | 'bajo'). */
     this.instrumentFilter = new Observable(appVm.settings.value.defaultInstrument || 'guitarra');
+    /** Filtro opcional de tipo ('todos' | 'melody' | 'harmony' | 'mixed'). */
+    this.typeFilter = new Observable('todos');
     /** Filtro opcional de nivel dentro del bottom sheet ('todos' | 1..5). */
     this.levelFilter = new Observable('todos');
     /** Filtro opcional de área/categoría dentro del bottom sheet ('todos' | categoría). */
@@ -54,9 +71,10 @@ export class PracticeListViewModel {
 
     /** Cantidad de filtros secundarios activos dentro del bottom sheet. */
     this.activeFilterCount = new ComputedObservable(
-      [this.levelFilter, this.categoryFilter, this.originFilter, this.tagFilter],
+      [this.typeFilter, this.levelFilter, this.categoryFilter, this.originFilter, this.tagFilter],
       () => {
         let c = 0;
+        if (this.typeFilter.value !== 'todos') c += 1;
         if (this.levelFilter.value !== 'todos') c += 1;
         if (this.categoryFilter.value !== 'todos') c += 1;
         if (this.originFilter.value !== 'todos') c += 1;
@@ -75,6 +93,7 @@ export class PracticeListViewModel {
     this.filteredPractices = new ComputedObservable(
       [
         this.instrumentPractices,
+        this.typeFilter,
         this.levelFilter,
         this.categoryFilter,
         this.originFilter,
@@ -247,6 +266,7 @@ export class PracticeListViewModel {
    */
   _computeFiltered() {
     const base = this.instrumentPractices.value;
+    const typeF = this.typeFilter.value;
     const lvl = this.levelFilter.value;
     const cat = this.categoryFilter.value;
     const origin = this.originFilter.value;
@@ -255,6 +275,7 @@ export class PracticeListViewModel {
 
     return base
       .filter((p) => {
+        if (typeF !== 'todos' && p.type !== typeF) return false;
         if (lvl !== 'todos' && p.level !== Number(lvl)) return false;
         if (cat !== 'todos' && p.category !== cat) return false;
         if (origin !== 'todos' && p.origin !== origin) return false;
@@ -266,6 +287,14 @@ export class PracticeListViewModel {
         return true;
       })
       .sort((a, b) => a.level - b.level || a.title.localeCompare(b.title, 'es-AR'));
+  }
+
+  /**
+   * Establece el filtro de tipo de práctica ('todos' | 'melody' | 'harmony' | 'mixed').
+   * @param {string} value Tipo elegido.
+   */
+  setType(value) {
+    this.typeFilter.set(value);
   }
 
   /**
@@ -323,6 +352,7 @@ export class PracticeListViewModel {
    * Limpia búsqueda y filtros secundarios manteniendo el instrumento activo.
    */
   resetFilters() {
+    this.typeFilter.set('todos');
     this.levelFilter.set('todos');
     this.categoryFilter.set('todos');
     this.originFilter.set('todos');

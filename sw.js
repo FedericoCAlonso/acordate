@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate.
+ * Versión del caché estático de la PWA Acordate (v3: Módulo de Armonía).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v2';
+const CACHE_NAME = 'acordate-static-v3';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -35,6 +35,11 @@ const PRECACHE_ASSETS = [
   './src/models/Scale.js',
   './src/models/UserProgress.js',
   './src/models/Settings.js',
+  './src/models/Tuning.js',
+  './src/models/ChordQuality.js',
+  './src/models/Chord.js',
+  './src/models/Voicing.js',
+  './src/models/ProgressionStep.js',
   './src/services/StorageService.js',
   './src/services/ThemeService.js',
   './src/services/WakeLockService.js',
@@ -44,20 +49,27 @@ const PRECACHE_ASSETS = [
   './src/services/ScaleGenerator.js',
   './src/services/ProgressionGenerator.js',
   './src/services/WalkingBassGenerator.js',
+  './src/services/VoicingGenerator.js',
+  './src/services/HarmonyService.js',
   './src/services/ImportExportService.js',
   './src/data/catalog.js',
   './src/data/catalog.json',
+  './src/data/harmonyCatalog.json',
+  './src/data/voicings.js',
   './src/viewmodels/AppViewModel.js',
   './src/viewmodels/PracticeListViewModel.js',
   './src/viewmodels/PracticePlayerViewModel.js',
+  './src/viewmodels/ChordsHubViewModel.js',
   './src/viewmodels/MetronomeViewModel.js',
   './src/viewmodels/EditorViewModel.js',
   './src/viewmodels/ProgressViewModel.js',
   './src/viewmodels/SettingsViewModel.js',
   './src/views/uiHelpers.js',
+  './src/views/ChordDiagramView.js',
   './src/views/AppShellView.js',
   './src/views/PracticeListView.js',
   './src/views/PracticePlayerView.js',
+  './src/views/ChordsHubView.js',
   './src/views/MetronomeView.js',
   './src/views/EditorView.js',
   './src/views/ProgressView.js',

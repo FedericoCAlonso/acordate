@@ -1,14 +1,17 @@
-import { createPopupMenu, el, icon } from './uiHelpers.js';
+import { closeAllOverlays, createPopupMenu, el, icon } from './uiHelpers.js';
 
 /**
- * Destinos principales de navegación presentes en Bottom Bar, Rail y Drawer.
+ * Destinos principales de navegación.
+ * En barra inferior móvil se muestran exactamente 5 destinos (Prácticas, Acordes, Metrónomo, Progreso, Ajustes);
+ * en rail de tablet y drawer de escritorio también se muestra Editor como acceso directo.
  */
 const NAV_ITEMS = [
-  { route: 'practicas', hash: '#/practicas', label: 'Prácticas', iconName: 'music' },
-  { route: 'metronomo', hash: '#/metronomo', label: 'Metrónomo', iconName: 'metronome' },
-  { route: 'editor', hash: '#/editor/nueva', label: 'Editor', iconName: 'edit' },
-  { route: 'progreso', hash: '#/progreso', label: 'Progreso', iconName: 'chart' },
-  { route: 'ajustes', hash: '#/ajustes', label: 'Ajustes', iconName: 'settings' }
+  { route: 'practicas', hash: '#/practicas', label: 'Prácticas', iconName: 'music', desktopOnly: false },
+  { route: 'acordes', hash: '#/acordes', label: 'Acordes', iconName: 'chords', desktopOnly: false },
+  { route: 'metronomo', hash: '#/metronomo', label: 'Metrónomo', iconName: 'metronome', desktopOnly: false },
+  { route: 'editor', hash: '#/editor/nueva', label: 'Editor', iconName: 'edit', desktopOnly: true },
+  { route: 'progreso', hash: '#/progreso', label: 'Progreso', iconName: 'chart', desktopOnly: false },
+  { route: 'ajustes', hash: '#/ajustes', label: 'Ajustes', iconName: 'settings', desktopOnly: false }
 ];
 
 /**
@@ -90,7 +93,7 @@ export class AppShellView {
           ]
         );
         this._navLinks.set(item.route, link);
-        return el('li', {}, [link]);
+        return el('li', { className: item.desktopOnly ? 'm3-nav__li--desktop-only' : '' }, [link]);
       })
     );
 
@@ -255,6 +258,18 @@ export class AppShellView {
       return;
     }
 
+    if (route.name === 'acordes') {
+      this._topTitle.textContent = 'Acordes y armonía';
+      if (this._activeLayoutKey !== 'acordes') {
+        this._cleanupActiveViews();
+        this._contentHost.innerHTML = '';
+        this._views.chords.mount(this._contentHost);
+        this._activeLayoutKey = 'acordes';
+      }
+      if (route.params?.tab) this._views.chords.openTab(route.params.tab);
+      return;
+    }
+
     if (route.name === 'metronomo') {
       this._topTitle.textContent = 'Metrónomo';
       if (this._activeLayoutKey !== 'metronomo') {
@@ -345,8 +360,10 @@ export class AppShellView {
    * Desmonta vistas previas deteniendo audio/observadores si corresponde al cambiar de pantalla.
    */
   _cleanupActiveViews() {
+    closeAllOverlays();
     this._views.list.unmount?.();
     this._views.player.unmount?.();
+    this._views.chords?.unmount?.();
     this._views.metronome.unmount?.();
     this._views.editor.unmount?.();
     this._views.progress.unmount?.();

@@ -78,12 +78,13 @@ test('getTuningStrings devuelve las cuerdas al aire reales para guitarra (E A D 
   );
 });
 
-test('Todas las 62 prácticas del catálogo producen la primera nota MIDI esperada con abcjs y están en rango físico real', async () => {
+test('Todas las prácticas con partitura ABC del catálogo producen la primera nota MIDI esperada con abcjs y están en rango físico real', async () => {
   const ABCJS = loadVendoredAbcjs();
   const catalog = await loadBuiltinCatalog();
+  const abcPractices = catalog.filter((p) => Boolean(p.abc));
   const abcSvc = new AbcService();
 
-  for (const practice of catalog) {
+  for (const practice of abcPractices) {
     const instrument = practice.instruments[0];
     const policy = INSTRUMENT_PITCH_POLICY[instrument];
     const tunes = ABCJS.parseOnly(practice.abc);

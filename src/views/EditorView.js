@@ -1,7 +1,12 @@
-import { CATEGORY_LABELS, INSTRUMENT_LABELS } from '../core/i18n.js';
+import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS } from '../core/i18n.js';
 import { ALL_KEYS } from '../core/MusicTheory.js';
+import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
+import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
+import { Tuning } from '../models/Tuning.js';
+import { Voicing } from '../models/Voicing.js';
 import { SCALE_RHYTHMS } from '../services/ScaleGenerator.js';
 import { EDITOR_TEMPLATES, QUICK_CHORDS } from '../viewmodels/EditorViewModel.js';
+import { createChordDiagramElement, createInteractiveVoicingPicker } from './ChordDiagramView.js';
 import { createFloatingField, el, icon, openConfirmDialog, openModalDialog } from './uiHelpers.js';
 
 /**
@@ -185,9 +190,19 @@ export class EditorView {
     };
 
     this._instChips = el('div', { className: 'm3-chip-row', role: 'group', 'aria-label': 'Instrumentos' });
+    this._typeSeg = el('div', { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Tipo de práctica' });
+
+    this._fields.comping = createFloatingField({
+      id: 'ed-comping',
+      label: 'Patrón de ritmo (armonía)',
+      kind: 'select',
+      options: Object.values(COMPING_PATTERNS).map((p) => ({ value: p.id, label: p.label })),
+      onChange: (e) => this._setField('comping', e.target.value)
+    });
 
     const metaCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('h2', { className: 'm3-title-md' }, ['Datos de la práctica']),
+      this._typeSeg,
       this._fields.title.wrap,
       el('div', {}, [
         el('div', { className: 'm3-body-md', style: 'margin-bottom:6px' }, ['Instrumentos']),
@@ -198,6 +213,7 @@ export class EditorView {
         this._fields.level.wrap,
         this._fields.key.wrap,
         this._fields.timeSignature.wrap,
+        this._fields.comping.wrap,
         this._fields.tempoStart.wrap,
         this._fields.tempoTarget.wrap,
         this._fields.tempoStep.wrap
@@ -205,6 +221,19 @@ export class EditorView {
       this._fields.tagsText.wrap,
       this._fields.goalsText.wrap,
       this._fields.notes.wrap
+    ]);
+
+    // Constructor de progresión de armonía con selector de voicing y grilla interactiva 6x5
+    this._harmonyStepsHost = el('div', { style: 'display:flex; flex-direction:column; gap:10px; margin-top:10px' });
+    this._harmonyCard = el('div', { className: 'm3-card', style: 'margin-top:14px' }, [
+      el('div', { className: 'player-toolbar' }, [
+        el('h3', { className: 'm3-title-md' }, ['Progresión de acordes y voicings']),
+        el('div', { className: 'stepper-inline' }, [
+          el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Quitar último paso', onClick: () => this._vm.resizeProgressionSteps(-1) }, ['−']),
+          el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Agregar paso', onClick: () => this._vm.resizeProgressionSteps(1) }, ['+'])
+        ])
+      ]),
+      this._harmonyStepsHost
     ]);
 
     // Grilla visual de cifrado por compás + botones de acordes comunes
@@ -264,7 +293,7 @@ export class EditorView {
       this._previewScoreEl
     ]);
 
-    const leftCol = el('div', {}, [metaCard, chordGridCard]);
+    const leftCol = el('div', {}, [metaCard, this._harmonyCard, chordGridCard]);
     const layout = el('div', { className: 'editor-layout' }, [leftCol, abcCard]);
 
     this._container.appendChild(this._draftBanner);
@@ -355,6 +384,32 @@ export class EditorView {
       }
     }
 
+    // Actualiza selector de tipo (Melodía / Armonía / Mixta)
+    const curType = f.type || 'melody';
+    this._typeSeg.innerHTML = '';
+    for (const t of ['melody', 'harmony', 'mixed']) {
+      this._typeSeg.appendChild(
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-segmented__btn',
+            ripple: true,
+            'aria-pressed': String(curType === t),
+            onClick: () => this._vm.updateField('type', t)
+          },
+          [PRACTICE_TYPE_LABELS[t]]
+        )
+      );
+    }
+
+    const showHarmony = curType === 'harmony' || curType === 'mixed';
+    this._harmonyCard.style.display = showHarmony ? 'block' : 'none';
+    this._fields.comping.wrap.style.display = showHarmony ? 'flex' : 'none';
+    if (showHarmony) {
+      this._renderHarmonyStepsEditor(f);
+    }
+
     // Actualiza chips de instrumentos
     this._instChips.innerHTML = '';
     for (const [instKey, instLabel] of Object.entries(INSTRUMENT_LABELS)) {
@@ -381,6 +436,28 @@ export class EditorView {
    */
   _renderLivePreview(f) {
     if (!this._previewScoreEl) return;
+    if (f.type === 'harmony') {
+      const fam = f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
+      const tuning = Tuning.defaultForInstrument(fam);
+      const notation = this._appVm.settings.value.chordNotation;
+      this._previewScoreEl.innerHTML = '';
+      const strip = el(
+        'div',
+        { className: 'harmony-strip' },
+        (f.progression || []).map((st) => {
+          const v = findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
+            getCuratedVoicingsForChord(st.chord, fam, tuning)[0];
+          return el('div', { className: 'harmony-step-card' }, [
+            el('strong', {}, [`${st.chord} (${st.bars}c)`]),
+            v ? createChordDiagramElement(v, { tuning, notation, size: 'sm', showTitle: false }) : null
+          ]);
+        })
+      );
+      this._previewScoreEl.appendChild(strip);
+      this._lastVisualObj = null;
+      return;
+    }
+
     const prepared = this._abc.prepareAbcForRender(f.abc, {
       viewMode: 'mixto',
       chordNotation: this._appVm.settings.value.chordNotation,
@@ -398,6 +475,142 @@ export class EditorView {
     if (warnings.length > 0 && this._vm.abcWarnings.value.length === 0) {
       this._vm.abcWarnings.set(warnings, true);
     }
+  }
+
+  /**
+   * Renderiza los pasos de progresión armónica con selector de voicing de biblioteca
+   * y botón para armar una digitación propia en una grilla táctil de 6×5 trastes.
+   * @param {object} f Estado actual del formulario.
+   */
+  _renderHarmonyStepsEditor(f) {
+    if (!this._harmonyStepsHost) return;
+    const fam = f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
+    const tuning = Tuning.defaultForInstrument(fam);
+    this._harmonyStepsHost.innerHTML = '';
+
+    (f.progression || []).forEach((step, idx) => {
+      const curated = getCuratedVoicingsForChord(step.chord || 'C', fam, tuning);
+      const customMatch = (f.customVoicings || []).filter((v) => v.chord === step.chord);
+      const allOpts = [...customMatch, ...curated];
+
+      const chordIn = el('input', {
+        type: 'text',
+        value: step.chord,
+        className: 'm3-field__input',
+        style: 'padding:8px 10px; min-height:44px; width:92px',
+        'aria-label': `Acorde paso ${idx + 1}`,
+        onChange: (e) => this._vm.updateProgressionStep(idx, { chord: e.target.value.trim() || 'C', voicingId: null })
+      });
+
+      const barsIn = el('input', {
+        type: 'number',
+        min: 0.5, max: 8, step: 0.5,
+        value: step.bars,
+        className: 'm3-field__input',
+        style: 'padding:8px; min-height:44px; width:68px',
+        'aria-label': `Compases paso ${idx + 1}`,
+        onChange: (e) => this._vm.updateProgressionStep(idx, { bars: Math.max(0.5, Number(e.target.value) || 1) })
+      });
+
+      const voicingSelect = el(
+        'select',
+        {
+          className: 'm3-field__select',
+          style: 'padding:8px 10px; min-height:44px; flex:1 1 140px',
+          'aria-label': `Voicing paso ${idx + 1}`,
+          onChange: (e) => this._vm.updateProgressionStep(idx, { voicingId: e.target.value || null })
+        },
+        [
+          el('option', { value: '' }, ['Automático (biblioteca)']),
+          ...allOpts.map((v) =>
+            el('option', { value: v.id, selected: v.id === step.voicingId }, [
+              `${v.id} (T${v.baseFret})`
+            ])
+          )
+        ]
+      );
+      voicingSelect.value = step.voicingId || '';
+
+      const customBtn = el(
+        'button',
+        {
+          type: 'button',
+          className: 'm3-btn m3-btn--compact m3-btn--outlined',
+          ripple: true,
+          onClick: () => this._openCustomVoicingDialog(idx, step, tuning)
+        },
+        ['Digitar 6×5']
+      );
+
+      this._harmonyStepsHost.appendChild(
+        el('div', { className: 'stepper-inline', style: 'width:100%' }, [
+          el('span', { className: 'm3-label' }, [`#${idx + 1}`]),
+          chordIn,
+          barsIn,
+          el('span', { className: 'm3-body-md' }, ['c.']),
+          voicingSelect,
+          customBtn
+        ])
+      );
+    });
+  }
+
+  /**
+   * Abre el diálogo interactivo de grilla 6×5 (o 4×5 en bajo) para crear una digitación propia.
+   * @param {number} stepIdx Índice del paso de progresión.
+   * @param {object} step Datos actuales del paso.
+   * @param {Tuning} tuning Afinación activa.
+   */
+  _openCustomVoicingDialog(stepIdx, step, tuning) {
+    const existing = findVoicingById(step.voicingId, this._vm.form.value.customVoicings || [], step.chord, tuning.instrument) ||
+      new Voicing({
+        id: `custom-${step.chord.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now().toString(36)}`,
+        chord: step.chord,
+        instrument: tuning.instrument,
+        frets: Array(tuning.stringCount).fill(null),
+        fingers: Array(tuning.stringCount).fill(null)
+      });
+
+    let working = new Voicing({
+      ...existing.toJSON(),
+      id: existing.id.startsWith('custom-') ? existing.id : `custom-${step.chord.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now().toString(36)}`,
+      chord: step.chord
+    });
+
+    const previewHost = el('div', { style: 'display:flex; justify-content:center' });
+    const renderPreview = () => {
+      previewHost.innerHTML = '';
+      previewHost.appendChild(
+        createChordDiagramElement(working, {
+          tuning,
+          notation: this._appVm.settings.value.chordNotation,
+          size: 'md',
+          labelMode: 'functions'
+        })
+      );
+    };
+
+    const picker = createInteractiveVoicingPicker(working, tuning, (nextVoicing) => {
+      working = nextVoicing;
+      renderPreview();
+    });
+    renderPreview();
+
+    openModalDialog({
+      title: `Crear digitación propia — ${step.chord}`,
+      body: el('div', { style: 'display:flex; flex-direction:column; gap:12px' }, [previewHost, picker]),
+      actions: [
+        { label: 'Cancelar', variant: 'm3-btn--text', onClick: (close) => close() },
+        {
+          label: 'Usar esta digitación',
+          variant: 'm3-btn--filled',
+          onClick: (close) => {
+            this._vm.attachCustomVoicingToStep(stepIdx, working);
+            close();
+          }
+        }
+      ]
+    });
   }
 
   /**

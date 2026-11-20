@@ -1,25 +1,34 @@
 import { Practice } from '../models/Practice.js';
 
 /**
- * Carga y valida el catálogo inicial de prácticas incluidas desde catalog.json.
- * Compatible tanto con navegador (fetch) como con pruebas unitarias en Node.js.
- * @returns {Promise<Practice[]>} Lista de instancias Practice de solo lectura (origin: "builtin").
+ * Lee un archivo JSON relativo al módulo actual usando fetch en navegador o fs en Node.js.
+ * @param {string} relativePath Ruta relativa (ej. './catalog.json').
+ * @returns {Promise<Array<object>>} Arreglo JSON parseado.
  */
-export async function loadBuiltinCatalog() {
-  const url = new URL('./catalog.json', import.meta.url);
-
-  let rawList;
+async function readJsonFile(relativePath) {
+  const url = new URL(relativePath, import.meta.url);
   if (typeof fetch === 'function' && url.protocol !== 'file:') {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`No se pudo cargar el catálogo inicial (${response.status}).`);
+      throw new Error(`No se pudo cargar ${relativePath} (${response.status}).`);
     }
-    rawList = await response.json();
-  } else {
-    const { readFile } = await import('node:fs/promises');
-    const text = await readFile(url, 'utf-8');
-    rawList = JSON.parse(text);
+    return response.json();
   }
+  const { readFile } = await import('node:fs/promises');
+  const text = await readFile(url, 'utf-8');
+  return JSON.parse(text);
+}
 
-  return rawList.map((item) => new Practice(item));
+/**
+ * Carga y valida el catálogo inicial completo (prácticas de melodía, mixtas y armonía)
+ * desde catalog.json y harmonyCatalog.json.
+ * @returns {Promise<Practice[]>} Lista combinada de instancias Practice (origin: "builtin").
+ */
+export async function loadBuiltinCatalog() {
+  const [melodyList, harmonyList] = await Promise.all([
+    readJsonFile('./catalog.json'),
+    readJsonFile('./harmonyCatalog.json')
+  ]);
+
+  return [...melodyList, ...harmonyList].map((item) => new Practice(item));
 }

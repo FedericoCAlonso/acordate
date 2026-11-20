@@ -34,7 +34,16 @@ export const INSTRUMENT_LABELS = {
 };
 
 /**
- * Etiquetas legibles para las categorías de prácticas.
+ * Etiquetas legibles para los tipos principales de práctica.
+ */
+export const PRACTICE_TYPE_LABELS = {
+  melody: 'Melodía',
+  harmony: 'Armonía',
+  mixed: 'Mixta'
+};
+
+/**
+ * Etiquetas legibles para las categorías de prácticas (melódicas y armónicas).
  */
 export const CATEGORY_LABELS = {
   escala: 'Escalas',
@@ -42,7 +51,15 @@ export const CATEGORY_LABELS = {
   lectura: 'Lectura',
   ritmo: 'Ritmo / Groove',
   walking: 'Walking bass',
-  arpegio: 'Arpegios'
+  arpegio: 'Arpegios',
+  formas: 'Formas de acorde',
+  inversiones: 'Inversiones',
+  cambios: 'Cambios de acorde',
+  'conduccion-de-voces': 'Conducción de voces',
+  'campo-armonico': 'Campo armónico',
+  acompanamiento: 'Acompañamiento',
+  'arpegios-de-acorde': 'Arpegios de acorde',
+  oido: 'Entrenamiento de oído'
 };
 
 /**

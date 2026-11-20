@@ -1,0 +1,1448 @@
+[
+  {
+    "id": "guitarra-cambios-g-c-01",
+    "version": 2,
+    "type": "harmony",
+    "title": "Cambios G – C – Am – Em (abiertos)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "cambios",
+    "level": 1,
+    "tags": [
+      "acordes abiertos",
+      "cambios",
+      "pulso"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 50,
+      "target": 80,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      }
+    ],
+    "comping": "negras-abajo",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Cambiar sin cortar el pulso de la mano derecha",
+      "Preparar los dedos en el aire antes de pisar"
+    ],
+    "notes": "Empezá a 50 BPM rasgueando cuatro negras hacia abajo por compás.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-formas-n1-01",
+    "version": 2,
+    "type": "harmony",
+    "title": "Formas abiertas esenciales: C, A, G, E, D, Am, Em, Dm",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "formas",
+    "level": 1,
+    "tags": [
+      "acordes abiertos",
+      "primera posición",
+      "CAGED"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 50,
+      "target": 76,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "A",
+        "voicingId": "a-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E",
+        "voicingId": "e-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm",
+        "voicingId": "d-minor-open"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Que suene cada cuerda limpia sin trasteos",
+      "Memorizar qué cuerdas se silencian (×)"
+    ],
+    "notes": "Arpegiá lentamente cada acorde para comprobar que ninguna cuerda queda apagada por accidente.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n1-i-iv-v",
+    "version": 2,
+    "type": "harmony",
+    "title": "Cadencia I – IV – V en Sol, Do y Re",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "campo-armonico",
+    "level": 1,
+    "tags": [
+      "I-IV-V",
+      "acordes abiertos",
+      "rasgueo"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 80,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      }
+    ],
+    "comping": "negras-abajo",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Reconocer la sensación de tónica, subdominante y dominante",
+      "Probar transponerla a C y D"
+    ],
+    "notes": "Usá la transposición del reproductor para practicar el mismo I-IV-V en otras tonalidades.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n2-septimas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Séptimas abiertas y acordes sus2/sus4",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "formas",
+    "level": 2,
+    "tags": [
+      "séptimas",
+      "sus2",
+      "sus4",
+      "abiertos"
+    ],
+    "key": "A",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 70,
+      "target": 96,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Asus4",
+        "voicingId": "asus4-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Asus2",
+        "voicingId": "asus2-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em7",
+        "voicingId": "em7-open"
+      }
+    ],
+    "comping": "rasgueo-balada",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Escuchar el color de la séptima mayor vs dominante",
+      "Resolver sus4 suavemente hacia el acorde base"
+    ],
+    "notes": "Prestá atención a los pequeños movimientos de un solo dedo que transforman una tríada en séptima o sus.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n2-cejillas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Primeras cejillas (F y Bm) sobre I – vi – IV – V",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "cambios",
+    "level": 2,
+    "tags": [
+      "cejilla",
+      "F",
+      "Bm",
+      "I-vi-IV-V"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 68,
+      "target": 98,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D",
+        "voicingId": "d-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Bm",
+        "voicingId": "bm-barre-2"
+      },
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      }
+    ],
+    "comping": "rasgueo-balada",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Apoyar el costado del dedo índice cerca del traste",
+      "Relajar el pulgar sin apretar de más"
+    ],
+    "notes": "Combiná acordes abiertos con F y Bm para entrenar la entrada limpia de la cejilla.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n2-blues",
+    "version": 2,
+    "type": "harmony",
+    "title": "Blues de 12 compases en La (acordes 7 abiertos)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acompanamiento",
+    "level": 2,
+    "tags": [
+      "blues",
+      "12 compases",
+      "dominantes"
+    ],
+    "key": "A",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 75,
+      "target": 100,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 2,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 2,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 2,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      }
+    ],
+    "comping": "negras-abajo",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Mantener la forma de 12 compases sin perder la cuenta",
+      "Acentuar tiempos 2 y 4 con el rasgueo"
+    ],
+    "notes": "Probá cambiar el patrón de ritmo a Swing en negras directamente desde el reproductor.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n3-triadas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Tríadas e inversiones en cuerdas 4-3-2 y 3-2-1",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "inversiones",
+    "level": 3,
+    "tags": [
+      "tríadas",
+      "inversiones",
+      "CAGED"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 85,
+      "target": 118,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "F"
+      },
+      {
+        "bars": 1,
+        "chord": "G"
+      },
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "Am"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm"
+      },
+      {
+        "bars": 1,
+        "chord": "G"
+      },
+      {
+        "bars": 1,
+        "chord": "C"
+      }
+    ],
+    "comping": "negras-abajo",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Identificar dónde está la raíz en cada inversión de tríada",
+      "Enlazar acordes en la misma zona del diapasón"
+    ],
+    "notes": "Usá el Explorador de Inversiones en la sección Acordes para recorrer cada forma por el mango.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n3-campo",
+    "version": 2,
+    "type": "harmony",
+    "title": "Campo armónico mayor en Sol (cadencias y cejillas)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "campo-armonico",
+    "level": 3,
+    "tags": [
+      "campo armónico",
+      "cejillas",
+      "diatónico"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 86,
+      "target": 120,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G",
+        "voicingId": "g-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Bm"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em7",
+        "voicingId": "em7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      }
+    ],
+    "comping": "rasgueo-balada",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Conectar los grados I–ii–iii–IV–V–vi sin saltos bruscos",
+      "Distinguir la función de cada acorde en la tonalidad"
+    ],
+    "notes": "Recorré el campo armónico de Sol mayor con formas abiertas y móviles.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n4-shell-ii-v-i",
+    "version": 2,
+    "type": "harmony",
+    "title": "Shell voicings y conducción de voces sobre ii–V–I",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 4,
+    "tags": [
+      "shell",
+      "drop2",
+      "ii-V-I",
+      "jazz"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 105,
+      "target": 148,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Gm7"
+      },
+      {
+        "bars": 1,
+        "chord": "C7"
+      },
+      {
+        "bars": 2,
+        "chord": "Fmaj7"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7b5"
+      },
+      {
+        "bars": 1,
+        "chord": "D7b9"
+      },
+      {
+        "bars": 2,
+        "chord": "Gm7"
+      }
+    ],
+    "comping": "swing-negras",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Mantener las notas guía (3ª y 7ª) moviéndose por semitono",
+      "Comping liviano y rítmico sin empastar el registro grave"
+    ],
+    "notes": "Alterná entre Comping jazz en negras y Bossa nova desde el selector de ritmo.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n4-bossa",
+    "version": 2,
+    "type": "harmony",
+    "title": "Comping bossa nova con Drop 2 en Do",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "acompanamiento",
+    "level": 4,
+    "tags": [
+      "bossa",
+      "drop2",
+      "séptimas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 144,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 2,
+        "chord": "Cmaj7"
+      },
+      {
+        "bars": 2,
+        "chord": "A7"
+      },
+      {
+        "bars": 2,
+        "chord": "Dm7"
+      },
+      {
+        "bars": 2,
+        "chord": "G7"
+      }
+    ],
+    "comping": "bossa",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Tocar el patrón sincopado con dedos (p-i-m-a) en bloques limpios",
+      "Dejar respirar los silencios característicos de la bossa"
+    ],
+    "notes": "Enfocá la dinámica pareja entre bajo y bloque armónico.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "guitarra-armon-n5-extensiones",
+    "version": 2,
+    "type": "harmony",
+    "title": "Extensiones (9, 11, 13), alteradas y sustitución por tritono",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 5,
+    "tags": [
+      "extensiones",
+      "tritono",
+      "alteradas",
+      "jazz"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 125,
+      "target": 165,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Dm9"
+      },
+      {
+        "bars": 1,
+        "chord": "Db7"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj9"
+      },
+      {
+        "bars": 1,
+        "chord": "A7alt"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm9"
+      },
+      {
+        "bars": 1,
+        "chord": "G13"
+      },
+      {
+        "bars": 1,
+        "chord": "G7b9"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj9"
+      }
+    ],
+    "comping": "swing-negras",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Escuchar la bajada cromática de bajo D → Db → C del sustituto tritonal",
+      "Resolver las tensiones alteradas (b9, #5) por semitono"
+    ],
+    "notes": "Estudiá despacio cada voicing observando las funciones armónicas en los puntos del diagrama.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-armon-n1-abiertos",
+    "version": 2,
+    "type": "harmony",
+    "title": "Acordes abiertos con p-i-m-a y cadencia I – V7",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "formas",
+    "level": 1,
+    "tags": [
+      "p-i-m-a",
+      "clásica",
+      "I-V7"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 54,
+      "target": 78,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-easy"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      }
+    ],
+    "comping": "arpegio-pima",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Alternar la vista Diagrama y Pentagrama para leer cada posición",
+      "Sostener la mano izquierda armada durante todo el arpegio"
+    ],
+    "notes": "En guitarra clásica podés estudiar los acordes tanto en diagrama como en pentagrama con digitación.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-armon-n2-cadencias",
+    "version": 2,
+    "type": "harmony",
+    "title": "Cadencias clásicas I–IV–V7–I e i–iv–V7–i en vals",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "acompanamiento",
+    "level": 2,
+    "tags": [
+      "vals",
+      "cadencias",
+      "clásica",
+      "cejilla"
+    ],
+    "key": "Am",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 72,
+      "target": 98,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm",
+        "voicingId": "d-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm",
+        "voicingId": "d-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      }
+    ],
+    "comping": "vals",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Diferenciar el pulgar en tiempo 1 del acorde en bloque en tiempos 2 y 3",
+      "Mantener la cadencia menor limpia con el Sol# de E7"
+    ],
+    "notes": "Practicá la entrada suave de la cejilla de Fa sin cortar el ritmo ternario.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-armon-n3-inversiones-bajo",
+    "version": 2,
+    "type": "harmony",
+    "title": "Inversiones y bajo descendente (C – G/B – Am – Am/G – F – C/E)",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "inversiones",
+    "level": 3,
+    "tags": [
+      "inversiones",
+      "bajo descendente",
+      "canon",
+      "clásica"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 82,
+      "target": 116,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G/B",
+        "voicingId": "g-over-b-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am/G",
+        "voicingId": "am-over-g-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 1,
+        "chord": "C/E",
+        "voicingId": "c-over-e-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm7",
+        "voicingId": "dm7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      }
+    ],
+    "comping": "arpegio-pima",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Destacar con el pulgar la escala descendente C – B – A – G – F – E – D – G",
+      "Conectar los bajos sin silencios involuntarios"
+    ],
+    "notes": "Una de las progresiones más musicales del repertorio clásico y popular.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-armon-n4-dominantes-sec",
+    "version": 2,
+    "type": "harmony",
+    "title": "Dominantes secundarios y modulación al relativo menor",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 4,
+    "tags": [
+      "dominantes secundarios",
+      "modulación",
+      "conducción"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 102,
+      "target": 140,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C",
+        "voicingId": "c-major-open"
+      },
+      {
+        "bars": 1,
+        "chord": "E7",
+        "voicingId": "e7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am",
+        "voicingId": "a-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "A7",
+        "voicingId": "a7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm7",
+        "voicingId": "dm7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "D7",
+        "voicingId": "d7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "G7",
+        "voicingId": "g7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      }
+    ],
+    "comping": "arpegio-pima",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Escuchar la tensión de cada dominante secundario (V/vi, V/ii, V/V)",
+      "Conducir la sensible de cada dominante hacia su resolución"
+    ],
+    "notes": "Notá cómo E7 apunta a Am, A7 apunta a Dm y D7 prepara a G7.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "gc-armon-n5-cromatismo",
+    "version": 2,
+    "type": "harmony",
+    "title": "Armonía cromática y sexta napolitana en Mi menor",
+    "instruments": [
+      "guitarra-clasica"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 5,
+    "tags": [
+      "sexta napolitana",
+      "cromatismo",
+      "clásica avanzada"
+    ],
+    "key": "Em",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 118,
+      "target": 160,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Em",
+        "voicingId": "e-minor-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7",
+        "voicingId": "am7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-barre"
+      },
+      {
+        "bars": 1,
+        "chord": "B7",
+        "voicingId": "b7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Em7",
+        "voicingId": "em7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7",
+        "voicingId": "cmaj7-open"
+      },
+      {
+        "bars": 1,
+        "chord": "F",
+        "voicingId": "f-major-easy"
+      },
+      {
+        "bars": 1,
+        "chord": "B7",
+        "voicingId": "b7-open"
+      }
+    ],
+    "comping": "vals",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Escuchar el color expresivo del acorde napolitano (F sobre Em) resolviendo en B7",
+      "Sostener claridad contrapuntística en las voces medias"
+    ],
+    "notes": "El acorde de Fa mayor (bII) en Mi menor genera una tensión dramática clásica antes de la dominante B7.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n1-r35",
+    "version": 2,
+    "type": "harmony",
+    "title": "Mapa del acorde R–3–5 sobre progresión C – F – G",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "arpegios-de-acorde",
+    "level": 1,
+    "tags": [
+      "arpegios",
+      "R-3-5",
+      "mapa de diapasón"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 56,
+      "target": 80,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "F"
+      },
+      {
+        "bars": 1,
+        "chord": "G"
+      },
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "Am"
+      },
+      {
+        "bars": 1,
+        "chord": "Dm"
+      },
+      {
+        "bars": 1,
+        "chord": "G"
+      },
+      {
+        "bars": 1,
+        "chord": "C"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Ubicar visualmente R, 3ª y 5ª de cada acorde en el mapa del diapasón",
+      "Distinguir de oído la 3ª mayor de la 3ª menor"
+    ],
+    "notes": "En bajo cada tarjeta muestra el mapa de notas del acorde (raíz, 3ª y 5ª) para estudiar la forma de arpegio.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n2-inversiones",
+    "version": 2,
+    "type": "harmony",
+    "title": "Arpegios invertidos y raíz-quinta sobre I–vi–IV–V",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "inversiones",
+    "level": 2,
+    "tags": [
+      "inversiones",
+      "arpegios",
+      "I-vi-IV-V"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 100,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "G"
+      },
+      {
+        "bars": 1,
+        "chord": "Em"
+      },
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "D"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Practicar entrando por la raíz, luego por la 3ª y por la 5ª de cada acorde",
+      "Mantener digitación económica 1-2-4"
+    ],
+    "notes": "Probá tocar dos vueltas desde la raíz y dos vueltas comenzando cada compás en la tercera.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n3-septimas-diadas",
+    "version": 2,
+    "type": "harmony",
+    "title": "Arpegios de séptima (maj7, 7, m7, m7b5) y díadas",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "arpegios-de-acorde",
+    "level": 3,
+    "tags": [
+      "séptimas",
+      "notas guía",
+      "díadas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 120,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "Dm7"
+      },
+      {
+        "bars": 1,
+        "chord": "G7"
+      },
+      {
+        "bars": 1,
+        "chord": "Cmaj7"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7"
+      },
+      {
+        "bars": 1,
+        "chord": "Bm7b5"
+      },
+      {
+        "bars": 1,
+        "chord": "E7"
+      },
+      {
+        "bars": 2,
+        "chord": "Am7"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Destacar las notas guía (3ª y 7ª) al enlazar Dm7 → G7 → Cmaj7",
+      "Probar las díadas en el registro agudo desde la Biblioteca de Acordes"
+    ],
+    "notes": "Las notas guía definen toda la armonía del bajo moderno.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n4-slash",
+    "version": 2,
+    "type": "harmony",
+    "title": "Slash chords e inversiones en el bajo (C – C/E – F – G/B)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "inversiones",
+    "level": 4,
+    "tags": [
+      "slash chords",
+      "inversiones",
+      "conducción"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 108,
+      "target": 146,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 1,
+        "chord": "C"
+      },
+      {
+        "bars": 1,
+        "chord": "C/E"
+      },
+      {
+        "bars": 1,
+        "chord": "F"
+      },
+      {
+        "bars": 1,
+        "chord": "G/B"
+      },
+      {
+        "bars": 1,
+        "chord": "Am7"
+      },
+      {
+        "bars": 1,
+        "chord": "Am/G"
+      },
+      {
+        "bars": 1,
+        "chord": "D/F#"
+      },
+      {
+        "bars": 1,
+        "chord": "G7"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Leer la nota detrás de la barra como la nota obligatoria del bajo",
+      "Escuchar cómo cambia el color del acorde al invertirlo"
+    ],
+    "notes": "En un slash chord, la nota del bajo manda la conducción armónica de toda la banda.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  },
+  {
+    "id": "bajo-armon-n5-estandar",
+    "version": 2,
+    "type": "harmony",
+    "title": "Análisis armónico y díadas sobre Rhythm Changes en Bb",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "campo-armonico",
+    "level": 5,
+    "tags": [
+      "rhythm changes",
+      "díadas",
+      "extensiones",
+      "estándar"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 130,
+      "target": 168,
+      "step": 5
+    },
+    "progression": [
+      {
+        "bars": 0.5,
+        "chord": "Bbmaj7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Cm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Dm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "G7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "Cm7"
+      },
+      {
+        "bars": 0.5,
+        "chord": "F7"
+      },
+      {
+        "bars": 1,
+        "chord": "D7"
+      },
+      {
+        "bars": 1,
+        "chord": "G7"
+      },
+      {
+        "bars": 1,
+        "chord": "C7"
+      },
+      {
+        "bars": 1,
+        "chord": "F7"
+      }
+    ],
+    "comping": "arpegio-asc",
+    "abc": null,
+    "fingerings": {},
+    "goals": [
+      "Identificar los ciclos I–VI–ii–V y el puente de dominantes por cuartas",
+      "Practicar díadas (R+3 / R+7) en trastes 7–12"
+    ],
+    "notes": "Combiná este análisis armónico con la práctica de Walking Bass sobre Rhythm Changes.",
+    "origin": "builtin",
+    "createdAt": "2026-11-19T00:00:00Z"
+  }
+]

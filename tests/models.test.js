@@ -74,7 +74,7 @@ test('El catálogo incluido cumple el esquema, cubre 5 niveles x 3 instrumentos 
   for (const pr of catalog) {
     const check = validatePracticeSchema(pr.toJSON());
     assert.equal(check.valid, true, `Práctica inválida ${pr.id}: ${check.errors.join(', ')}`);
-    assert.equal(/tablature|tablatura/i.test(pr.abc), false, `No debe haber tablatura en ${pr.id}`);
+    assert.equal(/tablature|tablatura/i.test(pr.abc || ''), false, `No debe haber tablatura en ${pr.id}`);
   }
 
   for (let lvl = 1; lvl <= 5; lvl++) {

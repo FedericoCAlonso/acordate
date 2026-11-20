@@ -2,10 +2,14 @@ import {
   CATEGORY_LABELS,
   INSTRUMENT_LABELS,
   NOTATION_VIEW_LABELS,
+  PRACTICE_TYPE_LABELS,
   SYNTH_INSTRUMENT_LABELS,
   formatChordSymbol,
   formatKeyName
 } from '../core/i18n.js';
+import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
+import { Tuning } from '../models/Tuning.js';
+import { createBassFretboardMapElement, createChordDiagramElement } from './ChordDiagramView.js';
 import { createSliderGroup, createSwitchRow, el, icon, openSheetModal } from './uiHelpers.js';
 
 /**
@@ -138,6 +142,7 @@ export class PracticePlayerView {
     this._viewBar = el('div', { className: 'player-view-bar' });
     this._countInEl = el('div', { className: 'count-in-overlay', style: 'display:none', 'aria-live': 'assertive' });
     this._scoreEl = el('div', { className: 'score-surface', 'aria-label': 'Partitura en pentagrama' });
+    this._harmonyEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
     this._chartEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Grilla de cifrado de acordes' });
     this._guideHost = el('div');
     this._transportDock = el('div', { className: 'transport-dock', role: 'region', 'aria-label': 'Controles de reproducción' });
@@ -145,6 +150,7 @@ export class PracticePlayerView {
     const scoreWrap = el('div', { className: 'score-wrap' }, [
       this._countInEl,
       this._scoreEl,
+      this._harmonyEl,
       this._chartEl
     ]);
 
@@ -211,6 +217,9 @@ export class PracticePlayerView {
       this._vm.countInStatus.subscribe((st) => this._renderCountIn(st)),
       this._vm.activeNoteEvent.subscribe((ev) => this._highlightActiveNote(ev)),
       this._vm.activeMeasure.subscribe((m) => this._highlightActiveChartBar(m)),
+      this._vm.activeChordStepIndex.subscribe((idx) => this._highlightActiveHarmonyStep(idx)),
+      this._vm.harmonySteps.subscribe(() => this._renderNotationSurface()),
+      this._vm.compingPattern.subscribe(() => this._renderViewBar()),
       this._vm.practiceStats.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.sessionRepetitions.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.isAtrilFullscreen.subscribe((full) => {
@@ -242,6 +251,7 @@ export class PracticePlayerView {
     this._metaStrip.innerHTML = '';
     const badges = [
       el('span', { className: 'm3-badge m3-badge--primary' }, [`Nivel ${pr.level}`]),
+      el('span', { className: 'm3-badge m3-badge--tertiary' }, [PRACTICE_TYPE_LABELS[pr.type] || 'Melodía']),
       el('span', { className: 'm3-badge' }, [CATEGORY_LABELS[pr.category] || pr.category]),
       el('span', { className: 'm3-badge' }, [`${keyLabel}${semi ? ` (${semi > 0 ? '+' : ''}${semi})` : ''} · ${pr.timeSignature}`]),
       el('span', { className: 'm3-badge' }, [`Obj. ${pr.tempo.target} BPM`]),
@@ -302,29 +312,67 @@ export class PracticePlayerView {
    */
   _renderViewBar() {
     if (!this._viewBar) return;
+    const pr = this._vm.practice.value;
     const mode = this._vm.viewMode.value;
     const isFull = this._vm.isAtrilFullscreen.value;
+    const isHarmony = pr?.type === 'harmony';
+    const hasHarmonySteps = (this._vm.harmonySteps.value || []).length > 0;
 
     this._viewBar.innerHTML = '';
+    const modeChoices = isHarmony
+      ? [
+          { id: 'diagramas', label: 'Diagramas' },
+          { id: 'cifrado', label: 'Cifrado' }
+        ]
+      : hasHarmonySteps
+        ? [
+            { id: 'pentagrama', label: 'Pentagrama' },
+            { id: 'diagramas', label: 'Diagramas' },
+            { id: 'mixto', label: 'Mixto' }
+          ]
+        : [
+            { id: 'pentagrama', label: NOTATION_VIEW_LABELS.pentagrama },
+            { id: 'cifrado', label: NOTATION_VIEW_LABELS.cifrado },
+            { id: 'mixto', label: NOTATION_VIEW_LABELS.mixto }
+          ];
+
     const seg = el(
       'div',
       { className: 'm3-segmented', role: 'group', 'aria-label': 'Vista de notación' },
-      ['pentagrama', 'cifrado', 'mixto'].map((m) =>
+      modeChoices.map((m) =>
         el(
           'button',
           {
             type: 'button',
             className: 'm3-segmented__btn',
             ripple: true,
-            'aria-pressed': String(mode === m),
-            onClick: () => this._vm.setViewMode(m)
+            'aria-pressed': String(mode === m.id),
+            onClick: () => this._vm.setViewMode(m.id)
           },
-          [NOTATION_VIEW_LABELS[m]]
+          [m.label]
         )
       )
     );
 
+    const compingSelect =
+      isHarmony || hasHarmonySteps
+        ? el(
+            'select',
+            {
+              className: 'm3-field__select',
+              style: 'padding:6px 10px; min-height:44px; width:auto; max-width:200px; font-size:0.84rem',
+              'aria-label': 'Patrón de ritmo',
+              onChange: (e) => this._vm.setCompingPattern(e.target.value)
+            },
+            Object.values(COMPING_PATTERNS).map((pat) =>
+              el('option', { value: pat.id, selected: pat.id === this._vm.compingPattern.value }, [pat.label])
+            )
+          )
+        : null;
+    if (compingSelect) compingSelect.value = this._vm.compingPattern.value;
+
     const quickRight = el('div', { className: 'stepper-inline' }, [
+      compingSelect,
       el(
         'button',
         {
@@ -344,17 +392,24 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la partitura adaptable con abcjs (sin recortes) o la grilla de acordes en modo Cifrado.
+   * Renderiza la partitura adaptable con abcjs, la fila de diagramas de armonía o la grilla de cifrado.
    */
   _renderNotationSurface() {
-    if (!this._scoreEl || !this._chartEl) return;
+    if (!this._scoreEl || !this._chartEl || !this._harmonyEl) return;
     const pr = this._vm.practice.value;
     if (!pr) return;
 
     const mode = this._vm.viewMode.value;
-    const showStaff = mode !== 'cifrado';
+    const isHarmonyOnly = pr.type === 'harmony';
+    const hasSteps = this._vm.harmonySteps.value.length > 0;
+
+    const showStaff = !isHarmonyOnly && mode !== 'cifrado' && mode !== 'diagramas';
+    const showDiagrams = (isHarmonyOnly && mode !== 'cifrado') || mode === 'diagramas' || (hasSteps && mode === 'mixto');
+    const showChart = mode === 'cifrado';
+
     this._scoreEl.style.display = showStaff ? 'block' : 'none';
-    this._chartEl.style.display = mode === 'cifrado' ? 'block' : 'none';
+    this._harmonyEl.style.display = showDiagrams ? 'block' : 'none';
+    this._chartEl.style.display = showChart ? 'block' : 'none';
 
     if (showStaff) {
       const width = this._scoreEl.clientWidth || this._container?.clientWidth || 340;
@@ -371,19 +426,140 @@ export class PracticePlayerView {
       this._vm.registerVisualTimeline(timeline);
     }
 
-    if (mode === 'cifrado') {
+    if (showDiagrams) {
+      this._renderHarmonyDiagrams();
+    }
+
+    if (showChart) {
       this._renderChordChart();
     }
+  }
+
+  /**
+   * Renderiza la fila desplazable de diagramas de acordes de una práctica de armonía o mixta,
+   * y en bajo incluye además el mapa de notas del acorde activo sobre el diapasón.
+   */
+  _renderHarmonyDiagrams() {
+    const pr = this._vm.practice.value;
+    const steps = this._vm.harmonySteps.value;
+    const notation = this._appVm.settings.value.chordNotation;
+    const isBass = pr?.instruments?.includes('bajo');
+    const tuning = Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar');
+    const activeIdx = this._vm.activeChordStepIndex.value;
+
+    this._harmonyEl.innerHTML = '';
+    if (steps.length === 0) {
+      this._harmonyEl.appendChild(el('p', { className: 'm3-body-md' }, ['Esta práctica no tiene pasos de progresión armónica.']));
+      return;
+    }
+
+    // En bajo, muestra el mapa del diapasón para el acorde activo (o el primero)
+    if (isBass) {
+      const focusStep = steps[activeIdx >= 0 ? activeIdx : 0] || steps[0];
+      this._harmonyEl.appendChild(
+        createBassFretboardMapElement(focusStep.chord, {
+          tuning,
+          notation,
+          labelMode: 'functions'
+        })
+      );
+    }
+
+    const strip = el(
+      'div',
+      { className: 'harmony-strip', role: 'list', 'aria-label': 'Progresión de acordes con diagramas' },
+      steps.map((step, idx) =>
+        el(
+          'div',
+          {
+            className: `harmony-step-card ${idx === activeIdx ? 'harmony-step-card--active' : ''}`,
+            dataset: { stepIndex: idx }
+          },
+          [
+            el('div', { className: 'player-toolbar', style: 'margin-bottom:4px' }, [
+              el('strong', {}, [formatChordSymbol(step.chord, notation)]),
+              el('span', { className: 'm3-label' }, [`${step.bars} c.`])
+            ]),
+            step.voicing
+              ? createChordDiagramElement(step.voicing, {
+                  tuning,
+                  notation,
+                  size: 'sm',
+                  showTitle: false,
+                  labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+                  onPlay: () => this._vm.playStepVoicing(step)
+                })
+              : el('button', {
+                  type: 'button',
+                  className: 'm3-btn m3-btn--compact m3-btn--tonal',
+                  onClick: () => this._vm.playStepVoicing(step)
+                }, [formatChordSymbol(step.chord, notation)])
+          ]
+        )
+      )
+    );
+
+    this._harmonyEl.appendChild(strip);
+  }
+
+  /**
+   * Resalta el diagrama del acorde que suena actualmente en la fila de armonía.
+   * @param {number} stepIndex Índice del paso activo (-1 si detenido).
+   */
+  _highlightActiveHarmonyStep(stepIndex) {
+    if (!this._harmonyEl) return;
+    const pr = this._vm.practice.value;
+    if (pr?.instruments?.includes('bajo') && stepIndex >= 0) {
+      // En bajo actualiza el mapa del diapasón para mostrar las notas del acorde que suena
+      this._renderHarmonyDiagrams();
+    }
+    const cards = this._harmonyEl.querySelectorAll('.harmony-step-card');
+    cards.forEach((card) => {
+      const match = Number(card.dataset.stepIndex) === stepIndex;
+      card.classList.toggle('harmony-step-card--active', match);
+      if (match) {
+        card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      }
+    });
   }
 
   /**
    * Renderiza la grilla de compases de acordes en modo Cifrado.
    */
   _renderChordChart() {
+    const pr = this._vm.practice.value;
     const ex = this._vm.exercise.value;
     const notation = this._appVm.settings.value.chordNotation;
     const activeM = this._vm.activeMeasure.value;
+    const steps = this._vm.harmonySteps.value;
     this._chartEl.innerHTML = '';
+
+    // En prácticas de armonía puras construye la grilla directamente desde harmonySteps
+    if (pr?.type === 'harmony' && steps.length > 0) {
+      let barNum = 1;
+      const cells = [];
+      steps.forEach((step, idx) => {
+        const count = Math.max(1, Math.round(step.bars));
+        for (let b = 0; b < count; b++) {
+          const curBar = barNum++;
+          cells.push(
+            el(
+              'div',
+              {
+                className: `chord-bar-cell ${curBar === activeM || idx === this._vm.activeChordStepIndex.value ? 'chord-bar-cell--active' : ''}`,
+                dataset: { measure: curBar }
+              },
+              [
+                el('span', { className: 'chord-bar-cell__num' }, [String(curBar)]),
+                el('div', { className: 'chord-bar-cell__chords' }, [el('span', {}, [formatChordSymbol(step.chord, notation)])])
+              ]
+            )
+          );
+        }
+      });
+      this._chartEl.appendChild(el('div', { className: 'chord-chart-grid' }, cells));
+      return;
+    }
 
     if (!ex || ex.measures.length === 0) {
       this._chartEl.appendChild(el('p', { className: 'm3-body-md' }, ['Esta práctica no tiene compases detectables.']));

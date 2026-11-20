@@ -1,6 +1,8 @@
 import { ComputedObservable, Observable } from '../core/Observable.js';
-import { NOTE_TO_PC, pcToNoteName, prefersFlats, transposeAbc, transposeChordSymbol } from '../core/MusicTheory.js';
+import { NOTE_TO_PC, parseTimeSignature, pcToNoteName, prefersFlats, transposeAbc, transposeChordSymbol } from '../core/MusicTheory.js';
+import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
 import { Exercise } from '../models/Exercise.js';
+import { Tuning } from '../models/Tuning.js';
 
 /**
  * ViewModel del reproductor de prácticas ("Modo Atril").
@@ -44,6 +46,10 @@ export class PracticePlayerViewModel {
     this.countInStatus = new Observable(null);
     /** Compás actualmente sonando (1-based, 0 si está detenido). */
     this.activeMeasure = new Observable(0);
+    /** Índice del paso armónico actualmente sonando en prácticas de armonía/mixtas (-1 si detenido). */
+    this.activeChordStepIndex = new Observable(-1);
+    /** Patrón rítmico de acompañamiento (comping) editable en vivo sin modificar la práctica. */
+    this.compingPattern = new Observable('negras-abajo');
     /** Último evento de nota visual para resaltar el SVG correspondiente. */
     this.activeNoteEvent = new Observable(null);
 
@@ -105,8 +111,37 @@ export class PracticePlayerViewModel {
       [this.practice, this.transposeSemitones],
       () => {
         const pr = this.practice.value;
-        if (!pr) return '';
+        if (!pr || !pr.abc) return '';
         return transposeAbc(pr.abc, this.transposeSemitones.value);
+      }
+    );
+
+    /** Pasos de progresión armónica resueltos con su acorde transpuesto y su Voicing exacto. */
+    this.harmonySteps = new ComputedObservable(
+      [this.practice, this.transposeSemitones],
+      () => {
+        const pr = this.practice.value;
+        if (!pr || !Array.isArray(pr.progression) || pr.progression.length === 0) return [];
+        const semi = this.transposeSemitones.value;
+        const isBass = pr.instruments.includes('bajo');
+        const fam = isBass ? 'bass' : 'guitar';
+        const tuning = Tuning.defaultForInstrument(fam);
+        const useFlats = prefersFlats(this.transposedKey?.value || pr.key);
+
+        return pr.progression.map((step, idx) => {
+          const chordSymbol = semi ? transposeChordSymbol(step.chord, semi, useFlats) : step.chord;
+          const voicing = !semi && step.voicingId
+            ? findVoicingById(step.voicingId, pr.customVoicings, chordSymbol, fam)
+            : (getCuratedVoicingsForChord(chordSymbol, fam, tuning)[0] || findVoicingById(null, pr.customVoicings, chordSymbol, fam));
+          return {
+            index: idx,
+            bars: step.bars,
+            chord: chordSymbol,
+            voicing,
+            rhythm: step.rhythm || null,
+            midis: voicing ? voicing.getMidiNotes(tuning) : []
+          };
+        });
       }
     );
 
@@ -188,6 +223,7 @@ export class PracticePlayerViewModel {
       }
       this.countInStatus.set(null);
       if (ev.measureIndex) this.activeMeasure.set(ev.measureIndex);
+      if (ev.chordStepIndex !== undefined) this.activeChordStepIndex.set(ev.chordStepIndex);
       if (ev.noteEvent) this.activeNoteEvent.set(ev.noteEvent, true);
     };
 
@@ -229,6 +265,15 @@ export class PracticePlayerViewModel {
 
     this.bpm.set(practice.tempo.start);
     this.synthInstrument.set(practice.getDefaultSynthInstrument());
+    this.compingPattern.set(practice.comping || 'negras-abajo');
+    this.activeChordStepIndex.set(-1);
+
+    // Ajusta vista inicial idónea según tipo de práctica (Armonía muestra diagramas; Melodía/Mixta muestra Mixto)
+    if (practice.type === 'harmony') {
+      this.viewMode.set('diagramas');
+    } else if (this.viewMode.value === 'diagramas') {
+      this.viewMode.set('mixto');
+    }
 
     // Carga la mezcla propia de la práctica (o la predeterminada con melodía al 100 %)
     const mix = this._appVm.getPracticeMix(practice);
@@ -239,20 +284,111 @@ export class PracticePlayerViewModel {
     this.chordsEnabled.set(mix.chordsEnabled);
     this.metronomeEnabled.set(mix.metronomeEnabled);
 
-    const ex = this.exercise.value;
-    const totalMeasures = Math.max(1, ex?.measureCount || 4);
-    this.measureCount.set(totalMeasures);
-    this.loopEnabled.set(false);
-    this.loopStartMeasure.set(1);
-    this.loopEndMeasure.set(totalMeasures);
+    if (practice.type === 'harmony') {
+      const harmonyTl = this.buildHarmonyTimeline();
+      this.measureCount.set(harmonyTl.measureCount);
+      this.loopEnabled.set(false);
+      this.loopStartMeasure.set(1);
+      this.loopEndMeasure.set(harmonyTl.measureCount);
+      this._audio.loadTimeline(harmonyTl);
+    } else {
+      const ex = this.exercise.value;
+      const totalMeasures = Math.max(1, ex?.measureCount || 4);
+      this.measureCount.set(totalMeasures);
+      this.loopEnabled.set(false);
+      this.loopStartMeasure.set(1);
+      this.loopEndMeasure.set(totalMeasures);
 
-    const fallbackTimeline = this._abc.extractTimeline(null, this.transposedAbc.value, {
-      instrument: practice.instruments[0] || 'guitarra',
-      isBass: practice.instruments.includes('bajo'),
-      timeSignature: practice.timeSignature
-    });
-    this._audio.loadTimeline(fallbackTimeline);
+      const fallbackTimeline = this._abc.extractTimeline(null, this.transposedAbc.value, {
+        instrument: practice.instruments[0] || 'guitarra',
+        isBass: practice.instruments.includes('bajo'),
+        timeSignature: practice.timeSignature
+      });
+      this._enrichTimelineWithHarmonyVoicings(fallbackTimeline);
+      this._audio.loadTimeline(fallbackTimeline);
+    }
     this._syncAudioConfig();
+  }
+
+  /**
+   * Construye la línea de tiempo exacta de una práctica de armonía usando los MIDI reales
+   * de cada Voicing (Tuning + frets) y el compás de la práctica.
+   * @returns {object} Timeline lista para AudioSynthService.
+   */
+  buildHarmonyTimeline() {
+    const pr = this.practice.value;
+    const { beats, beatUnit } = parseTimeSignature(pr?.timeSignature || '4/4');
+    const beatsPerMeasure = beats * (4 / beatUnit);
+    const steps = this.harmonySteps.value;
+    const isBassPiece = Boolean(pr?.instruments?.includes('bajo'));
+
+    let cursorBeat = 0;
+    const chords = steps.map((step, idx) => {
+      const durBeats = step.bars * beatsPerMeasure;
+      const measureIndex = Math.floor(cursorBeat / beatsPerMeasure) + 1;
+      const ev = {
+        beat: cursorBeat,
+        durationBeats: durBeats,
+        symbol: step.chord,
+        measureIndex,
+        stepIndex: idx,
+        voicingMidis: step.midis,
+        rhythm: step.rhythm
+      };
+      cursorBeat += durBeats;
+      return ev;
+    });
+
+    const totalBeats = Math.max(beatsPerMeasure, cursorBeat);
+    return {
+      notes: [],
+      chords,
+      totalBeats,
+      beatsPerMeasure,
+      beatUnit,
+      measureCount: Math.max(1, Math.ceil(totalBeats / beatsPerMeasure)),
+      isBassPiece,
+      isHarmonyOnly: true
+    };
+  }
+
+  /**
+   * Inyecta los voicingMidis exactos de harmonySteps en la línea de tiempo de una práctica mixta.
+   * @param {object} timeline Timeline extraída de abcjs.
+   */
+  _enrichTimelineWithHarmonyVoicings(timeline) {
+    if (!timeline || this.harmonySteps.value.length === 0) return;
+    const harmonyTl = this.buildHarmonyTimeline();
+    if (harmonyTl.chords.length > 0) {
+      timeline.chords = harmonyTl.chords;
+    }
+  }
+
+  /**
+   * Cambia el patrón de ritmo (comping) en vivo sin modificar ni guardar la práctica.
+   * @param {string} pattern Clave en COMPING_PATTERNS.
+   */
+  setCompingPattern(pattern) {
+    this.compingPattern.set(pattern);
+    this._audio.configure({ comping: pattern });
+  }
+
+  /**
+   * Reproduce un voicing puntual al tocar su diagrama dentro de la pantalla de práctica.
+   * @param {object} step Paso de harmonySteps.
+   */
+  playStepVoicing(step) {
+    if (!step) return;
+    const isBass = this.practice.value?.instruments?.includes('bajo');
+    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
+    if (step.voicing) {
+      this._audio.playVoicing(step.voicing, {
+        mode: isBass ? 'arpeggio-asc' : 'strum-down',
+        instrument: this.synthInstrument.value,
+        tuning: Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar'),
+        duration: 1.5
+      });
+    }
   }
 
   /**
@@ -282,6 +418,7 @@ export class PracticePlayerViewModel {
       bassVolume: this.bassVolume.value,
       metronomeEnabled: this.metronomeEnabled.value,
       metronomeVolume: this.metronomeVolume.value,
+      comping: this.compingPattern.value,
       countInMeasures: this.countInMeasures.value,
       loopEnabled: this.loopEnabled.value,
       loopStartMeasure: this.loopStartMeasure.value,
@@ -359,6 +496,7 @@ export class PracticePlayerViewModel {
     this.isPaused.set(false);
     this.countInStatus.set(null);
     this.activeMeasure.set(0);
+    this.activeChordStepIndex.set(-1);
     this.activeNoteEvent.set(null);
     this._wakeLock.release();
   }
@@ -403,12 +541,17 @@ export class PracticePlayerViewModel {
     this.transposeSemitones.set(clamped);
     const pr = this.practice.value;
     if (pr) {
-      const tl = this._abc.extractTimeline(null, this.transposedAbc.value, {
-        instrument: pr.instruments[0] || 'guitarra',
-        isBass: pr.instruments.includes('bajo'),
-        timeSignature: pr.timeSignature
-      });
-      this._audio.loadTimeline(tl);
+      if (pr.type === 'harmony') {
+        this._audio.loadTimeline(this.buildHarmonyTimeline());
+      } else {
+        const tl = this._abc.extractTimeline(null, this.transposedAbc.value, {
+          instrument: pr.instruments[0] || 'guitarra',
+          isBass: pr.instruments.includes('bajo'),
+          timeSignature: pr.timeSignature
+        });
+        this._enrichTimelineWithHarmonyVoicings(tl);
+        this._audio.loadTimeline(tl);
+      }
     }
   }
 
@@ -424,7 +567,7 @@ export class PracticePlayerViewModel {
    * @param {'pentagrama'|'cifrado'|'mixto'} mode Vista seleccionada.
    */
   setViewMode(mode) {
-    if (['pentagrama', 'cifrado', 'mixto'].includes(mode)) {
+    if (['pentagrama', 'cifrado', 'diagramas', 'mixto'].includes(mode)) {
       this.viewMode.set(mode);
     }
   }

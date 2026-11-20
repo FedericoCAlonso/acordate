@@ -1,6 +1,9 @@
 import { Observable } from '../core/Observable.js';
 import { Practice, generatePracticeId, validatePracticeSchema } from '../models/Practice.js';
-import { extractMeasuresFromAbc } from '../core/MusicTheory.js';
+import { Tuning } from '../models/Tuning.js';
+import { Voicing } from '../models/Voicing.js';
+import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
+import { extractMeasuresFromAbc, parseTimeSignature } from '../core/MusicTheory.js';
 
 /**
  * Plantillas iniciales listas para usar al crear una nueva práctica desde el editor.
@@ -160,7 +163,8 @@ export class EditorViewModel {
     const tpl = EDITOR_TEMPLATES.blanco;
     return {
       id: '',
-      version: 1,
+      version: 2,
+      type: 'melody',
       title: 'Mi nueva práctica',
       instruments: ['guitarra'],
       category: tpl.category,
@@ -174,6 +178,14 @@ export class EditorViewModel {
       goalsText: tpl.goals.join('\n'),
       notes: tpl.notes,
       abc: tpl.abc,
+      comping: 'negras-abajo',
+      progression: [
+        { bars: 1, chord: 'G', voicingId: 'g-major-open' },
+        { bars: 1, chord: 'C', voicingId: 'c-major-open' },
+        { bars: 1, chord: 'Am', voicingId: 'a-minor-open' },
+        { bars: 1, chord: 'D', voicingId: 'd-major-open' }
+      ],
+      customVoicings: [],
       fingerings: {},
       createdAt: new Date().toISOString()
     };
@@ -222,7 +234,8 @@ export class EditorViewModel {
 
     const baseForm = {
       id: isBuiltin ? '' : existing.id,
-      version: existing.version,
+      version: existing.version || 2,
+      type: existing.type || 'melody',
       title: isBuiltin ? `${existing.title} (copia)` : existing.title,
       instruments: [...existing.instruments],
       category: existing.category,
@@ -235,7 +248,15 @@ export class EditorViewModel {
       tempoStep: existing.tempo.step,
       goalsText: existing.goals.join('\n'),
       notes: existing.notes,
-      abc: existing.abc,
+      abc: existing.abc || '',
+      comping: existing.comping || 'negras-abajo',
+      progression: existing.progression?.length > 0
+        ? existing.progression.map((s) => s.toJSON())
+        : [
+            { bars: 1, chord: existing.key || 'C', voicingId: null },
+            { bars: 1, chord: 'G', voicingId: null }
+          ],
+      customVoicings: (existing.customVoicings || []).map((v) => v.toJSON()),
       fingerings: { ...existing.fingerings },
       createdAt: isBuiltin ? new Date().toISOString() : existing.createdAt
     };
@@ -425,11 +446,59 @@ export class EditorViewModel {
   }
 
   /**
-   * Construye el objeto candidato JSON a partir del formulario actual.
+   * Actualiza un paso de la progresión armónica del formulario.
+   * @param {number} idx Índice del paso.
+   * @param {{ bars?: number, chord?: string, voicingId?: string|null }} patch Cambios del paso.
+   */
+  updateProgressionStep(idx, patch) {
+    const steps = [...(this.form.value.progression || [])];
+    if (!steps[idx]) return;
+    steps[idx] = { ...steps[idx], ...patch };
+    this.updateField('progression', steps);
+  }
+
+  /**
+   * Agrega o quita un paso de la progresión armónica del formulario.
+   * @param {number} delta +1 para agregar, -1 para quitar el último.
+   */
+  resizeProgressionSteps(delta) {
+    const steps = [...(this.form.value.progression || [])];
+    if (delta > 0 && steps.length < 32) {
+      const last = steps[steps.length - 1] || { bars: 1, chord: 'C', voicingId: null };
+      steps.push({ bars: 1, chord: last.chord, voicingId: last.voicingId });
+    } else if (delta < 0 && steps.length > 1) {
+      steps.pop();
+    }
+    this.updateField('progression', steps);
+  }
+
+  /**
+   * Guarda un voicing personalizado (creado en la grilla 6×5) y lo asigna al paso indicado.
+   * @param {number} stepIdx Índice del paso destino.
+   * @param {Voicing} voicing Instancia Voicing personalizada.
+   */
+  attachCustomVoicingToStep(stepIdx, voicing) {
+    const vJson = voicing instanceof Voicing ? voicing.toJSON() : new Voicing(voicing).toJSON();
+    const customList = [
+      ...(this.form.value.customVoicings || []).filter((v) => v.id !== vJson.id),
+      vJson
+    ];
+    const steps = [...(this.form.value.progression || [])];
+    if (steps[stepIdx]) {
+      steps[stepIdx] = { ...steps[stepIdx], chord: vJson.chord, voicingId: vJson.id };
+    }
+    const next = { ...this.form.value, customVoicings: customList, progression: steps };
+    this.form.set(next, true);
+    this._scheduleDraftSave(next);
+  }
+
+  /**
+   * Construye el objeto candidato JSON a partir del formulario actual (esquema v2).
    * @returns {object} Objeto candidato para validación o guardado.
    */
   buildCandidateObject() {
     const f = this.form.value;
+    const type = f.type || 'melody';
     const id = this.mode.value === 'edit' && f.id ? f.id : generatePracticeId(f.title);
     const tags = String(f.tagsText || '')
       .split(',')
@@ -440,9 +509,13 @@ export class EditorViewModel {
       .map((g) => g.trim())
       .filter(Boolean);
 
+    const isHarmony = type === 'harmony';
+    const includeProg = type === 'harmony' || type === 'mixed';
+
     return {
       id,
-      version: Number(f.version) || 1,
+      version: includeProg ? 2 : Number(f.version) || 1,
+      type,
       title: String(f.title || '').trim(),
       instruments: [...(f.instruments || [])],
       category: f.category,
@@ -455,7 +528,9 @@ export class EditorViewModel {
         target: Number(f.tempoTarget),
         step: Number(f.tempoStep)
       },
-      abc: String(f.abc || '').trim(),
+      abc: isHarmony ? null : String(f.abc || '').trim(),
+      ...(includeProg ? { progression: f.progression || [], comping: f.comping || 'negras-abajo' } : {}),
+      ...(includeProg && f.customVoicings?.length ? { customVoicings: f.customVoicings } : {}),
       fingerings: f.fingerings || {},
       goals,
       notes: String(f.notes || ''),
@@ -639,14 +714,53 @@ export class EditorViewModel {
     }
     const f = this.form.value;
     const isBass = f.instruments.includes('bajo') && f.instruments.length === 1;
-    const timeline = this._abc.extractTimeline(visualObj, f.abc, {
-      isBass,
-      timeSignature: f.timeSignature
-    });
+    const fam = isBass ? 'bass' : 'guitar';
+    const tuning = Tuning.defaultForInstrument(fam);
+    let timeline;
+
+    if (f.type === 'harmony') {
+      const { beats, beatUnit } = parseTimeSignature(f.timeSignature || '4/4');
+      const beatsPerMeasure = beats * (4 / beatUnit);
+      let cursor = 0;
+      const chords = (f.progression || []).map((st, idx) => {
+        const dur = (Number(st.bars) || 1) * beatsPerMeasure;
+        const v = findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
+          getCuratedVoicingsForChord(st.chord, fam, tuning)[0];
+        const ev = {
+          beat: cursor,
+          durationBeats: dur,
+          symbol: st.chord,
+          measureIndex: Math.floor(cursor / beatsPerMeasure) + 1,
+          stepIndex: idx,
+          voicingMidis: v ? v.getMidiNotes(tuning) : [],
+          rhythm: st.rhythm || null
+        };
+        cursor += dur;
+        return ev;
+      });
+      timeline = {
+        notes: [],
+        chords,
+        totalBeats: Math.max(beatsPerMeasure, cursor),
+        beatsPerMeasure,
+        beatUnit,
+        measureCount: Math.max(1, Math.ceil(cursor / beatsPerMeasure)),
+        isBassPiece: isBass,
+        isHarmonyOnly: true
+      };
+    } else {
+      timeline = this._abc.extractTimeline(visualObj, f.abc, {
+        instrument: f.instruments[0] || 'guitarra',
+        isBass,
+        timeSignature: f.timeSignature
+      });
+    }
+
     this._audio.loadTimeline(timeline);
     this._audio.configure({
       bpm: Number(f.tempoStart) || 85,
       instrument: isBass ? 'electric-bass' : f.instruments.includes('guitarra-clasica') ? 'nylon-guitar' : 'acoustic-guitar',
+      comping: f.comping || 'negras-abajo',
       countInMeasures: 0,
       loopEnabled: false,
       metronomeEnabled: true,

@@ -65,6 +65,8 @@ export class AudioSynthService {
     this.metronomeEnabled = true;
     /** Volumen del metrónomo integrado (0-1). */
     this.metronomeVolume = 0.65;
+    /** Patrón rítmico de acompañamiento armónico (comping) para prácticas de armonía/mixtas. */
+    this.comping = 'negras-abajo';
     /** Cantidad de compases de conteo previo (0, 1 o 2). */
     this.countInMeasures = 1;
 
@@ -152,6 +154,7 @@ export class AudioSynthService {
     if (patch.bassVolume !== undefined) this.bassVolume = sanitizeVolume(patch.bassVolume, 0.75);
     if (patch.metronomeEnabled !== undefined) this.metronomeEnabled = Boolean(patch.metronomeEnabled);
     if (patch.metronomeVolume !== undefined) this.metronomeVolume = sanitizeVolume(patch.metronomeVolume, 0.65);
+    if (patch.comping !== undefined) this.comping = patch.comping || 'negras-abajo';
     if (patch.countInMeasures !== undefined) this.countInMeasures = Math.max(0, Math.min(2, Number(patch.countInMeasures) || 0));
     if (patch.loopEnabled !== undefined) this.loopEnabled = Boolean(patch.loopEnabled);
     if (patch.loopStartMeasure !== undefined) this.loopStartMeasure = Math.max(1, Number(patch.loopStartMeasure) || 1);
@@ -173,6 +176,116 @@ export class AudioSynthService {
     if (!ctx) return;
     const finalMidi = applyListeningRegister(soundingMidi, this.listeningRegister);
     this._playPluckedNote(ctx, finalMidi, ctx.currentTime + 0.02, 2.2, instrument, 0.95);
+  }
+
+  /**
+   * Reproduce exactamente las alturas MIDI de un Voicing (Tuning + frets) en bloque, arpegio
+   * (ascendente, descendente, p-i-m-a) o rasgueado (abajo/arriba con desfase de 10-30 ms).
+   * Respeta la política de registro única sin desplazamientos de octava duplicados.
+   * @param {number[]|{ getMidiNotes: Function }} voicingOrMidis Voicing o arreglo de números MIDI reales.
+   * @param {object} [options={}] Configuración de ejecución.
+   * @param {'block'|'strum-down'|'strum-up'|'arpeggio-asc'|'arpeggio-desc'|'arpeggio-pima'} [options.mode='strum-down'] Modo de ejecución.
+   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} [options.instrument] Timbre.
+   * @param {import('../models/Tuning.js').Tuning} [options.tuning] Afinación si se pasó un Voicing.
+   * @param {number} [options.strumMs=22] Desfase entre cuerdas en milisegundos (10-30 ms para rasgueo).
+   * @param {number} [options.duration=1.6] Duración en segundos.
+   * @param {number} [options.volume=0.88] Volumen (0 a 1).
+   */
+  playVoicing(voicingOrMidis, options = {}) {
+    const ctx = this._metronome.ensureAudioContext();
+    if (!ctx) return;
+    const rawMidis = Array.isArray(voicingOrMidis)
+      ? voicingOrMidis
+      : typeof voicingOrMidis?.getMidiNotes === 'function'
+        ? voicingOrMidis.getMidiNotes(options.tuning)
+        : [];
+    if (rawMidis.length === 0) return;
+
+    const mode = options.mode || 'strum-down';
+    const inst = options.instrument || this.instrument || 'acoustic-guitar';
+    const duration = Number(options.duration) || 1.6;
+    const vol = sanitizeVolume(options.volume, 0.88);
+    const startBase = options.startTime ?? ctx.currentTime + 0.02;
+    this._scheduleVoicingAt(ctx, rawMidis, startBase, duration, mode, inst, vol, options.strumMs ?? 22);
+  }
+
+  /**
+   * Reproduce una secuencia de bloques MIDI consecutivos (usado en Campo Armónico y Entrenamiento de Oído).
+   * @param {number[][]} chordsMidis Arreglo de conjuntos MIDI a sonar en secuencia.
+   * @param {object} [options={}] Opciones de intervalo, modo e instrumento.
+   */
+  playChordSequence(chordsMidis, options = {}) {
+    const ctx = this._metronome.ensureAudioContext();
+    if (!ctx || !Array.isArray(chordsMidis)) return;
+    const stepSec = (Number(options.stepMs) || 850) / 1000;
+    const start0 = ctx.currentTime + 0.04;
+    chordsMidis.forEach((midis, idx) => {
+      this._scheduleVoicingAt(
+        ctx,
+        midis,
+        start0 + idx * stepSec,
+        Math.max(0.5, stepSec * 0.92),
+        options.mode || 'strum-down',
+        options.instrument || 'nylon-guitar',
+        0.85,
+        18
+      );
+    });
+  }
+
+  /**
+   * Agenda en Web Audio API la ejecución de un conjunto exacto de notas MIDI según el modo rítmico.
+   * @param {AudioContext} ctx Contexto Web Audio.
+   * @param {number[]} rawMidis Alturas MIDI reales (baja a alta).
+   * @param {number} startTime Instante exacto en audioCtx.currentTime.
+   * @param {number} duration Duración en segundos.
+   * @param {string} mode Modo: block, strum-down, strum-up, arpeggio-asc, arpeggio-desc, arpeggio-pima.
+   * @param {string} instrument Timbre sintetizado.
+   * @param {number} volume Volumen base (0..1).
+   * @param {number} [strumMs=20] Desfase entre cuerdas para rasgueo (10-30 ms).
+   */
+  _scheduleVoicingAt(ctx, rawMidis, startTime, duration, mode, instrument, volume, strumMs = 20) {
+    const midis = [...rawMidis].sort((a, b) => a - b);
+    if (midis.length === 0) return;
+
+    if (mode === 'block') {
+      midis.forEach((m) => {
+        const finalM = applyListeningRegister(m, this.listeningRegister);
+        this._playPluckedNote(ctx, finalM, startTime, duration, instrument, volume * 0.55);
+      });
+      return;
+    }
+
+    if (mode === 'strum-down' || mode === 'strum-up') {
+      const spreadSec = Math.max(0.01, Math.min(0.03, strumMs / 1000));
+      const ordered = mode === 'strum-up' ? [...midis].reverse() : midis;
+      ordered.forEach((m, idx) => {
+        const accent = idx === 0 ? 1.0 : 0.88;
+        const finalM = applyListeningRegister(m, this.listeningRegister);
+        this._playPluckedNote(ctx, finalM, startTime + idx * spreadSec, duration, instrument, volume * 0.56 * accent);
+      });
+      return;
+    }
+
+    if (mode === 'arpeggio-pima') {
+      const bass = midis[0];
+      const upper = midis.length >= 4 ? midis.slice(-3) : midis.slice(1);
+      const seq = [bass, ...(upper.length > 0 ? upper : [bass])];
+      const step = Math.min(0.24, Math.max(0.08, duration / Math.max(4, seq.length)));
+      seq.forEach((m, idx) => {
+        const finalM = applyListeningRegister(m, this.listeningRegister);
+        this._playPluckedNote(ctx, finalM, startTime + idx * step, Math.max(0.35, duration - idx * step * 0.5), instrument, volume * (idx === 0 ? 0.72 : 0.6));
+      });
+      return;
+    }
+
+    // arpeggio-asc / arpeggio-desc
+    const ordered = mode === 'arpeggio-desc' ? [...midis].reverse() : midis;
+    const step = Math.min(0.22, Math.max(0.075, duration / Math.max(4, ordered.length)));
+    ordered.forEach((m, idx) => {
+      const finalM = applyListeningRegister(m, this.listeningRegister);
+      this._playPluckedNote(ctx, finalM, startTime + idx * step, Math.max(0.3, duration - idx * step * 0.4), instrument, volume * 0.64);
+    });
   }
 
   /**
@@ -378,12 +491,20 @@ export class AudioSynthService {
         }
       }
 
-      if (this.chordsEnabled && tl.chords.length > 0) {
+      if ((this.chordsEnabled || tl.isHarmonyOnly) && tl.chords.length > 0) {
         for (const chordEv of tl.chords) {
           if (chordEv.beat > scheduleWindowStart && chordEv.beat <= scheduleWindowEnd && chordEv.beat < this._rangeEndBeat) {
             const t = this._beatToAudioTime(chordEv.beat);
             const durSec = Math.max(0.25, chordEv.durationBeats * secPerBeat);
-            this._playChordAccompaniment(ctx, chordEv.symbol, t, durSec, tl.isBassPiece);
+            this._playChordEvent(ctx, chordEv, t, durSec, secPerBeat, tl);
+            if (tl.isHarmonyOnly) {
+              this._visualQueue.push({
+                time: t,
+                isCountIn: false,
+                measureIndex: chordEv.measureIndex,
+                chordStepIndex: chordEv.stepIndex
+              });
+            }
           }
         }
       }
@@ -530,6 +651,138 @@ export class AudioSynthService {
     };
     this._activeNodes.add(stopFn);
     osc1.onended = () => this._activeNodes.delete(stopFn);
+  }
+
+  /**
+   * Reproduce un evento de acorde de la línea de tiempo: si posee voicingMidis exactos
+   * (práctica de armonía o mixta con digitación) suena esa digitación exacta con el patrón de comping;
+   * si no, usa el voicing armónico genérico para acompañamiento ABC.
+   * @param {AudioContext} ctx Contexto Web Audio.
+   * @param {object} chordEv Evento de acorde ({ symbol, voicingMidis, durationBeats, rhythm }).
+   * @param {number} startTime Instante de inicio en AudioContext.
+   * @param {number} duration Duración total del evento en segundos.
+   * @param {number} secPerBeat Segundos por negra al BPM actual.
+   * @param {object} tl Línea de tiempo activa.
+   */
+  _playChordEvent(ctx, chordEv, startTime, duration, secPerBeat, tl) {
+    if (Array.isArray(chordEv.voicingMidis) && chordEv.voicingMidis.length > 0) {
+      const pattern = chordEv.rhythm || this.comping || 'negras-abajo';
+      const vol = tl.isHarmonyOnly ? Math.max(this.chordsVolume, this.melodyVolume) : this.chordsVolume;
+      const inst = tl.isBassPiece
+        ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
+        : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
+      this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, vol, tl.isBassPiece);
+      return;
+    }
+
+    this._playChordAccompaniment(ctx, chordEv.symbol, startTime, duration, tl.isBassPiece);
+  }
+
+  /**
+   * Agenda un patrón de ritmo (rasgueo, arpegio p-i-m-a, vals, bossa, swing o bloque)
+   * usando exactamente las notas MIDI del voicing seleccionado.
+   * @param {AudioContext} ctx Contexto Web Audio.
+   * @param {number[]} midis Alturas MIDI exactas del voicing.
+   * @param {number} startTime Instante inicial.
+   * @param {number} durationBeats Duración en negras.
+   * @param {number} secPerBeat Segundos por negra.
+   * @param {string} pattern Identificador del patrón en COMPING_PATTERNS.
+   * @param {string} instrument Timbre.
+   * @param {number} volume Volumen del canal.
+   * @param {boolean} isBassPiece True si es bajo (ejecuta arpegio de notas del acorde).
+   */
+  _scheduleCompingPattern(ctx, midis, startTime, durationBeats, secPerBeat, pattern, instrument, volume, isBassPiece) {
+    const sorted = [...midis].sort((a, b) => a - b);
+    const totalSec = durationBeats * secPerBeat;
+
+    if (isBassPiece) {
+      // En bajo reproduce el arpegio del acorde en negras (raíz, 3ª, 5ª, 7ª)
+      const beats = Math.max(1, Math.round(durationBeats));
+      for (let b = 0; b < beats; b++) {
+        const m = sorted[b % sorted.length];
+        const finalM = applyListeningRegister(m, this.listeningRegister);
+        this._playPluckedNote(ctx, finalM, startTime + b * secPerBeat, secPerBeat * 0.9, instrument, Math.max(volume, this.bassVolume) * 0.85);
+      }
+      return;
+    }
+
+    if (pattern === 'bloque') {
+      this._scheduleVoicingAt(ctx, sorted, startTime, totalSec, 'block', instrument, volume, 0);
+      return;
+    }
+
+    if (pattern === 'arpegio-pima' || pattern === 'arpegio-asc') {
+      const mode = pattern === 'arpegio-pima' ? 'arpeggio-pima' : 'arpeggio-asc';
+      const chunks = Math.max(1, Math.floor(durationBeats / 2));
+      const chunkSec = totalSec / chunks;
+      for (let c = 0; c < chunks; c++) {
+        this._scheduleVoicingAt(ctx, sorted, startTime + c * chunkSec, chunkSec, mode, instrument, volume, 18);
+      }
+      return;
+    }
+
+    if (pattern === 'vals') {
+      const bass = [sorted[0]];
+      const upper = sorted.length > 1 ? sorted.slice(1) : sorted;
+      const beats = Math.max(1, Math.round(durationBeats));
+      for (let b = 0; b < beats; b++) {
+        const isOne = b % 3 === 0;
+        this._scheduleVoicingAt(
+          ctx,
+          isOne ? bass : upper,
+          startTime + b * secPerBeat,
+          secPerBeat * (isOne ? 1.4 : 0.75),
+          isOne ? 'block' : 'strum-down',
+          instrument,
+          volume * (isOne ? 1.0 : 0.72),
+          14
+        );
+      }
+      return;
+    }
+
+    if (pattern === 'bossa') {
+      // Patrón bossa simplificado sobre 4 negras: 1 (bajo+bloque), 2.5 (síncopa), 3 (bajo), 4 (bloque)
+      const hits = [
+        { offset: 0, notes: sorted, mode: 'block', accent: 1.0 },
+        { offset: 1.5, notes: sorted.slice(1).length ? sorted.slice(1) : sorted, mode: 'block', accent: 0.78 },
+        { offset: 2, notes: [sorted[0]], mode: 'block', accent: 0.85 },
+        { offset: 3, notes: sorted.slice(1).length ? sorted.slice(1) : sorted, mode: 'block', accent: 0.82 }
+      ];
+      for (const h of hits) {
+        if (h.offset < durationBeats) {
+          this._scheduleVoicingAt(ctx, h.notes, startTime + h.offset * secPerBeat, secPerBeat * 0.9, h.mode, instrument, volume * h.accent, 14);
+        }
+      }
+      return;
+    }
+
+    if (pattern === 'rasgueo-balada') {
+      // Negras y contratiempos suaves: Abajo(1), Abajo(2), Arriba(2.5), Arriba(3.5), Abajo(4)
+      const strums = [
+        { offset: 0, mode: 'strum-down', accent: 1.0 },
+        { offset: 1, mode: 'strum-down', accent: 0.85 },
+        { offset: 1.5, mode: 'strum-up', accent: 0.65 },
+        { offset: 2.5, mode: 'strum-up', accent: 0.7 },
+        { offset: 3, mode: 'strum-down', accent: 0.85 },
+        { offset: 3.5, mode: 'strum-up', accent: 0.65 }
+      ];
+      for (const s of strums) {
+        if (s.offset < durationBeats) {
+          this._scheduleVoicingAt(ctx, sorted, startTime + s.offset * secPerBeat, secPerBeat * 0.85, s.mode, instrument, volume * s.accent, 22);
+        }
+      }
+      return;
+    }
+
+    // Por defecto ('negras-abajo' / 'swing-negras'): rasgueo firme en cada negra con acento en 1 y 3 (o 2 y 4 en swing)
+    const beats = Math.max(1, Math.round(durationBeats));
+    for (let b = 0; b < beats; b++) {
+      const isSwing = pattern === 'swing-negras';
+      const accent = isSwing ? (b % 2 === 1 ? 1.0 : 0.78) : (b % 4 === 0 ? 1.0 : 0.82);
+      const dur = isSwing ? secPerBeat * 0.62 : secPerBeat * 0.92;
+      this._scheduleVoicingAt(ctx, sorted, startTime + b * secPerBeat, dur, 'strum-down', instrument, volume * accent, 18);
+    }
   }
 
   /**

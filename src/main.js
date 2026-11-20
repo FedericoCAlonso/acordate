@@ -3,15 +3,18 @@ import { Router } from './core/Router.js';
 import { loadBuiltinCatalog } from './data/catalog.js';
 import { AbcService } from './services/AbcService.js';
 import { AudioSynthService } from './services/AudioSynthService.js';
+import { HarmonyService } from './services/HarmonyService.js';
 import { ImportExportService } from './services/ImportExportService.js';
 import { MetronomeService } from './services/MetronomeService.js';
 import { ProgressionGenerator } from './services/ProgressionGenerator.js';
 import { ScaleGenerator } from './services/ScaleGenerator.js';
 import { StorageService } from './services/StorageService.js';
 import { ThemeService } from './services/ThemeService.js';
+import { VoicingGenerator } from './services/VoicingGenerator.js';
 import { WakeLockService } from './services/WakeLockService.js';
 import { WalkingBassGenerator } from './services/WalkingBassGenerator.js';
 import { AppViewModel } from './viewmodels/AppViewModel.js';
+import { ChordsHubViewModel } from './viewmodels/ChordsHubViewModel.js';
 import { EditorViewModel } from './viewmodels/EditorViewModel.js';
 import { MetronomeViewModel } from './viewmodels/MetronomeViewModel.js';
 import { PracticeListViewModel } from './viewmodels/PracticeListViewModel.js';
@@ -19,6 +22,7 @@ import { PracticePlayerViewModel } from './viewmodels/PracticePlayerViewModel.js
 import { ProgressViewModel } from './viewmodels/ProgressViewModel.js';
 import { SettingsViewModel } from './viewmodels/SettingsViewModel.js';
 import { AppShellView } from './views/AppShellView.js';
+import { ChordsHubView } from './views/ChordsHubView.js';
 import { EditorView } from './views/EditorView.js';
 import { MetronomeView } from './views/MetronomeView.js';
 import { PracticeListView } from './views/PracticeListView.js';
@@ -41,7 +45,7 @@ async function registerServiceWorker() {
 }
 
 /**
- * Punto de entrada de Acordate v2.
+ * Punto de entrada de Acordate v3 (Módulo de Armonía).
  * Realiza la composición e inyección de dependencias manual de la arquitectura MVVM,
  * monta el AppShellView y arranca el router por hash.
  * @returns {Promise<void>}
@@ -59,6 +63,8 @@ async function bootstrap() {
   const scaleGenerator = new ScaleGenerator();
   const progressionGenerator = new ProgressionGenerator();
   const walkingBassGenerator = new WalkingBassGenerator();
+  const voicingGenerator = new VoicingGenerator();
+  const harmonyService = new HarmonyService();
   const importExportService = new ImportExportService();
 
   // 2) Capa ViewModels
@@ -79,6 +85,13 @@ async function bootstrap() {
     wakeLockService,
     importExportService
   });
+  const chordsHubVm = new ChordsHubViewModel({
+    appVm,
+    voicingGenerator,
+    harmonyService,
+    audioService,
+    metronomeService
+  });
   const metronomeVm = new MetronomeViewModel(metronomeService, appVm);
   const editorVm = new EditorViewModel({
     appVm,
@@ -97,6 +110,7 @@ async function bootstrap() {
   const views = {
     list: new PracticeListView(practiceListVm, appVm, importExportService),
     player: new PracticePlayerView(practicePlayerVm, appVm, abcService),
+    chords: new ChordsHubView(chordsHubVm, appVm, abcService),
     metronome: new MetronomeView(metronomeVm),
     editor: new EditorView(editorVm, appVm, abcService),
     progress: new ProgressView(progressVm),

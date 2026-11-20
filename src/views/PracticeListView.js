@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, INSTRUMENT_LABELS, formatKeyName } from '../core/i18n.js';
+import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, formatKeyName } from '../core/i18n.js';
 import {
   createFloatingField,
   createPopupMenu,
@@ -617,7 +617,7 @@ export class PracticeListView {
           )
         ]),
         el('div', { className: 'm3-body-md' }, [
-          `${formatKeyName(pr.key, notation)} · ${pr.timeSignature}${pr.origin === 'user' ? ' · Propia' : ''}`
+          `${PRACTICE_TYPE_LABELS[pr.type] || 'Melodía'} · ${formatKeyName(pr.key, notation)} · ${pr.timeSignature}${pr.origin === 'user' ? ' · Propia' : ''}`
         ]),
         el('div', { className: 'practice-card__progress-row' }, [
           el('div', { className: 'm3-linear-progress', style: 'flex:1 1 auto' }, [
@@ -642,6 +642,21 @@ export class PracticeListView {
 
     const renderFilters = (closeFn) => {
       content.innerHTML = '';
+
+      const typeRow = this._buildFilterChipGroup(
+        'Tipo',
+        [
+          { value: 'todos', label: 'Todos' },
+          { value: 'melody', label: 'Melodía' },
+          { value: 'harmony', label: 'Armonía' },
+          { value: 'mixed', label: 'Mixta' }
+        ],
+        this._vm.typeFilter.value,
+        (v) => {
+          this._vm.setType(v);
+          renderFilters(closeFn);
+        }
+      );
 
       const catRow = this._buildFilterChipGroup(
         'Área',
@@ -717,7 +732,7 @@ export class PracticeListView {
         )
       ]);
 
-      content.append(catRow, levelRow, originRow, tagRow, footer);
+      content.append(typeRow, catRow, levelRow, originRow, tagRow, footer);
     };
 
     const sheet = openSheetModal({

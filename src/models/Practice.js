@@ -1,12 +1,35 @@
+import { ProgressionStep } from './ProgressionStep.js';
+import { Voicing } from './Voicing.js';
+
 /**
  * Instrumentos válidos admitidos por el esquema de prácticas.
  */
 export const VALID_INSTRUMENTS = ['guitarra-clasica', 'guitarra', 'bajo'];
 
 /**
- * Categorías válidas admitidas por el esquema de prácticas.
+ * Tipos principales de práctica en el esquema v2: Melodía, Armonía o Mixta (lead sheet).
  */
-export const VALID_CATEGORIES = ['escala', 'acordes', 'lectura', 'ritmo', 'walking', 'arpegio'];
+export const VALID_PRACTICE_TYPES = ['melody', 'harmony', 'mixed'];
+
+/**
+ * Categorías válidas admitidas por el esquema de prácticas (melódicas y armónicas).
+ */
+export const VALID_CATEGORIES = [
+  'escala',
+  'acordes',
+  'lectura',
+  'ritmo',
+  'walking',
+  'arpegio',
+  'formas',
+  'inversiones',
+  'cambios',
+  'conduccion-de-voces',
+  'campo-armonico',
+  'acompanamiento',
+  'arpegios-de-acorde',
+  'oido'
+];
 
 /**
  * Orígenes válidos de una práctica: incluida (solo lectura) o creada por el usuario.
@@ -14,8 +37,28 @@ export const VALID_CATEGORIES = ['escala', 'acordes', 'lectura', 'ritmo', 'walki
 export const VALID_ORIGINS = ['builtin', 'user'];
 
 /**
- * Valida un objeto plano contra el esquema JSON oficial de una práctica.
- * Devuelve un objeto con estado de validez y mensajes de error claros en español.
+ * Deduce el tipo de práctica ('melody' | 'harmony' | 'mixed') para migración transparente de prácticas v1.
+ * @param {object} data Objeto de práctica crudo.
+ * @returns {'melody'|'harmony'|'mixed'} Tipo resuelto.
+ */
+export function inferPracticeType(data) {
+  if (VALID_PRACTICE_TYPES.includes(data?.type)) {
+    return data.type;
+  }
+  const hasProg = Array.isArray(data?.progression) && data.progression.length > 0;
+  const hasAbc = typeof data?.abc === 'string' && data.abc.trim().length > 0;
+  if (hasProg && hasAbc) return 'mixed';
+  if (hasProg && !hasAbc) return 'harmony';
+  // En prácticas v1 con cifrado americano sobre la partitura ABC, se clasifican como 'mixed' si tienen acordes
+  if (hasAbc && /"[A-G][#b]?[^"]*"/.test(data.abc)) {
+    return data.category === 'acordes' ? 'mixed' : 'melody';
+  }
+  return 'melody';
+}
+
+/**
+ * Valida un objeto plano contra el esquema JSON oficial de una práctica (v1 y v2).
+ * Devuelve estado de validez y mensajes de error claros en español.
  * @param {object} data Objeto candidato a validar.
  * @returns {{ valid: boolean, errors: string[] }} Resultado de la validación.
  */
@@ -35,6 +78,11 @@ export function validatePracticeSchema(data) {
     errors.push('El campo "version" debe ser un número entero mayor o igual a 1.');
   }
 
+  const practiceType = inferPracticeType(data);
+  if (!VALID_PRACTICE_TYPES.includes(practiceType)) {
+    errors.push(`El tipo "${data.type}" no es válido. Opciones: ${VALID_PRACTICE_TYPES.join(', ')}.`);
+  }
+
   if (typeof data.title !== 'string' || data.title.trim().length < 2) {
     errors.push('El título ("title") es obligatorio y debe tener al menos 2 caracteres.');
   }
@@ -49,14 +97,14 @@ export function validatePracticeSchema(data) {
   }
 
   if (!VALID_CATEGORIES.includes(data.category)) {
-    errors.push(`La categoría "${data.category}" no es válida. Opciones: ${VALID_CATEGORIES.join(', ')}.`);
+    errors.push(`La categoría "${data.category}" no es válida.`);
   }
 
   if (typeof data.level !== 'number' || !Number.isInteger(data.level) || data.level < 1 || data.level > 5) {
     errors.push('El nivel ("level") debe ser un entero entre 1 y 5.');
   }
 
-  if (!Array.isArray(data.tags) || data.tags.some((t) => typeof t !== 'string')) {
+  if (data.tags !== undefined && (!Array.isArray(data.tags) || data.tags.some((t) => typeof t !== 'string'))) {
     errors.push('Las etiquetas ("tags") deben ser una lista de textos.');
   }
 
@@ -86,21 +134,47 @@ export function validatePracticeSchema(data) {
     }
   }
 
-  if (typeof data.abc !== 'string' || !data.abc.trim()) {
-    errors.push('El contenido musical en notación ABC ("abc") es obligatorio.');
-  } else if (!/^K:/m.test(data.abc)) {
-    errors.push('La notación ABC debe incluir al menos la cabecera de tonalidad (K:).');
+  const hasAbc = typeof data.abc === 'string' && data.abc.trim().length > 0;
+  const hasProgression = Array.isArray(data.progression) && data.progression.length > 0;
+
+  if (practiceType === 'melody') {
+    if (!hasAbc) {
+      errors.push('El contenido musical en notación ABC ("abc") es obligatorio para prácticas de melodía.');
+    } else if (!/^K:/m.test(data.abc)) {
+      errors.push('La notación ABC debe incluir al menos la cabecera de tonalidad (K:).');
+    }
+  } else if (practiceType === 'harmony') {
+    if (!hasProgression && !hasAbc) {
+      errors.push('Una práctica de armonía debe incluir una progresión de acordes ("progression").');
+    }
+  } else if (practiceType === 'mixed') {
+    if (!hasAbc && !hasProgression) {
+      errors.push('Una práctica mixta debe incluir partitura ABC y/o progresión de acordes.');
+    } else if (hasAbc && !/^K:/m.test(data.abc)) {
+      errors.push('La notación ABC debe incluir la cabecera de tonalidad (K:).');
+    }
+  }
+
+  if (hasProgression) {
+    data.progression.forEach((step, idx) => {
+      if (!step || typeof step.chord !== 'string' || !step.chord.trim()) {
+        errors.push(`Paso ${idx + 1} de la progresión: falta el acorde ("chord").`);
+      }
+      if (step?.bars !== undefined && (typeof step.bars !== 'number' || step.bars <= 0)) {
+        errors.push(`Paso ${idx + 1} de la progresión: "bars" debe ser un número positivo.`);
+      }
+    });
   }
 
   if (data.fingerings !== undefined && (typeof data.fingerings !== 'object' || data.fingerings === null || Array.isArray(data.fingerings))) {
     errors.push('Las digitaciones ("fingerings") deben ser un objeto clave-valor.');
   }
 
-  if (!Array.isArray(data.goals) || data.goals.some((g) => typeof g !== 'string')) {
+  if (data.goals !== undefined && (!Array.isArray(data.goals) || data.goals.some((g) => typeof g !== 'string'))) {
     errors.push('Los objetivos ("goals") deben ser una lista de textos.');
   }
 
-  if (typeof data.notes !== 'string') {
+  if (data.notes !== undefined && typeof data.notes !== 'string') {
     errors.push('Las notas ("notes") deben ser un texto.');
   }
 
@@ -136,21 +210,26 @@ export function generatePracticeId(title = 'practica') {
 }
 
 /**
- * Modelo de dominio puro que representa una práctica musical (incluida o de usuario).
- * No accede al DOM ni a APIs del navegador.
+ * Modelo de dominio puro que representa una práctica musical (Melodía, Armonía o Mixta).
+ * Compatible hacia atrás con prácticas v1 y ampliado al esquema v2 con progresiones y voicings.
  */
 export class Practice {
   /**
-   * Construye y valida una instancia de Practice a partir de datos crudos.
+   * Construye y valida una instancia de Practice a partir de datos crudos (v1 o v2).
    * @param {object} data Objeto conforme al esquema JSON de práctica.
    */
   constructor(data) {
+    const inferredType = inferPracticeType(data);
+    const hasProgression = Array.isArray(data.progression) && data.progression.length > 0;
+    const rawAbc = typeof data.abc === 'string' && data.abc.trim() ? data.abc.trim() : null;
+
     const normalized = {
       id: data.id || generatePracticeId(data.title),
-      version: data.version ?? 1,
+      version: data.version ?? (hasProgression ? 2 : 1),
+      type: inferredType,
       title: (data.title || '').trim(),
       instruments: Array.isArray(data.instruments) ? [...data.instruments] : ['guitarra'],
-      category: data.category || 'lectura',
+      category: data.category || (inferredType === 'harmony' ? 'cambios' : 'lectura'),
       level: Number(data.level ?? 1),
       tags: Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [],
       key: (data.key || 'C').trim(),
@@ -160,7 +239,12 @@ export class Practice {
         target: Number(data.tempo?.target ?? 100),
         step: Number(data.tempo?.step ?? 5)
       },
-      abc: String(data.abc || '').trim(),
+      abc: rawAbc,
+      progression: hasProgression ? data.progression.map((s) => new ProgressionStep(s).toJSON()) : [],
+      comping: data.comping || 'negras-abajo',
+      customVoicings: Array.isArray(data.customVoicings)
+        ? data.customVoicings.map((v) => new Voicing(v).toJSON())
+        : [],
       fingerings: data.fingerings && typeof data.fingerings === 'object' ? { ...data.fingerings } : {},
       goals: Array.isArray(data.goals) ? data.goals.map((g) => String(g).trim()).filter(Boolean) : [],
       notes: typeof data.notes === 'string' ? data.notes : '',
@@ -175,13 +259,15 @@ export class Practice {
 
     /** Identificador único de la práctica. */
     this.id = normalized.id;
-    /** Versión del esquema de datos. */
+    /** Versión del esquema de datos (1 o 2). */
     this.version = normalized.version;
+    /** Tipo de práctica: 'melody', 'harmony' o 'mixed'. */
+    this.type = normalized.type;
     /** Título visible de la práctica. */
     this.title = normalized.title;
     /** Lista de instrumentos para los que aplica la práctica. */
     this.instruments = normalized.instruments;
-    /** Categoría pedagógica (escala, acordes, lectura, ritmo, walking, arpegio). */
+    /** Categoría pedagógica. */
     this.category = normalized.category;
     /** Nivel de dificultad entre 1 y 5. */
     this.level = normalized.level;
@@ -193,8 +279,14 @@ export class Practice {
     this.timeSignature = normalized.timeSignature;
     /** Configuración de tempo inicial, objetivo y paso de incremento. */
     this.tempo = normalized.tempo;
-    /** Partitura completa en notación ABC. */
+    /** Partitura completa en notación ABC (o null en prácticas puras de armonía). */
     this.abc = normalized.abc;
+    /** Pasos de progresión armónica con acordes y voicings específicos. */
+    this.progression = normalized.progression.map((s) => new ProgressionStep(s));
+    /** Patrón rítmico predeterminado de acompañamiento (comping). */
+    this.comping = normalized.comping;
+    /** Voicings personalizados incrustados por el usuario en esta práctica. */
+    this.customVoicings = normalized.customVoicings.map((v) => new Voicing(v));
     /** Mapa opcional de digitaciones por número de nota/compás. */
     this.fingerings = normalized.fingerings;
     /** Objetivos pedagógicos de la práctica. */
@@ -213,6 +305,14 @@ export class Practice {
    */
   get isReadOnly() {
     return this.origin === 'builtin';
+  }
+
+  /**
+   * Indica si la práctica posee contenido de armonía (progression).
+   * @returns {boolean} True si es harmony o mixed con progresión.
+   */
+  get isHarmonyCapable() {
+    return this.type === 'harmony' || (this.type === 'mixed' && this.progression.length > 0);
   }
 
   /**
@@ -250,9 +350,10 @@ export class Practice {
    * @returns {object} Representación JSON pura.
    */
   toJSON() {
-    return {
+    const base = {
       id: this.id,
       version: this.version,
+      type: this.type,
       title: this.title,
       instruments: [...this.instruments],
       category: this.category,
@@ -268,5 +369,14 @@ export class Practice {
       origin: this.origin,
       createdAt: this.createdAt
     };
+
+    if (this.progression.length > 0 || this.type === 'harmony') {
+      base.progression = this.progression.map((s) => s.toJSON());
+      base.comping = this.comping;
+    }
+    if (this.customVoicings.length > 0) {
+      base.customVoicings = this.customVoicings.map((v) => v.toJSON());
+    }
+    return base;
   }
 }

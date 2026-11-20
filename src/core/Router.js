@@ -6,6 +6,7 @@ import { Observable } from './Observable.js';
 export const ROUTE_PATTERNS = [
   { name: 'practicas', regex: /^#\/practicas\/?$/ },
   { name: 'practica', regex: /^#\/practica\/([^/?#]+)\/?$/ },
+  { name: 'acordes', regex: /^#\/acordes(?:\/([^/?#]+))?\/?$/ },
   { name: 'editor', regex: /^#\/editor\/([^/?#]+)\/?$/ },
   { name: 'editorNew', regex: /^#\/editor\/?$/ },
   { name: 'metronomo', regex: /^#\/metronomo\/?$/ },
@@ -29,6 +30,13 @@ export function parseHashRoute(rawHash) {
         return {
           name: 'practica',
           params: { id: decodeURIComponent(match[1]) },
+          hash
+        };
+      }
+      if (pattern.name === 'acordes') {
+        return {
+          name: 'acordes',
+          params: { tab: match[1] ? decodeURIComponent(match[1]) : 'biblioteca' },
           hash
         };
       }
