@@ -37,6 +37,11 @@ Usá este rol y protocolo para auditar y corregir el repertorio de **Acordate** 
 * **Rango físico estándar (`PitchPolicy`)**:
   * Guitarra / guitarra clásica (`K:... clef=treble-8`): `C` = MIDI 48 (5.ª cuerda traste 3), cuerda más grave `E,` = MIDI 40 (6.ª al aire). Nunca bajar de `E,` en afinación estándar.
   * Bajo (`K:... clef=bass`): cuerda más grave `E,,` = MIDI 28 (4.ª al aire), `G,,` = MIDI 31, `A,,` = MIDI 33, `D,` = MIDI 38, `G,` = MIDI 43.
+  * Piano (`%%staves {1 2}`, `V:1 clef=treble`, `V:2 clef=bass`): altura real (`0` st), Do central `C` = MIDI 60, `C,` = MIDI 48, `C,,` = MIDI 36, rango físico A0 (21) a C8 (108). Digitación MD arriba (`"^1"`..`"^5"`) y MI abajo (`"_1"`..`"_5"`).
+
+### A2. Piano clásico y dominio público (`pianoCatalog.json`)
+* Auditar nota por nota cada pieza en gran pentagrama contra ediciones Urtext (IMSLP / Henle / Bach-Gesellschaft): Bach (BWV Anh. 114, BWV Anh. 126, BWV 846, Invenciones), Beethoven (WoO 59), Satie (Gymnopédie n.º 1), Burgmüller (Op. 100), Schumann (Op. 68), Chopin (Preludios Op. 28).
+* Confirmar igualdad exacta de compases y duración total entre `V:1` (MD) y `V:2` (MI), armonía fiel y `verified: false` + `sourceRef` explícito.
 
 ### B. Tradicionales, Ragtime, Tango y Bach en bajo (`repertoireTraditional.json`)
 * Revisar fielmente las melodías tradicionales de dominio público:

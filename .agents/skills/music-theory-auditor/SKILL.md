@@ -3,12 +3,13 @@ name: music-theory-auditor
 description: >-
   Audits Acordate exercises, chord voicings, progressions, and voice leading from the
   perspective of a specialist in music theory, pedagogy, and technique for electric/acoustic
-  guitar, classical guitar, and 4/5-string electric bass (including bass-style chords).
-  Use when reviewing catalog.json, harmonyCatalog.json, voicings.js, VoicingGenerator.js,
-  or HarmonyService.js, or when designing/validating new musical exercises.
+  guitar, classical guitar, 4/5-string electric bass (including bass-style chords), and piano
+  (grand staff, canonical 1-5 fingerings, shell/rootless/drop-2 voicings).
+  Use when reviewing catalog.json, harmonyCatalog.json, pianoCatalog.json, voicings.js,
+  VoicingGenerator.js, PianoVoicingService.js, or HarmonyService.js, or when designing/validating new musical exercises.
 ---
 
-# Especialista en Teoría Musical y Técnica (Guitarra, Guitarra Clásica y Bajo)
+# Especialista en Teoría Musical y Técnica (Guitarra, Guitarra Clásica, Bajo y Piano)
 
 Usá este rol y protocolo cuando haya que auditar ejercicios existentes, validar nuevos voicings/progresiones o proponer mejoras pedagógicas y técnicas en **Acordate**.
 
@@ -40,7 +41,13 @@ Usá este rol y protocolo cuando haya que auditar ejercicios existentes, validar
   * **Tríadas abiertas (R–5–10)**: mayor `[0, 2, null, 1]`, menor `[0, 2, null, 0]`.
   * **Tríadas en registro agudo** (cuerdas A–D–G desde traste 7+) y **díadas de notas guía (3–7)** en cuerdas D–G.
   * **Power chords / quintas y octavas** limpias (`R–5`, `R–5–8`).
-* En walking bass y líneas armónicas: revisar notas guía (3ª y 7ª en tiempos fuertes), aproximación cromática/diatónica al siguiente acorde y articulación (muting, raking, alternancia de dedos).
+* **En walking bass y líneas armónicas**: revisar notas guía (3ª y 7ª en tiempos fuertes), aproximación cromática/diatónica al siguiente acorde y articulación (muting, raking, alternancia de dedos).
+
+### Piano (clásico, popular y jazz)
+* **Altura real (`0` semitonos) y Gran Pentagrama (`%%staves {1 2}`)**: rango de 88 teclas A0 (MIDI 21) a C8 (MIDI 108); `V:1 clef=treble` (MD, digitación `1–5` arriba `^`) y `V:2 clef=bass` (MI, digitación `1–5` abajo `_`, estilo Henle Urtext). Nunca transponer `-12` en clave de fa.
+* **Low Interval Limit (LIL) en piano**: evitar terceras o séptimas cerradas por debajo de C3/E3 en mano izquierda; en registro grave usar quintas abiertas, octavas, décimas o shells (R–7 / R–3) en rango medio.
+* **Digitaciones canónicas de escalas (`1–5`)**: respetar paso de pulgar sin forzar el pulgar (1) en tecla negra cuando existe tecla blanca adyacente; aplicar reglas específicas por tonalidad (ej. Fa mayor MD `1-2-3-4-1-2-3-4`, Si mayor MI `4-3-2-1-4-3-2-1`, tonalidades con bemoles/sostenidos).
+* **Voicings idiomáticos de piano**: posición fundamental, inversiones cerradas con dedos adaptados a la apertura (ej. 1.ª inv. tríada MD `1-2-5`, 2.ª inv. `1-3-5`), Shell (MI + MD), Rootless tipo A (`3-5-7-9`) y tipo B (`7-9-3-5`) estilo Bill Evans respetando `b9/#9/#11/b13/b5` en alterados y semidisminuidos, y Drop 2 abierto.
 
 ## 2. Procedimiento de auditoría
 

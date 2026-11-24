@@ -1,5 +1,6 @@
 import { ComputedObservable, Observable } from '../core/Observable.js';
 import { LEVELS } from '../models/Level.js';
+import { VALID_INSTRUMENTS } from '../models/Practice.js';
 import {
   buildTodayRoutine,
   pickContinueCard
@@ -139,7 +140,7 @@ export class HomeViewModel {
 
   /** Cambia el instrumento activo del estudio y lo recuerda globalmente. */
   setInstrument(value) {
-    if (!['guitarra-clasica', 'guitarra', 'bajo'].includes(value)) return;
+    if (!VALID_INSTRUMENTS.includes(value)) return;
     this.instrument.set(value);
     this._appVm.updateSettings({ defaultInstrument: value });
   }

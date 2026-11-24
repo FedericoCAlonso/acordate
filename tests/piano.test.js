@@ -25,10 +25,12 @@ import { VoicingGenerator } from '../src/services/VoicingGenerator.js';
 import { HarmonyService } from '../src/services/HarmonyService.js';
 import { ScaleCatalogService, SCALE_CATALOG } from '../src/services/ScaleCatalogService.js';
 import {
+  assignChordFingers,
   computePianoScaleFingers,
   computePianoVoiceLeading,
   generatePianoVoicings,
-  groupPianoVoicingsByFamily
+  groupPianoVoicingsByFamily,
+  isBlackKeyMidi
 } from '../src/services/PianoVoicingService.js';
 
 function createMemoryStorage() {
@@ -118,8 +120,8 @@ test('Catálogo de Piano: 20 prácticas graduadas (N1–N5), 6 piezas de dominio
   const pianoCurriculum = pianoAll.filter((p) => !p.isRepertoire);
   const pianoRepertoire = pianoAll.filter((p) => p.isRepertoire);
 
-  assert.ok(pianoCurriculum.length >= 20, `Se esperan al menos 20 prácticas de ruta para piano (hay ${pianoCurriculum.length})`);
-  assert.ok(pianoRepertoire.length >= 24, `Se esperan 6 clásicas + 18 jazz para piano (hay ${pianoRepertoire.length})`);
+  assert.ok(pianoCurriculum.length >= 25, `Se esperan al menos 25 prácticas de ruta para piano (hay ${pianoCurriculum.length})`);
+  assert.ok(pianoRepertoire.length >= 26, `Se esperan 8 clásicas + 18 jazz para piano (hay ${pianoRepertoire.length})`);
 
   for (let lvl = 1; lvl <= 5; lvl++) {
     const count = pianoCurriculum.filter((p) => p.level === lvl).length;
@@ -159,12 +161,19 @@ test('ViewModels con Piano: Settings, Home, PracticeList y PracticePlayer cargan
   await appVm.updateSettings({ defaultInstrument: 'piano' });
 
   const homeVm = new HomeViewModel(appVm);
-  assert.equal(homeVm.instrument.value, 'piano');
+  homeVm.setInstrument('guitarra');
+  assert.equal(homeVm.instrument.value, 'guitarra');
+  homeVm.setInstrument('piano');
+  assert.equal(homeVm.instrument.value, 'piano', 'HomeViewModel.setInstrument("piano") debe cambiar a Piano desde el Panel');
+  assert.equal(appVm.settings.value.defaultInstrument, 'piano');
   assert.ok(homeVm.continueCard.value?.practice?.instruments.includes('piano'));
   assert.ok(homeVm.todayRoutine.value.items.length >= 3);
 
   const listVm = new PracticeListViewModel(appVm);
+  listVm.setInstrument('guitarra');
+  listVm.setInstrument('piano');
   assert.equal(listVm.instrumentFilter.value, 'piano');
+  assert.equal(appVm.settings.value.defaultInstrument, 'piano');
   assert.ok(listVm.repertoirePractices.value.length >= 24);
 
   const mockAudio = {
@@ -310,4 +319,58 @@ test('Fase 2 Escalas y Acordes Hub con Piano: las 22 escalas generan digitación
 
   chordsVm.dispose();
   scalesVm.dispose();
+});
+
+test('Auditoría especialista de Piano: funciones armónicas, LIL, Rootless MI, inversiones, slash y digitación 1–5', () => {
+  // 1) Funciones armónicas reales (NO enteros de semitonos) y ortografía con bemoles en Cm/C7
+  const cmaj7Root = generatePianoVoicings('Cmaj7')[0];
+  const labels = cmaj7Root.getDetailedNotes('americano').map((d) => d.label);
+  assert.ok(labels.includes('R') && labels.includes('3') && labels.includes('5') && labels.includes('7'), `Etiquetas reales esperadas, obtuvo: ${labels}`);
+  assert.equal(labels.includes('4') || labels.includes('11'), false, 'Nunca debe devolver semitonos crudos como etiquetas');
+
+  const cmNames = generatePianoVoicings('Cm')[0].getDetailedNotes('americano').map((d) => d.americanName);
+  assert.ok(cmNames.includes('Eb'), `Cm debe usar Eb (obtuvo ${cmNames})`);
+
+  // 2) Acordes extendidos (C13): mano derecha tocable <= 12 st e inversiones estrictamente ascendentes
+  const c13List = generatePianoVoicings('C13');
+  for (const v of c13List.filter((x) => x.family === 'fundamental' || x.family === 'inversion')) {
+    const span = v.rhMidis.at(-1) - v.rhMidis[0];
+    assert.ok(span <= 12, `${v.id} debe ser tocable en una mano (span=${span})`);
+    for (let i = 1; i < v.rhMidis.length; i++) {
+      assert.ok(v.rhMidis[i] > v.rhMidis[i - 1], `${v.id} debe estar estrictamente ascendente`);
+    }
+  }
+
+  // 3) Slash chord C/E en Shell no debe inyectar B ajeno al acorde
+  const ceShell = generatePianoVoicings('C/E').find((v) => v.family === 'shell');
+  assert.ok(ceShell);
+  const cePcs = new Set(ceShell.getMidiNotes().map((m) => m % 12));
+  assert.equal(cePcs.has(11), false, 'C/E Shell nunca debe contener Si (pc 11)');
+
+  // 4) Rootless en MI (C3–A4), G13 conserva 13.ª (E), Cdim7 no genera falso Rootless
+  const g13RootlessA = generatePianoVoicings('G13').find((v) => v.id.endsWith('-rootless-a'));
+  assert.ok(g13RootlessA && g13RootlessA.lhMidis.length === 4 && g13RootlessA.rhMidis.length === 0, 'Rootless vive en MI');
+  assert.ok(g13RootlessA.lhMidis.some((m) => m % 12 === 4), 'G13 Rootless debe incluir la 13.ª (Mi)');
+  assert.equal(generatePianoVoicings('Cdim7').some((v) => v.family === 'rootless'), false, 'Cdim7 no debe generar falso Rootless 3-5-7-9');
+
+  // 5) assignChordFingers por inversión real
+  assert.deepEqual(Object.values(assignChordFingers([64, 67, 72], 'rh')), [1, 2, 5], '1.ª inv tríada MD = 1-2-5');
+  assert.deepEqual(Object.values(assignChordFingers([55, 60, 64], 'lh')), [5, 2, 1], '2.ª inv tríada MI = 5-2-1');
+
+  // 6) Escalas: Lidio C, F#m, Bbm, Cromática y Bb mayor 2 octavas sin pulgar ilegal ni dedos repetidos
+  const scalesSvc = new ScaleCatalogService();
+  const cLydian = computePianoScaleFingers('C', scalesSvc.getScaleById('lidio'), 'rh', 1);
+  assert.notEqual(cLydian[3], 1, 'C Lidio MD no debe poner pulgar 1 en F#');
+  assert.deepEqual(computePianoScaleFingers('F#', scalesSvc.getScaleById('menor-natural'), 'rh', 1), [2, 3, 1, 2, 3, 1, 2, 3]);
+  assert.deepEqual(computePianoScaleFingers('Bb', scalesSvc.getScaleById('menor-natural'), 'lh', 1), [2, 1, 3, 2, 1, 4, 3, 2]);
+
+  const bbMaj2 = computePianoScaleFingers('Bb', scalesSvc.getScaleById('mayor'), 'rh', 2);
+  assert.equal(bbMaj2[7], 4, 'Bb mayor 2 octavas MD pivota con dedo 4 en el Sib central');
+  for (let i = 1; i < bbMaj2.length; i++) assert.notEqual(bbMaj2[i], bbMaj2[i - 1]);
+
+  const chromRh = computePianoScaleFingers('C', { id: 'cromatica', intervals: [0,1,2,3,4,5,6,7,8,9,10,11] }, 'rh', 1);
+  for (let i = 1; i < chromRh.length; i++) {
+    assert.notEqual(chromRh[i], chromRh[i - 1], 'Cromática MD nunca repite dedos consecutivos');
+    if (chromRh[i] === 1) assert.equal(isBlackKeyMidi(60 + i), false, 'Cromática MD nunca pone pulgar en tecla negra');
+  }
 });

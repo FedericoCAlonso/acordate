@@ -1,5 +1,6 @@
 import { ComputedObservable, Observable } from '../core/Observable.js';
 import { LEVELS } from '../models/Level.js';
+import { VALID_INSTRUMENTS } from '../models/Practice.js';
 import {
   AREA_ORDER,
   buildTodayRoutine,
@@ -193,7 +194,7 @@ export class PracticeListViewModel {
   /** Cambia el instrumento fijo superior y lo recuerda en Ajustes. */
   setInstrument(value) {
     this.instrumentFilter.set(value);
-    if (['guitarra-clasica', 'guitarra', 'bajo'].includes(value)) {
+    if (VALID_INSTRUMENTS.includes(value)) {
       this._appVm.updateSettings({ defaultInstrument: value });
     }
   }

@@ -21,12 +21,17 @@ function svgEl(tag, attrs = {}) {
 }
 
 /**
- * Formatea una etiqueta de grado o nota con símbolos ♯ y ♭ nítidos.
+ * Formatea una etiqueta musical (grado o nota) convirtiendo alteraciones # / b a ♯ / ♭
+ * sin alterar palabras normales en español (como "Bajo").
  * @param {string} txt Texto crudo.
  * @returns {string} Texto formateado.
  */
 function fmtAcc(txt) {
-  return String(txt || '').replace(/#/g, '♯').replace(/b/g, '♭');
+  return String(txt || '')
+    .replace(/#/g, '♯')
+    .replace(/^bb(?=\d)/, '𝄫')
+    .replace(/^b(?=[235679]|1[13])/, '♭')
+    .replace(/([A-G]|Do|Re|Mi|Fa|Sol|La|Si)b(?=$|\/)/g, '$1♭');
 }
 
 /**
@@ -201,8 +206,9 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
           cy,
           r,
           fill,
-          stroke: 'var(--md-sys-color-surface)',
-          'stroke-width': 1.4,
+          stroke: det.hand === 'lh' && pianoVoicing.rhMidis?.length > 0 ? 'var(--md-sys-color-on-surface)' : 'var(--md-sys-color-surface)',
+          'stroke-width': det.hand === 'lh' && pianoVoicing.rhMidis?.length > 0 ? 1.8 : 1.4,
+          'stroke-dasharray': det.hand === 'lh' && pianoVoicing.rhMidis?.length > 0 ? '2.5 1.5' : undefined,
           'pointer-events': 'none'
         })
       );

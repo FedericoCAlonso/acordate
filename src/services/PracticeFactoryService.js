@@ -409,7 +409,7 @@ export function createChordStudyPractice({ chord, instrument, voicing, tuning })
       { bars: 2, chord: chord.americanSymbol, voicingId: voicing?.id || null },
       { bars: 2, chord: chord.americanSymbol, voicingId: voicing?.id || null }
     ],
-    comping: instrument === 'guitarra-clasica' ? 'arpegio-pima' : instrument === 'bajo' ? 'bloque' : 'negras-abajo',
+    comping: instrument === 'guitarra-clasica' ? 'arpegio-pima' : (instrument === 'bajo' || instrument === 'piano') ? 'bloque' : 'negras-abajo',
     customVoicings: voicing?.suggested ? [voicing.toJSON()] : [],
     goals: ['Que todas las cuerdas suenen limpias', 'Armar la forma de memoria sin mirar el mango'],
     notes: `Creada desde la Biblioteca de Acordes (${voicing ? voicing.toAccessibleDescription(tuning) : chord.americanSymbol}).`,
@@ -448,7 +448,7 @@ export function createProgressionPractice({ chords, instrument, key, voiceLed, o
     timeSignature: '4/4',
     tempo: { start: 65, target: 105, step: 5 },
     progression,
-    comping: instrument === 'guitarra-clasica' ? 'arpegio-pima' : instrument === 'bajo' ? 'bloque' : 'negras-abajo',
+    comping: instrument === 'guitarra-clasica' ? 'arpegio-pima' : (instrument === 'bajo' || instrument === 'piano') ? 'bloque' : 'negras-abajo',
     customVoicings,
     goals: ['Reconocer la función de cada acorde', 'Cambiar sin cortar el pulso'],
     notes: opts.notes || 'Creada desde el módulo de Acordes y Armonía.',
