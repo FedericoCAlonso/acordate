@@ -73,6 +73,8 @@ export class PracticePlayerView {
     this._lastScrolledSystemKey = null;
     /** Referencia al sheet modal abierto (si existe). */
     this._activeSheet = null;
+    /** Estado del panel rápido de capas de anotaciones (plegado por defecto para despejar la partitura). */
+    this._annotationsOpen = false;
 
     /** Listener de teclado: barra espaciadora alterna reproducir/pausar. */
     this._onKeyDown = (e) => {
@@ -332,20 +334,21 @@ export class PracticePlayerView {
     const semi = this._vm.transposeSemitones.value;
 
     this._metaStrip.innerHTML = '';
-    const badges = [
-      el('span', { className: 'm3-badge m3-badge--primary' }, [`Nivel ${pr.level} · ${CATEGORY_LABELS[pr.category] || pr.category}`]),
-      el('span', { className: 'm3-badge' }, [`${keyLabel}${semi ? ` (${semi > 0 ? '+' : ''}${semi})` : ''} · ${pr.timeSignature}`]),
-      pr.form ? el('span', { className: 'm3-badge' }, [pr.form]) : null,
-      stats?.bestBpm > 0
-        ? el('span', { className: 'm3-badge m3-badge--success' }, [`Mejor ${stats.bestBpm} / ${pr.tempo.target} BPM`])
-        : el('span', { className: 'm3-badge' }, [`Obj. ${pr.tempo.target} BPM`]),
+    const parts = [
+      `Nivel ${pr.level}`,
+      CATEGORY_LABELS[pr.category] || pr.category,
+      `${keyLabel}${semi ? ` (${semi > 0 ? '+' : ''}${semi})` : ''} · ${pr.timeSignature}`,
+      pr.form || null,
+      stats?.bestBpm > 0 ? `Mejor ${stats.bestBpm}/${pr.tempo.target} BPM` : `Obj. ${pr.tempo.target} BPM`,
       this._vm.sessionRepetitions.value > 0
-        ? el('span', { className: 'm3-badge m3-badge--tertiary' }, [`${this._vm.sessionRepetitions.value} vuelta${this._vm.sessionRepetitions.value === 1 ? '' : 's'}`])
+        ? `${this._vm.sessionRepetitions.value} vuelta${this._vm.sessionRepetitions.value === 1 ? '' : 's'}`
         : null
-    ];
-    for (const b of badges) {
-      if (b) this._metaStrip.appendChild(b);
-    }
+    ].filter(Boolean);
+
+    parts.forEach((text, i) => {
+      if (i > 0) this._metaStrip.appendChild(el('span', { className: 'meta-strip__dot', 'aria-hidden': 'true' }, ['·']));
+      this._metaStrip.appendChild(el('span', { className: i === 0 ? 'meta-strip__lead' : 'meta-strip__item' }, [text]));
+    });
 
     this._renderViewBar();
     this._renderAnnotationsBar();
@@ -437,8 +440,7 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la barra rápida e independiente de capas de anotación sobre la partitura
-   * (Mano izquierda, Mano derecha, Acordes y Otras anotaciones/análisis) + botón de Guía de referencias.
+   * Renderiza el cajón compacto de capas de anotación sobre la partitura cuando el usuario toca "Referencias".
    */
   _renderAnnotationsBar() {
     if (!this._annotationsBar) return;
@@ -446,7 +448,7 @@ export class PracticePlayerView {
     const mode = this._vm.viewMode.value;
     const isStaffVisible = Boolean(pr && pr.type !== 'harmony' && mode !== 'cifrado' && mode !== 'diagramas');
 
-    if (!isStaffVisible) {
+    if (!isStaffVisible || !this._annotationsOpen) {
       this._annotationsBar.style.display = 'none';
       this._annotationsBar.innerHTML = '';
       return;
@@ -463,13 +465,13 @@ export class PracticePlayerView {
         label: 'Mano izq.',
         title: 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
         active: this._vm.showLeftHand.value,
-        onClick: () => this._vm.toggleLeftHand()
+        onClick: () => { this._vm.toggleLeftHand(); this._renderViewBar(); }
       },
       {
         label: 'Mano der.',
         title: 'Dedos de pulsación (p, i, m, a) y rasgueos (↓ ↑)',
         active: this._vm.showRightHand.value,
-        onClick: () => this._vm.toggleRightHand()
+        onClick: () => { this._vm.toggleRightHand(); this._renderViewBar(); }
       },
       {
         label: 'Acordes',
@@ -482,18 +484,18 @@ export class PracticePlayerView {
           } else {
             this._vm.toggleChordsOnScore();
           }
+          this._renderViewBar();
         }
       },
       {
-        label: isBass ? 'Funciones / Otros' : 'Análisis / Otros',
+        label: isBass ? 'Funciones' : 'Análisis',
         title: isBass ? 'Funciones armónicas de bajo (R, 3, 5, 7, Crom) y marcas de texto' : 'Grados romanos y anotaciones de análisis',
         active: this._vm.showOtherAnnotations.value,
-        onClick: () => this._vm.toggleOtherAnnotations()
+        onClick: () => { this._vm.toggleOtherAnnotations(); this._renderViewBar(); }
       }
     ];
 
     this._annotationsBar.append(
-      el('span', { className: 'annotations-bar__label' }, [icon('layers', 15), 'Referencias:']),
       ...chips.map((c) =>
         el(
           'button',
@@ -517,7 +519,7 @@ export class PracticePlayerView {
           title: 'Explicación de dedos, cuerdas, trastes y símbolos',
           onClick: () => openNotationGuideModal()
         },
-        [icon('help', 16), '¿Qué significan?']
+        [icon('help', 15), 'Guía']
       )
     );
   }
@@ -627,7 +629,35 @@ export class PracticePlayerView {
         )
       : null;
 
+    const isStaffVisible = Boolean(pr && !isHarmony && mode !== 'cifrado' && mode !== 'diagramas');
+    const activeLayersCount =
+      (this._vm.showLeftHand.value ? 1 : 0) +
+      (this._vm.showRightHand.value ? 1 : 0) +
+      (mode !== 'pentagrama' && this._vm.showChordsOnScore.value ? 1 : 0) +
+      (this._vm.showOtherAnnotations.value ? 1 : 0);
+
+    const layersToggleBtn = isStaffVisible
+      ? el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip m3-chip--compact',
+            ripple: true,
+            'aria-pressed': String(this._annotationsOpen),
+            'aria-expanded': String(this._annotationsOpen),
+            title: 'Activar o desactivar mano izquierda, mano derecha, acordes y análisis',
+            onClick: () => {
+              this._annotationsOpen = !this._annotationsOpen;
+              this._renderViewBar();
+              this._renderAnnotationsBar();
+            }
+          },
+          [icon('layers', 15), `Capas (${activeLayersCount})`]
+        )
+      : null;
+
     const quickRight = el('div', { className: 'stepper-inline' }, [
+      layersToggleBtn,
       voiceControl,
       harmonicLayerBtn,
       compingSelect,

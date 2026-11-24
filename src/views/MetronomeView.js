@@ -69,18 +69,15 @@ export class MetronomeView {
       this._beatVisualizer,
       this._barInfo,
       this._bpmHero,
-      el('div', { className: 'stepper-inline' }, [
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 5 BPM', title: 'Bajar 5 BPM', onClick: () => this._vm.stepBpm(-5) }, ['−5']),
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Bajar 1 BPM', title: 'Bajar 1 BPM', onClick: () => this._vm.stepBpm(-1) }, ['−1']),
-        this._toggleFab,
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 1 BPM', title: 'Subir 1 BPM', onClick: () => this._vm.stepBpm(1) }, ['+1']),
-        el('button', { type: 'button', className: 'm3-icon-btn m3-icon-btn--tonal', ripple: true, 'aria-label': 'Subir 5 BPM', title: 'Subir 5 BPM', onClick: () => this._vm.stepBpm(5) }, ['+5'])
+      el('div', { className: 'metronome-primary-row' }, [this._toggleFab, tapBtn]),
+      el('div', { className: 'metronome-step-row' }, [
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--tonal', ripple: true, 'aria-label': 'Bajar 5 BPM', title: 'Bajar 5 BPM', onClick: () => this._vm.stepBpm(-5) }, ['−5']),
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--tonal', ripple: true, 'aria-label': 'Bajar 1 BPM', title: 'Bajar 1 BPM', onClick: () => this._vm.stepBpm(-1) }, ['−1']),
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--tonal', ripple: true, 'aria-label': 'Subir 1 BPM', title: 'Subir 1 BPM', onClick: () => this._vm.stepBpm(1) }, ['+1']),
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--tonal', ripple: true, 'aria-label': 'Subir 5 BPM', title: 'Subir 5 BPM', onClick: () => this._vm.stepBpm(5) }, ['+5'])
       ]),
-      el('div', { style: 'width:100%; max-width:480px; margin-top:8px' }, [this._bpmSlider]),
-      el('div', { className: 'stepper-inline', style: 'margin-top:8px; flex-wrap:wrap; justify-content:center' }, [
-        tapBtn,
-        this._tapHintEl
-      ])
+      el('div', { style: 'width:100%; max-width:480px; margin-top:4px' }, [this._bpmSlider]),
+      this._tapHintEl
     ]);
 
     // Compás, subdivisión y sonido

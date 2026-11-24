@@ -67,47 +67,68 @@ a {
   left: 12px;
 }
 
-/* Escala tipográfica Material 3 */
+/* Escala tipográfica Estudio Táctil Moderno */
 .m3-display {
   font-size: var(--md-sys-typescale-display-size);
   line-height: var(--md-sys-typescale-display-line);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
   margin: 0;
 }
 
 .m3-headline {
   font-size: var(--md-sys-typescale-headline-size);
-  line-height: var(--md-sys-typescale-headline-line);
-  font-weight: 600;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
 .m3-title-lg {
   font-size: var(--md-sys-typescale-title-lg-size);
-  line-height: var(--md-sys-typescale-title-lg-line);
-  font-weight: 600;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   margin: 0;
 }
 
 .m3-title-md {
   font-size: var(--md-sys-typescale-title-md-size);
-  line-height: var(--md-sys-typescale-title-md-line);
-  font-weight: 600;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .m3-body-md {
   font-size: var(--md-sys-typescale-body-md-size);
-  line-height: var(--md-sys-typescale-body-md-line);
+  line-height: 1.45;
   color: var(--md-sys-color-on-surface-variant);
   margin: 0;
 }
 
 .m3-label {
   font-size: var(--md-sys-typescale-label-md-size);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.m3-label-md {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Protección global anti-desborde móvil en secciones y grillas */
+section,
+article,
+aside,
+main {
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* State layers y ripple */

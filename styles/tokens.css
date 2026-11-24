@@ -20,18 +20,18 @@
   --md-sys-color-tertiary-container: hsl(293 43% 90%);
   --md-sys-color-on-tertiary-container: hsl(293 31% 16%);
 
-  --md-sys-color-surface: hsl(231 8% 98%);
-  --md-sys-color-surface-dim: hsl(231 8% 89%);
+  --md-sys-color-surface: hsl(231 5% 96.5%);
+  --md-sys-color-surface-dim: hsl(231 5% 89%);
   --md-sys-color-surface-container-lowest: #FFFFFF;
-  --md-sys-color-surface-container-low: hsl(231 8% 96%);
-  --md-sys-color-surface-container: hsl(231 10% 94%);
-  --md-sys-color-surface-container-high: hsl(231 11% 91%);
-  --md-sys-color-surface-container-highest: hsl(231 12% 88%);
+  --md-sys-color-surface-container-low: #FFFFFF;
+  --md-sys-color-surface-container: hsl(231 6% 93.5%);
+  --md-sys-color-surface-container-high: hsl(231 7% 90%);
+  --md-sys-color-surface-container-highest: hsl(231 7% 86%);
 
-  --md-sys-color-on-surface: hsl(231 12% 12%);
-  --md-sys-color-on-surface-variant: hsl(231 10% 30%);
-  --md-sys-color-outline: hsl(231 8% 45%);
-  --md-sys-color-outline-variant: hsl(231 10% 78%);
+  --md-sys-color-on-surface: hsl(231 14% 10%);
+  --md-sys-color-on-surface-variant: hsl(231 8% 36%);
+  --md-sys-color-outline: hsl(231 6% 56%);
+  --md-sys-color-outline-variant: hsl(231 8% 86%);
 
   --md-sys-color-inverse-surface: hsl(231 12% 18%);
   --md-sys-color-inverse-on-surface: hsl(231 10% 95%);
@@ -65,28 +65,28 @@
   --md-sys-typescale-label-lg-size: 0.875rem;
   --md-sys-typescale-label-md-size: 0.75rem;
 
-  /* Formas (Shape scale) */
-  --md-sys-shape-xs: 4px;
-  --md-sys-shape-sm: 8px;
-  --md-sys-shape-md: 12px;
-  --md-sys-shape-lg: 16px;
+  /* Formas (Shape scale — Estudio Táctil Moderno) */
+  --md-sys-shape-xs: 6px;
+  --md-sys-shape-sm: 10px;
+  --md-sys-shape-md: 14px;
+  --md-sys-shape-lg: 20px;
   --md-sys-shape-xl: 28px;
   --md-sys-shape-full: 9999px;
 
-  /* Elevación tonal y sombras */
-  --md-sys-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.14), 0 1px 3px 1px rgba(0, 0, 0, 0.08);
-  --md-sys-elevation-2: 0 2px 6px 2px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.14);
-  --md-sys-elevation-3: 0 6px 18px 4px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.14);
+  /* Elevación sutil y limpia */
+  --md-sys-elevation-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --md-sys-elevation-2: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --md-sys-elevation-3: 0 12px 28px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
 
   /* Movimiento */
-  --md-sys-motion-fast: 150ms cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-fast: 140ms cubic-bezier(0.2, 0, 0, 1);
   --md-sys-motion-standard: 240ms cubic-bezier(0.2, 0, 0, 1);
 
   /* Dimensiones de navegación */
-  --nav-bar-height: 70px;
-  --nav-rail-width: 80px;
-  --nav-drawer-width: 244px;
-  --top-bar-height: 56px;
+  --nav-bar-height: 66px;
+  --nav-rail-width: 78px;
+  --nav-drawer-width: 236px;
+  --top-bar-height: 54px;
 }
 
 @media (prefers-color-scheme: dark) {

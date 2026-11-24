@@ -59,7 +59,7 @@ export class PracticeListView {
     container.innerHTML = '';
 
     this._instBar = el('div', { className: 'practices-top-bar' });
-    this._sectionTabs = el('div', { className: 'm3-segmented m3-segmented--full', role: 'tablist', 'aria-label': 'Secciones de prácticas' });
+    this._sectionTabs = el('div', { className: 'm3-tabs', role: 'tablist', 'aria-label': 'Secciones de prácticas' });
     this._searchRow = el('div', { className: 'm3-search-row' });
     this._bodyHost = el('div', { className: 'route-stack' });
 
@@ -187,9 +187,9 @@ export class PracticeListView {
     const myCount = this._vm.userPractices.value.length;
 
     const tabs = [
-      { id: 'ruta', label: 'Ruta de niveles' },
-      { id: 'repertorio', label: `Repertorio (${repCount})` },
-      { id: 'mias', label: `Mis prácticas (${myCount})` }
+      { id: 'ruta', label: 'Ruta', count: null },
+      { id: 'repertorio', label: 'Repertorio', count: repCount },
+      { id: 'mias', label: 'Mis prácticas', count: myCount }
     ];
 
     this._sectionTabs.innerHTML = '';
@@ -200,7 +200,7 @@ export class PracticeListView {
           {
             type: 'button',
             role: 'tab',
-            className: 'm3-segmented__btn',
+            className: 'm3-tabs__btn',
             ripple: true,
             'aria-pressed': String(active === t.id),
             'aria-selected': String(active === t.id),
@@ -209,7 +209,7 @@ export class PracticeListView {
               this._appVm.navigate(`#/practicas/${t.id}`);
             }
           },
-          [t.label]
+          [t.label, t.count !== null ? el('span', { className: 'm3-tabs__count' }, [String(t.count)]) : null]
         )
       );
     }

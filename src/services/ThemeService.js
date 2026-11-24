@@ -57,84 +57,84 @@ export function generateM3Palette(seedHex, isDark = false) {
   const secSat = Math.max(16, Math.min(34, pSat * 0.45));
   const terHue = (h + 62) % 360;
   const terSat = Math.max(28, Math.min(55, pSat * 0.65));
-  const neuSat = Math.min(14, Math.max(5, Math.round(pSat * 0.16)));
+  const neuSat = Math.min(8, Math.max(3, Math.round(pSat * 0.1)));
 
   if (!isDark) {
     return {
-      '--md-sys-color-primary': hsl(h, pSat, 38),
+      '--md-sys-color-primary': hsl(h, Math.min(76, pSat + 6), 40),
       '--md-sys-color-on-primary': '#FFFFFF',
-      '--md-sys-color-primary-container': hsl(h, Math.min(88, pSat + 12), 90),
-      '--md-sys-color-on-primary-container': hsl(h, pSat, 16),
+      '--md-sys-color-primary-container': hsl(h, Math.min(84, pSat + 10), 92),
+      '--md-sys-color-on-primary-container': hsl(h, pSat, 15),
 
-      '--md-sys-color-secondary': hsl(secHue, secSat, 40),
+      '--md-sys-color-secondary': hsl(secHue, secSat, 38),
       '--md-sys-color-on-secondary': '#FFFFFF',
-      '--md-sys-color-secondary-container': hsl(secHue, secSat + 10, 90),
-      '--md-sys-color-on-secondary-container': hsl(secHue, secSat, 16),
+      '--md-sys-color-secondary-container': hsl(secHue, secSat + 6, 92),
+      '--md-sys-color-on-secondary-container': hsl(secHue, secSat, 15),
 
       '--md-sys-color-tertiary': hsl(terHue, terSat, 38),
       '--md-sys-color-on-tertiary': '#FFFFFF',
-      '--md-sys-color-tertiary-container': hsl(terHue, terSat + 12, 90),
-      '--md-sys-color-on-tertiary-container': hsl(terHue, terSat, 16),
+      '--md-sys-color-tertiary-container': hsl(terHue, terSat + 10, 92),
+      '--md-sys-color-on-tertiary-container': hsl(terHue, terSat, 15),
 
-      '--md-sys-color-surface': hsl(h, neuSat, 98),
+      '--md-sys-color-surface': hsl(h, neuSat, 96.5),
       '--md-sys-color-surface-dim': hsl(h, neuSat, 89),
       '--md-sys-color-surface-container-lowest': '#FFFFFF',
-      '--md-sys-color-surface-container-low': hsl(h, neuSat, 96),
-      '--md-sys-color-surface-container': hsl(h, neuSat + 2, 94),
-      '--md-sys-color-surface-container-high': hsl(h, neuSat + 3, 91),
-      '--md-sys-color-surface-container-highest': hsl(h, neuSat + 4, 88),
+      '--md-sys-color-surface-container-low': '#FFFFFF',
+      '--md-sys-color-surface-container': hsl(h, neuSat + 1, 93.5),
+      '--md-sys-color-surface-container-high': hsl(h, neuSat + 2, 90),
+      '--md-sys-color-surface-container-highest': hsl(h, neuSat + 2, 86),
 
-      '--md-sys-color-on-surface': hsl(h, 12, 12),
-      '--md-sys-color-on-surface-variant': hsl(h, 10, 32),
-      '--md-sys-color-outline': hsl(h, 8, 48),
-      '--md-sys-color-outline-variant': hsl(h, 10, 80),
+      '--md-sys-color-on-surface': hsl(h, 14, 10),
+      '--md-sys-color-on-surface-variant': hsl(h, 8, 36),
+      '--md-sys-color-outline': hsl(h, 6, 56),
+      '--md-sys-color-outline-variant': hsl(h, 8, 86),
 
-      '--md-sys-color-inverse-surface': hsl(h, 12, 18),
-      '--md-sys-color-inverse-on-surface': hsl(h, 10, 95),
+      '--md-sys-color-inverse-surface': hsl(h, 12, 13),
+      '--md-sys-color-inverse-on-surface': hsl(h, 8, 96),
       '--md-sys-color-inverse-primary': hsl(h, pSat, 78),
 
-      '--md-sys-color-error': '#B3261E',
+      '--md-sys-color-error': '#C62828',
       '--md-sys-color-on-error': '#FFFFFF',
-      '--md-sys-color-error-container': '#F9DEDC',
-      '--md-sys-color-on-error-container': '#410E0B',
+      '--md-sys-color-error-container': '#FDE8E8',
+      '--md-sys-color-on-error-container': '#5F1414',
 
-      '--md-sys-color-success': '#1F6E43',
-      '--md-sys-color-success-container': '#D6F5E3',
-      '--md-sys-color-on-success-container': '#0B361E'
+      '--md-sys-color-success': '#157A48',
+      '--md-sys-color-success-container': '#DCF7E8',
+      '--md-sys-color-on-success-container': '#093820'
     };
   }
 
   return {
-    '--md-sys-color-primary': hsl(h, Math.min(84, pSat + 8), 76),
-    '--md-sys-color-on-primary': hsl(h, pSat, 16),
-    '--md-sys-color-primary-container': hsl(h, pSat, 28),
-    '--md-sys-color-on-primary-container': hsl(h, Math.min(88, pSat + 12), 92),
+    '--md-sys-color-primary': hsl(h, Math.min(86, pSat + 10), 72),
+    '--md-sys-color-on-primary': hsl(h, pSat, 12),
+    '--md-sys-color-primary-container': hsl(h, Math.min(52, pSat), 22),
+    '--md-sys-color-on-primary-container': hsl(h, Math.min(88, pSat + 12), 94),
 
     '--md-sys-color-secondary': hsl(secHue, secSat + 8, 76),
-    '--md-sys-color-on-secondary': hsl(secHue, secSat, 18),
-    '--md-sys-color-secondary-container': hsl(secHue, secSat, 28),
-    '--md-sys-color-on-secondary-container': hsl(secHue, secSat + 10, 90),
+    '--md-sys-color-on-secondary': hsl(secHue, secSat, 14),
+    '--md-sys-color-secondary-container': hsl(secHue, secSat, 22),
+    '--md-sys-color-on-secondary-container': hsl(secHue, secSat + 10, 92),
 
     '--md-sys-color-tertiary': hsl(terHue, terSat + 8, 76),
-    '--md-sys-color-on-tertiary': hsl(terHue, terSat, 16),
-    '--md-sys-color-tertiary-container': hsl(terHue, terSat, 28),
+    '--md-sys-color-on-tertiary': hsl(terHue, terSat, 14),
+    '--md-sys-color-tertiary-container': hsl(terHue, terSat, 24),
     '--md-sys-color-on-tertiary-container': hsl(terHue, terSat + 12, 92),
 
-    '--md-sys-color-surface': hsl(h, neuSat + 2, 9),
-    '--md-sys-color-surface-dim': hsl(h, neuSat + 2, 6),
-    '--md-sys-color-surface-container-lowest': hsl(h, neuSat + 2, 7),
-    '--md-sys-color-surface-container-low': hsl(h, neuSat + 2, 12),
-    '--md-sys-color-surface-container': hsl(h, neuSat + 3, 15),
-    '--md-sys-color-surface-container-high': hsl(h, neuSat + 4, 19),
-    '--md-sys-color-surface-container-highest': hsl(h, neuSat + 5, 24),
+    '--md-sys-color-surface': hsl(h, neuSat + 2, 7),
+    '--md-sys-color-surface-dim': hsl(h, neuSat + 2, 5),
+    '--md-sys-color-surface-container-lowest': hsl(h, neuSat + 2, 10),
+    '--md-sys-color-surface-container-low': hsl(h, neuSat + 2, 11),
+    '--md-sys-color-surface-container': hsl(h, neuSat + 3, 14),
+    '--md-sys-color-surface-container-high': hsl(h, neuSat + 3, 18),
+    '--md-sys-color-surface-container-highest': hsl(h, neuSat + 4, 23),
 
-    '--md-sys-color-on-surface': hsl(h, 12, 94),
-    '--md-sys-color-on-surface-variant': hsl(h, 10, 82),
-    '--md-sys-color-outline': hsl(h, 10, 64),
-    '--md-sys-color-outline-variant': hsl(h, 10, 34),
+    '--md-sys-color-on-surface': hsl(h, 10, 95),
+    '--md-sys-color-on-surface-variant': hsl(h, 8, 72),
+    '--md-sys-color-outline': hsl(h, 8, 46),
+    '--md-sys-color-outline-variant': hsl(h, 8, 22),
 
-    '--md-sys-color-inverse-surface': hsl(h, 10, 91),
-    '--md-sys-color-inverse-on-surface': hsl(h, 12, 18),
+    '--md-sys-color-inverse-surface': hsl(h, 8, 92),
+    '--md-sys-color-inverse-on-surface': hsl(h, 12, 12),
     '--md-sys-color-inverse-primary': hsl(h, pSat, 40),
 
     '--md-sys-color-error': '#F2B8B5',
@@ -142,9 +142,9 @@ export function generateM3Palette(seedHex, isDark = false) {
     '--md-sys-color-error-container': '#8C1D18',
     '--md-sys-color-on-error-container': '#F9DEDC',
 
-    '--md-sys-color-success': '#7ED9A4',
-    '--md-sys-color-success-container': '#124D2E',
-    '--md-sys-color-on-success-container': '#D6F5E3'
+    '--md-sys-color-success': '#6EE0A0',
+    '--md-sys-color-success-container': '#104429',
+    '--md-sys-color-on-success-container': '#DCF7E8'
   };
 }
 

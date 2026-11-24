@@ -327,14 +327,56 @@ export class EditorView {
       this._previewScoreEl
     ]);
 
-    const leftCol = el('div', {}, [metaCard, this._harmonyCard, chordGridCard]);
-    const layout = el('div', { className: 'editor-layout' }, [leftCol, abcCard]);
+    const leftCol = el('div', { className: 'editor-col-form' }, [metaCard, this._harmonyCard, chordGridCard]);
+    const rightCol = el('div', { className: 'editor-col-preview' }, [abcCard]);
+    const layout = el('div', { className: 'editor-layout editor-layout--mobile-form' }, [leftCol, rightCol]);
+
+    // Switcher rápido móvil (<960px): alterna entre Editar y Vista previa sin scrollear toda la página
+    const mobileTabForm = el(
+      'button',
+      {
+        type: 'button',
+        className: 'm3-segmented__btn',
+        ripple: true,
+        'aria-pressed': 'true',
+        onClick: () => {
+          layout.classList.add('editor-layout--mobile-form');
+          layout.classList.remove('editor-layout--mobile-preview');
+          mobileTabForm.setAttribute('aria-pressed', 'true');
+          mobileTabPreview.setAttribute('aria-pressed', 'false');
+        }
+      },
+      ['Editar datos']
+    );
+    const mobileTabPreview = el(
+      'button',
+      {
+        type: 'button',
+        className: 'm3-segmented__btn',
+        ripple: true,
+        'aria-pressed': 'false',
+        onClick: () => {
+          layout.classList.remove('editor-layout--mobile-form');
+          layout.classList.add('editor-layout--mobile-preview');
+          mobileTabForm.setAttribute('aria-pressed', 'false');
+          mobileTabPreview.setAttribute('aria-pressed', 'true');
+          this._renderLivePreview(this._vm.form.value);
+        }
+      },
+      ['ABC y vista previa']
+    );
+    const mobileSwitcher = el(
+      'div',
+      { className: 'm3-segmented m3-segmented--full editor-mobile-switcher', role: 'group', 'aria-label': 'Panel del editor en móvil' },
+      [mobileTabForm, mobileTabPreview]
+    );
 
     this._container.appendChild(this._draftBanner);
     this._container.appendChild(this._builtinBanner);
     this._container.appendChild(this._errorsBox);
     this._container.appendChild(actionsCard);
     this._container.appendChild(toolsCard);
+    this._container.appendChild(mobileSwitcher);
     this._container.appendChild(layout);
   }
 

@@ -43,14 +43,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-height: 52px;
-  min-width: 48px;
-  padding: 4px 8px;
+  gap: 2px;
+  min-height: 50px;
+  min-width: 0;
+  padding: 4px 4px;
   border: none;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.72rem;
+  font-size: 0.69rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -59,22 +59,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 30px;
+  width: 46px;
+  height: 28px;
   border-radius: var(--md-sys-shape-full);
-  transition: background-color var(--md-sys-motion-fast);
+  transition: background-color var(--md-sys-motion-fast), color var(--md-sys-motion-fast);
 }
 
 .m3-nav__item[aria-current='page'] {
   color: var(--md-sys-color-on-surface);
+  font-weight: 700;
 }
 
 .m3-nav__item[aria-current='page'] .m3-nav__pill {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  background: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-surface);
 }
 
-/* Compact (<600px vertical): Barra de navegación inferior */
+/* Compact (<600px vertical): Barra de navegación inferior limpia y calibrada para 320-390px */
 @media (max-width: 599px) {
   .m3-nav {
     position: fixed;
@@ -82,8 +83,11 @@
     right: 0;
     bottom: 0;
     height: calc(var(--nav-bar-height) + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    padding: 4px 4px env(safe-area-inset-bottom, 0px);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 92%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+    padding: 4px 2px env(safe-area-inset-bottom, 0px);
   }
 
   .m3-nav__list {
@@ -93,8 +97,17 @@
   }
 
   .m3-nav__item {
-    flex: 1;
-    padding: 4px 2px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 1px;
+    font-size: 0.67rem;
+  }
+
+  .m3-nav__item > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* En barra inferior móvil se muestran exactamente 5 destinos M3; Editor vive en Mis prácticas (+) y menú */
@@ -301,7 +314,7 @@
   padding: max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) calc(var(--transport-dock-height, 176px) + env(safe-area-inset-bottom, 0px) + 24px) max(10px, env(safe-area-inset-left, 0px));
 }
 
-/* Top App Bar compacta a todo el ancho sin cortes */
+/* Top App Bar translúcida minimalista */
 .m3-top-bar {
   position: sticky;
   top: 0;
@@ -309,8 +322,10 @@
   width: 100%;
   min-height: var(--top-bar-height);
   padding: max(4px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 4px max(12px, env(safe-area-inset-left, 0px));
-  background: var(--md-sys-color-surface);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: color-mix(in srgb, var(--md-sys-color-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -627,19 +642,26 @@
   padding-bottom: 12px;
 }
 
-/* En escritorio amplio en vista de detalle completa, partitura izquierda + panel lateral opcional */
+/* Línea discreta de metadatos de la práctica (sin ruido de cajitas) */
 .meta-strip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 2px 0;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  padding: 0 2px;
   width: 100%;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
 }
 
-.meta-strip::-webkit-scrollbar {
-  display: none;
+.meta-strip__lead {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.meta-strip__dot {
+  opacity: 0.45;
 }
 
 .player-view-bar {
@@ -947,7 +969,7 @@
 
 .controls-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -1753,9 +1775,11 @@
 
 .fingering-design-select {
   padding: 6px 10px;
-  min-height: 36px;
+  min-height: 38px;
   font-size: 0.85rem;
-  min-width: 210px;
+  min-width: 0;
+  flex: 1 1 180px;
+  max-width: 100%;
 }
 
 .fingering-design-bar__meta {
@@ -2115,7 +2139,7 @@
 /* Grilla de teoría, acordes asociados y repertorio */
 .scale-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 14px;
 }
 
@@ -2178,7 +2202,7 @@
 /* Comparativa de 7 modos paralelos */
 .modes-compare-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 12px;
 }
 
@@ -2703,6 +2727,223 @@
   gap: 2px;
   min-width: 0;
 }
+
+/* ==========================================================================
+   Estudio Táctil Moderno + Blindaje Cero-Desborde Móvil (320px–390px)
+   ========================================================================== */
+
+/* Metrónomo táctil: botón Play protagonista + 4 pasos simétricos sin desborde */
+.metronome-primary-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.metronome-step-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 6px;
+}
+
+.metronome-step-row .m3-btn {
+  width: 100%;
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Progreso: lista de tarjetas en móvil (<640px) y tabla limpia en escritorio */
+.progress-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-desktop-table {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .progress-mobile-list {
+    display: none;
+  }
+
+  .progress-desktop-table {
+    display: block;
+  }
+}
+
+/* Editor: switcher Editar / Vista previa solo en móvil (<960px) */
+.editor-mobile-switcher {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 959px) {
+  .editor-layout--mobile-form .editor-col-preview {
+    display: none;
+  }
+
+  .editor-layout--mobile-preview .editor-col-form {
+    display: none;
+  }
+}
+
+@media (min-width: 960px) {
+  .editor-mobile-switcher {
+    display: none;
+  }
+}
+
+/* Pista sutil de scroll horizontal del diapasón SVG solo en pantallas estrechas */
+.fretboard-scroll-hint {
+  display: block;
+  text-align: right;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+@media (min-width: 760px) {
+  .fretboard-scroll-hint {
+    display: none;
+  }
+}
+
+/* Reglas específicas para pantallas compactas (320px–599px): cero desbordes horizontales */
+@media (max-width: 599px) {
+  .app-content {
+    padding: 10px max(10px, env(safe-area-inset-right, 0px)) 18px max(10px, env(safe-area-inset-left, 0px));
+  }
+
+  .m3-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .home-continue-card,
+  .home-session-card,
+  .home-level-card {
+    padding: 15px;
+  }
+
+  .home-status-pill {
+    width: 100%;
+    justify-content: space-between;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* En móvil, el stepper de niveles se desliza en 1 sola fila limpia sin ocupar medio viewport */
+  .level-stepper {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+
+  .level-stepper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .level-pill {
+    flex: 0 0 auto;
+    min-width: 112px;
+    min-height: 48px;
+    padding: 8px 12px;
+  }
+
+  .compact-select {
+    min-width: 0;
+    flex: 1 1 130px;
+  }
+
+  .bpm-readout {
+    min-width: 56px;
+    font-size: 0.86rem;
+  }
+
+  .transport-dock__bpm-row {
+    gap: 4px;
+  }
+
+  .transport-dock__bpm-row .m3-slider {
+    min-width: 48px;
+  }
+
+  .root-grid {
+    gap: 4px;
+  }
+
+  .root-grid .m3-chip {
+    min-height: 36px;
+    padding: 4px 2px;
+    font-size: 0.8rem;
+  }
+
+  .m3-segmented__btn {
+    padding: 0 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Pulido táctil del Hero Continuar y dock de transporte */
+.continue-card {
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border: none;
+}
+
+.continue-card .m3-body-md {
+  color: var(--md-sys-color-inverse-on-surface);
+  opacity: 0.78;
+}
+
+.continue-card .m3-badge {
+  background: color-mix(in srgb, var(--md-sys-color-inverse-on-surface) 14%, transparent);
+  color: var(--md-sys-color-inverse-on-surface);
+}
+
+.continue-card .home-continue-card__bar {
+  background: color-mix(in srgb, var(--md-sys-color-inverse-on-surface) 18%, transparent);
+}
+
+.continue-card .home-continue-card__secondary {
+  color: var(--md-sys-color-inverse-on-surface);
+}
+
+.continue-card .m3-btn--filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.transport-dock {
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 94%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 65%, transparent);
+}
+
+.m3-collapsible {
+  border-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 55%, transparent);
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.m3-collapsible--subtle {
+  box-shadow: none;
+  background: var(--md-sys-color-surface-container);
+}
+
 
 
 

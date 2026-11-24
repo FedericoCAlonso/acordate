@@ -92,7 +92,7 @@ export class ChordsHubView {
     this._container = container;
     container.innerHTML = '';
 
-    this._tabsBar = el('div', { className: 'm3-segmented m3-segmented--full', role: 'tablist', style: 'margin-bottom:14px' });
+    this._tabsBar = el('div', { className: 'm3-tabs', role: 'tablist', 'aria-label': 'Herramientas de armonía', style: 'margin-bottom:12px' });
     this._panelHost = el('div', { className: 'route-stack' });
     container.append(this._tabsBar, this._panelHost);
 
@@ -167,7 +167,7 @@ export class ChordsHubView {
           {
             type: 'button',
             role: 'tab',
-            className: 'm3-segmented__btn',
+            className: 'm3-tabs__btn',
             ripple: true,
             'aria-pressed': String(active === tab.id),
             'aria-selected': String(active === tab.id),

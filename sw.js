@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v13: Panel de Inicio, flujo de Prácticas en 3 pestañas, Modo Atril despejado, anotaciones sin solapamiento y Guía de referencias).
+ * Versión del caché estático de la PWA Acordate (v14: Estudio Táctil Moderno y blindaje móvil cero-desborde 320–390px en toda la app).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v13';
+const CACHE_NAME = 'acordate-static-v14';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

@@ -82,7 +82,7 @@ export class ScalesHubView {
     this._container.innerHTML = '';
 
     this._tabsBar = el('div', {
-      className: 'm3-segmented m3-segmented--full',
+      className: 'm3-tabs',
       role: 'tablist',
       'aria-label': 'Herramientas de escalas y modos'
     });
@@ -155,7 +155,7 @@ export class ScalesHubView {
           {
             type: 'button',
             role: 'tab',
-            className: 'm3-segmented__btn',
+            className: 'm3-tabs__btn',
             ripple: true,
             'aria-pressed': String(active === tab.id),
             'aria-selected': String(active === tab.id),
@@ -444,7 +444,7 @@ export class ScalesHubView {
       )
     ]);
 
-    // Contenedor del diapasón SVG interactivo
+    // Contenedor del diapasón SVG interactivo (con pista de deslizamiento en móvil)
     const fretboardHost = el('div', { className: 'scale-fretboard-wrap' });
     this._fretboardView.render(fretboardHost, layout, {
       labelMode: this._vm.labelMode.value,
@@ -452,6 +452,7 @@ export class ScalesHubView {
       showAvoidNotes: this._vm.showAvoidNotes.value,
       leftHanded: this._vm.leftHanded.value
     });
+    const fretboardHint = el('div', { className: 'fretboard-scroll-hint' }, ['Deslizá el mástil horizontalmente ↔']);
 
     // Leyenda visual del diapasón
     const legend = el('div', { className: 'scale-legend', 'aria-label': 'Leyenda de colores del diapasón' }, [
@@ -536,6 +537,7 @@ export class ScalesHubView {
         displayRow
       ]),
       fretboardHost,
+      fretboardHint,
       legend,
       el('p', { className: 'm3-body-md', style: 'margin:6px 0 0; font-size:0.82rem; opacity:0.75' }, [
         'Tocá cualquier punto del diapasón para escuchar su altura real.'

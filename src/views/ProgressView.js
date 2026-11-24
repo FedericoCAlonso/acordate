@@ -162,53 +162,81 @@ export class ProgressView {
       )
     ]);
 
-    // Tabla de registro por práctica
+    // Tabla en escritorio + tarjetas apiladas limpias en móvil (cero scroll horizontal de tabla)
     const historyContent =
       studied.length === 0
         ? el('p', { className: 'm3-body-md' }, [
             'Todavía no registraste sesiones. Abrí cualquier práctica y dale a Reproducir o Registrar vuelta.'
           ])
-        : el('div', { className: 'progress-table-wrap' }, [
-            el('table', { className: 'progress-table' }, [
-              el('thead', {}, [
-                el('tr', {}, [
-                  el('th', {}, ['Práctica']),
-                  el('th', {}, ['Mejor BPM']),
-                  el('th', {}, ['Repeticiones']),
-                  el('th', {}, ['Tiempo']),
-                  el('th', {}, ['Última sesión'])
-                ])
-              ]),
-              el(
-                'tbody',
-                {},
-                studied.map(({ practiceId, practice, stats }) =>
-                  el('tr', {}, [
-                    el('td', {}, [
-                      practice
-                        ? el(
-                            'button',
-                            {
-                              type: 'button',
-                              className: 'm3-btn m3-btn--text',
-                              style: 'min-height:36px; padding:0',
-                              onClick: () => this._vm.openPractice(practiceId)
-                            },
-                            [practice.title]
-                          )
-                        : practiceId
-                    ]),
-                    el('td', {}, [
+        : el('div', {}, [
+            el(
+              'div',
+              { className: 'progress-mobile-list' },
+              studied.map(({ practiceId, practice, stats }) =>
+                el(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'practice-card',
+                    ripple: true,
+                    onClick: () => this._vm.openPractice(practiceId)
+                  },
+                  [
+                    el('div', { className: 'practice-card__top' }, [
+                      el('span', { className: 'practice-card__title' }, [practice ? practice.title : practiceId]),
                       stats.completedTarget
                         ? el('span', { className: 'm3-badge m3-badge--success' }, [`${stats.bestBpm} BPM ✓`])
-                        : `${stats.bestBpm} BPM`
+                        : el('span', { className: 'm3-badge' }, [`${stats.bestBpm} BPM`])
                     ]),
-                    el('td', {}, [String(stats.repetitions)]),
-                    el('td', {}, [formatStudyDuration(stats.studySeconds)]),
-                    el('td', {}, [formatDateEsAR(stats.lastSessionAt)])
-                  ])
+                    el('div', { className: 'm3-body-md' }, [
+                      `${stats.repetitions} vuelta${stats.repetitions === 1 ? '' : 's'} · ${formatStudyDuration(stats.studySeconds)} · ${formatDateEsAR(stats.lastSessionAt)}`
+                    ])
+                  ]
                 )
               )
+            ),
+            el('div', { className: 'progress-table-wrap progress-desktop-table' }, [
+              el('table', { className: 'progress-table' }, [
+                el('thead', {}, [
+                  el('tr', {}, [
+                    el('th', {}, ['Práctica']),
+                    el('th', {}, ['Mejor BPM']),
+                    el('th', {}, ['Repeticiones']),
+                    el('th', {}, ['Tiempo']),
+                    el('th', {}, ['Última sesión'])
+                  ])
+                ]),
+                el(
+                  'tbody',
+                  {},
+                  studied.map(({ practiceId, practice, stats }) =>
+                    el('tr', {}, [
+                      el('td', {}, [
+                        practice
+                          ? el(
+                              'button',
+                              {
+                                type: 'button',
+                                className: 'm3-btn m3-btn--text',
+                                style: 'min-height:36px; padding:0',
+                                onClick: () => this._vm.openPractice(practiceId)
+                              },
+                              [practice.title]
+                            )
+                          : practiceId
+                      ]),
+                      el('td', {}, [
+                        stats.completedTarget
+                          ? el('span', { className: 'm3-badge m3-badge--success' }, [`${stats.bestBpm} BPM ✓`])
+                          : `${stats.bestBpm} BPM`
+                      ]),
+                      el('td', {}, [String(stats.repetitions)]),
+                      el('td', {}, [formatStudyDuration(stats.studySeconds)]),
+                      el('td', {}, [formatDateEsAR(stats.lastSessionAt)])
+                    ])
+                  )
+                )
+              ])
             ])
           ]);
 
