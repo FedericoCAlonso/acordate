@@ -1,18 +1,21 @@
+import { openNotationGuideModal } from './NotationGuideModal.js';
 import { closeAllOverlays, createPopupMenu, el, icon } from './uiHelpers.js';
 
 /**
  * Destinos principales de navegación.
- * En barra inferior móvil se muestran exactamente 5 destinos de estudio
- * (Prácticas, Acordes, Escalas, Metrónomo, Progreso) y Ajustes se accede desde la Top App Bar;
- * en rail de tablet y drawer de escritorio también se muestran Editor y Ajustes.
+ * En barra inferior móvil se muestran exactamente 5 destinos M3
+ * (Inicio, Prácticas, Acordes, Escalas, Metrónomo); Progreso se abre desde el Panel de Inicio
+ * y Ajustes + Guía de referencias desde la Top App Bar.
+ * En rail de tablet y drawer de escritorio se muestran todos los destinos.
  */
 const NAV_ITEMS = [
+  { route: 'inicio', hash: '#/inicio', label: 'Inicio', iconName: 'home', desktopOnly: false },
   { route: 'practicas', hash: '#/practicas', label: 'Prácticas', iconName: 'music', desktopOnly: false },
   { route: 'acordes', hash: '#/acordes', label: 'Acordes', iconName: 'chords', desktopOnly: false },
   { route: 'escalas', hash: '#/escalas', label: 'Escalas', iconName: 'scales', desktopOnly: false },
   { route: 'metronomo', hash: '#/metronomo', label: 'Metrónomo', iconName: 'metronome', desktopOnly: false },
   { route: 'editor', hash: '#/editor/nueva', label: 'Editor', iconName: 'edit', desktopOnly: true },
-  { route: 'progreso', hash: '#/progreso', label: 'Progreso', iconName: 'chart', desktopOnly: false },
+  { route: 'progreso', hash: '#/progreso', label: 'Progreso', iconName: 'chart', desktopOnly: true },
   { route: 'ajustes', hash: '#/ajustes', label: 'Ajustes', iconName: 'settings', desktopOnly: true }
 ];
 
@@ -56,6 +59,8 @@ export class AppShellView {
     this._snackbarHost = null;
     /** Última clave de layout renderizada. */
     this._activeLayoutKey = null;
+    /** Última ruta de exploración visitada antes de entrar a Modo Atril (para botón Volver). */
+    this._lastBrowseHash = '#/inicio';
     /** Lista de desuscripciones activas del shell. */
     this._unsubs = [];
     /** Referencias a listeners de ventana y timer de orientación para limpieza en unmount/dispose. */
@@ -114,9 +119,10 @@ export class AppShellView {
         type: 'button',
         className: 'm3-icon-btn',
         ripple: true,
-        'aria-label': 'Volver a prácticas',
+        'aria-label': 'Volver',
+        title: 'Volver',
         style: 'display:none',
-        onClick: () => this._appVm.navigate('#/practicas')
+        onClick: () => this._appVm.navigate(this._lastBrowseHash || '#/practicas')
       },
       [icon('back', 22)]
     );
@@ -144,17 +150,6 @@ export class AppShellView {
       this._appVm.isMobileLandscape.subscribe(() => this._renderRoute()),
       this._appVm.isReady.subscribe((ready) => {
         if (ready) this._renderRoute();
-      }),
-      this._appVm.activePracticeId.subscribe((id) => {
-        if (
-          this._appVm.currentRoute.value.name === 'practicas' &&
-          this._appVm.windowSizeClass.value === 'expanded' &&
-          !this._appVm.isMobileLandscape.value &&
-          id
-        ) {
-          const pr = this._appVm.findPracticeById(id);
-          if (pr) this._views.player.showPractice(pr);
-        }
       }),
       this._appVm.activeStudySession.subscribe((ses) => this._renderSessionBanner(ses)),
       this._appVm.snackbar.subscribe((sb) => this._renderSnackbar(sb))
@@ -220,9 +215,11 @@ export class AppShellView {
     }
 
     const route = this._appVm.currentRoute.value;
-    const sizeClass = this._appVm.windowSizeClass.value;
-    const isLandscapePhone = this._appVm.isMobileLandscape.value;
     const isPracticeFull = route.name === 'practica';
+
+    if (!isPracticeFull && route.hash) {
+      this._lastBrowseHash = route.hash;
+    }
 
     this._shellEl.classList.toggle('app-shell--practicing', isPracticeFull);
     if (!isPracticeFull && this._playerVm?.isAtrilFullscreen?.value) {
@@ -238,46 +235,61 @@ export class AppShellView {
     this._topActions.innerHTML = '';
     this._backBtn.style.display = isPracticeFull ? 'inline-flex' : 'none';
 
-    // En vistas que no son Ajustes ni reproductor full-screen, ofrece acceso directo a Ajustes en la Top App Bar
-    if (!isPracticeFull && route.name !== 'ajustes') {
+    // Acceso directo a Guía de referencias y Ajustes desde la Top App Bar
+    if (!isPracticeFull) {
       this._topActions.appendChild(
         el(
           'button',
           {
             type: 'button',
-            className: 'm3-icon-btn top-bar-settings-btn',
+            className: 'm3-icon-btn',
             ripple: true,
-            'aria-label': 'Ajustes',
-            title: 'Ajustes',
-            onClick: () => this._appVm.navigate('#/ajustes')
+            'aria-label': 'Guía de referencias y símbolos',
+            title: 'Guía de referencias y símbolos',
+            onClick: () => openNotationGuideModal()
           },
-          [icon('settings', 22)]
+          [icon('help', 21)]
         )
       );
+      if (route.name !== 'ajustes') {
+        this._topActions.appendChild(
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-icon-btn top-bar-settings-btn',
+              ripple: true,
+              'aria-label': 'Ajustes',
+              title: 'Ajustes',
+              onClick: () => this._appVm.navigate('#/ajustes')
+            },
+            [icon('settings', 21)]
+          )
+        );
+      }
+    }
+
+    if (route.name === 'inicio') {
+      this._topTitle.textContent = 'Inicio';
+      if (this._activeLayoutKey !== 'inicio') {
+        this._cleanupActiveViews();
+        this._contentHost.innerHTML = '';
+        this._views.home?.mount(this._contentHost);
+        this._activeLayoutKey = 'inicio';
+      }
+      return;
     }
 
     if (route.name === 'practicas') {
       this._topTitle.textContent = 'Prácticas';
-      const useDualPane = sizeClass === 'expanded' && !isLandscapePhone;
-      const layoutKey = useDualPane ? 'practicas-dual' : 'practicas-single';
-      if (this._activeLayoutKey !== layoutKey) {
+      if (this._activeLayoutKey !== 'practicas') {
         this._cleanupActiveViews();
         this._contentHost.innerHTML = '';
-        if (useDualPane) {
-          const listPane = el('section', { className: 'dual-pane__list', 'aria-label': 'Ruta de prácticas' });
-          const playerPane = el('section', { className: 'dual-pane__player', 'aria-label': 'Práctica activa' });
-          const dual = el('div', { className: 'dual-pane' }, [listPane, playerPane]);
-          this._contentHost.appendChild(dual);
-          this._views.list.mount(listPane);
-          this._views.player.mount(playerPane);
-          const selected =
-            this._appVm.findPracticeById(this._appVm.activePracticeId.value) ||
-            this._appVm.allPractices.value[0];
-          if (selected) this._views.player.showPractice(selected);
-        } else {
-          this._views.list.mount(this._contentHost);
-        }
-        this._activeLayoutKey = layoutKey;
+        this._views.list.mount(this._contentHost);
+        this._activeLayoutKey = 'practicas';
+      }
+      if (route.params?.tab) {
+        this._views.list.openSection?.(route.params.tab);
       }
       return;
     }
@@ -287,9 +299,42 @@ export class AppShellView {
       this._topTitle.textContent = pr ? pr.title : 'Práctica';
       if (pr) this._appVm.activePracticeId.set(pr.id);
 
-      // Menú contextual compacto (⋮) en la barra superior
+      // Acceso rápido a Guía de referencias + único menú contextual compacto (⋮) en la barra superior
       if (pr && this._playerVm) {
+        const isVerified = this._appVm.progress.value.isPracticeVerified(pr);
+        this._topActions.appendChild(
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-icon-btn',
+              ripple: true,
+              'aria-label': 'Guía de referencias y símbolos',
+              title: 'Guía de referencias (dedos, cuerdas, trastes)',
+              onClick: () => openNotationGuideModal()
+            },
+            [icon('help', 21)]
+          )
+        );
+
         const menu = createPopupMenu('Opciones de la práctica', [
+          {
+            label: 'Guía de referencias y símbolos',
+            iconName: 'help',
+            onClick: () => openNotationGuideModal()
+          },
+          {
+            label: 'Detalles de la práctica',
+            iconName: 'book',
+            onClick: () => this._views.player.openCurrentDetails?.()
+          },
+          ...(pr.isRepertoire
+            ? [{
+                label: isVerified ? 'Marcar como "A verificar"' : 'Confirmar transcripción verificada',
+                iconName: 'check',
+                onClick: () => this._playerVm.toggleVerifiedCurrent()
+              }]
+            : []),
           {
             label: pr.isReadOnly ? 'Duplicar y editar' : 'Editar práctica',
             iconName: pr.isReadOnly ? 'copy' : 'edit',
@@ -300,11 +345,9 @@ export class AppShellView {
             iconName: 'download',
             onClick: () => this._playerVm.exportCurrent('json')
           },
-          {
-            label: 'Exportar .abc',
-            iconName: 'download',
-            onClick: () => this._playerVm.exportCurrent('abc')
-          },
+          ...(pr.abc
+            ? [{ label: 'Exportar .abc', iconName: 'download', onClick: () => this._playerVm.exportCurrent('abc') }]
+            : []),
           {
             label: 'Modo atril (pantalla completa)',
             iconName: 'fullscreen',
@@ -439,6 +482,7 @@ export class AppShellView {
    */
   _cleanupActiveViews() {
     closeAllOverlays();
+    this._views.home?.unmount?.();
     this._views.list.unmount?.();
     this._views.player.unmount?.();
     this._views.chords?.unmount?.();

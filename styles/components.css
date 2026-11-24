@@ -180,6 +180,12 @@
   font-weight: 600;
 }
 
+.m3-chip--compact {
+  min-height: 36px;
+  padding: 4px 11px;
+  font-size: 0.8rem;
+}
+
 /* Segmented Buttons adaptables sin desborde */
 .m3-segmented {
   display: inline-flex;

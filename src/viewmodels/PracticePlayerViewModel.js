@@ -62,8 +62,16 @@ export class PracticePlayerViewModel {
     this.showHarmonicAnalysis = new Observable(false);
     /** Walking bass sugerido generado sobre la progresión activa. */
     this.generatedWalkingAbc = new Observable('');
-    /** Mostrar digitaciones anotadas sobre las notas. */
+    /** Mostrar digitaciones anotadas sobre las notas (combinado izq + der). */
     this.showFingerings = new Observable(appVm.settings.value.showFingerings ?? true);
+    /** Mostrar referencias de mano izquierda (dedos 0–4, cuerdas ①–⑥, posiciones romanas). */
+    this.showLeftHand = new Observable(appVm.settings.value.showLeftHand ?? appVm.settings.value.showFingerings ?? true);
+    /** Mostrar referencias de mano derecha (p, i, m, a, rasgueo). */
+    this.showRightHand = new Observable(appVm.settings.value.showRightHand ?? appVm.settings.value.showFingerings ?? true);
+    /** Mostrar cifrado de acordes sobre la partitura. */
+    this.showChordsOnScore = new Observable(appVm.settings.value.showChordsOnScore ?? true);
+    /** Mostrar otras anotaciones en partitura (análisis armónico / grados / texto). */
+    this.showOtherAnnotations = new Observable(appVm.settings.value.showOtherAnnotations ?? true);
     /** Mostrar funciones armónicas en bajo. */
     this.showBassFunctions = new Observable(appVm.settings.value.showBassFunctions ?? true);
     /** Modo pantalla completa ("atril"). */
@@ -176,16 +184,33 @@ export class PracticePlayerViewModel {
       return pr ? new Exercise({ practiceId: pr.id, abc: this.transposedAbc.value, key: this.transposedKey.value, timeSignature: pr.timeSignature }) : null;
     });
 
-    /** ABC preparado finalmente para renderizar con abcjs. */
+    /** ABC preparado finalmente para renderizar con abcjs con capas de anotación independientes. */
     this.renderableAbc = new ComputedObservable(
-      [this.practice, this.transposedAbc, this.viewMode, this.showFingerings, this.showBassFunctions, this.showHarmonicAnalysis, this._appVm.settings],
+      [
+        this.practice,
+        this.transposedAbc,
+        this.viewMode,
+        this.showFingerings,
+        this.showLeftHand,
+        this.showRightHand,
+        this.showChordsOnScore,
+        this.showOtherAnnotations,
+        this.showBassFunctions,
+        this.showHarmonicAnalysis,
+        this._appVm.settings
+      ],
       () => {
         const pr = this.practice.value;
         if (!pr) return '';
+        const mode = this.viewMode.value;
         return this._abc.prepareAbcForRender(this.transposedAbc.value, {
-          viewMode: this.viewMode.value,
+          viewMode: mode,
           chordNotation: this._appVm.settings.value.chordNotation,
           showFingerings: this.showFingerings.value,
+          showLeftHand: this.showLeftHand.value,
+          showRightHand: this.showRightHand.value,
+          showChords: mode === 'pentagrama' ? false : this.showChordsOnScore.value,
+          showOtherAnnotations: this.showOtherAnnotations.value,
           fingerings: pr.fingerings,
           showBassFunctions: this.showBassFunctions.value,
           showHarmonicAnalysis: this.showHarmonicAnalysis.value,
@@ -204,8 +229,12 @@ export class PracticePlayerViewModel {
 
     /** Desuscripción guardada de `appVm.settings`. */
     this._unsubSettings = appVm.settings.subscribe((s) => {
-      this.showFingerings.set(s.showFingerings);
-      this.showBassFunctions.set(s.showBassFunctions);
+      this.showLeftHand.set(s.showLeftHand ?? s.showFingerings ?? true);
+      this.showRightHand.set(s.showRightHand ?? s.showFingerings ?? true);
+      this.showFingerings.set(s.showFingerings ?? true);
+      this.showChordsOnScore.set(s.showChordsOnScore ?? true);
+      this.showOtherAnnotations.set(s.showOtherAnnotations ?? true);
+      this.showBassFunctions.set(s.showBassFunctions ?? true);
       this.countInMeasures.set(s.countInMeasures);
       this._audio.configure({ listeningRegister: s.listeningRegister });
     });
@@ -321,8 +350,56 @@ export class PracticePlayerViewModel {
   setViewMode(m) { if (['pentagrama', 'cifrado', 'diagramas', 'mixto'].includes(m)) this.viewMode.set(m); }
   setZoom(z) { this.zoom.set(Math.max(0.75, Math.min(1.6, Math.round(Number(z) * 100) / 100))); }
   setListeningRegister(r) { this._appVm.updateSettings({ listeningRegister: r }); }
-  toggleFingerings() { this.showFingerings.set(!this.showFingerings.value); }
+  toggleFingerings() {
+    const next = !this.showFingerings.value;
+    this.showFingerings.set(next);
+    this.showLeftHand.set(next);
+    this.showRightHand.set(next);
+  }
+  toggleLeftHand() {
+    const next = !this.showLeftHand.value;
+    this.showLeftHand.set(next);
+    this.showFingerings.set(next || this.showRightHand.value);
+  }
+  toggleRightHand() {
+    const next = !this.showRightHand.value;
+    this.showRightHand.set(next);
+    this.showFingerings.set(this.showLeftHand.value || next);
+  }
+  toggleChordsOnScore() {
+    this.showChordsOnScore.set(!this.showChordsOnScore.value);
+  }
+  toggleOtherAnnotations() {
+    const next = !this.showOtherAnnotations.value;
+    this.showOtherAnnotations.set(next);
+    this.showBassFunctions.set(next);
+  }
   toggleBassFunctions() { this.showBassFunctions.set(!this.showBassFunctions.value); }
+
+  /**
+   * Encuentra la siguiente práctica lógica dentro del mismo instrumento (priorizando el mismo nivel
+   * o el siguiente) para ofrecer continuidad directa desde Modo Atril.
+   * @returns {import('../models/Practice.js').Practice|null} Siguiente práctica o null.
+   */
+  getNextPracticeInContext() {
+    const current = this.practice.value;
+    if (!current) return null;
+    const inst = this._appVm.settings.value.defaultInstrument || current.instruments[0] || 'guitarra';
+    const pool = this._appVm.allPractices.value
+      .filter((p) => p.instruments.includes(inst) && Boolean(p.isRepertoire) === Boolean(current.isRepertoire))
+      .sort((a, b) => a.level - b.level || a.title.localeCompare(b.title, 'es-AR'));
+    const idx = pool.findIndex((p) => p.id === current.id);
+    if (idx >= 0 && idx + 1 < pool.length) return pool[idx + 1];
+    return null;
+  }
+
+  /** Navega a la siguiente práctica sugerida del instrumento/nivel actual. */
+  openNextPractice() {
+    const next = this.getNextPracticeInContext();
+    if (!next) return;
+    this._appVm.activePracticeId.set(next.id);
+    this._appVm.navigate(`#/practica/${encodeURIComponent(next.id)}`);
+  }
   setSheetOpen(open, tab) { if (tab) this.activeSheetTab.set(tab); this.isSheetOpen.set(Boolean(open)); }
   toggleAtrilFullscreen() { this.isAtrilFullscreen.set(!this.isAtrilFullscreen.value); }
   getFormSections() { return extractFormSections(this.harmonySteps.value, this.measureCount.value); }

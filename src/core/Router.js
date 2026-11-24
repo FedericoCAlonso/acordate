@@ -4,7 +4,8 @@ import { Observable } from './Observable.js';
  * Definición de patrones de rutas por hash soportadas por la aplicación.
  */
 export const ROUTE_PATTERNS = [
-  { name: 'practicas', regex: /^#\/practicas\/?$/ },
+  { name: 'inicio', regex: /^#\/inicio\/?$/ },
+  { name: 'practicas', regex: /^#\/practicas(?:\/([^/?#]+))?\/?$/ },
   { name: 'practica', regex: /^#\/practica\/([^/?#]+)\/?$/ },
   { name: 'acordes', regex: /^#\/acordes(?:\/([^/?#]+))?\/?$/ },
   { name: 'escalas', regex: /^#\/escalas(?:\/([^/?#]+))?\/?$/ },
@@ -21,12 +22,20 @@ export const ROUTE_PATTERNS = [
  * @returns {{ name: string, params: Record<string, string>, hash: string }} Ruta normalizada.
  */
 export function parseHashRoute(rawHash) {
-  /** Hash normalizado con ruta por defecto a #/practicas. */
-  const hash = rawHash && rawHash.startsWith('#/') ? rawHash : '#/practicas';
+  /** Hash normalizado con ruta por defecto al Panel de Inicio (#/inicio). */
+  const hash = rawHash && rawHash.startsWith('#/') ? rawHash : '#/inicio';
 
   for (const pattern of ROUTE_PATTERNS) {
     const match = hash.match(pattern.regex);
     if (match) {
+      if (pattern.name === 'practicas') {
+        const rawTab = match[1] ? decodeURIComponent(match[1]) : '';
+        return {
+          name: 'practicas',
+          params: rawTab ? { tab: rawTab } : {},
+          hash
+        };
+      }
       if (pattern.name === 'practica') {
         return {
           name: 'practica',
@@ -66,7 +75,7 @@ export function parseHashRoute(rawHash) {
     }
   }
 
-  return { name: 'practicas', params: {}, hash: '#/practicas' };
+  return { name: 'inicio', params: {}, hash: '#/inicio' };
 }
 
 /**
@@ -82,10 +91,10 @@ export class Router {
     /** Referencia al objeto window del navegador. */
     this._win = win;
     /** Observable con la ruta actual parseada. */
-    this.currentRoute = new Observable(parseHashRoute(win?.location?.hash || '#/practicas'));
+    this.currentRoute = new Observable(parseHashRoute(win?.location?.hash || '#/inicio'));
     /** Listener vinculado para el evento hashchange. */
     this._onHashChange = () => {
-      const next = parseHashRoute(this._win?.location?.hash || '#/practicas');
+      const next = parseHashRoute(this._win?.location?.hash || '#/inicio');
       this.currentRoute.set(next);
     };
   }
@@ -96,7 +105,7 @@ export class Router {
   start() {
     if (!this._win) return;
     if (!this._win.location.hash || !this._win.location.hash.startsWith('#/')) {
-      this._win.location.hash = '#/practicas';
+      this._win.location.hash = '#/inicio';
     }
     this._win.addEventListener('hashchange', this._onHashChange);
     this._onHashChange();

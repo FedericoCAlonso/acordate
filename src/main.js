@@ -19,6 +19,7 @@ import { WalkingBassGenerator } from './services/WalkingBassGenerator.js';
 import { AppViewModel } from './viewmodels/AppViewModel.js';
 import { ChordsHubViewModel } from './viewmodels/ChordsHubViewModel.js';
 import { EditorViewModel } from './viewmodels/EditorViewModel.js';
+import { HomeViewModel } from './viewmodels/HomeViewModel.js';
 import { MetronomeViewModel } from './viewmodels/MetronomeViewModel.js';
 import { PracticeListViewModel } from './viewmodels/PracticeListViewModel.js';
 import { PracticePlayerViewModel } from './viewmodels/PracticePlayerViewModel.js';
@@ -28,6 +29,7 @@ import { SettingsViewModel } from './viewmodels/SettingsViewModel.js';
 import { AppShellView } from './views/AppShellView.js';
 import { ChordsHubView } from './views/ChordsHubView.js';
 import { EditorView } from './views/EditorView.js';
+import { HomeView } from './views/HomeView.js';
 import { MetronomeView } from './views/MetronomeView.js';
 import { PracticeListView } from './views/PracticeListView.js';
 import { PracticePlayerView } from './views/PracticePlayerView.js';
@@ -85,6 +87,7 @@ async function bootstrap() {
     loadCatalogFn: loadBuiltinCatalog
   });
 
+  const homeVm = new HomeViewModel(appVm);
   const practiceListVm = new PracticeListViewModel(appVm);
   const practicePlayerVm = new PracticePlayerViewModel({
     appVm,
@@ -131,6 +134,7 @@ async function bootstrap() {
 
   // 3) Capa Views (solo renderizado y delegación de eventos)
   const views = {
+    home: new HomeView(homeVm, appVm),
     list: new PracticeListView(practiceListVm, appVm, importExportService),
     player: new PracticePlayerView(practicePlayerVm, appVm, abcService),
     chords: new ChordsHubView(chordsHubVm, appVm, abcService),

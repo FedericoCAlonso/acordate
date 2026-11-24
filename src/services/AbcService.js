@@ -173,10 +173,109 @@ export function validateAbcInstrumentRange(abcText, instrument = 'guitarra') {
 }
 
 /**
+ * Clasifica una anotación o cifrado de partitura ABC (contenido entre comillas o texto SVG)
+ * en una de cuatro capas independientes:
+ * - `'rightHand'`: dedos de mano derecha (`p, i, m, a, c`, alternancias `i-m`, rasgueos `↓/↑`).
+ * - `'leftHand'`: dedos de mano izquierda (`0–4`), cuerdas en círculo (`①–⑥`), combinaciones (`2③`),
+ *   posiciones de traste en romanos (`I`–`XII`, `pos. V`, `C.V`, `½C.II`, `tr. 5`).
+ * - `'chord'`: símbolos de cifrado americano (`C`, `Dm7`, `F#m7b5/C`) o latino (`Do`, `Rem7`, `Sol7`).
+ * - `'other'`: funciones armónicas de bajo (`R`, `3`, `5`, `b7`, `Crom`), análisis armónico inferior (`_I`, `_V7`, `_ii6`) y texto libre.
+ * @param {string} rawText Texto crudo (puede incluir prefijo de posición `^`, `_`, `<`, `>`, `@`).
+ * @param {{ isRenderedSvg?: boolean }} [opts={}] Opciones cuando se clasifica texto ya renderizado en SVG.
+ * @returns {'chord'|'rightHand'|'leftHand'|'other'} Capa semántica detectada.
+ */
+export function classifyAbcAnnotation(rawText, { isRenderedSvg = false } = {}) {
+  const raw = String(rawText || '').trim();
+  if (!raw) return 'other';
+
+  const posPrefix = /^[\\^_<>@]/.test(raw) ? raw[0] : '';
+  const body = posPrefix ? raw.slice(1).trim() : raw;
+  if (!body) return 'other';
+
+  // 1) Mano derecha: p, i, m, a, c, combinaciones p-i / i-m / m-a y flechas de rasgueo/púa
+  if (/^([pimac](?:[\s–-][pimac])*|[↓↑]+)$/i.test(body) && /^[pimac↓↑\s–-]+$/.test(body)) {
+    return 'rightHand';
+  }
+
+  // 2) Anotaciones inferiores explícitas ("_...") suelen ser funciones de bajo o grados romanos de análisis
+  if (posPrefix === '_') {
+    return 'other';
+  }
+
+  // 3) Mano izquierda: dedos 0-4, cuerdas ①-⑥, combinaciones (1①, 0⑥, 2④), posiciones romanas sobre pentagrama (^V, ^VII, C.V, ½C.II, pos. V, tr. 5)
+  if (/^[0-4]?[①②③④⑤⑥]$/.test(body) || /^[0-4](?:[\s–-][0-4])*$/.test(body)) {
+    return 'leftHand';
+  }
+  if (
+    /^(?:pos\.?\s*|tr\.?\s*|½?C\.?\s*|B\.?\s*)(?:[IVX]+|\d+)$/i.test(body) ||
+    ((posPrefix === '^' || isRenderedSvg) && /^(?:XII|XI|IX|X|VIII|VII|VI|IV|V|III|II|I)$/.test(body))
+  ) {
+    return 'leftHand';
+  }
+
+  // 4) Cifrado de acordes (solo sin prefijo ^_<>@, o en SVG ya renderizado)
+  if (!posPrefix || isRenderedSvg) {
+    // Americano: C, Am7, F#m7b5, Bbmaj7/D, G7alt, Eb9sus4...
+    if (/^[A-G][#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|\d|\([^)]*\))*(?:\/[A-G][#b♯♭]?)?$/.test(body)) {
+      return 'chord';
+    }
+    // Latino renderizado: Do, Rem7, Sol7, Sib, Fa#m7/Do#...
+    if (/^(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|\d|\([^)]*\))*(?:\/(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?)?$/.test(body)) {
+      return 'chord';
+    }
+  }
+
+  return 'other';
+}
+
+/**
+ * Resuelve colisiones verticales entre rectángulos de texto (anotaciones y acordes) dentro de una
+ * misma zona (arriba o abajo del pentagrama), desplazando únicamente los elementos que realmente
+ * se pisan para garantizar lectura limpia sin solapamientos.
+ * @param {Array<{ id?: string, x: number, y: number, width: number, height: number, tier?: number }>} items Rectángulos con su prioridad (`tier`: menor = más cerca del pentagrama).
+ * @param {'up'|'down'} [direction='up'] Dirección de desplazamiento al resolver choque (`up` arriba del pentagrama, `down` abajo).
+ * @param {{ padX?: number, gapY?: number }} [options={}] Margen horizontal y separación vertical mínima.
+ * @returns {Array<{ item: object, dy: number, y: number }>} Desplazamientos calculados por elemento.
+ */
+export function resolveRectCollisions(items, direction = 'up', { padX = 3, gapY = 2.5 } = {}) {
+  const ordered = [...items].sort((a, b) => (a.tier ?? 0) - (b.tier ?? 0) || a.x - b.x);
+  const placed = [];
+  const results = new Map();
+
+  for (const item of ordered) {
+    let curY = item.y;
+    const x1 = item.x - padX;
+    const x2 = item.x + item.width + padX;
+
+    let moved = true;
+    let guard = 0;
+    while (moved && guard < 16) {
+      moved = false;
+      guard += 1;
+      for (const p of placed) {
+        const overlapsX = x1 < p.x2 && x2 > p.x1;
+        if (!overlapsX) continue;
+        const overlapsY = curY < p.y2 + gapY && curY + item.height > p.y1 - gapY;
+        if (overlapsY) {
+          curY = direction === 'up' ? p.y1 - item.height - gapY : p.y2 + gapY;
+          moved = true;
+        }
+      }
+    }
+
+    placed.push({ x1, x2, y1: curY, y2: curY + item.height });
+    results.set(item, { item, dy: curY - item.y, y: curY });
+  }
+
+  return items.map((it) => results.get(it));
+}
+
+/**
  * Servicio encapsulador sobre abcjs (versión fija 6.4.4) responsable de:
  * - Renderizar el pentagrama adaptable con reflujo de compases según ancho y orientación.
  * - Ocultar cabeceras T: duplicadas dentro del SVG y evitar recortes inferiores.
- * - Anotar digitaciones y funciones armónicas de bajo sin usar tablatura en ningún caso.
+ * - Gestionar capas independientes de anotaciones (acordes, mano izquierda, mano derecha y análisis)
+ *   resolviendo automáticamente cualquier superposición visual en el SVG.
  * - Extraer la línea de tiempo reproducible aplicando únicamente PitchPolicy.
  */
 export class AbcService {
@@ -207,6 +306,10 @@ export class AbcService {
       viewMode = 'mixto',
       chordNotation = 'americano',
       showFingerings = true,
+      showLeftHand,
+      showRightHand,
+      showChords,
+      showOtherAnnotations = true,
       fingerings = {},
       showBassFunctions = false,
       isBass = false,
@@ -214,6 +317,11 @@ export class AbcService {
       showHarmonicAnalysis = false,
       harmonicAnalysis = []
     } = options;
+
+    const effectiveLeftHand = showLeftHand !== undefined ? Boolean(showLeftHand) : Boolean(showFingerings);
+    const effectiveRightHand = showRightHand !== undefined ? Boolean(showRightHand) : Boolean(showFingerings);
+    const effectiveChords = showChords !== undefined ? Boolean(showChords) : viewMode !== 'pentagrama';
+    const effectiveOther = Boolean(showOtherAnnotations);
 
     // Quita cabeceras T: del ABC que se dibuja para no duplicar ni recortar el título en el SVG
     if (stripTitle) {
@@ -234,29 +342,36 @@ export class AbcService {
     }
 
     // Capa opcional de análisis armónico (grados romanos / cadencias para guitarra clásica)
-    if (showHarmonicAnalysis && Array.isArray(harmonicAnalysis) && harmonicAnalysis.length > 0) {
+    if (effectiveOther && showHarmonicAnalysis && Array.isArray(harmonicAnalysis) && harmonicAnalysis.length > 0) {
       result = this._injectHarmonicAnalysisLayer(result, harmonicAnalysis);
     }
 
     // 1) En bajo con funciones armónicas activas, anota R, 3, 5, 7, Crom debajo de cada nota
-    if (isBass && showBassFunctions && viewMode !== 'pentagrama') {
+    if (effectiveOther && isBass && showBassFunctions && viewMode !== 'pentagrama') {
       result = this._injectBassFunctionAnnotations(result);
     }
 
-    // 2) Inyecta digitaciones del campo practice.fingerings si están habilitadas
-    if (showFingerings && fingerings && Object.keys(fingerings).length > 0) {
+    // 2) Inyecta digitaciones del campo practice.fingerings si la mano izquierda está habilitada
+    if (effectiveLeftHand && fingerings && Object.keys(fingerings).length > 0) {
       result = this._injectFingeringAnnotations(result, fingerings);
-    } else if (!showFingerings) {
-      result = result.replace(/"\^[^"]+"/g, '');
     }
 
-    // 3) En modo Pentagrama puro, oculta los símbolos de acorde para lectura pura (mantiene digitaciones p-i-m-a)
-    if (viewMode === 'pentagrama') {
-      result = result.replace(/"([^"]+)"/g, (full, inner) => {
-        if (/^[\^_<>@]/.test(inner) || /^(p|i|m|a|[0-4])$/.test(inner.trim())) return full;
-        return '';
-      });
-    } else if (chordNotation === 'latino') {
+    // 3) Filtra de forma independiente las 4 capas de anotaciones ("...") y respeta cifrado latino/americano
+    result = result.replace(/"([^"]+)"/g, (full, inner) => {
+      const kind = classifyAbcAnnotation(inner);
+      if (kind === 'chord') {
+        return effectiveChords ? full : '';
+      }
+      if (kind === 'leftHand') {
+        return effectiveLeftHand ? full : '';
+      }
+      if (kind === 'rightHand') {
+        return effectiveRightHand ? full : '';
+      }
+      return effectiveOther ? full : '';
+    });
+
+    if (effectiveChords && chordNotation === 'latino') {
       result = formatAbcChordsForDisplay(result, 'latino');
     }
 
@@ -411,7 +526,10 @@ export class AbcService {
     const tunes = ABCJS.renderAbc(container, abcText, visualParams);
     const visualObj = tunes && tunes[0] ? tunes[0] : null;
 
-    // Ajusta el viewBox si alguna digitación o cifrado inferior sobresale del alto calculado
+    // Etiqueta cada capa (acordes, mano izq., mano der., otras) y resuelve cualquier choque vertical en el SVG
+    this._tagAndResolveAnnotationCollisions(container);
+
+    // Ajusta el viewBox si alguna digitación o cifrado superior/inferior sobresale del alto calculado
     this._ensureSvgNeverClips(container);
 
     const warnings = Array.isArray(visualObj?.warnings)
@@ -419,6 +537,118 @@ export class AbcService {
       : [];
 
     return { visualObj, warnings };
+  }
+
+  /**
+   * Clasifica visualmente cada texto `.abcjs-chord` / `.abcjs-annotation` dentro del SVG
+   * (aplicando clases semánticas por capa) y desplaza con precisión geométrica cualquier par
+   * de etiquetas cuyas cajas se pisen, garantizando lectura limpia de acordes, mano izq. y mano der.
+   * @param {HTMLElement} container Contenedor DOM del SVG renderizado por abcjs.
+   */
+  _tagAndResolveAnnotationCollisions(container) {
+    const svg = container.querySelector('svg');
+    if (!svg || typeof svg.getBBox !== 'function') return;
+
+    try {
+      // Mide el centro vertical de cada sistema/pentagrama para distinguir etiquetas arriba vs abajo
+      const staffLines = [...svg.querySelectorAll('.abcjs-staff')];
+      const staffCenters = [];
+      for (const st of staffLines) {
+        try {
+          const b = st.getBBox();
+          if (b && b.width > 0) staffCenters.push(b.y + b.height / 2);
+        } catch {
+          // Ignora nodos ocultos
+        }
+      }
+      staffCenters.sort((a, b) => a - b);
+      // Agrupa líneas de un mismo pentagrama que estén a menos de 45px entre sí
+      const systems = [];
+      for (const cy of staffCenters) {
+        if (systems.length === 0 || cy - systems[systems.length - 1].center > 45) {
+          systems.push({ center: cy, sum: cy, count: 1 });
+        } else {
+          const last = systems[systems.length - 1];
+          last.sum += cy;
+          last.count += 1;
+          last.center = last.sum / last.count;
+        }
+      }
+
+      const textNodes = [...svg.querySelectorAll('text.abcjs-chord, text.abcjs-annotation')];
+      if (textNodes.length === 0) return;
+
+      const byZone = new Map();
+      const tierAbove = { leftHand: 0, rightHand: 1, other: 2, chord: 3 };
+      const tierBelow = { leftHand: 0, rightHand: 0, other: 1, chord: 2 };
+
+      for (const node of textNodes) {
+        const text = (node.textContent || '').trim();
+        if (!text) continue;
+
+        const isExplicitChord = node.classList.contains('abcjs-chord');
+        let kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
+        if (kind === 'chord' && !isExplicitChord && node.classList.contains('abcjs-annotation')) {
+          // Si abcjs lo marcó como annotation (con ^ o _), respeta leftHand/rightHand/other
+          kind = classifyAbcAnnotation(`^${text}`, { isRenderedSvg: true });
+        }
+
+        node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : kind === 'chord' ? 'chord' : 'other'}`);
+
+        let bbox;
+        try {
+          bbox = node.getBBox();
+        } catch {
+          continue;
+        }
+        if (!bbox || bbox.width === 0 || bbox.height === 0) continue;
+
+        // Encuentra el sistema más cercano verticalmente
+        const cy = bbox.y + bbox.height / 2;
+        let sysIdx = 0;
+        let bestDist = Infinity;
+        systems.forEach((sys, idx) => {
+          const d = Math.abs(cy - sys.center);
+          if (d < bestDist) {
+            bestDist = d;
+            sysIdx = idx;
+          }
+        });
+
+        const sysCenter = systems[sysIdx]?.center ?? cy + 1;
+        const side = cy <= sysCenter ? 'up' : 'down';
+        const zoneKey = `${sysIdx}:${side}`;
+        if (!byZone.has(zoneKey)) byZone.set(zoneKey, { side, items: [] });
+
+        byZone.get(zoneKey).items.push({
+          node,
+          kind,
+          x: bbox.x,
+          y: bbox.y,
+          width: bbox.width,
+          height: bbox.height,
+          tier: side === 'up' ? (tierAbove[kind] ?? 2) : (tierBelow[kind] ?? 1)
+        });
+      }
+
+      for (const { side, items } of byZone.values()) {
+        if (items.length < 2) continue;
+        const resolved = resolveRectCollisions(items, side, { padX: 3.5, gapY: 3 });
+        for (const res of resolved) {
+          if (Math.abs(res.dy) < 0.5) continue;
+          const node = res.item.node;
+          const curYAttr = parseFloat(node.getAttribute('y'));
+          if (Number.isFinite(curYAttr)) {
+            node.setAttribute('y', (curYAttr + res.dy).toFixed(2));
+          } else {
+            const existingT = node.getAttribute('transform') || '';
+            node.setAttribute('transform', `${existingT} translate(0, ${res.dy.toFixed(2)})`.trim());
+          }
+        }
+      }
+    } catch {
+      // Protección ante entornos sin layout SVG completo
+    }
   }
 
   /**

@@ -21,6 +21,10 @@ export const DEFAULT_SETTINGS = {
   listeningRegister: 'real',
   wakeLockEnabled: true,
   showFingerings: true,
+  showLeftHand: true,
+  showRightHand: true,
+  showChordsOnScore: true,
+  showOtherAnnotations: true,
   showBassFunctions: true,
   metronomeSound: 'woodblock',
   countInMeasures: 1
@@ -53,8 +57,20 @@ export class Settings {
       : DEFAULT_SETTINGS.listeningRegister;
     /** Indica si se intenta mantener la pantalla encendida durante la práctica (Wake Lock). */
     this.wakeLockEnabled = data.wakeLockEnabled !== undefined ? Boolean(data.wakeLockEnabled) : DEFAULT_SETTINGS.wakeLockEnabled;
-    /** Mostrar digitaciones anotadas sobre las notas. */
-    this.showFingerings = data.showFingerings !== undefined ? Boolean(data.showFingerings) : DEFAULT_SETTINGS.showFingerings;
+    /** Mostrar digitaciones anotadas (compatibilidad global izquierda + derecha). */
+    const baseFingerings = data.showFingerings !== undefined ? Boolean(data.showFingerings) : DEFAULT_SETTINGS.showFingerings;
+    /** Mostrar referencias de mano izquierda (dedos 0–4, cuerdas ①–⑥, posiciones romanas). */
+    this.showLeftHand = data.showLeftHand !== undefined ? Boolean(data.showLeftHand) : baseFingerings;
+    /** Mostrar referencias de mano derecha (p, i, m, a, c, rasgueo). */
+    this.showRightHand = data.showRightHand !== undefined ? Boolean(data.showRightHand) : baseFingerings;
+    /** Indicador combinado de digitaciones (true si al menos una mano está visible). */
+    this.showFingerings = data.showFingerings !== undefined && data.showLeftHand === undefined && data.showRightHand === undefined
+      ? baseFingerings
+      : (this.showLeftHand || this.showRightHand);
+    /** Mostrar cifrado de acordes sobre el pentagrama. */
+    this.showChordsOnScore = data.showChordsOnScore !== undefined ? Boolean(data.showChordsOnScore) : DEFAULT_SETTINGS.showChordsOnScore;
+    /** Mostrar otras anotaciones en partitura (grados romanos, indicaciones de texto). */
+    this.showOtherAnnotations = data.showOtherAnnotations !== undefined ? Boolean(data.showOtherAnnotations) : DEFAULT_SETTINGS.showOtherAnnotations;
     /** Mostrar funciones armónicas (R, 3, 5, 7, Crom) en prácticas de bajo. */
     this.showBassFunctions = data.showBassFunctions !== undefined ? Boolean(data.showBassFunctions) : DEFAULT_SETTINGS.showBassFunctions;
     /** Sonido predeterminado del metrónomo. */
@@ -89,6 +105,10 @@ export class Settings {
       listeningRegister: this.listeningRegister,
       wakeLockEnabled: this.wakeLockEnabled,
       showFingerings: this.showFingerings,
+      showLeftHand: this.showLeftHand,
+      showRightHand: this.showRightHand,
+      showChordsOnScore: this.showChordsOnScore,
+      showOtherAnnotations: this.showOtherAnnotations,
       showBassFunctions: this.showBassFunctions,
       metronomeSound: this.metronomeSound,
       countInMeasures: this.countInMeasures

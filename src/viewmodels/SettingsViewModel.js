@@ -110,11 +110,36 @@ export class SettingsViewModel {
   }
 
   /**
-   * Configura si se muestran digitaciones anotadas por defecto.
+   * Configura si se muestran digitaciones anotadas por defecto (ambas manos).
    * @param {boolean} showFingerings Nuevo estado.
    */
   setShowFingerings(showFingerings) {
-    this._appVm.updateSettings({ showFingerings: Boolean(showFingerings) });
+    const val = Boolean(showFingerings);
+    this._appVm.updateSettings({ showFingerings: val, showLeftHand: val, showRightHand: val });
+  }
+
+  /** Configura visibilidad por defecto de mano izquierda (dedos 0–4, cuerdas, posiciones). */
+  setShowLeftHand(showLeftHand) {
+    const val = Boolean(showLeftHand);
+    const right = this.settings.value.showRightHand;
+    this._appVm.updateSettings({ showLeftHand: val, showFingerings: val || right });
+  }
+
+  /** Configura visibilidad por defecto de mano derecha (p, i, m, a). */
+  setShowRightHand(showRightHand) {
+    const val = Boolean(showRightHand);
+    const left = this.settings.value.showLeftHand;
+    this._appVm.updateSettings({ showRightHand: val, showFingerings: left || val });
+  }
+
+  /** Configura visibilidad por defecto del cifrado de acordes sobre la partitura. */
+  setShowChordsOnScore(showChordsOnScore) {
+    this._appVm.updateSettings({ showChordsOnScore: Boolean(showChordsOnScore) });
+  }
+
+  /** Configura visibilidad por defecto de otras anotaciones (grados romanos, texto). */
+  setShowOtherAnnotations(showOtherAnnotations) {
+    this._appVm.updateSettings({ showOtherAnnotations: Boolean(showOtherAnnotations) });
   }
 
   /**

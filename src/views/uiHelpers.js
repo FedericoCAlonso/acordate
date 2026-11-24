@@ -37,7 +37,13 @@ const ICONS = {
   starOutline: '<path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>',
   ear: '<path d="M17 20c-.29 0-.56-.06-.76-.15-.71-.37-1.21-.88-1.71-2.38-.51-1.56-1.47-2.29-2.39-3-.79-.61-1.61-1.24-2.32-2.53C9.29 10.98 9 9.93 9 9c0-2.8 2.2-5 5-5s5 2.2 5 5h2c0-3.93-3.07-7-7-7S7 5.07 7 9c0 1.26.38 2.65 1.07 3.9.91 1.65 1.98 2.48 2.85 3.15.81.62 1.39 1.07 1.71 2.05.6 1.82 1.37 2.84 2.73 3.55.51.23 1.07.35 1.64.35 2.21 0 4-1.79 4-4h-2c0 1.1-.9 2-2 2zM14 6.5c-1.38 0-2.5 1.12-2.5 2.5h2c0-.28.22-.5.5-.5s.5.22.5.5c0 .19-.07.35-.19.48l-.55.58c-.47.5-.76 1.15-.76 1.94h2c0-.43.16-.75.44-1.05l.56-.59c.31-.33.5-.81.5-1.36 0-1.38-1.12-2.5-2.5-2.5z"/>',
   swap: '<path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>',
-  scales: '<path d="M3 18h4v-3h4v-3h4V9h4V6h2v5h-4v3h-4v3H9v3H3v-2z"/>'
+  scales: '<path d="M3 18h4v-3h4v-3h4V9h4V6h2v5h-4v3h-4v3H9v3H3v-2z"/>',
+  home: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>',
+  help: '<path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>',
+  arrowRight: '<path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>',
+  book: '<path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>',
+  flame: '<path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>',
+  layers: '<path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/>'
 };
 
 /** Función de cierre del menú emergente actualmente abierto (evita menús superpuestos). */
@@ -419,7 +425,7 @@ export function openSheetModal({ title, body, sideOnWide = true, onClose }) {
  * @param {object} opts Contenido del diálogo.
  * @returns {{ close: Function }} Controlador para cerrar el diálogo.
  */
-export function openModalDialog({ title, body, actions = [] }) {
+export function openModalDialog({ title, body, content, actions = [] }) {
   closeAllOverlays();
 
   const previousFocus = document.activeElement;
@@ -442,18 +448,21 @@ export function openModalDialog({ title, body, actions = [] }) {
   activeOverlayCloser = close;
   document.body.style.overflow = 'hidden';
 
-  const actionBtns = actions.map((act) =>
-    el(
+  const modalBody = body !== undefined ? body : content;
+  const actionBtns = actions.map((act) => {
+    const rawVar = act.variant || 'm3-btn--text';
+    const clsVar = rawVar.startsWith('m3-btn--') ? rawVar : `m3-btn--${rawVar}`;
+    return el(
       'button',
       {
         type: 'button',
-        className: `m3-btn ${act.variant || 'm3-btn--text'}`,
+        className: `m3-btn ${clsVar}`,
         ripple: true,
-        onClick: () => act.onClick(close)
+        onClick: () => (act.onClick ? act.onClick(close) : close())
       },
       [act.label]
-    )
-  );
+    );
+  });
 
   const dialog = el(
     'div',
@@ -465,7 +474,7 @@ export function openModalDialog({ title, body, actions = [] }) {
     },
     [
       el('h2', { id: 'm3-dialog-title', className: 'm3-title-lg' }, [title]),
-      typeof body === 'string' ? el('p', { className: 'm3-body-md' }, [body]) : body,
+      typeof modalBody === 'string' ? el('p', { className: 'm3-body-md' }, [modalBody]) : modalBody,
       el('div', { className: 'm3-dialog__actions' }, actionBtns)
     ]
   );

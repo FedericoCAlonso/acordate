@@ -1,6 +1,7 @@
 import { INSTRUMENT_LABELS, METRONOME_SOUND_LABELS } from '../core/i18n.js';
 import { SEED_COLOR_PRESETS } from '../models/Settings.js';
-import { createSwitchRow, el } from './uiHelpers.js';
+import { openNotationGuideModal } from './NotationGuideModal.js';
+import { createSwitchRow, el, icon } from './uiHelpers.js';
 
 /**
  * Vista de Ajustes (#/ajustes).
@@ -223,12 +224,36 @@ export class SettingsView {
     );
     instSelect.value = s.defaultInstrument;
 
-    const fingeringsSwitch = createSwitchRow({
-      id: 'set-fingerings',
-      label: 'Mostrar digitaciones anotadas',
-      description: 'Dedos 1-4, cuerdas y posiciones sobre la nota (nunca tablatura)',
-      checked: s.showFingerings,
-      onChange: (v) => this._vm.setShowFingerings(v)
+    const leftHandSwitch = createSwitchRow({
+      id: 'set-left-hand',
+      label: 'Referencias de mano izquierda',
+      description: 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII) sobre la partitura',
+      checked: s.showLeftHand,
+      onChange: (v) => this._vm.setShowLeftHand(v)
+    });
+
+    const rightHandSwitch = createSwitchRow({
+      id: 'set-right-hand',
+      label: 'Referencias de mano derecha',
+      description: 'Dedos de pulsación (p, i, m, a) y direcciones de rasgueo (↓ ↑)',
+      checked: s.showRightHand,
+      onChange: (v) => this._vm.setShowRightHand(v)
+    });
+
+    const chordsOnScoreSwitch = createSwitchRow({
+      id: 'set-chords-score',
+      label: 'Cifrado de acordes sobre la partitura',
+      description: 'Muestra los símbolos de acorde encima del pentagrama (en modo Mixto)',
+      checked: s.showChordsOnScore,
+      onChange: (v) => this._vm.setShowChordsOnScore(v)
+    });
+
+    const otherAnnSwitch = createSwitchRow({
+      id: 'set-other-ann',
+      label: 'Otras anotaciones y análisis',
+      description: 'Grados romanos (I, ii, V7) y marcas textuales de estudio',
+      checked: s.showOtherAnnotations,
+      onChange: (v) => this._vm.setShowOtherAnnotations(v)
     });
 
     const bassFnSwitch = createSwitchRow({
@@ -240,13 +265,28 @@ export class SettingsView {
     });
 
     const notationCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
-      el('h2', { className: 'm3-title-md' }, ['Notación y práctica']),
+      el('div', { className: 'player-toolbar' }, [
+        el('h2', { className: 'm3-title-md' }, ['Notación y referencias en partitura']),
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--outlined',
+            ripple: true,
+            onClick: () => openNotationGuideModal()
+          },
+          [icon('help', 16), 'Guía de símbolos']
+        )
+      ]),
       notationSeg,
       el('div', {}, [
         el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Instrumento principal']),
         instSelect
       ]),
-      fingeringsSwitch.row,
+      leftHandSwitch.row,
+      rightHandSwitch.row,
+      chordsOnScoreSwitch.row,
+      otherAnnSwitch.row,
       bassFnSwitch.row
     ]);
 

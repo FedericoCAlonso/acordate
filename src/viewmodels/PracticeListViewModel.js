@@ -44,7 +44,9 @@ export class PracticeListViewModel {
     this.repertoireLevelFilter = new Observable('todos');
     /** Texto libre de búsqueda en la Search Bar. */
     this.searchQuery = new Observable('');
-    /** Nivel actualmente abierto en la ruta de niveles (null = automático). */
+    /** Pestaña activa dentro de Prácticas ('ruta' | 'repertorio' | 'mias'). */
+    this.activeSection = new Observable('ruta');
+    /** Nivel actualmente seleccionado en la ruta de niveles (null = automático). */
     this.expandedLevel = new Observable(null);
 
     /** Prácticas pertenecientes al instrumento seleccionado actualmente. */
@@ -168,6 +170,21 @@ export class PracticeListViewModel {
         this.instrumentFilter.set(appVm.settings.value.defaultInstrument);
       }
     });
+
+    /** Mantiene el instrumento sincronizado con cambios realizados en el Panel de Inicio o Ajustes. */
+    this._unsubSettings = appVm.settings.subscribe((s) => {
+      if (s?.defaultInstrument && s.defaultInstrument !== this.instrumentFilter.value && this.instrumentFilter.value !== 'todos') {
+        this.instrumentFilter.set(s.defaultInstrument);
+      }
+    });
+  }
+
+  /** Cambia la pestaña activa dentro de Prácticas ('ruta' | 'repertorio' | 'mias'). */
+  setActiveSection(tab) {
+    const valid = ['ruta', 'repertorio', 'mias'].includes(tab) ? tab : 'ruta';
+    if (this.activeSection.value !== valid) {
+      this.activeSection.set(valid);
+    }
   }
 
   /** Establece filtro de tipo de práctica. */
@@ -226,12 +243,11 @@ export class PracticeListViewModel {
     this._appVm.startStudySession(routine);
   }
 
-  /** Abre una práctica: actualiza panel derecho en escritorio o navega en móvil/tablet. */
+  /** Abre una práctica directamente en Modo Atril (#/practica/:id). */
   openPractice(practiceId) {
+    if (!practiceId) return;
     this._appVm.activePracticeId.set(practiceId);
-    if (this._appVm.windowSizeClass.value !== 'expanded' || this._appVm.currentRoute.value.name !== 'practicas') {
-      this._appVm.navigate(`#/practica/${encodeURIComponent(practiceId)}`);
-    }
+    this._appVm.navigate(`#/practica/${encodeURIComponent(practiceId)}`);
   }
 
   /** Navega al editor para crear una práctica nueva. */
@@ -241,12 +257,16 @@ export class PracticeListViewModel {
   skipLevel(levelNumber) { this._appVm.skipToLevel(levelNumber); }
 
   /**
-   * Libera la suscripción a `appVm.isReady` y todos los `ComputedObservable`.
+   * Libera la suscripción a `appVm.isReady`, `appVm.settings` y todos los `ComputedObservable`.
    */
   dispose() {
     if (this._unsubReady) {
       this._unsubReady();
       this._unsubReady = null;
+    }
+    if (this._unsubSettings) {
+      this._unsubSettings();
+      this._unsubSettings = null;
     }
     this.groupedByLevel.dispose();
     this.todayRoutine.dispose();

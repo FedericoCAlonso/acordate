@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v12: Auditoría técnica de digitaciones en diapasón para guitarras y bajo 4c/5c).
+ * Versión del caché estático de la PWA Acordate (v13: Panel de Inicio, flujo de Prácticas en 3 pestañas, Modo Atril despejado, anotaciones sin solapamiento y Guía de referencias).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v12';
+const CACHE_NAME = 'acordate-static-v13';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -73,6 +73,7 @@ const PRECACHE_ASSETS = [
   './src/data/voicings.js',
   './src/viewmodels/AppShellViewModel.js',
   './src/viewmodels/AppViewModel.js',
+  './src/viewmodels/HomeViewModel.js',
   './src/viewmodels/PracticeListViewModel.js',
   './src/viewmodels/PracticePlayerViewModel.js',
   './src/viewmodels/player/PlayerTransportViewModel.js',
@@ -94,9 +95,11 @@ const PRECACHE_ASSETS = [
   './src/viewmodels/ProgressViewModel.js',
   './src/viewmodels/SettingsViewModel.js',
   './src/views/uiHelpers.js',
+  './src/views/NotationGuideModal.js',
   './src/views/ChordDiagramView.js',
   './src/views/ScaleFretboardView.js',
   './src/views/AppShellView.js',
+  './src/views/HomeView.js',
   './src/views/PracticeListView.js',
   './src/views/PracticePlayerView.js',
   './src/views/ChordsHubView.js',

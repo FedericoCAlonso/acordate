@@ -1,16 +1,13 @@
 import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, RIGHTS_LABELS, STYLE_LABELS, formatKeyName } from '../core/i18n.js';
 import {
   createFloatingField,
-  createPopupMenu,
   el,
   icon,
   openModalDialog,
   openSheetModal
 } from './uiHelpers.js';
 
-/**
- * Instrumentos disponibles en el selector fijo superior de la ruta de prácticas.
- */
+/** Instrumentos disponibles en el selector superior de Prácticas. */
 const INSTRUMENT_TABS = [
   { value: 'guitarra-clasica', label: 'Clásica', fullLabel: 'Guitarra clásica' },
   { value: 'guitarra', label: 'Guitarra', fullLabel: 'Guitarra' },
@@ -18,10 +15,11 @@ const INSTRUMENT_TABS = [
 ];
 
 /**
- * Vista de la pantalla de Prácticas v2 organizada como "Ruta".
- * Muestra selector fijo de instrumento, Search Bar + botón de filtros en bottom sheet,
- * bloques "Continuar", "Sesión de hoy", "Ruta de niveles" con anillos de progreso,
- * "Mis prácticas" con estado vacío ilustrado y FAB flotante.
+ * Vista de la pantalla de Prácticas (#/practicas) organizada en 3 pestañas claras:
+ * - Ruta (Niveles 1–5 con selector de pasos sin acordeones anidados)
+ * - Repertorio (filtros compactos por estilo, nivel y derechos en una sola barra)
+ * - Mis prácticas (creación, importación .json/.abc y sesiones propias)
+ * Al seleccionar cualquier práctica abre directamente el Modo Atril (#/practica/:id).
  */
 export class PracticeListView {
   /**
@@ -41,25 +39,33 @@ export class PracticeListView {
     this._unsubs = [];
     /** Contenedor DOM. */
     this._container = null;
-    /** Botón FAB flotante anexado a la vista. */
-    this._fabEl = null;
   }
 
   /**
-   * Monta la vista de ruta de prácticas dentro del contenedor.
+   * Abre una pestaña específica desde el router hash (#/practicas/ruta|repertorio|mias).
+   * @param {string} tab Nombre de pestaña.
+   */
+  openSection(tab) {
+    this._vm.setActiveSection(tab);
+  }
+
+  /**
+   * Monta la vista de Prácticas dentro del contenedor.
    * @param {HTMLElement} container Elemento destino.
    */
   mount(container) {
+    this.unmount();
     this._container = container;
     container.innerHTML = '';
 
-    this._instBar = el('div', { className: 'instrument-sticky' });
+    this._instBar = el('div', { className: 'practices-top-bar' });
+    this._sectionTabs = el('div', { className: 'm3-segmented m3-segmented--full', role: 'tablist', 'aria-label': 'Secciones de prácticas' });
     this._searchRow = el('div', { className: 'm3-search-row' });
     this._bodyHost = el('div', { className: 'route-stack' });
 
     this._searchInput = el('input', {
       type: 'search',
-      placeholder: 'Buscar práctica, tonalidad o tema…',
+      placeholder: 'Buscar por título, tonalidad, estilo o tema…',
       'aria-label': 'Buscar prácticas',
       value: this._vm.searchQuery.value,
       onInput: (e) => this._vm.setSearchQuery(e.target.value)
@@ -84,73 +90,64 @@ export class PracticeListView {
 
     this._searchRow.append(searchBar, this._filterBtn);
 
-    const stack = el('div', { className: 'route-stack' }, [
+    const stack = el('div', { className: 'route-stack practices-page' }, [
       this._instBar,
+      this._sectionTabs,
       this._searchRow,
       this._bodyHost
     ]);
 
-    // FAB flotante para crear una nueva práctica
-    this._fabEl = el(
-      'button',
-      {
-        type: 'button',
-        className: 'm3-fab m3-fab--primary m3-fab--floating',
-        ripple: true,
-        'aria-label': 'Crear nueva práctica',
-        onClick: () => this._vm.createNewPractice()
-      },
-      [icon('plus', 22), el('span', {}, ['Nueva'])]
-    );
-
-    container.append(stack, this._fabEl);
+    container.append(stack);
 
     this._unsubs = [
       this._vm.instrumentFilter.subscribe(() => {
-        this._renderInstrumentTabs();
+        this._renderInstrumentBar();
+        this._renderSectionTabs();
+        this._renderBody();
+      }),
+      this._vm.activeSection.subscribe(() => {
+        this._renderSectionTabs();
         this._renderBody();
       }),
       this._vm.activeFilterCount.subscribe(() => this._syncFilterButton()),
       this._vm.isFiltering.subscribe(() => this._renderBody()),
       this._vm.groupedByLevel.subscribe(() => this._renderBody()),
-      this._vm.continueCard.subscribe(() => this._renderBody()),
-      this._vm.todayRoutine.subscribe(() => this._renderBody()),
-      this._vm.userPractices.subscribe(() => this._renderBody()),
-      this._vm.repertoirePractices.subscribe(() => this._renderBody()),
+      this._vm.userPractices.subscribe(() => {
+        this._renderSectionTabs();
+        this._renderBody();
+      }),
+      this._vm.repertoirePractices.subscribe(() => {
+        this._renderSectionTabs();
+        this._renderBody();
+      }),
       this._vm.expandedLevel.subscribe(() => this._renderBody()),
-      this._appVm.activePracticeId.subscribe(() => this._renderBody()),
       this._appVm.studySessions.subscribe(() => this._renderBody()),
       this._appVm.settings.subscribe(() => this._renderBody()),
       this._appVm.progress.subscribe(() => this._renderBody())
     ];
 
-    this._renderInstrumentTabs();
+    this._renderInstrumentBar();
+    this._renderSectionTabs();
     this._syncFilterButton();
     this._renderBody();
   }
 
-  /**
-   * Libera todas las suscripciones al desmontar.
-   */
+  /** Libera todas las suscripciones al desmontar. */
   unmount() {
     for (const unsub of this._unsubs) unsub();
     this._unsubs = [];
-    this._fabEl?.remove();
-    this._fabEl = null;
     this._container = null;
   }
 
-  /**
-   * Renderiza el selector de instrumento fijo superior (Guitarra clásica / Guitarra / Bajo).
-   */
-  _renderInstrumentTabs() {
+  /** Renderiza el selector de instrumento y el botón integrado "+ Nueva" (sin FAB flotante). */
+  _renderInstrumentBar() {
     if (!this._instBar) return;
     const active = this._vm.instrumentFilter.value;
     this._instBar.innerHTML = '';
 
     const seg = el(
       'div',
-      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Seleccionar instrumento' },
+      { className: 'm3-segmented practices-inst-seg', role: 'group', 'aria-label': 'Seleccionar instrumento' },
       INSTRUMENT_TABS.map((inst) =>
         el(
           'button',
@@ -166,12 +163,59 @@ export class PracticeListView {
         )
       )
     );
-    this._instBar.appendChild(seg);
+
+    const newBtn = el(
+      'button',
+      {
+        type: 'button',
+        className: 'm3-btn m3-btn--compact m3-btn--filled',
+        ripple: true,
+        'aria-label': 'Crear nueva práctica',
+        onClick: () => this._vm.createNewPractice()
+      },
+      [icon('plus', 18), 'Nueva']
+    );
+
+    this._instBar.append(seg, newBtn);
   }
 
-  /**
-   * Actualiza la etiqueta del botón "Filtros" indicando cuántos filtros están activos.
-   */
+  /** Renderiza las 3 pestañas principales de Prácticas: Ruta · Repertorio · Mis prácticas. */
+  _renderSectionTabs() {
+    if (!this._sectionTabs) return;
+    const active = this._vm.activeSection.value;
+    const repCount = this._vm.repertoirePractices.value.length;
+    const myCount = this._vm.userPractices.value.length;
+
+    const tabs = [
+      { id: 'ruta', label: 'Ruta de niveles' },
+      { id: 'repertorio', label: `Repertorio (${repCount})` },
+      { id: 'mias', label: `Mis prácticas (${myCount})` }
+    ];
+
+    this._sectionTabs.innerHTML = '';
+    for (const t of tabs) {
+      this._sectionTabs.appendChild(
+        el(
+          'button',
+          {
+            type: 'button',
+            role: 'tab',
+            className: 'm3-segmented__btn',
+            ripple: true,
+            'aria-pressed': String(active === t.id),
+            'aria-selected': String(active === t.id),
+            onClick: () => {
+              this._vm.setActiveSection(t.id);
+              this._appVm.navigate(`#/practicas/${t.id}`);
+            }
+          },
+          [t.label]
+        )
+      );
+    }
+  }
+
+  /** Actualiza la etiqueta del botón "Filtros" indicando cuántos filtros están activos. */
   _syncFilterButton() {
     if (!this._filterBtn) return;
     const count = this._vm.activeFilterCount.value;
@@ -180,9 +224,7 @@ export class PracticeListView {
     this._filterBtn.appendChild(el('span', {}, [count > 0 ? `Filtros (${count})` : 'Filtros']));
   }
 
-  /**
-   * Renderiza el cuerpo principal: resultados filtrados o los bloques de la Ruta.
-   */
+  /** Renderiza el cuerpo según si hay búsqueda/filtros globales activos o la pestaña seleccionada. */
   _renderBody() {
     if (!this._bodyHost) return;
     this._bodyHost.innerHTML = '';
@@ -192,258 +234,214 @@ export class PracticeListView {
       return;
     }
 
-    // 1) Bloques "Continuar" y "Sesión de hoy" visibles inmediatamente en la primera pantalla
-    const heroGrid = el('div', { className: 'hero-cards-grid' }, [
-      this._buildContinueBlock(),
-      this._buildTodaySessionBlock()
-    ]);
-    this._bodyHost.appendChild(heroGrid);
-
-    // 2) Ruta de niveles (1 a 5) con anillos de progreso
-    this._bodyHost.appendChild(this._buildLevelsRouteSection());
-
-    // 3) Sección "Repertorio" integrada con filtros de estilo, derechos y nivel (B2)
-    this._bodyHost.appendChild(this._buildRepertoireSection());
-
-    // 4) Sección propia "Mis prácticas" y sesiones personalizadas
-    this._bodyHost.appendChild(this._buildMyPracticesSection());
+    const tab = this._vm.activeSection.value;
+    if (tab === 'repertorio') {
+      this._bodyHost.appendChild(this._buildRepertoireSection());
+    } else if (tab === 'mias') {
+      this._bodyHost.appendChild(this._buildMyPracticesSection());
+    } else {
+      this._bodyHost.appendChild(this._buildLevelsRouteSection());
+    }
   }
 
   /**
-   * Construye la tarjeta destacada "Continuar" con la última práctica del instrumento activo.
-   * @returns {HTMLElement|null} Tarjeta Continuar.
-   */
-  _buildContinueBlock() {
-    const info = this._vm.continueCard.value;
-    if (!info) return null;
-    const { practice, stats, isFresh } = info;
-    const notation = this._appVm.settings.value.chordNotation;
-    const pct = Math.min(100, Math.round(((stats.bestBpm || 0) / (practice.tempo.target || 100)) * 100));
-
-    return el('section', { className: 'continue-card', 'aria-label': 'Continuar práctica' }, [
-      el('div', { className: 'player-toolbar' }, [
-        el('span', { className: 'm3-label' }, [isFresh ? 'PARA EMPEZAR' : 'CONTINUAR']),
-        el('span', { className: 'm3-label' }, [`Nivel ${practice.level} · ${formatKeyName(practice.key, notation)}`])
-      ]),
-      el('h2', { className: 'm3-title-lg' }, [practice.title]),
-      el('div', { className: 'm3-body-md' }, [
-        stats.bestBpm > 0
-          ? `Mejor marca: ${stats.bestBpm} / ${practice.tempo.target} BPM (${pct}%)`
-          : `Inicio sugerido: ${practice.tempo.start} BPM · Objetivo: ${practice.tempo.target} BPM`
-      ]),
-      el('div', { style: 'margin-top:4px' }, [
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-btn m3-btn--filled',
-            ripple: true,
-            onClick: () => this._vm.openPractice(practice.id)
-          },
-          [icon('play', 18), isFresh ? 'Empezar ahora' : 'Seguir practicando']
-        )
-      ])
-    ]);
-  }
-
-  /**
-   * Construye la tarjeta "Sesión de hoy" (~15 min) y el botón para armar una sesión personalizada.
-   * @returns {HTMLElement} Tarjeta de sesión sugerida.
-   */
-  _buildTodaySessionBlock() {
-    const routine = this._vm.todayRoutine.value;
-    const savedSessions = this._appVm.studySessions.value.filter(
-      (s) => s.instrument === this._vm.instrumentFilter.value
-    );
-
-    const rows = routine.items.map((item) =>
-      el('div', { className: 'routine-row' }, [
-        el('span', { className: 'routine-row__title' }, [
-          el('strong', {}, [`${item.role}: `]),
-          item.practice.title
-        ]),
-        el('span', { className: 'm3-label', style: 'flex-shrink:0' }, [`${item.minutes} min`])
-      ])
-    );
-
-    const customList =
-      savedSessions.length > 0
-        ? el(
-            'div',
-            { className: 'm3-chip-row', style: 'margin-top:8px' },
-            savedSessions.map((ses) =>
-              el(
-                'button',
-                {
-                  type: 'button',
-                  className: 'm3-chip',
-                  ripple: true,
-                  onClick: () => this._appVm.startStudySession(ses)
-                },
-                [icon('playlist', 16), `${ses.title} (${ses.items.reduce((a, b) => a + b.minutes, 0)} min)`]
-              )
-            )
-          )
-        : null;
-
-    return el('section', { className: 'm3-card', 'aria-label': 'Sesión de hoy' }, [
-      el('div', { className: 'player-toolbar' }, [
-        el('h2', { className: 'm3-title-md' }, [routine.title]),
-        el('span', { className: 'm3-badge m3-badge--tertiary' }, [`~${routine.totalMinutes} min`])
-      ]),
-      el('div', { className: 'routine-list' }, rows),
-      el('div', { className: 'm3-chip-row', style: 'margin-top:8px' }, [
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-btn m3-btn--tonal',
-            ripple: true,
-            onClick: () => this._vm.startTodayRoutine()
-          },
-          [icon('play', 18), 'Iniciar sesión']
-        ),
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-btn m3-btn--outlined',
-            ripple: true,
-            onClick: () => this._openSessionBuilderDialog()
-          },
-          [icon('playlist', 18), 'Armar sesión']
-        )
-      ]),
-      customList
-    ]);
-  }
-
-  /**
-   * Construye la sección "Ruta de niveles" con anillos de progreso SVG y áreas plegables dentro de cada nivel.
-   * @returns {HTMLElement} Contenedor de la ruta de niveles.
+   * Pestaña 1 — Ruta de niveles (1–5) con barra de pasos horizontal (sin acordeones anidados).
+   * @returns {HTMLElement} Sección de Ruta.
    */
   _buildLevelsRouteSection() {
     const groups = this._vm.groupedByLevel.value;
-    const expanded = this._vm.getActiveExpandedLevel();
+    const activeLvlNum = this._vm.getActiveExpandedLevel() || 1;
+    const activeGroup = groups.find((g) => g.level.number === activeLvlNum) || groups[0];
 
-    const steps = groups.map((group) => {
-      const { level, status, areas } = group;
-      const isOpen = expanded === level.number;
-      const pct = status.requiredCount > 0 ? Math.min(1, status.completedCount / status.requiredCount) : 0;
-
-      let stateText;
-      if (status.completed) stateText = `Completo (${status.completedCount}/${status.requiredCount} clave)`;
-      else if (status.unlocked) stateText = `En curso · ${status.completedCount}/${status.requiredCount} prácticas clave`;
-      else {
-        const rem = status.remainingToUnlock || 2;
-        stateText = `Te falta${rem === 1 ? '' : 'n'} ${rem} práctica${rem === 1 ? '' : 's'} clave del nivel ${level.number - 1}`;
-      }
-
-      const menuItems = [
-        !status.unlocked
-          ? {
-              label: `Saltar al nivel ${level.number}`,
-              iconName: 'check',
-              onClick: () => this._vm.skipLevel(level.number)
-            }
-          : null,
-        {
-          label: isOpen ? 'Plegar nivel' : 'Ver prácticas del nivel',
-          iconName: 'music',
-          onClick: () => this._vm.toggleLevelExpanded(level.number)
-        }
-      ].filter(Boolean);
-
-      const header = el('div', { className: 'level-step__header' }, [
-        el(
+    // Selector horizontal de niveles N1..N5
+    const levelPills = el(
+      'div',
+      { className: 'level-stepper', role: 'tablist', 'aria-label': 'Seleccionar nivel de la ruta' },
+      groups.map((g) => {
+        const isCurrent = g.level.number === activeGroup?.level.number;
+        const { status, level } = g;
+        const badgeIcon = status.completed ? icon('check', 15) : !status.unlocked ? icon('lock', 14) : null;
+        return el(
           'button',
           {
             type: 'button',
-            className: 'level-step__toggle',
-            'aria-expanded': String(isOpen),
-            onClick: () => this._vm.toggleLevelExpanded(level.number)
+            role: 'tab',
+            className: `level-pill ${isCurrent ? 'level-pill--active' : ''} ${status.completed ? 'level-pill--done' : ''} ${!status.unlocked ? 'level-pill--locked' : ''}`,
+            ripple: true,
+            'aria-selected': String(isCurrent),
+            onClick: () => this._vm.expandedLevel.set(level.number)
           },
           [
-            this._buildProgressRing(level.number, pct, status.completed, !status.unlocked),
-            el('div', { style: 'min-width:0' }, [
-              el('div', { className: 'm3-title-md' }, [`Nivel ${level.number}: ${level.name}`]),
-              el('div', { className: 'm3-body-md' }, [`${level.subtitle} · ${stateText}`])
-            ])
+            el('span', { className: 'level-pill__num' }, [badgeIcon, `Nivel ${level.number}`]),
+            el('span', { className: 'level-pill__name' }, [level.name])
           ]
-        ),
-        createPopupMenu(`Opciones del nivel ${level.number}`, menuItems)
-      ]);
-
-      let body = null;
-      if (isOpen) {
-        body = el(
-          'div',
-          { className: 'level-step__body' },
-          areas.map((areaGroup, idx) =>
-            el('details', { className: 'm3-collapsible', open: idx === 0 }, [
-              el('summary', {}, [
-                el('span', {}, [`${CATEGORY_LABELS[areaGroup.area] || areaGroup.area} (${areaGroup.practices.length})`]),
-                icon('chevronDown', 18)
-              ]),
-              el('div', { className: 'm3-collapsible__content' }, [
-                el(
-                  'div',
-                  { className: 'practice-grid' },
-                  areaGroup.practices.map((pr) => this._buildCompactPracticeCard(pr))
-                )
-              ])
-            ])
-          )
         );
-      }
+      })
+    );
 
-      return el('article', { className: `level-step ${status.unlocked ? '' : 'level-step--locked'}` }, [header, body]);
-    });
+    if (!activeGroup) {
+      return el('div', { className: 'route-stack' }, [levelPills]);
+    }
 
-    return el('section', { className: 'route-stack', 'aria-label': 'Ruta de niveles' }, [
-      el('h2', { className: 'm3-title-lg' }, ['Ruta de niveles']),
-      ...steps
+    const { level, status, areas } = activeGroup;
+    const ratio = status.requiredCount > 0 ? Math.min(1, status.completedCount / status.requiredCount) : 0;
+
+    let stateText;
+    if (status.completed) stateText = `Completo · ${status.completedCount}/${status.requiredCount} prácticas clave al objetivo`;
+    else if (status.unlocked) stateText = `En curso · ${status.completedCount}/${status.requiredCount} prácticas clave al objetivo`;
+    else {
+      const rem = status.remainingToUnlock || 2;
+      stateText = `Te falta${rem === 1 ? '' : 'n'} ${rem} práctica${rem === 1 ? '' : 's'} clave del nivel ${level.number - 1}`;
+    }
+
+    const levelHeaderCard = el('section', { className: `m3-card level-banner ${!status.unlocked ? 'level-step--locked' : ''}` }, [
+      el('div', { className: 'player-toolbar' }, [
+        el('div', { style: 'display:flex; align-items:center; gap:12px; min-width:0' }, [
+          this._buildProgressRing(level.number, ratio, status.completed, !status.unlocked),
+          el('div', { style: 'min-width:0' }, [
+            el('h2', { className: 'm3-title-lg' }, [`Nivel ${level.number}: ${level.name}`]),
+            el('p', { className: 'm3-body-md' }, [`${level.subtitle} · ${stateText}`])
+          ])
+        ]),
+        !status.unlocked
+          ? el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-btn m3-btn--compact m3-btn--tonal',
+                ripple: true,
+                onClick: () => this._vm.skipLevel(level.number)
+              },
+              [icon('check', 16), `Saltar al nivel ${level.number}`]
+            )
+          : null
+      ])
+    ]);
+
+    // Agrupación limpia por área pedagógica con encabezados planos (sin acordeones dentro de acordeones)
+    const areaSections = areas.map((areaGroup) =>
+      el('section', { className: 'area-block' }, [
+        el('div', { className: 'area-block__header' }, [
+          el('h3', { className: 'm3-title-md' }, [CATEGORY_LABELS[areaGroup.area] || areaGroup.area]),
+          el('span', { className: 'm3-label' }, [`${areaGroup.practices.length} práctica${areaGroup.practices.length === 1 ? '' : 's'}`])
+        ]),
+        el(
+          'div',
+          { className: 'practice-grid practice-grid--responsive' },
+          areaGroup.practices.map((pr) => this._buildCompactPracticeCard(pr))
+        )
+      ])
+    );
+
+    return el('div', { className: 'route-stack' }, [levelPills, levelHeaderCard, ...areaSections]);
+  }
+
+  /**
+   * Pestaña 2 — Repertorio con barra compacta de filtros desplegables (estilo, nivel, derechos).
+   * @returns {HTMLElement} Sección Repertorio.
+   */
+  _buildRepertoireSection() {
+    const items = this._vm.repertoirePractices.value;
+    const styleF = this._vm.repertoireStyleFilter.value;
+    const rightsF = this._vm.repertoireRightsFilter.value;
+    const lvlF = this._vm.repertoireLevelFilter.value;
+    const hasRepFilters = styleF !== 'todos' || rightsF !== 'todos' || lvlF !== 'todos';
+
+    const styleSelect = el(
+      'select',
+      {
+        className: 'm3-field__select compact-select',
+        'aria-label': 'Filtrar repertorio por estilo',
+        onChange: (e) => this._vm.repertoireStyleFilter.set(e.target.value)
+      },
+      [
+        el('option', { value: 'todos' }, ['Estilo: Todos']),
+        ...Object.entries(STYLE_LABELS).map(([val, lbl]) => el('option', { value: val }, [lbl]))
+      ]
+    );
+    styleSelect.value = styleF;
+
+    const levelSelect = el(
+      'select',
+      {
+        className: 'm3-field__select compact-select',
+        'aria-label': 'Filtrar repertorio por nivel',
+        onChange: (e) => this._vm.repertoireLevelFilter.set(e.target.value === 'todos' ? 'todos' : Number(e.target.value))
+      },
+      [
+        el('option', { value: 'todos' }, ['Nivel: Todos']),
+        ...[1, 2, 3, 4, 5].map((n) => el('option', { value: String(n) }, [`Nivel ${n}`]))
+      ]
+    );
+    levelSelect.value = String(lvlF);
+
+    const rightsSelect = el(
+      'select',
+      {
+        className: 'm3-field__select compact-select',
+        'aria-label': 'Filtrar repertorio por tipo de partitura',
+        onChange: (e) => this._vm.repertoireRightsFilter.set(e.target.value)
+      },
+      [
+        el('option', { value: 'todos' }, ['Tipo: Todos']),
+        ...Object.entries(RIGHTS_LABELS).map(([val, lbl]) => el('option', { value: val }, [lbl]))
+      ]
+    );
+    rightsSelect.value = rightsF;
+
+    const filterToolbar = el('div', { className: 'repertoire-filter-bar' }, [
+      styleSelect,
+      levelSelect,
+      rightsSelect,
+      hasRepFilters
+        ? el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--text',
+              ripple: true,
+              onClick: () => {
+                this._vm.repertoireStyleFilter.set('todos');
+                this._vm.repertoireLevelFilter.set('todos');
+                this._vm.repertoireRightsFilter.set('todos');
+              }
+            },
+            ['Limpiar']
+          )
+        : null
+    ]);
+
+    const listEl = items.length > 0
+      ? el('div', { className: 'practice-grid practice-grid--responsive' }, items.map((pr) => this._buildCompactPracticeCard(pr, { showRepertoireBadges: true })))
+      : el('div', { className: 'empty-state' }, [
+          el('div', { className: 'm3-title-md' }, ['Sin piezas con esos filtros']),
+          el('p', { className: 'm3-body-md' }, ['Probá cambiando el estilo, el nivel o el instrumento activo.'])
+        ]);
+
+    return el('section', { className: 'route-stack', 'aria-label': 'Repertorio' }, [
+      el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
+        el('div', { className: 'player-toolbar' }, [
+          el('div', {}, [
+            el('h2', { className: 'm3-title-md' }, [`Repertorio (${items.length})`]),
+            el('span', { className: 'm3-body-md' }, ['Standards en modo solo armonía, temas tradicionales y obras de dominio público'])
+          ])
+        ]),
+        filterToolbar
+      ]),
+      listEl
     ]);
   }
 
   /**
-   * Construye un anillo SVG de progreso de nivel (46x46 px).
-   * @param {number} levelNumber Número del nivel.
-   * @param {number} ratio Fracción de avance [0, 1].
-   * @param {boolean} isCompleted True si alcanzó las prácticas clave.
-   * @param {boolean} isLocked True si el nivel está bloqueado.
-   * @returns {HTMLElement} Nodo del anillo.
-   */
-  _buildProgressRing(levelNumber, ratio, isCompleted, isLocked) {
-    const r = 19;
-    const c = 2 * Math.PI * r;
-    const dashOffset = c * (1 - Math.max(0, Math.min(1, ratio)));
-    const ns = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('viewBox', '0 0 46 46');
-    svg.setAttribute('width', '46');
-    svg.setAttribute('height', '46');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = `
-      <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="4"/>
-      <circle cx="23" cy="23" r="${r}" fill="none" stroke="${isCompleted ? 'var(--md-sys-color-success)' : 'var(--md-sys-color-primary)'}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}"/>
-    `;
-
-    const center = isCompleted
-      ? icon('check', 18)
-      : isLocked
-        ? icon('lock', 16)
-        : el('span', { className: 'level-ring__label' }, [String(levelNumber)]);
-
-    return el('div', { className: 'level-ring' }, [svg, center]);
-  }
-
-  /**
-   * Construye la sección dedicada "Mis prácticas" con estado vacío ilustrado e importación de sets.
+   * Pestaña 3 — Mis prácticas + sesiones personalizadas + importación .json / .abc.
    * @returns {HTMLElement} Sección Mis prácticas.
    */
   _buildMyPracticesSection() {
     const userItems = this._vm.userPractices.value;
+    const savedSessions = this._appVm.studySessions.value.filter(
+      (s) => s.instrument === this._vm.instrumentFilter.value
+    );
+
     const fileInput = el('input', {
       type: 'file',
       accept: '.json,.abc,application/json,text/plain',
@@ -473,29 +471,75 @@ export class PracticeListView {
       }
     });
 
-    const header = el('div', { className: 'player-toolbar' }, [
-      el('h2', { className: 'm3-title-lg' }, [`Mis prácticas (${userItems.length})`]),
-      el('div', { className: 'stepper-inline' }, [
-        fileInput,
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-btn m3-btn--compact m3-btn--outlined',
-            ripple: true,
-            onClick: () => fileInput.click()
-          },
-          [icon('upload', 16), 'Importar set']
-        )
-      ])
+    const actionsCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
+      el('div', { className: 'player-toolbar' }, [
+        el('div', {}, [
+          el('h2', { className: 'm3-title-md' }, [`Mis prácticas (${userItems.length})`]),
+          el('span', { className: 'm3-body-md' }, ['Ejercicios creados con el editor o importados desde .json / .abc'])
+        ]),
+        el('div', { className: 'm3-chip-row' }, [
+          fileInput,
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--filled',
+              ripple: true,
+              onClick: () => this._vm.createNewPractice()
+            },
+            [icon('plus', 17), 'Crear práctica']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--outlined',
+              ripple: true,
+              onClick: () => fileInput.click()
+            },
+            [icon('upload', 16), 'Importar']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              onClick: () => this._openSessionBuilderDialog()
+            },
+            [icon('playlist', 16), 'Armar sesión']
+          )
+        ])
+      ]),
+      savedSessions.length > 0
+        ? el('div', { style: 'display:flex; flex-direction:column; gap:6px' }, [
+            el('span', { className: 'm3-label' }, ['Tus sesiones guardadas']),
+            el(
+              'div',
+              { className: 'm3-chip-row' },
+              savedSessions.map((ses) =>
+                el(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'm3-chip',
+                    ripple: true,
+                    onClick: () => this._appVm.startStudySession(ses)
+                  },
+                  [icon('play', 15), `${ses.title} (${ses.items.reduce((a, b) => a + b.minutes, 0)} min)`]
+                )
+              )
+            )
+          ])
+        : null
     ]);
 
     const content =
       userItems.length === 0
         ? el('div', { className: 'empty-state' }, [
             this._buildEmptyIllustration(),
-            el('div', { className: 'm3-title-md' }, ['Todavía no creaste prácticas.']),
-            el('p', { className: 'm3-body-md' }, ['Tocá + para armar tu primera escala, progresión o walking bass, o importá un set en JSON/.abc.']),
+            el('div', { className: 'm3-title-md' }, ['Todavía no creaste prácticas para este instrumento']),
+            el('p', { className: 'm3-body-md' }, ['Armá tu propia escala, progresión o walking bass en el editor, o importá un archivo JSON/.abc.']),
             el(
               'button',
               {
@@ -504,21 +548,38 @@ export class PracticeListView {
                 ripple: true,
                 onClick: () => this._vm.createNewPractice()
               },
-              [icon('plus', 18), 'Crear práctica']
+              [icon('plus', 18), 'Crear mi primera práctica']
             )
           ])
-        : el('div', { className: 'practice-grid' }, userItems.map((pr) => this._buildCompactPracticeCard(pr)));
+        : el('div', { className: 'practice-grid practice-grid--responsive' }, userItems.map((pr) => this._buildCompactPracticeCard(pr)));
 
-    return el('section', { className: 'route-stack', 'aria-label': 'Mis prácticas', style: 'margin-bottom:56px' }, [
-      header,
-      content
-    ]);
+    return el('section', { className: 'route-stack', 'aria-label': 'Mis prácticas' }, [actionsCard, content]);
   }
 
-  /**
-   * Dibuja una ilustración vectorial liviana para el estado vacío de Mis prácticas.
-   * @returns {SVGSVGElement} Ilustración SVG.
-   */
+  /** Dibuja un anillo SVG de progreso de nivel (46x46 px). */
+  _buildProgressRing(levelNumber, ratio, isCompleted, isLocked) {
+    const r = 19;
+    const c = 2 * Math.PI * r;
+    const dashOffset = c * (1 - Math.max(0, Math.min(1, ratio)));
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 46 46');
+    svg.setAttribute('width', '46');
+    svg.setAttribute('height', '46');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = `
+      <circle cx="23" cy="23" r="${r}" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="4"/>
+      <circle cx="23" cy="23" r="${r}" fill="none" stroke="${isCompleted ? 'var(--md-sys-color-success)' : 'var(--md-sys-color-primary)'}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}"/>
+    `;
+    const center = isCompleted
+      ? icon('check', 18)
+      : isLocked
+        ? icon('lock', 16)
+        : el('span', { className: 'level-ring__label' }, [String(levelNumber)]);
+    return el('div', { className: 'level-ring' }, [svg, center]);
+  }
+
+  /** Dibuja una ilustración vectorial liviana para el estado vacío de Mis prácticas. */
   _buildEmptyIllustration() {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -542,9 +603,7 @@ export class PracticeListView {
     return svg;
   }
 
-  /**
-   * Renderiza los resultados planos cuando el usuario escribe en la búsqueda o aplica filtros del sheet.
-   */
+  /** Renderiza los resultados planos cuando hay búsqueda o filtros activos. */
   _renderSearchResults() {
     const items = this._vm.filteredPractices.value;
     const header = el('div', { className: 'player-toolbar' }, [
@@ -577,138 +636,40 @@ export class PracticeListView {
     }
 
     this._bodyHost.appendChild(
-      el('div', { className: 'practice-grid' }, items.map((pr) => this._buildCompactPracticeCard(pr)))
+      el('div', { className: 'practice-grid practice-grid--responsive' }, items.map((pr) => this._buildCompactPracticeCard(pr, { showRepertoireBadges: true })))
     );
   }
 
   /**
-   * Construye la sección "Repertorio" integrada en la ruta, con filtros por estilo, derechos y nivel
-   * y tarjetas con insignias claras (Dominio público, Solo armonía, Importada, A verificar).
-   * @returns {HTMLElement} Sección Repertorio.
-   */
-  _buildRepertoireSection() {
-    const items = this._vm.repertoirePractices.value;
-    const styleF = this._vm.repertoireStyleFilter.value;
-    const rightsF = this._vm.repertoireRightsFilter.value;
-    const lvlF = this._vm.repertoireLevelFilter.value;
-
-    const styleChips = el(
-      'div',
-      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por estilo' },
-      [
-        { value: 'todos', label: 'Todos los estilos' },
-        ...Object.entries(STYLE_LABELS).map(([value, label]) => ({ value, label }))
-      ].map((opt) =>
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip',
-            ripple: true,
-            'aria-pressed': String(styleF === opt.value),
-            onClick: () => this._vm.repertoireStyleFilter.set(opt.value)
-          },
-          [opt.label]
-        )
-      )
-    );
-
-    const rightsChips = el(
-      'div',
-      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por derechos' },
-      [
-        { value: 'todos', label: 'Todos los derechos' },
-        ...Object.entries(RIGHTS_LABELS).map(([value, label]) => ({ value, label }))
-      ].map((opt) =>
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip',
-            ripple: true,
-            'aria-pressed': String(rightsF === opt.value),
-            onClick: () => this._vm.repertoireRightsFilter.set(opt.value)
-          },
-          [opt.label]
-        )
-      )
-    );
-
-    const levelChips = el(
-      'div',
-      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtrar repertorio por nivel' },
-      [
-        { value: 'todos', label: 'Todos los niveles' },
-        ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `Nivel ${n}` }))
-      ].map((opt) =>
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip',
-            ripple: true,
-            'aria-pressed': String(lvlF === opt.value),
-            onClick: () => this._vm.repertoireLevelFilter.set(opt.value)
-          },
-          [opt.label]
-        )
-      )
-    );
-
-    const listEl = items.length > 0
-      ? el('div', { className: 'practice-cards-grid' }, items.map((pr) => this._buildCompactPracticeCard(pr)))
-      : el('p', { className: 'm3-body-md' }, ['No hay piezas de repertorio que coincidan con esos filtros para este instrumento.']);
-
-    return el('section', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px', 'aria-label': 'Repertorio' }, [
-      el('div', { className: 'player-toolbar' }, [
-        el('div', {}, [
-          el('h2', { className: 'm3-title-md' }, [`Repertorio (${items.length})`]),
-          el('span', { className: 'm3-body-md' }, ['Standards en modo solo armonía, temas tradicionales y obras de dominio público integradas a tu progreso'])
-        ])
-      ]),
-      styleChips,
-      rightsChips,
-      levelChips,
-      listEl
-    ]);
-  }
-
-  /**
-   * Construye una tarjeta compacta de práctica:
-   * título (máx 2 líneas), línea única ("Do · 4/4"), insignias de repertorio/derechos, barra BPM e ícono de estado.
+   * Construye una tarjeta limpia y legible de práctica (sin sobrecarga de insignias).
    * @param {import('../models/Practice.js').Practice} pr Instancia de práctica.
+   * @param {{ showRepertoireBadges?: boolean }} [opts={}] Opciones de visualización.
    * @returns {HTMLElement} Botón tarjeta.
    */
-  _buildCompactPracticeCard(pr) {
+  _buildCompactPracticeCard(pr, { showRepertoireBadges = false } = {}) {
     const prog = this._appVm.progress.value;
     const stats = prog.getPracticeStats(pr.id);
     const status = prog.getPracticeStatus(pr.id, pr.tempo.target);
     const notation = this._appVm.settings.value.chordNotation;
-    const isSelected = pr.id === this._appVm.activePracticeId.value && this._appVm.windowSizeClass.value === 'expanded';
     const pct = Math.min(100, Math.round(((stats.bestBpm || 0) / (pr.tempo.target || 100)) * 100));
-    const isVerified = prog.isPracticeVerified(pr);
 
     const statusIconName = status === 'dominada' ? 'check' : status === 'en-curso' ? 'progress' : 'circle';
     const statusLabel = status === 'dominada' ? 'Dominada' : status === 'en-curso' ? 'En curso' : 'Nueva';
 
     const repBadges = [];
-    if (pr.rights) {
-      repBadges.push(el('span', { className: 'm3-badge m3-badge--success' }, [RIGHTS_LABELS[pr.rights] || pr.rights]));
-    }
-    if (pr.style) {
+    if (showRepertoireBadges && pr.style) {
       repBadges.push(el('span', { className: 'm3-badge' }, [STYLE_LABELS[pr.style] || pr.style]));
     }
-    if (pr.isRepertoire && !isVerified) {
-      repBadges.push(el('span', { className: 'm3-badge m3-badge--warning' }, ['A verificar']));
+    if (showRepertoireBadges && pr.rights) {
+      repBadges.push(el('span', { className: 'm3-badge m3-badge--tertiary' }, [RIGHTS_LABELS[pr.rights] || pr.rights]));
     }
 
     return el(
       'button',
       {
         type: 'button',
-        className: `practice-card ${isSelected ? 'practice-card--active' : ''}`,
+        className: 'practice-card',
         ripple: true,
-        'aria-current': isSelected ? 'true' : undefined,
         onClick: () => this._vm.openPractice(pr.id)
       },
       [
@@ -743,9 +704,7 @@ export class PracticeListView {
     );
   }
 
-  /**
-   * Abre el Bottom Sheet de filtros secundarios (Área, Nivel, Origen y Etiqueta).
-   */
+  /** Abre el Bottom/Side Sheet de filtros secundarios (Tipo, Área, Nivel, Origen y Etiqueta). */
   _openFiltersSheet() {
     const content = el('div', { style: 'display:flex; flex-direction:column; gap:14px' });
 
@@ -852,14 +811,7 @@ export class PracticeListView {
     renderFilters(sheet.close);
   }
 
-  /**
-   * Construye un bloque rotulado de chips para el bottom sheet de filtros.
-   * @param {string} title Título del grupo.
-   * @param {Array<{ value: *, label: string }>} options Opciones.
-   * @param {*} current Valor activo.
-   * @param {Function} onSelect Handler de selección.
-   * @returns {HTMLElement} Bloque DOM.
-   */
+  /** Construye un bloque rotulado de chips para el sheet de filtros. */
   _buildFilterChipGroup(title, options, current, onSelect) {
     return el('div', {}, [
       el('div', { className: 'm3-body-md', style: 'margin-bottom:6px; font-weight:600' }, [title]),
@@ -883,9 +835,7 @@ export class PracticeListView {
     ]);
   }
 
-  /**
-   * Abre el constructor modal para armar una sesión de estudio ordenada con tiempos por práctica.
-   */
+  /** Abre el constructor modal para armar una sesión de estudio ordenada con tiempos por práctica. */
   _openSessionBuilderDialog() {
     const pool = this._vm.instrumentPractices.value;
     if (pool.length === 0) return;
