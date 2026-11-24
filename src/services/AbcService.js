@@ -586,15 +586,6 @@ export class AbcService {
         const text = (node.textContent || '').trim();
         if (!text) continue;
 
-        const isExplicitChord = node.classList.contains('abcjs-chord');
-        let kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
-        if (kind === 'chord' && !isExplicitChord && node.classList.contains('abcjs-annotation')) {
-          // Si abcjs lo marcó como annotation (con ^ o _), respeta leftHand/rightHand/other
-          kind = classifyAbcAnnotation(`^${text}`, { isRenderedSvg: true });
-        }
-
-        node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : kind === 'chord' ? 'chord' : 'other'}`);
-
         let bbox;
         try {
           bbox = node.getBBox();
@@ -603,7 +594,7 @@ export class AbcService {
         }
         if (!bbox || bbox.width === 0 || bbox.height === 0) continue;
 
-        // Encuentra el sistema más cercano verticalmente
+        // Encuentra el sistema más cercano verticalmente y si la etiqueta está arriba o abajo del pentagrama
         const cy = bbox.y + bbox.height / 2;
         let sysIdx = 0;
         let bestDist = Infinity;
@@ -617,6 +608,21 @@ export class AbcService {
 
         const sysCenter = systems[sysIdx]?.center ?? cy + 1;
         const side = cy <= sysCenter ? 'up' : 'down';
+
+        const isExplicitChord = node.classList.contains('abcjs-chord');
+        let kind;
+        if (side === 'down' && !isExplicitChord) {
+          // Todo texto debajo del pentagrama (funciones de bajo R/2/3/4/5/6/7 o grados romanos) pertenece a análisis/otros
+          kind = classifyAbcAnnotation(`_${text}`, { isRenderedSvg: true });
+        } else {
+          kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
+          if (kind === 'chord' && !isExplicitChord && node.classList.contains('abcjs-annotation')) {
+            kind = classifyAbcAnnotation(`^${text}`, { isRenderedSvg: true });
+          }
+        }
+
+        node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : kind === 'chord' ? 'chord' : 'other'}`);
+
         const zoneKey = `${sysIdx}:${side}`;
         if (!byZone.has(zoneKey)) byZone.set(zoneKey, { side, items: [] });
 
@@ -1179,7 +1185,29 @@ export class AbcService {
   }
 
   /**
-   * Inyecta anotaciones de función armónica ("_R", "_3", "_5", "_b7", "_Crom") debajo de las notas de bajo.
+   * Extrae únicamente los símbolos de acorde válidos (clasificados como `'chord'`) dentro de un compás ABC,
+   * tokenizando siempre cadenas entre comillas de forma secuencial para jamás cruzar entre dos anotaciones
+   * como `"^2③"C,2 "^4③"`.
+   * @param {string} barText Fragmento ABC de un compás.
+   * @returns {string[]} Lista de acordes reales en ese compás.
+   */
+  _extractChordsFromBar(barText) {
+    const chords = [];
+    const re = /"([^"]*)"/g;
+    let m;
+    while ((m = re.exec(barText)) !== null) {
+      const inner = m[1].trim();
+      if (inner && classifyAbcAnnotation(inner) === 'chord') {
+        chords.push(inner);
+      }
+    }
+    return chords;
+  }
+
+  /**
+   * Inyecta anotaciones de función armónica ("_R", "_2", "_3", "_5", "_b7", "_Crom") debajo de las notas de bajo.
+   * Solo se aplica cuando la partitura posee cifrado armónico explícito (no inventa acordes sobre
+   * lecturas puras de cuerdas al aire ni obras barrocas sin cifrado).
    * @param {string} abcText Texto ABC con cifrado americano.
    * @returns {string} Texto ABC anotado.
    */
@@ -1187,7 +1215,6 @@ export class AbcService {
     const keyMatch = abcText.match(/^K:\s*([A-G][#b]?m?)/m);
     const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
 
-    const measureChords = [];
     const musicLines = abcText.split('\n');
     const barChordScan = musicLines
       .filter((l) => {
@@ -1197,15 +1224,26 @@ export class AbcService {
       .join(' ')
       .split(/\|/);
 
+    const measureChords = [];
+    let hasExplicitChords = false;
     for (const rawBar of barChordScan) {
-      const m = rawBar.match(/"([A-G][#b]?[^"]*)"/);
-      if (rawBar.trim()) {
-        measureChords.push(m ? m[1] : measureChords[measureChords.length - 1] || null);
-      }
+      if (!rawBar.trim() || !/[A-Ga-gzZ"]/.test(rawBar)) continue;
+      const barChords = this._extractChordsFromBar(rawBar);
+      if (barChords.length > 0) hasExplicitChords = true;
+      const lastBarChord = barChords.length > 0 ? barChords[barChords.length - 1] : null;
+      const firstBarChord = barChords.length > 0 ? barChords[0] : null;
+      measureChords.push({
+        first: firstBarChord || measureChords[measureChords.length - 1]?.last || null,
+        last: lastBarChord || measureChords[measureChords.length - 1]?.last || null
+      });
+    }
+
+    if (!hasExplicitChords) {
+      return abcText;
     }
 
     let currentBar = 0;
-    let currentChord = measureChords[0] || null;
+    let currentChord = measureChords[0]?.first || null;
 
     return musicLines
       .map((line) => {
@@ -1215,20 +1253,27 @@ export class AbcService {
         }
         const bars = line.split('|');
         const processedBars = bars.map((barText, idx) => {
-          if (!barText.trim()) return barText;
-          const localChordMatch = barText.match(/"([A-G][#b]?[^"]*)"/);
-          if (localChordMatch) currentChord = localChordMatch[1];
-          const nextChord = measureChords[currentBar + 1] || measureChords[0] || null;
+          if (!barText.trim() || !/[A-Ga-gzZ"]/.test(barText)) return barText;
+
+          const nextBarChord = measureChords[currentBar + 1]?.first || measureChords[0]?.first || null;
           const barAcc = {};
 
-          const noteMatches = [...barText.matchAll(/(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g)];
-          const totalNotesInBar = noteMatches.length;
+          // Cuenta solo notas reales (ignorando letras dentro de acordes "..." y decoraciones !...!)
+          const cleanedForCount = barText
+            .replace(/"[^"]*"/g, ' ')
+            .replace(/![^!]*!/g, ' ')
+            .replace(/\[[A-Za-z]:[^\]]*\]/g, ' ');
+          const totalNotesInBar = [...cleanedForCount.matchAll(/(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g)].length;
           let noteIdx = 0;
 
-          const annotated = barText.replace(/"[^"]*"|!.*?!|(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g, (token, acc, letter, oct) => {
+          const annotated = barText.replace(/"([^"]*)"|!.*?!|\[[A-Za-z]:[^\]]*\]|(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*)/g, (token, quotedInner, acc, letter, oct) => {
             if (!letter) {
-              const cm = token.match(/^"([A-G][#b]?[^"]*)"$/);
-              if (cm) currentChord = cm[1];
+              if (quotedInner !== undefined) {
+                const trimmedInner = quotedInner.trim();
+                if (trimmedInner && classifyAbcAnnotation(trimmedInner) === 'chord') {
+                  currentChord = trimmedInner;
+                }
+              }
               return token;
             }
             noteIdx += 1;
@@ -1236,7 +1281,7 @@ export class AbcService {
             const midi = abcPitchToMidi(`${acc || ''}${letter}${oct || ''}`, keyMap, barAcc);
             if (midi === null) return token;
             const isLast = noteIdx === totalNotesInBar && totalNotesInBar >= 3;
-            const fnLabel = analyzeBassFunction(midi, currentChord, nextChord, isLast);
+            const fnLabel = analyzeBassFunction(midi, currentChord, nextBarChord, isLast);
             return fnLabel ? `"_${fnLabel}"${token}` : token;
           });
 

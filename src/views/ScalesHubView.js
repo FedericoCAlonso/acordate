@@ -252,20 +252,12 @@ export class ScalesHubView {
     );
 
     return el('section', { className: 'm3-card scales-controls-card' }, [
-      el('div', { className: 'scales-top-row' }, [
-        el('div', { style: 'flex:1 1 260px' }, [
-          el('div', { className: 'm3-label-md', style: 'margin-bottom:6px' }, ['Instrumento']),
-          instSeg
-        ]),
-        el('div', { className: 'scales-enh-wrap' }, [
-          el('div', { className: 'm3-label-md', style: 'margin-bottom:6px' }, ['Alteraciones']),
-          enhToggle
-        ])
+      instSeg,
+      el('div', { className: 'scales-root-header' }, [
+        el('span', { className: 'm3-label-md' }, ['Tónica']),
+        enhToggle
       ]),
-      el('div', { style: 'margin-top:10px' }, [
-        el('div', { className: 'm3-label-md', style: 'margin-bottom:6px' }, ['Tónica']),
-        rootGrid
-      ])
+      rootGrid
     ]);
   }
 
@@ -512,37 +504,30 @@ export class ScalesHubView {
       )
     ]);
 
-    const mainCard = el('section', { className: 'm3-card' }, [
+    const mainCard = el('section', { className: 'm3-card scales-main-card' }, [
       el('div', { className: 'scales-header-row' }, [
-        el('div', { style: 'flex:1 1 240px' }, [
-          el('div', { className: 'm3-label-md', style: 'margin-bottom:4px' }, ['Escala o modo']),
+        el('div', { style: 'flex:1 1 220px; min-width:0' }, [
           this._buildScaleSelector()
         ]),
         el('div', { className: 'scales-title-meta' }, [
-          el('span', { className: 'm3-badge' }, [`Nivel ${scale.level}`]),
-          relLabel ? el('span', { className: 'm3-body-md' }, [`Relación: ${relLabel}`]) : null
+          el('span', { className: 'm3-badge' }, [`N${scale.level}`]),
+          relLabel ? el('span', { className: 'm3-body-md', style: 'font-size:0.8rem' }, [relLabel]) : null
         ])
       ]),
-      el('h2', { className: 'm3-title-lg', style: 'margin:12px 0 6px' }, [
-        `${fmtSym(layout.root, notation)} ${scale.name}`
-      ]),
-      notesRow,
-      melodicToggle,
-      el('div', { style: 'margin-top:12px; display:flex; flex-direction:column; gap:8px' }, [
+      fretboardHost,
+      fretboardHint,
+      displayRow,
+      actionBar,
+      el('div', { style: 'margin-top:10px; display:flex; flex-direction:column; gap:8px' }, [
         systemChips,
         posChips,
         layout.activePosition?.hint
           ? el('p', { className: 'm3-body-md', style: 'margin:0; opacity:0.86' }, [layout.activePosition.hint])
-          : null,
-        displayRow
+          : null
       ]),
-      fretboardHost,
-      fretboardHint,
-      legend,
-      el('p', { className: 'm3-body-md', style: 'margin:6px 0 0; font-size:0.82rem; opacity:0.75' }, [
-        'Tocá cualquier punto del diapasón para escuchar su altura real.'
-      ]),
-      actionBar
+      melodicToggle,
+      notesRow,
+      legend
     ]);
 
     this._panelHost.appendChild(mainCard);

@@ -356,7 +356,7 @@
       "target": 80,
       "step": 5
     },
-    "abc": "X:1\nT:Escala de Do mayor en bajo\nM:4/4\nL:1/4\nK:C clef=bass\n\"^2③\"C,2 \"^4③\"D,2 | \"^1②\"E,2 \"^2②\"F,2 | \"^4②\"G,2 \"^1①\"A,2 | \"^3①\"B,2 \"^4①\"C2 |\nC B, A, G, | F, E, D, C, |]",
+    "abc": "X:1\nT:Escala de Do mayor en bajo\nM:4/4\nL:1/4\nK:C clef=bass\n\"C\"\"^2③\"C,2 \"^4③\"D,2 | \"^1②\"E,2 \"^2②\"F,2 | \"^4②\"G,2 \"^1①\"A,2 | \"^3①\"B,2 \"^4①\"C2 |\nC B, A, G, | F, E, D, C, |]",
     "fingerings": {},
     "goals": [
       "Alternar dedos índice y medio de mano derecha",

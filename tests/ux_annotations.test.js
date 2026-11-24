@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EventBus } from '../src/core/EventBus.js';
+import { analyzeBassFunction } from '../src/core/MusicTheory.js';
 import { Router, parseHashRoute } from '../src/core/Router.js';
 import { Practice } from '../src/models/Practice.js';
 import { AbcService, classifyAbcAnnotation, resolveRectCollisions } from '../src/services/AbcService.js';
@@ -210,3 +211,41 @@ test('HomeViewModel y PracticePlayerViewModel: panel de inicio, capas independie
   playerVm.dispose();
   appVm.dispose();
 });
+
+test('Funciones armónicas en bajo: escala mayor Do produce R, 2, 3, 4, 5, 6, 7, R sin falsos acordes entre comillas', () => {
+  const abcSvc = new AbcService();
+
+  // Caso exacto reportado: escala mayor de Do con digitaciones "^2③", "^4③", etc.
+  const cMajorBassScale =
+    'X:1\nM:4/4\nL:1/4\nK:C clef=bass\n"C""^2③"C,2 "^4③"D,2 | "^1②"E,2 "^2②"F,2 | "^4②"G,2 "^1①"A,2 | "^3①"B,2 "^4①"C2 |\nC B, A, G, | F, E, D, C, |]';
+
+  const prepared = abcSvc.prepareAbcForRender(cMajorBassScale, {
+    viewMode: 'mixto',
+    isBass: true,
+    showBassFunctions: true
+  });
+  const fnLabels = [...prepared.matchAll(/"_([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(fnLabels, [
+    'R', '2', '3', '4', '5', '6', '7', 'R',
+    'R', '7', '6', '5', '4', '3', '2', 'R'
+  ]);
+
+  // Sin cifrado explícito (ej. cuerdas al aire o Bach) no inventa funciones falsas entre comillas
+  const openStrings =
+    'X:1\nM:4/4\nL:1/4\nK:C clef=bass\n"^④"E,,2 "^③"A,,2 | "^②"D,2 "^①"G,2 |]';
+  const prepOpen = abcSvc.prepareAbcForRender(openStrings, {
+    viewMode: 'mixto',
+    isBass: true,
+    showBassFunctions: true
+  });
+  assert.equal([...prepOpen.matchAll(/"_([^"]+)"/g)].length, 0);
+
+  // Intervalo de 6.ª menor sobre acorde menor es b6 (no #5), y sobre aumentado es #5
+  assert.equal(analyzeBassFunction(41, 'Am', 'Dm', false), 'b6');
+  assert.equal(analyzeBassFunction(44, 'Caug', 'F', false), '#5');
+  // Tiempo 4 sobre el mismo acorde (sin cambio armónico) no sobreescribe la 7.ª con Crom
+  assert.equal(analyzeBassFunction(47, 'C', 'C', true), '7');
+  // Tiempo 4 con cambio real F7 -> Bb7 y nota no del acorde (Si natural) sí marca Crom
+  assert.equal(analyzeBassFunction(47, 'F7', 'Bb7', true), 'Crom');
+});
+

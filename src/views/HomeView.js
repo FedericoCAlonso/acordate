@@ -163,6 +163,7 @@ export class HomeView {
 
     const { practice, stats, isFresh } = info;
     const pct = Math.min(100, Math.round(((stats.bestBpm || 0) / (practice.tempo.target || 100)) * 100));
+    const leadTip = practice.notes || practice.goals?.[0] || '';
 
     return el('section', { className: 'continue-card home-continue-card', 'aria-label': 'Retomar práctica' }, [
       el('div', { className: 'player-toolbar' }, [
@@ -175,6 +176,7 @@ export class HomeView {
           ? `Mejor marca: ${stats.bestBpm} / ${practice.tempo.target} BPM (${pct}%)`
           : `Inicio sugerido: ${practice.tempo.start} BPM · Objetivo: ${practice.tempo.target} BPM`
       ]),
+      leadTip ? el('p', { className: 'm3-body-md home-continue-card__tip' }, [leadTip]) : null,
       el('div', { className: 'm3-linear-progress home-continue-card__bar' }, [
         el('div', {
           className: `m3-linear-progress__fill ${pct >= 100 ? 'm3-linear-progress__fill--done' : ''}`,
@@ -242,10 +244,10 @@ export class HomeView {
         : null;
 
     return el('section', { className: 'm3-card home-session-card', 'aria-label': 'Sesión de hoy' }, [
-      el('div', { className: 'player-toolbar' }, [
-        el('div', {}, [
+      el('div', { className: 'home-session-card__head' }, [
+        el('div', { style: 'min-width:0' }, [
           el('h2', { className: 'm3-title-md' }, [routine.title]),
-          el('span', { className: 'm3-body-md' }, ['Rutina guiada con temporizador entre bloques'])
+          el('span', { className: 'm3-body-md' }, ['Rutina guiada con temporizador'])
         ]),
         el('span', { className: 'm3-badge m3-badge--tertiary' }, [`~${routine.totalMinutes} min`])
       ]),

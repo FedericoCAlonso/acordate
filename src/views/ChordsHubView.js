@@ -318,31 +318,30 @@ export class ChordsHubView {
     const currentVoicing = voicings[safeIdx] || null;
     const isFav = this._appVm.progress.value.favoriteChords.includes(chord.americanSymbol);
 
-    // Selector de enarmonía (♯ Sostenidos / ♭ Bemoles) + grilla de 12 raíces
+    // Selector compacto de enarmonía (♯ / ♭) + grilla de 12 raíces
     const rootChoices = this._vm.getRootChoices();
-    const enharmonicRow = el('div', { className: 'player-toolbar' }, [
-      el('span', { className: 'm3-label' }, ['Raíz del acorde']),
-      el(
-        'div',
-        { className: 'm3-segmented', role: 'group', 'aria-label': 'Enarmonía preferida' },
-        [
-          { sharps: true, label: '♯ Sostenidos' },
-          { sharps: false, label: '♭ Bemoles' }
-        ].map((opt) =>
-          el(
-            'button',
-            {
-              type: 'button',
-              className: 'm3-segmented__btn',
-              ripple: true,
-              'aria-pressed': String(this._vm.preferSharps.value === opt.sharps),
-              onClick: () => this._vm.setPreferSharps(opt.sharps)
-            },
-            [opt.label]
-          )
+    const enhToggleLib = el(
+      'div',
+      { className: 'm3-segmented', style: 'flex-shrink:0', role: 'group', 'aria-label': 'Enarmonía preferida' },
+      [
+        { sharps: true, label: '♯', aria: 'Mostrar sostenidos' },
+        { sharps: false, label: '♭', aria: 'Mostrar bemoles' }
+      ].map((opt) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-segmented__btn',
+            style: 'min-width:40px; padding:0 10px',
+            ripple: true,
+            'aria-label': opt.aria,
+            'aria-pressed': String(this._vm.preferSharps.value === opt.sharps),
+            onClick: () => this._vm.setPreferSharps(opt.sharps)
+          },
+          [opt.label]
         )
       )
-    ]);
+    );
 
     const rootsGrid = el(
       'div',
@@ -417,11 +416,51 @@ export class ChordsHubView {
           { value: 'sugerido', label: 'Sugeridos' }
         ];
 
-    // Filtros secundarios plegables (tipo, inversión, rango de trastes, zurdo, etiquetas)
-    const filtersCollapsible = el('details', { className: 'm3-collapsible' }, [
-      el('summary', {}, [el('span', {}, ['Filtros y opciones del diagrama']), icon('chevronDown', 18)]),
+    // Selector de afinación reutilizable (se aloja en opciones avanzadas para despejar la biblioteca)
+    const tuningOptions = Object.values(PRESET_TUNINGS).filter((t) => t.instrument === (isBass ? 'bass' : 'guitar'));
+    const tuningSelectLib = el(
+      'select',
+      {
+        className: 'm3-field__select',
+        style: 'padding:8px 12px; min-height:42px',
+        'aria-label': 'Afinación',
+        onChange: (e) => this._vm.setTuning(e.target.value)
+      },
+      tuningOptions.map((t) => el('option', { value: t.id, selected: t.id === this._vm.tuningId.value }, [t.name]))
+    );
+    tuningSelectLib.value = this._vm.tuningId.value;
+
+    const instSegLib = el(
+      'div',
+      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Instrumento' },
+      ['guitarra-clasica', 'guitarra', 'bajo'].map((inst) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-segmented__btn',
+            ripple: true,
+            'aria-pressed': String(this._vm.instrument.value === inst),
+            onClick: () => this._vm.setInstrument(inst)
+          },
+          [inst === 'guitarra-clasica' ? 'Clásica' : INSTRUMENT_LABELS[inst]]
+        )
+      )
+    );
+
+    // Filtros secundarios plegables (afinación, bajo slash, tipo, inversión, trastes, zurdo, etiquetas)
+    const filtersCollapsible = el('details', { className: 'm3-collapsible m3-collapsible--subtle' }, [
+      el('summary', {}, [el('span', {}, ['Afinación, bajo alternativo y opciones']), icon('chevronDown', 18)]),
       el('div', { className: 'm3-collapsible__content' }, [
         el('div', { className: 'controls-grid' }, [
+          el('div', {}, [
+            el('label', { className: 'm3-label-md', style: 'display:block; margin-bottom:4px' }, ['Afinación']),
+            tuningSelectLib
+          ]),
+          el('div', {}, [
+            el('label', { className: 'm3-label-md', style: 'display:block; margin-bottom:4px' }, ['Bajo alternativo (slash)']),
+            slashSelect
+          ]),
           this._buildMiniSelect('Tipo de voicing', this._vm.voicingTypeFilter.value, voicingTypeOptions, (v) => this._vm.voicingTypeFilter.set(v)),
           this._buildMiniSelect('Inversión', String(this._vm.inversionFilter.value), [
             { value: 'todas', label: 'Todas las inversiones' },
@@ -448,7 +487,7 @@ export class ChordsHubView {
             'button',
             {
               type: 'button',
-              className: 'm3-chip',
+              className: 'm3-chip m3-chip--compact',
               ripple: true,
               'aria-pressed': String(this._vm.leftHanded.value),
               onClick: () => this._vm.leftHanded.set(!this._vm.leftHanded.value)
@@ -460,7 +499,7 @@ export class ChordsHubView {
               'button',
               {
                 type: 'button',
-                className: 'm3-chip',
+                className: 'm3-chip m3-chip--compact',
                 ripple: true,
                 'aria-pressed': String(this._vm.fretRangeFilter.value === rng),
                 onClick: () => this._vm.fretRangeFilter.set(rng)
@@ -638,12 +677,10 @@ export class ChordsHubView {
       }, [icon(isFav ? 'star' : 'starOutline', 22)])
     ]);
 
-    const selectorCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
-      this._buildInstrumentTuningBar(),
-      el('div', { className: 'controls-grid' }, [qualitySelect, slashSelect]),
-      enharmonicRow,
-      rootsGrid,
-      filtersCollapsible
+    const selectorCard = el('div', { className: 'm3-card chords-compact-selector' }, [
+      instSegLib,
+      el('div', { className: 'chords-quality-enh-row' }, [qualitySelect, enhToggleLib]),
+      rootsGrid
     ]);
 
     const detailCard = el('div', { className: 'm3-card m3-card--elevated', style: 'display:flex; flex-direction:column; gap:12px' }, [
@@ -656,15 +693,16 @@ export class ChordsHubView {
         ]),
         viewModeSeg
       ]),
+      visualHost,
+      actionsRow,
+      el('div', { className: 'm3-chip-row' }, notesBadges),
+      createChordColorLegendElement(),
       isBass
         ? el('p', { className: 'm3-body-md', style: 'font-size:0.84rem' }, [
             'Acordes al estilo del bajo: décimas (R–10), shells (R–7–10 / R–3–7), tríadas en registro agudo y notas guía respetando el Low Interval Limit.'
           ])
         : null,
-      el('div', { className: 'm3-chip-row' }, notesBadges),
-      createChordColorLegendElement(),
-      visualHost,
-      actionsRow,
+      filtersCollapsible,
       groupsHost,
       bassMapSection
     ]);

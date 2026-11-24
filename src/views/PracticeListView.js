@@ -65,7 +65,7 @@ export class PracticeListView {
 
     this._searchInput = el('input', {
       type: 'search',
-      placeholder: 'Buscar por título, tonalidad, estilo o tema…',
+      placeholder: 'Buscar práctica o tono…',
       'aria-label': 'Buscar prácticas',
       value: this._vm.searchQuery.value,
       onInput: (e) => this._vm.setSearchQuery(e.target.value)
@@ -294,28 +294,32 @@ export class PracticeListView {
       stateText = `Te falta${rem === 1 ? '' : 'n'} ${rem} práctica${rem === 1 ? '' : 's'} clave del nivel ${level.number - 1}`;
     }
 
-    const levelHeaderCard = el('section', { className: `m3-card level-banner ${!status.unlocked ? 'level-step--locked' : ''}` }, [
-      el('div', { className: 'player-toolbar' }, [
-        el('div', { style: 'display:flex; align-items:center; gap:12px; min-width:0' }, [
-          this._buildProgressRing(level.number, ratio, status.completed, !status.unlocked),
-          el('div', { style: 'min-width:0' }, [
-            el('h2', { className: 'm3-title-lg' }, [`Nivel ${level.number}: ${level.name}`]),
-            el('p', { className: 'm3-body-md' }, [`${level.subtitle} · ${stateText}`])
-          ])
+    const pct = Math.round(ratio * 100);
+    const levelHeaderCard = el('section', { className: `level-summary-strip ${!status.unlocked ? 'level-step--locked' : ''}` }, [
+      el('div', { className: 'level-summary-strip__main' }, [
+        el('div', { className: 'level-summary-strip__text' }, [
+          el('strong', {}, [level.subtitle]),
+          el('span', { className: 'm3-body-md' }, [stateText])
         ]),
-        !status.unlocked
-          ? el(
-              'button',
-              {
-                type: 'button',
-                className: 'm3-btn m3-btn--compact m3-btn--tonal',
-                ripple: true,
-                onClick: () => this._vm.skipLevel(level.number)
-              },
-              [icon('check', 16), `Saltar al nivel ${level.number}`]
-            )
-          : null
-      ])
+        el('div', { className: 'm3-linear-progress', style: 'max-width:220px' }, [
+          el('div', {
+            className: `m3-linear-progress__fill ${status.completed ? 'm3-linear-progress__fill--done' : ''}`,
+            style: `width:${pct}%`
+          })
+        ])
+      ]),
+      !status.unlocked
+        ? el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              onClick: () => this._vm.skipLevel(level.number)
+            },
+            [icon('check', 16), `Saltar a N${level.number}`]
+          )
+        : null
     ]);
 
     // Agrupación limpia por área pedagógica con encabezados planos (sin acordeones dentro de acordeones)

@@ -652,11 +652,18 @@ export function analyzeBassFunction(noteMidi, chordSymbol, nextChordSymbol = nul
 
   const notePc = mod12(noteMidi);
   const interval = mod12(notePc - parsed.rootPc);
+  const chordToneSet = new Set((parsed.intervals || [0, 4, 7]).map((iv) => mod12(iv)));
+  const qual = String(parsed.quality || '');
+  const isMinorChord = chordToneSet.has(3) && !chordToneSet.has(4);
+  const isAugOrAlt = /(\+|aug|#5|alt)/i.test(qual);
+  const isLydian = /#11/i.test(qual);
+  const hasFlatNine = /(b9|alt)/i.test(qual);
 
-  // En el tiempo 4, prioriza marcar aproximación cromática hacia la raíz siguiente
+  // En el último pulso del compás (tiempo 4), solo marca aproximación cromática/diatónica
+  // cuando el acorde realmente cambia a otra raíz y la nota no es ya nota del acorde vigente
   if (isApproachPosition && nextChordSymbol) {
     const nextParsed = parseChord(nextChordSymbol);
-    if (nextParsed) {
+    if (nextParsed && nextParsed.rootPc !== parsed.rootPc && !chordToneSet.has(interval)) {
       const distToNext = mod12(nextParsed.rootPc - notePc);
       if (distToNext === 1 || distToNext === 11) {
         return 'Crom';
@@ -669,17 +676,17 @@ export function analyzeBassFunction(noteMidi, chordSymbol, nextChordSymbol = nul
 
   switch (interval) {
     case 0: return 'R';
+    case 1: return hasFlatNine ? 'b2' : 'Crom';
+    case 2: return '2';
     case 3: return 'b3';
     case 4: return '3';
     case 5: return '4';
-    case 6: return 'b5';
+    case 6: return isLydian ? '#4' : 'b5';
     case 7: return '5';
-    case 8: return '#5';
+    case 8: return isAugOrAlt || !isMinorChord ? (isAugOrAlt ? '#5' : 'b6') : 'b6';
     case 9: return '6';
     case 10: return 'b7';
     case 11: return '7';
-    case 2: return '9';
-    case 1: return 'Crom';
     default: return 'Paso';
   }
 }
