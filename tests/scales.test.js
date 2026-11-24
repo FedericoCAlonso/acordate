@@ -6,6 +6,8 @@ import { parseHashRoute } from '../src/core/Router.js';
 import { Settings } from '../src/models/Settings.js';
 import { Practice } from '../src/models/Practice.js';
 import { validateAbcInstrumentRange, validateAbcMeasures } from '../src/services/AbcService.js';
+import { FingeringDesignService } from '../src/services/FingeringDesignService.js';
+import { Tuning } from '../src/models/Tuning.js';
 import {
   SCALE_CATALOG,
   SCALE_EAR_LEVELS,
@@ -224,6 +226,89 @@ test('ScalesHubViewModel: modos paralelos por brillo, drone, cruce Acordes↔Esc
   assert.equal(practice.category, 'escala');
   assert.equal(saved.length, 1);
   assert.ok(navigated.at(-1).startsWith('#/practica/'));
+});
+
+test('Auditoría técnica (C1–C5, A1–A4, M1–M4): digitaciones en diapasón sin notas faltantes, sin unísonos ni dedos rotos', () => {
+  // C1 + A4: Bajo caja-1oct — todas las 3 cajas completan la 1.ª octava (8 notas exactas en heptatónicas) sin repetir dedo 4 ni usar dedo 3 en trastes 1-4
+  for (const [root, scaleId] of [['C', 'mayor'], ['C', 'menor-natural'], ['E', 'mayor'], ['F', 'mayor'], ['G', 'menor-natural']]) {
+    for (let pos = 0; pos < 3; pos++) {
+      const lay = service.computeFretboardLayout({ root, scaleId, voicingInstrument: 'bajo', systemId: 'caja-1oct', positionIndex: pos });
+      const active = lay.dots.filter((d) => d.inPosition);
+      const uniqueMidis = new Set(active.map((d) => d.midi));
+      assert.equal(uniqueMidis.size, 8, `Bajo caja-1oct ${root} ${scaleId} pos ${pos} debe incluir las 8 notas exactas de la 1.ª octava`);
+      // Verifica dedos por cuerda: sin 4-4 consecutivo, sin dedo 3 en trastes 1-4
+      for (let s = 0; s < lay.tuning.stringCount; s++) {
+        const onStr = active.filter((d) => d.stringIndex === s && d.fret > 0).sort((a, b) => a.fret - b.fret);
+        for (let i = 1; i < onStr.length; i++) {
+          assert.ok(!(onStr[i].finger === 4 && onStr[i - 1].finger === 4), `Bajo ${root} ${scaleId} pos ${pos} c.${s} no debe repetir dedo 4`);
+        }
+        if (onStr.length > 0 && Math.max(...onStr.map((d) => d.fret)) <= 4) {
+          for (const d of onStr) assert.notEqual(d.finger, 3, `Simandl en trastes 1-4 no usa dedo 3 (${root} ${scaleId})`);
+        }
+      }
+    }
+  }
+
+  // C2: Bajo diagonal-2oct — 15 notas exactas (2 octavas completas) en C, D y G (4c) sin tobogán de 8 notas en 1.ª cuerda
+  for (const root of ['C', 'D', 'G']) {
+    const lay = service.computeFretboardLayout({ root, scaleId: 'mayor', voicingInstrument: 'bajo', systemId: 'diagonal-2oct' });
+    const active = lay.dots.filter((d) => d.inPosition);
+    assert.equal(new Set(active.map((d) => d.midi)).size, 15, `Bajo 4c 2 octavas ${root} mayor debe tener las 15 notas completas`);
+    const gStrCount = active.filter((d) => d.stringIndex === 3).length;
+    assert.ok(gStrCount <= 5, `Bajo 4c ${root} mayor no debe meter ${gStrCount} notas en 1.ª cuerda`);
+  }
+  const bass5A = service.computeFretboardLayout({ root: 'A', scaleId: 'mayor', voicingInstrument: 'bajo-5', systemId: 'diagonal-2oct' });
+  assert.ok(bass5A.activePosition.minFret <= 6, 'Bajo 5c A mayor arranca en E1 tr. 5 en vez de B0 tr. 10');
+
+  // C3: 3NPS — 18 notas exactas incluso en Eb mayor Pos. 1, dedos 1-2-4 en tono-tono, y fallback limpio para cromática
+  const eb3nps = service.computeFretboardLayout({ root: 'Eb', scaleId: 'mayor', voicingInstrument: 'guitarra', systemId: '3nps', positionIndex: 0 });
+  assert.equal(eb3nps.dots.filter((d) => d.inPosition).length, 18, 'Eb mayor 3NPS Pos. 1 debe conservar 3 notas × 6 cuerdas = 18');
+  const c3nps = service.computeFretboardLayout({ root: 'C', scaleId: 'mayor', voicingInstrument: 'guitarra', systemId: '3nps', positionIndex: 0 });
+  const cStr0 = c3nps.dots.filter((d) => d.inPosition && d.stringIndex === 0).sort((a, b) => a.fret - b.fret);
+  assert.deepEqual(cStr0.map((d) => d.finger), [1, 2, 4], 'Patrón tono–tono [8,10,12] debe usar dedos 1–2–4');
+  const chrom3nps = service.computeFretboardLayout({ root: 'C', scaleId: 'cromatica', voicingInstrument: 'guitarra', systemId: '3nps' });
+  assert.equal(chrom3nps.positions.length, 5, 'Escala no heptatónica en 3NPS debe hacer fallback limpio a 5 cajas CAGED');
+
+  // C4: Guitarra clásica Segovia — 2 octavas completas con monotonicidad estricta de cuerda (cero retrocesos 2.ª->3.ª)
+  for (const [root, scaleId] of [['C', 'mayor'], ['G', 'mayor'], ['A', 'menor-natural'], ['D', 'mayor'], ['F', 'mayor']]) {
+    const lay = service.computeFretboardLayout({ root, scaleId, voicingInstrument: 'guitarra-clasica', systemId: 'segovia' });
+    const active = lay.dots.filter((d) => d.inPosition).sort((a, b) => a.midi - b.midi);
+    assert.equal(active.length, 15, `Segovia ${root} ${scaleId} debe tener exactamente 15 notas (2 octavas)`);
+    for (let i = 1; i < active.length; i++) {
+      assert.ok(
+        active[i].stringIndex >= active[i - 1].stringIndex,
+        `Segovia ${root} ${scaleId} retrocedió de cuerda ${active[i - 1].stringIndex} a ${active[i].stringIndex} en MIDI ${active[i].midi}`
+      );
+    }
+  }
+
+  // A3: CAGED — sin unísonos duplicados en G->B y dedos correctos en C pentatónica menor Forma E
+  for (let p = 0; p < 5; p++) {
+    const lay = service.computeFretboardLayout({ root: 'G', scaleId: 'mayor', voicingInstrument: 'guitarra', systemId: 'caged', positionIndex: p });
+    const active = lay.dots.filter((d) => d.inPosition);
+    assert.equal(active.length, new Set(active.map((d) => d.midi)).size, `CAGED G mayor caja ${p} no debe tener unísonos duplicados`);
+  }
+  const cPentE = service.computeFretboardLayout({ root: 'C', scaleId: 'pentatonica-menor', voicingInstrument: 'guitarra', systemId: 'caged', positionIndex: 0 });
+  const cPentRoot6 = cPentE.dots.find((d) => d.inPosition && d.stringIndex === 0 && d.fret === 8);
+  assert.equal(cPentRoot6?.finger, 1, 'C pentatónica menor Forma E debe arrancar con dedo 1 en traste 8');
+
+  // M1 y M2: Todo el diapasón devuelve finger=null; 1.ª posición clásica elimina unísono 3.ª tr.4 vs 2.ª aire
+  const fullNeck = service.computeFretboardLayout({ root: 'C', scaleId: 'mayor', voicingInstrument: 'guitarra', systemId: 'completo' });
+  assert.ok(fullNeck.dots.every((d) => d.finger === null), 'En Todo el diapasón finger debe ser null');
+  const pos1 = service.computeFretboardLayout({ root: 'C', scaleId: 'mayor', voicingInstrument: 'guitarra-clasica', systemId: 'primera-posicion' });
+  assert.equal(pos1.dots.find((d) => d.stringIndex === 3 && d.fret === 4)?.inPosition, false, '3.ª tr. 4 (B3) no duplica 2.ª al aire en 1.ª posición');
+
+  // A1: Tuning.stringLabels expone nombres limpios de cuerda
+  assert.deepEqual(Tuning.byId('guitar-standard').stringLabels, ['E', 'A', 'D', 'G', 'B', 'E']);
+  assert.deepEqual(Tuning.byId('bass-5-standard').stringLabels, ['B', 'E', 'A', 'D', 'G']);
+
+  // C5: FingeringDesignService filtra customChords por americanSymbol exacto (no inyecta Dm7 en G7)
+  const designer = new FingeringDesignService();
+  const customDm7 = { id: 'custom-dm7-test', chord: 'Dm7', instrument: 'guitar', frets: [null, 5, 7, 5, 6, 5], fingers: [null, 1, 3, 1, 2, 1], baseFret: 5 };
+  const g7Cands = designer.getCandidateVoicingsForChord('G7', 'guitarra', [customDm7]);
+  assert.equal(g7Cands.some((v) => v.id === 'custom-dm7-test'), false, 'Un customChord de Dm7 nunca debe aparecer como candidato de G7');
+  const dm7Cands = designer.getCandidateVoicingsForChord('Dm7', 'guitarra', [customDm7]);
+  assert.equal(dm7Cands.some((v) => v.id === 'custom-dm7-test'), true, 'Un customChord de Dm7 sí debe aparecer como candidato de Dm7');
 });
 
 test('Integridad de módulos ESM: todas las vistas y servicios de Escalas importan sin errores de exportación', async () => {

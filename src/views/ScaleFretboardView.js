@@ -4,7 +4,7 @@ import { formatChordSymbol } from '../core/i18n.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /** Trastes con marcadores visuales clásicos (un punto o doble punto en el 12). */
-const INLAY_FRETS = new Set([3, 5, 7, 9, 12, 15]);
+const INLAY_FRETS = new Set([3, 5, 7, 9, 12, 15, 17, 19]);
 
 /**
  * Crea un elemento SVG con atributos opcionales.
@@ -92,9 +92,11 @@ export class ScaleFretboardView {
     const stringCount = tuning.stringCount;
     const fretCount = Math.max(12, Number(maxFret) || 15);
 
-    // Dimensiones lógicas del viewBox SVG (se adapta con scroll horizontal cómodo en móvil)
-    const leftMargin = 54;
-    const rightMargin = 24;
+    // Dimensiones lógicas del viewBox SVG con márgenes invertibles para modo diestro y zurdo
+    const nutMargin = 72;
+    const endMargin = 24;
+    const leftMargin = leftHanded ? endMargin : nutMargin;
+    const rightMargin = leftHanded ? nutMargin : endMargin;
     const topMargin = 28;
     const bottomMargin = 30;
     const fretW = 54;
@@ -108,7 +110,7 @@ export class ScaleFretboardView {
     /** Convierte un número de traste (0..fretCount) a su coordenada X del centro de casilla. */
     const fretCenterX = (fret) => {
       if (fret === 0) {
-        return leftHanded ? leftMargin + neckW + 18 : leftMargin - 20;
+        return leftHanded ? leftMargin + neckW + 22 : leftMargin - 22;
       }
       const visualFret = leftHanded ? fretCount - fret + 1 : fret;
       return leftMargin + (visualFret - 0.5) * fretW;
@@ -142,22 +144,29 @@ export class ScaleFretboardView {
       })
     );
 
-    // Zona sombreada de la posición/caja activa cuando no es "Todo el diapasón"
+    // Zona(s) sombreadas de la posición/caja activa (en trayectorias diagonales sombrea sub-posiciones reales en vez de un bloque gigante)
     if (system.id !== 'completo' && activePosition) {
-      const boxMin = Math.max(1, activePosition.minFret || 1);
-      const boxMax = Math.max(boxMin, Math.min(fretCount, activePosition.maxFret || boxMin + 3));
-      const xStart = Math.min(fretLineX(boxMin - 1), fretLineX(boxMax));
-      const xEnd = Math.max(fretLineX(boxMin - 1), fretLineX(boxMax));
-      svg.appendChild(
-        svgEl('rect', {
-          x: xStart,
-          y: topMargin - 8,
-          width: Math.max(fretW, xEnd - xStart),
-          height: neckH + 16,
-          rx: 4,
-          class: 'scale-fretboard__zone'
-        })
-      );
+      const zones = Array.isArray(activePosition.subZones) && activePosition.subZones.length > 0
+        ? activePosition.subZones
+        : activePosition.isDiagonal
+          ? []
+          : [{ minFret: activePosition.minFret || 1, maxFret: activePosition.maxFret || (activePosition.minFret || 1) + 3 }];
+      for (const z of zones) {
+        const boxMin = Math.max(1, z.minFret || 1);
+        const boxMax = Math.max(boxMin, Math.min(fretCount, z.maxFret || boxMin + 3));
+        const xStart = Math.min(fretLineX(boxMin - 1), fretLineX(boxMax));
+        const xEnd = Math.max(fretLineX(boxMin - 1), fretLineX(boxMax));
+        svg.appendChild(
+          svgEl('rect', {
+            x: xStart,
+            y: topMargin - 8,
+            width: Math.max(fretW, xEnd - xStart),
+            height: neckH + 16,
+            rx: 4,
+            class: 'scale-fretboard__zone'
+          })
+        );
+      }
     }
 
     // Incrustaciones (puntos guía de trastes 3, 5, 7, 9, 12, 15)
@@ -214,9 +223,9 @@ export class ScaleFretboardView {
         })
       );
 
-      // Nombre de la cuerda al aire
-      const openLabel = tuning.stringLabels?.[sIdx] || '';
-      const labelX = leftHanded ? leftMargin + neckW + 38 : leftMargin - 40;
+      // Nombre de la cuerda al aire (separado 30px de la casilla 0, seguro para notación latina y modo zurdo)
+      const openLabel = tuning.stringLabels?.[sIdx] || (tuning.noteNames?.[sIdx] || '').replace(/\d+$/, '');
+      const labelX = leftHanded ? leftMargin + neckW + 54 : leftMargin - 54;
       const sTxt = svgEl('text', {
         x: labelX,
         y: y + 4,

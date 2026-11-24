@@ -60,7 +60,7 @@ export class ScaleAudioController {
     this._audio.startDrone(droneMidis, { volume: 0.25 });
   }
 
-  /** Reproduce la escala o el patrón elegido iluminando cada nota en el diapasón SVG. */
+  /** Reproduce la escala o el patrón elegido iluminando cada nota en el diapasón SVG (alineado a la caja activa). */
   playCurrentScale(overridePattern = null) {
     const st = this._getState();
     const { midis, droneMidis } = this._scales.buildStudySequence({
@@ -69,7 +69,8 @@ export class ScaleAudioController {
       voicingInstrument: st.voicingInstrument,
       pattern: overridePattern || st.studyPattern,
       octaves: st.octaves,
-      classicalMelodicDesc: st.classicalMelodicDesc
+      classicalMelodicDesc: st.classicalMelodicDesc,
+      preferredBaseMidi: st.preferredBaseMidi ?? null
     });
     this.isPlayingSequence.set(true);
     this._audio.playScaleSequence(midis, {

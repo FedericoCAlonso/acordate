@@ -74,15 +74,21 @@ export class ScalesHubViewModel {
     this.audio = new ScaleAudioController({
       scaleCatalogService,
       audioService,
-      getState: () => ({
-        root: this.selectedRoot.value,
-        scaleId: this.selectedScaleId.value,
-        voicingInstrument: this.voicingInstrument.value,
-        studyPattern: this.studyPattern.value,
-        octaves: this.octaves.value,
-        bpm: this.bpm.value,
-        classicalMelodicDesc: this.classicalMelodicDesc.value
-      })
+      getState: () => {
+        const activeRoots = (this.fretboardLayout?.value?.dots || [])
+          .filter((d) => d.inPosition && d.isRoot)
+          .map((d) => d.midi);
+        return {
+          root: this.selectedRoot.value,
+          scaleId: this.selectedScaleId.value,
+          voicingInstrument: this.voicingInstrument.value,
+          studyPattern: this.studyPattern.value,
+          octaves: this.octaves.value,
+          bpm: this.bpm.value,
+          classicalMelodicDesc: this.classicalMelodicDesc.value,
+          preferredBaseMidi: activeRoots.length > 0 ? Math.min(...activeRoots) : null
+        };
+      }
     });
 
     /** Sub-ViewModel del Entrenador de Oído Modal en paralelo. */

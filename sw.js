@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v11: Refactorización arquitectónica MVVM — Stores de dominio, sub-ViewModels cohesivos y ciclo de vida dispose).
+ * Versión del caché estático de la PWA Acordate (v12: Auditoría técnica de digitaciones en diapasón para guitarras y bajo 4c/5c).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v11';
+const CACHE_NAME = 'acordate-static-v12';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

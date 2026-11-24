@@ -869,21 +869,23 @@ export class ScaleCatalogService {
     const normInst = normalizeVoicingInstrument(voicingInstrument);
     const tuning = getTuningForVoicingInstrument(normInst);
     const isBass = tuning.instrument === 'bass';
+    const scale = this.getScaleById(scaleId);
     const systems = this.getFingeringSystems(normInst);
     const activeSystem = systems.find((s) => s.id === systemId) || systems[0];
     const notesMeta = this.spellScaleNotes(root, scaleId);
     const pcMap = new Map(notesMeta.map((n) => [n.pc, n]));
     const rootPc = notesMeta[0]?.pc ?? 0;
-    const maxFret = normInst === 'guitarra-clasica' ? 12 : 15;
+    const baseMaxFret = normInst === 'guitarra-clasica' ? 12 : 15;
 
-    // 1) Calcula todas las posiciones de caja disponibles según sistema e instrumento
+    // 1) Calcula todas las posiciones de caja disponibles según sistema, escala e instrumento
     const positions = this._buildPositionsForSystem({
       activeSystemId: activeSystem.id,
       normInst,
       tuning,
       rootPc,
       notesMeta,
-      maxFret
+      scale,
+      maxFret: baseMaxFret
     });
 
     const safePosIdx = Math.max(0, Math.min(positions.length - 1, Number(positionIndex) || 0));
@@ -891,56 +893,47 @@ export class ScaleCatalogService {
       id: 'all',
       label: 'Todo el mango',
       minFret: 0,
-      maxFret,
+      maxFret: baseMaxFret,
       hint: ''
     };
+    const effectiveMaxFret = Math.min(20, Math.max(baseMaxFret, activePos.requiredMaxFret || activePos.maxFret || baseMaxFret));
 
     // 2) Recopila todos los puntos del diapasón y marca cuáles pertenecen a la caja/posición activa
     const dots = [];
     const lowRootFret = activePos.minFret;
+    const isFullNeck = activeSystem.id === 'completo';
 
     for (let sIdx = 0; sIdx < tuning.stringCount; sIdx++) {
       const openMidi = tuning.strings[sIdx];
-      // En sistema 3NPS seleccionamos exactamente 3 notas por cuerda a partir de la ventana de posición
-      if (activeSystem.id === '3nps' && !isBass && notesMeta.length >= 7 && Array.isArray(activePos.perStringFrets)) {
-        const allowedFrets = new Set(activePos.perStringFrets[sIdx] || []);
-        for (let fret = 0; fret <= maxFret; fret++) {
-          const midi = openMidi + fret;
-          const info = pcMap.get(mod12(midi));
-          if (!info) continue;
-          const inPosition = allowedFrets.has(fret);
-          const finger = inPosition
-            ? this._assignFinger({ fret, minFret: Math.min(...(activePos.perStringFrets[sIdx] || [fret])), isBass, normInst })
-            : null;
-          dots.push({
-            stringIndex: sIdx,
-            fret,
-            midi,
-            ...info,
-            inPosition,
-            finger
-          });
-        }
-        continue;
-      }
 
-      for (let fret = 0; fret <= maxFret; fret++) {
+      for (let fret = 0; fret <= effectiveMaxFret; fret++) {
         const midi = openMidi + fret;
         const info = pcMap.get(mod12(midi));
         if (!info) continue;
 
+        const key = `${sIdx}:${fret}`;
         let inPosition = true;
         if (activePos.explicitSet) {
-          inPosition = activePos.explicitSet.has(`${sIdx}:${fret}`);
-        } else if (activeSystem.id !== 'completo') {
+          inPosition = activePos.explicitSet.has(key);
+        } else if (!isFullNeck) {
           inPosition = fret >= activePos.minFret && fret <= activePos.maxFret;
-          // Permite cuerdas al aire en primera posición/abierta
           if (activePos.allowOpen && fret === 0) inPosition = true;
         }
 
-        const finger = inPosition
-          ? this._assignFinger({ fret, minFret: lowRootFret, isBass, normInst, bassSimandl: isBass && activePos.minFret <= 4 })
-          : null;
+        // En modo "Todo el diapasón" no hay una posición de mano única -> finger = null (M1)
+        let finger = null;
+        if (inPosition && !isFullNeck) {
+          if (activePos.fingerMap && activePos.fingerMap.has(key)) {
+            finger = activePos.fingerMap.get(key);
+          } else {
+            finger = this._assignFinger({
+              fret,
+              minFret: lowRootFret,
+              isBass,
+              bassSimandl: isBass && lowRootFret <= 4
+            });
+          }
+        }
 
         dots.push({
           stringIndex: sIdx,
@@ -955,14 +948,14 @@ export class ScaleCatalogService {
 
     return {
       root: notesMeta[0]?.name || root,
-      scale: this.getScaleById(scaleId),
+      scale,
       voicingInstrument: normInst,
       tuning,
       system: activeSystem,
       positions,
       positionIndex: safePosIdx,
       activePosition: activePos,
-      maxFret,
+      maxFret: effectiveMaxFret,
       notesMeta,
       dots
     };
@@ -973,15 +966,40 @@ export class ScaleCatalogService {
    * @param {object} cfg Configuración interna.
    * @returns {Array<object>} Posiciones disponibles.
    */
-  _buildPositionsForSystem({ activeSystemId, normInst, tuning, rootPc, notesMeta, maxFret }) {
+  _buildPositionsForSystem({ activeSystemId, normInst, tuning, rootPc, notesMeta, scale, maxFret }) {
     const isBass = tuning.instrument === 'bass';
     const pcSet = new Set(notesMeta.map((n) => n.pc));
 
     if (activeSystemId === 'completo') {
-      return [{ id: 'completo', label: `Diapasón completo (0–${maxFret})`, minFret: 0, maxFret, allowOpen: true, hint: 'Todas las notas de la escala en el mango.' }];
+      return [
+        {
+          id: 'completo',
+          label: `Diapasón completo (0–${maxFret})`,
+          minFret: 0,
+          maxFret,
+          allowOpen: true,
+          hint: 'Todas las notas de la escala en el mango (elegí una caja o posición para ver digitación de dedos).'
+        }
+      ];
     }
 
+    // Posición abierta / 1.ª posición clásica (0–4) eliminando el unísono duplicado 3.ª tr. 4 vs 2.ª al aire (M2)
     if (activeSystemId === 'abierta' || activeSystemId === 'primera-posicion') {
+      const explicitSet = new Set();
+      const fingerMap = new Map();
+      const seenMidis = new Set();
+      // Recorre de cuerda aguda a grave para que la 2.ª cuerda al aire (B3) tenga prioridad sobre 3.ª tr. 4
+      for (let s = tuning.stringCount - 1; s >= 0; s--) {
+        for (let f = 0; f <= 4; f++) {
+          const midi = tuning.strings[s] + f;
+          if (!pcSet.has(mod12(midi))) continue;
+          if (!isBass && s === 3 && f === 4 && seenMidis.has(midi)) continue;
+          seenMidis.add(midi);
+          const key = `${s}:${f}`;
+          explicitSet.add(key);
+          fingerMap.set(key, f === 0 ? 0 : Math.min(4, f));
+        }
+      }
       return [
         {
           id: 'pos-1',
@@ -989,241 +1007,723 @@ export class ScaleCatalogService {
           minFret: 0,
           maxFret: 4,
           allowOpen: true,
+          explicitSet,
+          fingerMap,
           hint: normInst === 'guitarra-clasica'
-            ? 'Primera posición clásica con cuerdas al aire; dedos 1–2–3–4 en trastes 1–4.'
+            ? 'Primera posición clásica con cuerdas al aire (sin unísonos duplicados); dedos 1–2–3–4 en trastes 1–4.'
             : 'Posición abierta aprovechando cuerdas al aire en trastes 0–4.'
         }
       ];
     }
 
-    // Guitarra: 5 cajas CAGED ancladas alrededor de la raíz en 6.ª cuerda
+    // Guitarra: 3 notas por cuerda (3NPS) — estrictamente para escalas heptatónicas (C3)
+    if (activeSystemId === '3nps' && !isBass) {
+      if (!scale?.heptatonic || notesMeta.length !== 7) {
+        return this._buildCagedPositions({
+          tuning,
+          rootPc,
+          pcSet,
+          maxFret,
+          fallbackNotice: '3NPS aplica solo a escalas de 7 notas; se muestran las 5 cajas CAGED para esta escala.'
+        });
+      }
+      return this._build3npsPositions({ tuning, notesMeta, pcSet });
+    }
+
+    // Guitarra: 5 cajas CAGED sin unísonos duplicados en G→B y con dedos por posición real de mano (A3)
     if (activeSystemId === 'caged' && !isBass) {
-      const rootFret6 = mod12(rootPc - tuning.strings[0]);
-      const baseAnchor = rootFret6 === 0 ? 12 : rootFret6;
-      const cagedSpecs = [
-        { id: 'caged-e', label: 'Forma E (raíz 6.ª)', offset: -1, span: 4, hint: 'Raíz en 6.ª cuerda con dedo 2; enlaza directo con la cejilla forma E.' },
-        { id: 'caged-d', label: 'Forma D (raíz 4.ª)', offset: 1, span: 4, hint: 'Raíz en 4.ª cuerda; caja limpia en registro medio.' },
-        { id: 'caged-c', label: 'Forma C (raíz 5.ª)', offset: 4, span: 4, hint: 'Raíz en 5.ª cuerda con dedo 4; superpone la forma C.' },
-        { id: 'caged-a', label: 'Forma A (raíz 5.ª)', offset: 6, span: 4, hint: 'Raíz en 5.ª cuerda con dedo 1/2; enlaza con la cejilla forma A.' },
-        { id: 'caged-g', label: 'Forma G (raíz 6.ª)', offset: 9, span: 4, hint: 'Raíz en 6.ª cuerda con dedo 4; superpone la forma G.' }
-      ];
-      return cagedSpecs.map((sp) => {
-        let minF = mod12(baseAnchor + sp.offset);
-        if (minF > 11) minF -= 12;
-        const maxF = Math.min(maxFret, minF + sp.span);
-        return {
-          id: sp.id,
-          label: `${sp.label} · tr. ${minF}–${maxF}`,
-          minFret: minF,
-          maxFret: maxF,
-          allowOpen: minF === 0,
-          hint: sp.hint
-        };
-      });
+      return this._buildCagedPositions({ tuning, rootPc, pcSet, maxFret });
     }
 
-    // Guitarra: 3 notas por cuerda (3NPS) — 7 posiciones desde cada grado en la 6.ª cuerda
-    if (activeSystemId === '3nps' && !isBass && notesMeta.length >= 7) {
-      const scalePcs = notesMeta.map((n) => n.pc);
-      return notesMeta.slice(0, 7).map((degInfo, degIdx) => {
-        let startFret6 = mod12(degInfo.pc - tuning.strings[0]);
-        if (startFret6 === 0 && degIdx > 0) startFret6 = 12;
-        const perStringFrets = [];
-        let cursorMidi = tuning.strings[0] + startFret6;
-        let minF = Infinity;
-        let maxF = 0;
-
-        for (let s = 0; s < tuning.stringCount; s++) {
-          const picked = [];
-          let m = Math.max(tuning.strings[s], cursorMidi);
-          while (picked.length < 3 && m <= tuning.strings[s] + maxFret + 2) {
-            if (pcSet.has(mod12(m))) {
-              const f = m - tuning.strings[s];
-              if (f >= 0 && f <= maxFret) {
-                picked.push(f);
-                if (f < minF) minF = f;
-                if (f > maxF) maxF = f;
-              }
-            }
-            m += 1;
-          }
-          perStringFrets.push(picked);
-          if (picked.length > 0) {
-            cursorMidi = tuning.strings[s] + picked[picked.length - 1] + 1;
-          }
-        }
-        return {
-          id: `3nps-${degIdx + 1}`,
-          label: `Pos. ${degIdx + 1} (desde ${degInfo.degree}: ${degInfo.name})`,
-          minFret: Number.isFinite(minF) ? minF : 0,
-          maxFret: Math.max(4, maxF),
-          perStringFrets,
-          hint: `3 notas por cuerda arrancando en grado ${degInfo.degree} (${degInfo.name}). Usá dedos 1–2–4 o 1–3–4.`
-        };
-      });
-    }
-
-    // Guitarra clásica: Esquema tipo Segovia en 2 octavas (traslado limpio posición baja -> media/alta)
+    // Guitarra clásica: Esquema tipo Segovia en 2 octavas (cerrado, monótono en cuerdas y 2 tramos limpios) (C4)
     if (activeSystemId === 'segovia') {
-      const rootFret6 = mod12(rootPc - tuning.strings[0]);
-      const startLow = rootFret6 <= 7 ? rootFret6 : mod12(rootPc - tuning.strings[1]);
-      const startString = rootFret6 <= 7 ? 0 : 1;
-      const startMidi = tuning.strings[startString] + startLow;
-      const explicitSet = new Set();
-      let minF = 12;
-      let maxF = 0;
-
-      // Recorre 2 octavas exactas asignando la cuerda más ergonómica con cambio de posición gradual
-      let curPos = Math.max(1, startLow);
-      for (let oct = 0; oct < 2; oct++) {
-        for (const semi of notesMeta.map((n) => n.interval)) {
-          const targetMidi = startMidi + oct * 12 + semi;
-          const spot = this._pickErgonomicSpot(targetMidi, tuning, curPos, 12);
-          if (spot) {
-            explicitSet.add(`${spot.stringIndex}:${spot.fret}`);
-            if (spot.fret > 0) {
-              minF = Math.min(minF, spot.fret);
-              maxF = Math.max(maxF, spot.fret);
-              if (spot.fret > curPos + 3) curPos = spot.fret - 1;
-            }
-          }
-        }
-      }
-      // Agrega la octava final
-      const topSpot = this._pickErgonomicSpot(startMidi + 24, tuning, curPos, 12);
-      if (topSpot) {
-        explicitSet.add(`${topSpot.stringIndex}:${topSpot.fret}`);
-        maxF = Math.max(maxF, topSpot.fret);
-      }
-
-      return [
-        {
-          id: 'segovia-2oct',
-          label: `Segovia 2 octavas (tr. ${Math.min(minF, maxF)}–${maxF})`,
-          minFret: Math.min(minF, maxF),
-          maxFret: maxF,
-          explicitSet,
-          hint: 'Esquema clásico de 2 octavas: traslado limpio sin aperturas lesivas; practicá alternando i–m y m–a.'
-        }
-      ];
+      return this._buildSegoviaPosition({ tuning, rootPc, notesMeta });
     }
 
-    // Bajo 4c / 5c: 3 digitaciones de 1 octava (iniciando en dedo 1, dedo 2 o dedo 4)
+    // Bajo 4c / 5c: 3 digitaciones de 1 octava completa con dedos reales y Simandl 1–2–4 en trastes 1–4 (C1 + A4)
     if (activeSystemId === 'caja-1oct' && isBass) {
-      const eStringIdx = tuning.stringCount === 5 ? 1 : 0;
-      const rootOnE = mod12(rootPc - tuning.strings[eStringIdx]);
-      const rootFret = rootOnE === 0 ? 12 : rootOnE;
-      const rootLow = rootOnE <= 5 ? rootOnE : rootOnE;
-
-      const specs = [
-        {
-          id: 'bass-f2',
-          label: 'Dedo 2 en raíz (posición central)',
-          minFret: Math.max(0, rootFret - 1),
-          maxFret: Math.min(maxFret, rootFret + 2),
-          hint: rootFret <= 4
-            ? 'En trastes graves (1–4) aplicá digitación Simandl (1–2–4) para cuidar la muñeca.'
-            : 'Posición centrada de 1 dedo por traste (dedo 2 en la raíz): cero desplazamientos.'
-        },
-        {
-          id: 'bass-f1',
-          label: 'Dedo 1 en raíz (hacia agudos)',
-          minFret: Math.max(0, rootLow),
-          maxFret: Math.min(maxFret, rootLow + 3),
-          hint: rootLow <= 4
-            ? 'Trastes bajos: usá Simandl (1–2–4) con pivote suave en lugar de forzar 1 dedo por traste.'
-            : 'Inicia con índice (dedo 1) abriendo la escala hacia trastes más agudos.'
-        },
-        {
-          id: 'bass-f4',
-          label: 'Dedo 4 en raíz (hacia graves)',
-          minFret: Math.max(0, (rootFret < 3 ? rootFret + 12 : rootFret) - 3),
-          maxFret: Math.min(maxFret, rootFret < 3 ? rootFret + 12 : rootFret),
-          hint: 'Inicia con meñique (dedo 4) abriendo hacia trastes graves: clave para lectura a primera vista.'
-        }
-      ];
-      return specs.map((sp) => ({
-        ...sp,
-        label: `${sp.label} · tr. ${sp.minFret}–${sp.maxFret}`,
-        allowOpen: sp.minFret === 0
-      }));
+      return this._buildBassOneOctavePositions({ tuning, rootPc, notesMeta, maxFret });
     }
 
-    // Bajo 4c / 5c: 2 octavas diagonal (en 5c aprovecha B0)
+    // Bajo 4c / 5c: 2 octavas diagonal en 2 tramos claros (sin tobogán de 8 notas ni amputación en 4c) (C2)
     if (activeSystemId === 'diagonal-2oct' && isBass) {
-      const startStr = 0; // E1 en 4c o B0 en 5c
-      const startFret = mod12(rootPc - tuning.strings[startStr]);
-      const baseMidi = tuning.strings[startStr] + startFret;
-      const explicitSet = new Set();
-      let minF = 15;
-      let maxF = 0;
-      let curPos = Math.max(1, startFret);
-
-      for (let oct = 0; oct < 2; oct++) {
-        for (const semi of notesMeta.map((n) => n.interval)) {
-          const m = baseMidi + oct * 12 + semi;
-          const spot = this._pickErgonomicSpot(m, tuning, curPos, maxFret);
-          if (spot) {
-            explicitSet.add(`${spot.stringIndex}:${spot.fret}`);
-            if (spot.fret > 0) {
-              minF = Math.min(minF, spot.fret);
-              maxF = Math.max(maxF, spot.fret);
-              if (spot.fret > curPos + 3) curPos = spot.fret - 1;
-            }
-          }
-        }
-      }
-      const topSpot = this._pickErgonomicSpot(baseMidi + 24, tuning, curPos, maxFret);
-      if (topSpot) {
-        explicitSet.add(`${topSpot.stringIndex}:${topSpot.fret}`);
-        maxF = Math.max(maxF, topSpot.fret);
-      }
-
-      return [
-        {
-          id: 'bass-2oct',
-          label: tuning.stringCount === 5
-            ? `2 octavas en 5 cuerdas (tr. ${Math.min(minF, maxF)}–${maxF})`
-            : `2 octavas diagonal (tr. ${Math.min(minF, maxF)}–${maxF})`,
-          minFret: Math.min(minF, maxF),
-          maxFret: maxF,
-          explicitSet,
-          hint: tuning.stringCount === 5
-            ? 'Aprovecha la 5.ª cuerda (Si grave) para cubrir 2 octavas con mínimos desplazamientos.'
-            : 'Desplazamiento diagonal controlado en el grado 3 o 5 para enlazar las 2 octavas con limpieza.'
-        }
-      ];
+      return this._buildBassTwoOctavePosition({ tuning, rootPc, notesMeta });
     }
 
     return [{ id: 'default', label: `Posición (0–${maxFret})`, minFret: 0, maxFret, allowOpen: true, hint: '' }];
   }
 
   /**
-   * Elige la cuerda y traste más ergonómicos para un MIDI dado cerca de `anchorFret`.
-   * @param {number} midi Altura MIDI real deseada.
-   * @param {import('../models/Tuning.js').Tuning} tuning Afinación activa.
-   * @param {number} anchorFret Traste de referencia de la mano.
-   * @param {number} maxFret Traste máximo permitido.
-   * @returns {{ stringIndex: number, fret: number }|null} Posición elegida.
+   * Construye las 5 cajas CAGED para guitarra eliminando unísonos duplicados entre cuerdas contiguas
+   * (especialmente 3.ª→2.ª G→B) y calculando dedos sobre la posición efectiva de la mano.
+   * @param {object} cfg Parámetros CAGED.
+   * @returns {Array<object>} 5 posiciones CAGED.
    */
-  _pickErgonomicSpot(midi, tuning, anchorFret, maxFret) {
-    let best = null;
-    let bestCost = Infinity;
-    for (let s = 0; s < tuning.stringCount; s++) {
-      const f = midi - tuning.strings[s];
-      if (f < 0 || f > maxFret) continue;
-      const dist = f === 0 && anchorFret <= 3 ? 0.5 : Math.abs(f - anchorFret);
-      if (dist < bestCost) {
-        bestCost = dist;
-        best = { stringIndex: s, fret: f };
+  _buildCagedPositions({ tuning, rootPc, pcSet, maxFret, fallbackNotice = '' }) {
+    const rootFret6 = mod12(rootPc - tuning.strings[0]);
+    const baseAnchor = rootFret6 === 0 ? 12 : rootFret6;
+    const cagedSpecs = [
+      { id: 'caged-e', label: 'Forma E (raíz 6.ª)', offset: -1, span: 4, hint: 'Raíz en 6.ª cuerda; enlaza directo con la cejilla forma E.' },
+      { id: 'caged-d', label: 'Forma D (raíz 4.ª)', offset: 1, span: 4, hint: 'Raíz en 4.ª cuerda; caja limpia en registro medio.' },
+      { id: 'caged-c', label: 'Forma C (raíz 5.ª)', offset: 4, span: 4, hint: 'Raíz en 5.ª cuerda con dedo 4; superpone la forma C.' },
+      { id: 'caged-a', label: 'Forma A (raíz 5.ª)', offset: 6, span: 4, hint: 'Raíz en 5.ª cuerda con dedo 1/2; enlaza con la cejilla forma A.' },
+      { id: 'caged-g', label: 'Forma G (raíz 6.ª)', offset: 9, span: 4, hint: 'Raíz en 6.ª cuerda con dedo 4; superpone la forma G.' }
+    ];
+
+    return cagedSpecs.map((sp) => {
+      const nominalMin = mod12(baseAnchor + sp.offset);
+      const nominalMax = Math.min(maxFret, nominalMin + sp.span);
+      const allowOpen = nominalMin === 0;
+
+      // Recolecta candidatos por cuerda y elimina unísonos duplicados (prefiriendo la cuerda superior)
+      const perString = Array.from({ length: tuning.stringCount }, () => []);
+      for (let s = 0; s < tuning.stringCount; s++) {
+        for (let f = 0; f <= nominalMax; f++) {
+          if (f < nominalMin && !(allowOpen && f === 0)) continue;
+          if (pcSet.has(mod12(tuning.strings[s] + f))) {
+            perString[s].push(f);
+          }
+        }
       }
-    }
-    return best;
+
+      // Elimina unísono exacto cuando el borde derecho de cuerda s coincide con el borde izquierdo de s+1
+      for (let s = 0; s < tuning.stringCount - 1; s++) {
+        const nextMidis = new Set(perString[s + 1].map((f) => tuning.strings[s + 1] + f));
+        perString[s] = perString[s].filter((f) => !nextMidis.has(tuning.strings[s] + f));
+      }
+
+      const explicitSet = new Set();
+      const fingerMap = new Map();
+      const nonZeroFrets = perString.flat().filter((f) => f > 0);
+      const actualMin = nonZeroFrets.length > 0 ? Math.min(...nonZeroFrets) : nominalMin;
+      const actualMax = nonZeroFrets.length > 0 ? Math.max(...nonZeroFrets) : nominalMax;
+
+      // Si el rango real de trastes pisados ocupa 5 trastes (span 4, ej. 9..13), ancla la mano en actualMin+1
+      // dejando actualMin como extensión controlada del dedo 1 y evitando duplicar dedo 4 en los dos últimos trastes
+      const handBase = actualMax - actualMin >= 4 ? actualMin + 1 : Math.max(1, actualMin);
+
+      for (let s = 0; s < tuning.stringCount; s++) {
+        const frets = perString[s];
+        const assigned = this._assignGuitarStringFingers(frets, handBase);
+        frets.forEach((f, i) => {
+          const key = `${s}:${f}`;
+          explicitSet.add(key);
+          fingerMap.set(key, assigned[i]);
+        });
+      }
+
+      const displayMin = allowOpen && perString.some((arr) => arr.includes(0)) ? 0 : actualMin;
+      return {
+        id: sp.id,
+        label: `${sp.label} · tr. ${displayMin}–${actualMax}`,
+        minFret: displayMin,
+        maxFret: actualMax,
+        allowOpen,
+        explicitSet,
+        fingerMap,
+        hint: fallbackNotice ? `${fallbackNotice} ${sp.hint}` : sp.hint
+      };
+    });
   }
 
   /**
-   * Asigna el dedo de mano izquierda (0 al aire, 1–4) aplicando Simandl (1–2–4) en trastes graves
-   * del bajo y 1 dedo por traste en guitarra y registro medio/agudo del bajo.
+   * Construye las 7 digitaciones 3NPS (exactamente 3 notas por cuerda) para escalas heptatónicas,
+   * expandiendo el traste máximo hasta 19 cuando la posición lo exige y asignando dedos por geometría de cuerda.
+   * @param {object} cfg Parámetros 3NPS.
+   * @returns {Array<object>} 7 posiciones 3NPS.
+   */
+  _build3npsPositions({ tuning, notesMeta, pcSet }) {
+    const hardLimit = 19;
+    return notesMeta.map((degInfo, degIdx) => {
+      let startFret6 = mod12(degInfo.pc - tuning.strings[0]);
+      // Evita empujar innecesariamente la cuerda al aire al traste 12 si eso haría superar el traste 18
+      if (startFret6 === 0 && degIdx > 0) {
+        startFret6 = 0;
+      }
+      const explicitSet = new Set();
+      const fingerMap = new Map();
+      const perStringFrets = [];
+      let cursorMidi = tuning.strings[0] + startFret6;
+      let minF = Infinity;
+      let maxF = 0;
+      let hasWideStretch = false;
+
+      for (let s = 0; s < tuning.stringCount; s++) {
+        const picked = [];
+        let m = Math.max(tuning.strings[s], cursorMidi);
+        while (picked.length < 3 && m <= tuning.strings[s] + hardLimit) {
+          if (pcSet.has(mod12(m))) {
+            const f = m - tuning.strings[s];
+            if (f >= 0 && f <= hardLimit) {
+              picked.push(f);
+              if (f < minF) minF = f;
+              if (f > maxF) maxF = f;
+            }
+          }
+          m += 1;
+        }
+        perStringFrets.push(picked);
+        const fingers = this._assign3npsStringFingers(picked);
+        if (picked.length === 3 && picked[2] - picked[0] >= 4 && picked[0] > 0) {
+          hasWideStretch = true;
+        }
+        picked.forEach((f, idx) => {
+          const key = `${s}:${f}`;
+          explicitSet.add(key);
+          fingerMap.set(key, fingers[idx]);
+        });
+        if (picked.length > 0) {
+          cursorMidi = tuning.strings[s] + picked[picked.length - 1] + 1;
+        }
+      }
+
+      const safeMin = Number.isFinite(minF) ? minF : 0;
+      const safeMax = Math.max(4, maxF);
+      return {
+        id: `3nps-${degIdx + 1}`,
+        label: `Pos. ${degIdx + 1} (${degInfo.degree}: ${degInfo.name}) · tr. ${safeMin}–${safeMax}`,
+        minFret: safeMin,
+        maxFret: safeMax,
+        requiredMaxFret: Math.max(15, safeMax),
+        perStringFrets,
+        explicitSet,
+        fingerMap,
+        hint: hasWideStretch
+          ? `3 notas por cuerda desde ${degInfo.degree} (${degInfo.name}). En patrones tono–tono usá dedos 1–2–4 (apertura controlada).`
+          : `3 notas por cuerda desde ${degInfo.degree} (${degInfo.name}). Usá dedos 1–2–4 o 1–3–4 según los semitonos.`
+      };
+    });
+  }
+
+  /**
+   * Asigna dedos ergonómicos de guitarra para exactamente 3 notas en una cuerda (3NPS).
+   * @param {number[]} frets Trastes ascendentes en la cuerda (ej. [8, 10, 12]).
+   * @returns {number[]} Dedos asignados (0..4).
+   */
+  _assign3npsStringFingers(frets) {
+    if (frets.length === 0) return [];
+    if (frets.length === 1) return [frets[0] === 0 ? 0 : 1];
+    if (frets[0] === 0) {
+      const rest = frets.slice(1);
+      const base = rest[0] <= 2 ? 1 : rest[0];
+      return [0, ...rest.map((f) => Math.min(4, Math.max(1, f - base + 1)))];
+    }
+    if (frets.length === 2) {
+      const diff = frets[1] - frets[0];
+      return [1, diff === 1 ? 2 : diff === 2 ? 3 : 4];
+    }
+    const [f0, f1, f2] = frets;
+    const d1 = f1 - f0;
+    const d2 = f2 - f0;
+    if (d1 === 1 && d2 === 2) return [1, 2, 3]; // semitono–semitono
+    if (d1 === 1 && d2 === 3) return [1, 2, 4]; // semitono–tono
+    if (d1 === 2 && d2 === 3) return [1, 3, 4]; // tono–semitono
+    if (d1 === 2 && d2 === 4) return [1, 2, 4]; // tono–tono (ergonómico: nunca 1-3-4!)
+    if (d1 === 1 && d2 >= 4) return [1, 2, 4];  // apertura en 2.ª aumentada
+    if (d1 >= 3 && d2 >= 4) return [1, 3, 4];   // 2.ª aumentada inicial (ej. menor armónica)
+    return [1, 2, 4];
+  }
+
+  /**
+   * Asigna dedos de guitarra para un grupo arbitrario de trastes en una cuerda respecto a `handBase`,
+   * garantizando que nunca se asigne el mismo dedo (en especial el 4) a dos trastes consecutivos.
+   * @param {number[]} frets Trastes ascendentes en la cuerda.
+   * @param {number} handBase Traste de referencia para el dedo 1.
+   * @returns {number[]} Dedos asignados por traste.
+   */
+  _assignGuitarStringFingers(frets, handBase) {
+    const nonZero = frets.filter((f) => f > 0);
+    if (nonZero.length === 3 && nonZero[2] - nonZero[0] >= 4) {
+      const mapped = this._assign3npsStringFingers(nonZero);
+      let idx = 0;
+      return frets.map((f) => (f === 0 ? 0 : mapped[idx++]));
+    }
+    const result = frets.map((f) => {
+      if (f === 0) return 0;
+      const offset = f - handBase;
+      if (offset <= 0) return 1;
+      return Math.min(4, offset + 1);
+    });
+    // Corrección anti-colisión: nunca dos trastes distintos en la misma cuerda con dedo 4
+    for (let i = result.length - 1; i > 0; i--) {
+      if (frets[i] > 0 && frets[i - 1] > 0 && result[i] === result[i - 1]) {
+        if (result[i] === 4) {
+          result[i - 1] = frets[i] - frets[i - 1] >= 2 ? 2 : 3;
+        } else if (result[i - 1] === 1 && result[i] === 1) {
+          result[i] = 2;
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Construye el esquema clásico estilo Segovia en 2 octavas para guitarra clásica:
+   * - Monotonicidad estricta de cuerda (`s >= prevString`, jamás retrocede de 2.ª a 3.ª).
+   * - Posiciones cerradas (sin cuerdas al aire) para homogeneidad tímbrica.
+   * - Dos tramos claros (`pos1` y `pos2`) con 1 traslado limpio y dedos calculados localmente por tramo.
+   * @param {object} cfg Parámetros Segovia.
+   * @returns {Array<object>} Posición Segovia de 2 octavas.
+   */
+  _buildSegoviaPosition({ tuning, rootPc, notesMeta }) {
+    const rootFret6 = mod12(rootPc - tuning.strings[0]);
+    const useFifthString = rootFret6 === 0 || rootFret6 > 7;
+    const startString = useFifthString ? 1 : 0;
+    const startFret = mod12(rootPc - tuning.strings[startString]);
+    const startMidi = tuning.strings[startString] + startFret;
+
+    // Construye las 2 octavas exactas (N*2 + 1 notas)
+    const targetMidis = [];
+    for (let oct = 0; oct < 2; oct++) {
+      for (const n of notesMeta) targetMidis.push(startMidi + oct * 12 + n.interval);
+    }
+    targetMidis.push(startMidi + 24);
+
+    // Tramo 1: ancla baja alrededor de la raíz; Tramo 2: ancla media-alta que permite llegar a la nota tope con dedo 4
+    const topMidi = targetMidis[targetMidis.length - 1];
+    const topFretOnE1 = topMidi - tuning.strings[5];
+    const hardLimit = Math.max(12, Math.min(15, topFretOnE1));
+    const pos1 = Math.max(1, startFret > 1 ? startFret - 1 : 1);
+    const pos2 = Math.max(pos1, Math.min(hardLimit - 3, Math.max(pos1 + 2, topFretOnE1 - 3)));
+
+    const chosen = [];
+    let prevString = startString;
+    let inSecondPos = false;
+    let notesOnCurrentString = 0;
+
+    for (let idx = 0; idx < targetMidis.length; idx++) {
+      const m = targetMidis[idx];
+      // Determina si corresponde pasar al 2.º tramo (al llegar a 2.ª/1.ª cuerda o salir de pos1+3)
+      if (!inSecondPos && (prevString >= 4 || m - tuning.strings[prevString] > pos1 + 4)) {
+        const canShiftHere = m - tuning.strings[Math.min(5, prevString)] >= pos2 && m - tuning.strings[Math.min(5, prevString)] <= pos2 + 3;
+        if (canShiftHere || prevString >= 4) {
+          inSecondPos = true;
+        }
+      }
+
+      const activeAnchor = inSecondPos ? pos2 : pos1;
+      let best = null;
+      let bestCost = Infinity;
+
+      for (let s = prevString; s < tuning.stringCount; s++) {
+        const f = m - tuning.strings[s];
+        // Esquema cerrado tipo Segovia: evita traste 0 salvo que sea la única opción física
+        if (f < 1 || f > hardLimit) continue;
+        // Limita a 3 notas por cuerda salvo en la 1.ª cuerda donde puede completar el cierre
+        if (s === prevString && s < 5 && notesOnCurrentString >= 3) continue;
+
+        let cost = Math.abs(f - (activeAnchor + 1.5));
+        if (f < activeAnchor || f > activeAnchor + 3) cost += 4;
+        if (s > prevString + 1) cost += 10; // Evita saltar cuerdas innecesariamente
+        if (s === prevString && notesOnCurrentString < 2) cost -= 0.4; // Agrupa 2-3 notas naturales por cuerda
+        if (cost < bestCost) {
+          bestCost = cost;
+          best = { stringIndex: s, fret: f, tramo: inSecondPos ? 2 : 1 };
+        }
+      }
+
+      // Respaldo absoluto si alguna nota solo existe al aire o fuera de la ventana preferida
+      if (!best) {
+        for (let s = prevString; s < tuning.stringCount; s++) {
+          const f = m - tuning.strings[s];
+          if (f >= 0 && f <= hardLimit) {
+            best = { stringIndex: s, fret: f, tramo: inSecondPos ? 2 : 1 };
+            break;
+          }
+        }
+      }
+
+      if (best) {
+        if (best.stringIndex === prevString) {
+          notesOnCurrentString += 1;
+        } else {
+          prevString = best.stringIndex;
+          notesOnCurrentString = 1;
+        }
+        if (best.fret >= pos2 && best.stringIndex >= 4) inSecondPos = true;
+        chosen.push(best);
+      }
+    }
+
+    // Asigna dedos localmente por (cuerda, tramo) para no repetir dedo 4 en la 2.ª octava
+    const explicitSet = new Set();
+    const fingerMap = new Map();
+    const groups = new Map();
+    for (const spot of chosen) {
+      const gKey = `${spot.stringIndex}:${spot.tramo}`;
+      if (!groups.has(gKey)) groups.set(gKey, []);
+      groups.get(gKey).push(spot);
+    }
+
+    let minF = hardLimit;
+    let maxF = 0;
+    for (const spots of groups.values()) {
+      const frets = spots.map((sp) => sp.fret);
+      const localAnchor = spots[0].tramo === 2 ? pos2 : pos1;
+      const fingers = this._assignGuitarStringFingers(frets, localAnchor);
+      spots.forEach((sp, i) => {
+        const key = `${sp.stringIndex}:${sp.fret}`;
+        explicitSet.add(key);
+        fingerMap.set(key, fingers[i]);
+        if (sp.fret > 0) {
+          minF = Math.min(minF, sp.fret);
+          maxF = Math.max(maxF, sp.fret);
+        }
+      });
+    }
+
+    const safeMin = Math.min(minF, maxF);
+    return [
+      {
+        id: 'segovia-2oct',
+        label: `Segovia 2 octavas (Pos. ${pos1} → ${pos2} · tr. ${safeMin}–${maxF})`,
+        minFret: safeMin,
+        maxFret: maxF,
+        requiredMaxFret: Math.max(12, maxF),
+        isDiagonal: true,
+        subZones: pos2 > pos1
+          ? [
+              { minFret: pos1, maxFret: Math.min(hardLimit, pos1 + 3) },
+              { minFret: pos2, maxFret: Math.min(hardLimit, pos2 + 3) }
+            ]
+          : [{ minFret: pos1, maxFret: Math.min(hardLimit, pos1 + 3) }],
+        explicitSet,
+        fingerMap,
+        hint: `Esquema clásico cerrado en 2 octavas (Pos. ${pos1} con traslado limpio a Pos. ${pos2}). Practicá alternando i–m y m–a.`
+      }
+    ];
+  }
+
+  /**
+   * Construye las 3 cajas de 1 octava completa para bajo (4c y 5c) como `explicitSet` exacto
+   * (raíz a octava sin omitir ningún grado), aplicando Simandl (1–2–4) en trastes 1–4 y 1FPC desde traste 5+.
+   * @param {object} cfg Parámetros del bajo.
+   * @returns {Array<object>} 3 cajas de 1 octava (dedo 2, dedo 1, dedo 4 en raíz).
+   */
+  _buildBassOneOctavePositions({ tuning, rootPc, notesMeta, maxFret }) {
+    const eStringIdx = tuning.stringCount === 5 ? 1 : 0;
+    const rootOnE = mod12(rootPc - tuning.strings[eStringIdx]);
+
+    const templates = [
+      {
+        id: 'bass-f2',
+        title: 'Dedo 2 en raíz (posición central)',
+        rootFret: rootOnE === 0 ? 12 : rootOnE === 1 ? 13 : rootOnE,
+        anchorOffset: -1, // raíz en anchor+1 => dedo 2
+        hintLow: 'En trastes graves (1–4) aplicá Simandl (1–2–4) manteniendo la mano relajada.',
+        hintHigh: 'Posición centrada con dedo 2 en la raíz (1 dedo por traste desde traste 5+).'
+      },
+      {
+        id: 'bass-f1',
+        title: 'Dedo 1 en raíz (hacia agudos)',
+        rootFret: rootOnE,
+        anchorOffset: 0, // raíz en anchor => dedo 1 (o al aire si 0)
+        hintLow: 'Trastes graves: usá Simandl (1–2–4) con pivote controlado cuando la 3.ª o 6.ª mayor pide un traste extra.',
+        hintHigh: 'Inicia con índice (dedo 1) abriendo hacia trastes agudos con extensión controlada del meñique.'
+      },
+      {
+        id: 'bass-f4',
+        title: 'Dedo 4 en raíz (hacia graves)',
+        rootFret: rootOnE < 3 ? rootOnE + 12 : rootOnE,
+        anchorOffset: -3, // raíz en anchor+3 => dedo 4
+        hintLow: 'Inicia con meñique (dedo 4) abriendo hacia trastes graves; aplicá Simandl (1–2–4) en trastes 1–4.',
+        hintHigh: 'Inicia con meñique (dedo 4) abriendo hacia trastes graves: clave para lectura y walking bass.'
+      }
+    ];
+
+    return templates.map((tpl) => {
+      const startMidi = tuning.strings[eStringIdx] + tpl.rootFret;
+      const handAnchor = Math.max(1, tpl.rootFret + tpl.anchorOffset);
+      const allowOpen = tpl.rootFret === 0;
+      const targetMidis = [...notesMeta.map((n) => startMidi + n.interval), startMidi + 12];
+      const hardLimit = Math.max(maxFret, tpl.rootFret + 4);
+
+      const chosen = [];
+      let prevString = eStringIdx;
+
+      for (let i = 0; i < targetMidis.length; i++) {
+        const m = targetMidis[i];
+        if (i === 0) {
+          chosen.push({ stringIndex: eStringIdx, fret: tpl.rootFret });
+          continue;
+        }
+
+        let best = null;
+        let bestCost = Infinity;
+        for (let s = prevString; s < tuning.stringCount; s++) {
+          const f = m - tuning.strings[s];
+          if (f < 0 || f > hardLimit) continue;
+          if (f === 0 && !allowOpen && handAnchor > 2) continue;
+
+          // Ventana ideal de 4 trastes [handAnchor, handAnchor+3]; permite ±1 de extensión controlada para no omitir grados
+          let cost = 0;
+          if (f === 0 && allowOpen) {
+            cost = 0.2;
+          } else if (f >= handAnchor && f <= handAnchor + 3) {
+            cost = Math.abs(f - (handAnchor + 1.5)) * 0.4;
+          } else if (f === handAnchor - 1 || f === handAnchor + 4) {
+            cost = 2.6;
+          } else {
+            cost = 8 + Math.abs(f - handAnchor);
+          }
+          if (s > prevString + 1) cost += 6;
+          if (cost < bestCost) {
+            bestCost = cost;
+            best = { stringIndex: s, fret: f };
+          }
+        }
+        if (best) {
+          prevString = best.stringIndex;
+          chosen.push(best);
+        }
+      }
+
+      const explicitSet = new Set();
+      const fingerMap = new Map();
+      const byString = new Map();
+      let minF = hardLimit;
+      let maxF = 0;
+
+      for (const spot of chosen) {
+        if (!byString.has(spot.stringIndex)) byString.set(spot.stringIndex, []);
+        byString.get(spot.stringIndex).push(spot.fret);
+        if (spot.fret < minF) minF = spot.fret;
+        if (spot.fret > maxF) maxF = spot.fret;
+      }
+
+      for (const [sIdx, frets] of byString.entries()) {
+        const fingers = this._assignBassStringFingers(frets, handAnchor, sIdx === eStringIdx ? tpl.id : null);
+        frets.forEach((f, idx) => {
+          const key = `${sIdx}:${f}`;
+          explicitSet.add(key);
+          fingerMap.set(key, fingers[idx]);
+        });
+      }
+
+      return {
+        id: tpl.id,
+        label: `${tpl.title} · tr. ${minF}–${maxF}`,
+        minFret: minF,
+        maxFret: maxF,
+        requiredMaxFret: Math.max(15, maxF),
+        allowOpen,
+        explicitSet,
+        fingerMap,
+        hint: minF <= 4 ? tpl.hintLow : tpl.hintHigh
+      };
+    });
+  }
+
+  /**
+   * Construye el recorrido de 2 octavas en bajo (4c o 5c) con planificación diagonal balanceada:
+   * - En 5c usa B0 cuando la raíz está en trastes 0–7, o E1 si supera el traste 7.
+   * - En 4c amplía el traste máximo hasta 20 para completar las 2 octavas en todas las tonalidades (incl. C, D y Eb).
+   * - Distribuye equilibradamente las notas entre todas las cuerdas útiles (4–4–4–3 en 4c, 3×5 en 5c)
+   *   evitando el tobogán de 7–8 notas en la 1.ª cuerda, con dedos calculados por sub-posición local.
+   * @param {object} cfg Parámetros del bajo.
+   * @returns {Array<object>} Posición de 2 octavas.
+   */
+  _buildBassTwoOctavePosition({ tuning, rootPc, notesMeta }) {
+    const is5String = tuning.stringCount === 5;
+    let startStr = 0;
+    if (is5String) {
+      const rootOnB = mod12(rootPc - tuning.strings[0]);
+      startStr = rootOnB <= 7 ? 0 : 1;
+    }
+    const startFret = mod12(rootPc - tuning.strings[startStr]);
+    const baseMidi = tuning.strings[startStr] + startFret;
+
+    const targetMidis = [];
+    for (let oct = 0; oct < 2; oct++) {
+      for (const n of notesMeta) targetMidis.push(baseMidi + oct * 12 + n.interval);
+    }
+    targetMidis.push(baseMidi + 24);
+
+    const lastStr = tuning.stringCount - 1;
+    const numStrings = lastStr - startStr + 1;
+    const topMidi = targetMidis[targetMidis.length - 1];
+    const topFretOnG = topMidi - tuning.strings[lastStr];
+    const hardLimit = Math.min(20, Math.max(15, topFretOnG));
+
+    const totalNotes = targetMidis.length;
+    const maxPerStr = Math.ceil(totalNotes / numStrings);
+    const startAnchor = Math.max(1, startFret);
+    const endAnchor = Math.max(1, Math.min(hardLimit - 3, topFretOnG - 3));
+    const strAnchor = (s) => {
+      const t = numStrings > 1 ? (s - startStr) / (numStrings - 1) : 0;
+      return startAnchor + t * (endAnchor - startAnchor);
+    };
+
+    // Programación dinámica sobre (índice de nota, cuerda, cantidad en cuerda, traste previo)
+    let states = new Map();
+    states.set(`${startStr}:1:${startFret}`, {
+      cost: 0,
+      path: [{ stringIndex: startStr, fret: startFret }]
+    });
+
+    for (let i = 1; i < totalNotes; i++) {
+      const m = targetMidis[i];
+      const next = new Map();
+      for (const [key, st] of states.entries()) {
+        const [ps, pcnt, pf] = key.split(':').map(Number);
+        for (let s = ps; s <= Math.min(lastStr, ps + 1); s++) {
+          const f = m - tuning.strings[s];
+          if (f < 0 || f > hardLimit) continue;
+          if (f === 0 && startAnchor > 3) continue;
+          const cnt = s === ps ? pcnt + 1 : 1;
+          if (cnt > maxPerStr + 2) continue;
+
+          let stepCost = Math.abs(f - (strAnchor(s) + 1.5)) * 0.6;
+          if (cnt > maxPerStr) stepCost += s === lastStr ? 20 : 12;
+          if (s > ps) {
+            const drop = pf - f;
+            if (drop > 4) stepCost += (drop - 4) * 4;
+            if (drop < 0) stepCost += Math.abs(drop) * 3;
+            if (pcnt === 1) stepCost += 8;
+          } else {
+            const firstOnStr = st.path[st.path.length - pcnt].fret;
+            const span = f - firstOnStr;
+            const comfySpan = firstOnStr <= 4 ? 3 : 4;
+            if (span > comfySpan + 2) stepCost += (span - comfySpan) * 3;
+          }
+
+          const nKey = `${s}:${cnt}:${f}`;
+          const totalCost = st.cost + stepCost;
+          const cur = next.get(nKey);
+          if (!cur || totalCost < cur.cost) {
+            next.set(nKey, { cost: totalCost, path: [...st.path, { stringIndex: s, fret: f }] });
+          }
+        }
+      }
+      if (next.size > 0) states = next;
+    }
+
+    let bestState = null;
+    for (const st of states.values()) {
+      if (!bestState || st.cost < bestState.cost) bestState = st;
+    }
+    const chosen = bestState ? bestState.path : [];
+
+    const explicitSet = new Set();
+    const fingerMap = new Map();
+    const byString = new Map();
+    let minF = hardLimit;
+    let maxF = 0;
+
+    for (const spot of chosen) {
+      if (!byString.has(spot.stringIndex)) byString.set(spot.stringIndex, []);
+      byString.get(spot.stringIndex).push(spot.fret);
+      if (spot.fret > 0) minF = Math.min(minF, spot.fret);
+      if (spot.fret > maxF) maxF = spot.fret;
+    }
+
+    for (const [sIdx, frets] of byString.entries()) {
+      const localAnchor = Math.max(1, frets.find((f) => f > 0) ?? 1);
+      const fingers = this._assignBassStringFingers(frets, localAnchor);
+      frets.forEach((f, idx) => {
+        const key = `${sIdx}:${f}`;
+        explicitSet.add(key);
+        fingerMap.set(key, fingers[idx]);
+      });
+    }
+
+    const safeMin = Math.min(minF, maxF);
+    const pos1 = Math.max(1, startFret > 1 ? startFret : safeMin);
+    const pos2 = Math.max(pos1, Math.min(hardLimit - 3, maxF - 3));
+    const subZones = pos2 > pos1 + 1
+      ? [
+          { minFret: pos1, maxFret: Math.min(hardLimit, pos1 + 3) },
+          { minFret: pos2, maxFret: Math.min(hardLimit, pos2 + 3) }
+        ]
+      : [{ minFret: safeMin, maxFret: Math.min(hardLimit, Math.max(maxF, safeMin + 3)) }];
+
+    return [
+      {
+        id: 'bass-2oct',
+        label: is5String
+          ? `2 octavas en 5 cuerdas (Pos. ${pos1}${pos2 > pos1 + 1 ? ` → ${pos2}` : ''} · tr. ${safeMin}–${maxF})`
+          : `2 octavas diagonal (Pos. ${pos1} → ${pos2} · tr. ${safeMin}–${maxF})`,
+        minFret: safeMin,
+        maxFret: maxF,
+        requiredMaxFret: Math.max(15, maxF),
+        isDiagonal: true,
+        subZones,
+        explicitSet,
+        fingerMap,
+        hint: is5String
+          ? `Aprovecha la 5.ª cuerda (${startStr === 0 ? 'Si grave' : 'Mi'}) en recorrido balanceado (tr. ${safeMin}–${maxF}) sin sobrecargar la 1.ª cuerda.`
+          : `Recorrido diagonal balanceado (3–4 notas por cuerda, tr. ${safeMin}–${maxF}) con traslados limpios hacia Pos. ${pos2}.`
+      }
+    ];
+  }
+
+  /**
+   * Asigna dedos de bajo para las notas de una cuerda respetando Simandl (1–2–4, sin dedo 3)
+   * en trastes graves 1–4 y 1 dedo por traste (1–2–3–4) desde traste 5+, sin duplicar jamás un dedo
+   * en dos trastes consecutivos de la misma cuerda (A4). Si la cuerda abarca más de una posición
+   * (ej. recorrido diagonal de 2 octavas), divide automáticamente en sub-posiciones locales limpias.
+   * @param {number[]} frets Trastes ascendentes en la cuerda.
+   * @param {number} handAnchor Traste base local de la mano.
+   * @param {string|null} [rootBoxId=null] Identificador de caja si es la cuerda de la raíz.
+   * @returns {number[]} Dedos asignados (0..4).
+   */
+  _assignBassStringFingers(frets, handAnchor, rootBoxId = null) {
+    const nonZero = frets.filter((f) => f > 0);
+    if (nonZero.length === 0) return frets.map(() => 0);
+
+    const span = nonZero[nonZero.length - 1] - nonZero[0];
+    const maxSingleSpan = nonZero[0] <= 4 ? 3 : 4;
+
+    // Si la cuerda excede 4 dedos o una posición cómoda (ej. 4+ notas diagonales / cromática), divide en sub-grupos locales
+    if (nonZero.length > 4 || (nonZero.length >= 4 && span > maxSingleSpan)) {
+      const splitIdx = Math.ceil(nonZero.length / 2);
+      const firstHalf = this._assignBassStringFingers(nonZero.slice(0, splitIdx), nonZero[0], rootBoxId);
+      const secondHalf = this._assignBassStringFingers(nonZero.slice(splitIdx), nonZero[splitIdx], null);
+      const combined = [...firstHalf, ...secondHalf];
+      let k = 0;
+      return frets.map((x) => (x === 0 ? 0 : combined[k++]));
+    }
+
+    const isLowZone = Math.min(...nonZero) <= 4 && Math.max(...nonZero) <= 5;
+    if (isLowZone) {
+      // Simandl estricto en trastes 1–4: nunca dedo 3, nunca repetir dedo 4 en trastes consecutivos
+      if (nonZero.length === 1) {
+        const f = nonZero[0];
+        const d = rootBoxId === 'bass-f4' ? 4 : rootBoxId === 'bass-f2' && f >= 2 ? 2 : f - handAnchor >= 2 ? 4 : f - handAnchor === 1 ? 2 : 1;
+        return frets.map((x) => (x === 0 ? 0 : d));
+      }
+      if (nonZero.length === 2) {
+        const diff = nonZero[1] - nonZero[0];
+        const pair = diff === 1 ? [1, 2] : [1, 4];
+        let k = 0;
+        return frets.map((x) => (x === 0 ? 0 : pair[k++]));
+      }
+      const seq = nonZero.length === 3 ? [1, 2, 4] : [1, 2, 1, 4];
+      let k = 0;
+      return frets.map((x) => (x === 0 ? 0 : seq[Math.min(k++, seq.length - 1)]));
+    }
+
+    // Desde traste 5+: 1 dedo por traste (1FPC: 1–2–3–4), evitando repetir dedos en trastes consecutivos
+    const base = Math.max(1, Math.min(nonZero[0], Math.max(handAnchor, nonZero[nonZero.length - 1] - 3)));
+    const result = frets.map((f) => {
+      if (f === 0) return 0;
+      const offset = f - base;
+      if (offset <= 0) return 1;
+      return Math.min(4, offset + 1);
+    });
+    for (let i = result.length - 1; i > 0; i--) {
+      if (frets[i] > 0 && frets[i - 1] > 0 && result[i] === result[i - 1]) {
+        if (result[i] === 4) result[i - 1] = frets[i] - frets[i - 1] >= 2 ? 2 : 3;
+        else if (result[i - 1] === 1) result[i] = 2;
+        else result[i - 1] = Math.max(1, result[i] - 1);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Asigna el dedo de mano izquierda de respaldo (0 al aire, 1–4) aplicando Simandl (1–2–4)
+   * en trastes graves del bajo y 1 dedo por traste en guitarra y registro medio/agudo del bajo.
    * @param {object} cfg Parámetros ({ fret, minFret, isBass, bassSimandl }).
    * @returns {number} Número de dedo (0..4).
    */
@@ -1232,7 +1732,6 @@ export class ScaleCatalogService {
     const base = Math.max(1, minFret);
     const offset = Math.max(0, fret - base);
     if (isBass && (bassSimandl || fret <= 4)) {
-      // Regla ergonómica Simandl para escala de 34": 1–2–4 en trastes 1–4 (evita tensión del dedo 3)
       if (offset === 0) return 1;
       if (offset === 1) return 2;
       return 4;
@@ -1243,8 +1742,9 @@ export class ScaleCatalogService {
   /**
    * Calcula los MIDI reales de la secuencia reproducible según patrón de estudio
    * (asc-desc, terceras, grupos-3, grupos-4, arpegios) y modo de menor melódica clásica.
+   * Acepta `preferredBaseMidi` para sincronizar la octava reproducida con la caja visible en el diapasón.
    * @param {object} params Parámetros de generación.
-   * @returns {{ midis: number[], droneMidis: number[], labels: string[] }} Secuencia MIDI real + drone modal.
+   * @returns {{ midis: number[], droneMidis: number[] }} Secuencia MIDI real + drone modal.
    */
   buildStudySequence({
     root = 'C',
@@ -1252,18 +1752,28 @@ export class ScaleCatalogService {
     voicingInstrument = 'guitarra',
     pattern = 'asc-desc',
     octaves = 1,
-    classicalMelodicDesc = false
+    classicalMelodicDesc = false,
+    preferredBaseMidi = null
   }) {
     const scale = this.getScaleById(scaleId);
     const normInst = normalizeVoicingInstrument(voicingInstrument);
     const isBass = normInst === 'bajo' || normInst === 'bajo-5';
     const rootPc = NOTE_TO_PC[this._normalizeRoot(root)] ?? 0;
 
-    // Altura base cómoda dentro del rango físico real del instrumento
-    const minMidi = normInst === 'bajo-5' ? 28 : isBass ? 28 : 40;
+    // Altura base cómoda dentro del rango físico real del instrumento (alineada a la caja si se provee)
+    const minMidi = normInst === 'bajo-5' ? 23 : isBass ? 28 : 40;
+    const maxStartMidi = isBass ? 48 : 64;
     let baseMidi = isBass ? 28 + mod12(rootPc - 4) : 40 + mod12(rootPc - 4);
-    if (!isBass && baseMidi < 45) baseMidi += 12; // Sitúa guitarras en un rango cálido y cantable
+    if (!isBass && baseMidi < 45) baseMidi += 12;
     if (baseMidi < minMidi) baseMidi += 12;
+    if (
+      Number.isFinite(preferredBaseMidi) &&
+      mod12(preferredBaseMidi) === rootPc &&
+      preferredBaseMidi >= minMidi &&
+      preferredBaseMidi <= maxStartMidi
+    ) {
+      baseMidi = preferredBaseMidi;
+    }
 
     const octCount = Math.max(1, Math.min(2, Number(octaves) || 1));
     const asc = [];

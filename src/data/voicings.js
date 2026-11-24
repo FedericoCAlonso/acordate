@@ -143,7 +143,7 @@ export const MOVABLE_GUITAR_TEMPLATES = [
   { key: 'm11-s6', quality: 'm11', rootString: 0, offsets: [0, null, 0, 0, -2, null], fingers: [2, null, 3, 4, 1, null], tags: ['extension'] },
   { key: 'dom13-s6', quality: '13', rootString: 0, offsets: [0, null, 0, 1, 2, null], fingers: [1, null, 2, 3, 4, null], tags: ['extension'] },
   { key: '7b9-s5', quality: '7b9', rootString: 1, offsets: [null, 0, -1, 0, -1, null], fingers: [null, 2, 1, 3, 1, null], barre: { from: 2, to: 4, finger: 1, offset: -1 }, tags: ['alterado'] },
-  { key: '7b9-s6', quality: '7b9', rootString: 0, offsets: [0, null, 0, 1, null, 1], fingers: [1, null, 2, 3, null, 4], tags: ['alterado'] },
+  { key: '7b9-s6', quality: '7b9', rootString: 0, offsets: [0, null, 0, 1, 0, 1], fingers: [1, null, 1, 2, 1, 3], barre: { from: 0, to: 4, finger: 1, offset: 0 }, tags: ['alterado'] },
   { key: '7sharp9-s5', quality: '7#9', rootString: 1, offsets: [null, 0, -1, 0, 1, null], fingers: [null, 2, 1, 3, 4, null], tags: ['alterado'] },
   { key: '7sharp11-s6', quality: '7#11', rootString: 0, offsets: [0, null, 0, 1, -1, null], fingers: [2, null, 3, 4, 1, null], tags: ['alterado'] },
   { key: '7alt-s6', quality: '7alt', rootString: 0, offsets: [0, null, 0, 1, 1, null], fingers: [1, null, 2, 3, 4, null], tags: ['alterado'] }
@@ -177,10 +177,10 @@ export const MOVABLE_BASS_TEMPLATES = [
   // Díadas y tríadas de inversión / slash chords en bajo (bajo en 3ª, 5ª o b7)
   { key: 'bass-inv1-maj-dyad', quality: '', rootString: 3, offsets: [null, 2, null, 0], fingers: [null, 3, null, 1], minRootMidi: 46, tags: ['diada', 'inversion'] },
   { key: 'bass-inv1-min-dyad', quality: 'm', rootString: 2, offsets: [1, null, 0, null], fingers: [2, null, 1, null], minRootMidi: 43, tags: ['diada', 'inversion'] },
-  { key: 'bass-inv3-min-slash', quality: 'm', rootString: 3, offsets: [1, 1, null, 0], fingers: [2, 3, null, 1], minRootMidi: 44, tags: ['triada', 'inversion'], allowSlashSeven: true },
+  { key: 'bass-inv3-min-slash', quality: 'm', rootString: 3, offsets: [1, 1, null, 0], fingers: [2, 3, null, 1], minRootMidi: 48, tags: ['triada', 'inversion'], allowSlashSeven: true },
 
   // Disminuidas, aumentadas y suspendidas
-  { key: 'bass-dim-triad', quality: 'dim', rootString: 1, offsets: [null, 0, -2, -4], fingers: [null, 4, 2, 1], minRootMidi: 41, tags: ['triada'] },
+  { key: 'bass-dim-triad', quality: 'dim', rootString: 0, offsets: [0, 1, null, 0], fingers: [1, 2, null, 1], minRootMidi: 35, tags: ['triada', 'decima'] },
   { key: 'bass-aug-triad', quality: 'aug', rootString: 0, offsets: [0, 3, null, 1], fingers: [1, 4, null, 2], minRootMidi: 33, tags: ['triada', 'decima'] },
   { key: 'bass-sus4-e', quality: 'sus4', rootString: 0, offsets: [0, 2, null, 2], fingers: [1, 3, null, 4], minRootMidi: 33, tags: ['triada'] },
   { key: 'bass-sus2-a', quality: 'sus2', rootString: 1, offsets: [null, 0, 2, 4], fingers: [null, 1, 2, 4], minRootMidi: 38, tags: ['triada'] },

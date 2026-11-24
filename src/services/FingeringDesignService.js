@@ -175,10 +175,10 @@ export class FingeringDesignService {
     };
 
     // 1) Acordes propios del usuario que coincidan con el acorde y cantidad de cuerdas
-    const targetChord = Chord.parse(chordSymbol).symbol;
+    const targetChord = Chord.parse(chordSymbol).americanSymbol;
     for (const raw of customChords || []) {
       try {
-        if (Chord.parse(raw.chord).symbol === targetChord) {
+        if (Chord.parse(raw.chord).americanSymbol === targetChord) {
           pushUnique(raw);
         }
       } catch {
@@ -194,7 +194,7 @@ export class FingeringDesignService {
     if (pool.length < 6) {
       try {
         const sets = isBass
-          ? (tuning.stringCount === 5 ? [[1, 2, 3, 4], [2, 3, 4]] : [[0, 2, 3], [1, 2, 3], [0, 3]])
+          ? (tuning.stringCount === 5 ? [[1, 3, 4], [2, 3, 4], [1, 4], [0, 2, 3]] : [[0, 2, 3], [1, 2, 3], [0, 3]])
           : [[1, 2, 3, 4], [2, 3, 4, 5], [0, 2, 3, 4]];
         for (const stringSet of sets) {
           const generated = this._gen.generate(chordSymbol, {

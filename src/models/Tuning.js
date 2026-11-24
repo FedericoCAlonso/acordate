@@ -88,6 +88,14 @@ export class Tuning {
   }
 
   /**
+   * Nombres de nota limpios (sin número de octava) para etiquetar cada cuerda al aire (ej. ["E", "A", "D", "G", "B", "E"]).
+   * @returns {string[]} Etiquetas de cuerdas de grave a aguda.
+   */
+  get stringLabels() {
+    return this.noteNames.map((n) => String(n || '').replace(/\d+$/, ''));
+  }
+
+  /**
    * Calcula el número MIDI real al pisar un traste en una cuerda dada (0 = cuerda al aire).
    * @param {number} stringIndex Índice de cuerda (0 = más grave).
    * @param {number|null} fret Número de traste (0..24) o null si la cuerda no suena.
