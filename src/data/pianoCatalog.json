@@ -54,7 +54,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 55, "target": 88, "step": 5 },
-    "abc": "X:1\nT:Tríadas en bloque en Do\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"[CEG] [CEG] | \"Am\"[CEA] [CEA] | \"F\"[CFA] [CFA] | \"G\"[B,DG] [B,DG] | \"C\"[CEG]2 |]\nV:2 clef=bass\nC,2 | A,,2 | F,,2 | G,,2 | C,2 |]",
+    "abc": "X:1\nT:Tríadas en bloque en Do\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1-3-5\"[CEG] [CEG] | \"Am\"\"^1-2-5\"[CEA] [CEA] | \"F\"\"^1-3-5\"[CFA] [CFA] | \"G\"\"^1-2-5\"[B,DG] [B,DG] | \"C\"\"^1-3-5\"[CEG]2 |]\nV:2 clef=bass\n\"_1\"C,2 | \"_3\"A,,2 | \"_5\"F,,2 | \"_4\"G,,2 | \"_1\"C,2 |]",
     "goals": [
       "Hacer sonar las tres notas del acorde exactamente al mismo tiempo",
       "Reconocer las notas comunes entre C, Am y F para minimizar saltos"
@@ -75,7 +75,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 60, "target": 92, "step": 5 },
-    "abc": "X:1\nT:Pulso y coordinación básica\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"E E G G | \"F\"A A \"C\"G2 | \"G\"F F \"C\"E E | \"G\"D D \"C\"C2 | \"C\"E G c G | \"F\"A F \"C\"G2 | \"G\"F D B, D | \"C\"C4 |]\nV:2 clef=bass\nC,2 G,2 | F,2 C,2 | G,,2 C,2 | G,,2 C,2 | C,2 E,2 | F,2 C,2 | G,,2 G,,2 | C,4 |]",
+    "abc": "X:1\nT:Pulso y coordinación básica\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1\"E E \"^3\"G G | \"F\"\"^4\"A A \"C\"\"^3\"G2 | \"G\"\"^2\"F F \"C\"\"^1\"E E | \"G\"\"^2\"D D \"C\"\"^1\"C2 | \"C\"\"^1\"E \"^2\"G \"^5\"c \"^2\"G | \"F\"\"^5\"A \"^3\"F \"C\"\"^4\"G2 | \"G\"\"^3\"F \"^2\"D \"^1\"B, \"^3\"D | \"C\"\"^2\"C4 |]\nV:2 clef=bass\n\"_5\"C,2 \"_1\"G,2 | \"_2\"F,2 \"_3\"C,2 | \"_5\"G,,2 \"_2\"C,2 | \"_5\"G,,2 \"_2\"C,2 | \"_5\"C,2 \"_3\"E,2 | \"_2\"F,2 \"_3\"C,2 | \"_5\"G,,2 G,,2 | \"_2\"C,4 |]",
     "goals": [
       "Sostener las blancas de mano izquierda durante sus dos tiempos completos",
       "Mantener el tempo constante al cambiar de negras a blancas y seguir cada cambio armónico"
@@ -138,7 +138,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 65, "target": 105, "step": 5 },
-    "abc": "X:1\nT:Arpegios de tríadas en Do\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^3\"G \"^2\"E \"^1\"C \"^2\"E | \"F\"\"^1\"C \"^2\"F \"^4\"A \"^5\"c \"^4\"A \"^2\"F \"^1\"C \"^2\"F | \"G\"\"^1\"D \"^2\"G \"^4\"B \"^5\"d \"^4\"B \"^2\"G \"^1\"D \"^2\"G | \"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^1\"C4 |]\nV:2 clef=bass\nC,4 G,4 | F,,4 C,4 | G,,4 D,4 | C,8 |]",
+    "abc": "X:1\nT:Arpegios de tríadas en Do\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^3\"G \"^2\"E \"^1\"C \"^2\"E | \"F\"\"^1\"C \"^2\"F \"^4\"A \"^5\"c \"^4\"A \"^2\"F \"^1\"C \"^2\"F | \"G\"\"^1\"D \"^2\"G \"^4\"B \"^5\"d \"^4\"B \"^2\"G \"^1\"D \"^2\"G | \"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^1\"C4 |]\nV:2 clef=bass\n\"_5\"C,4 \"_1\"G,4 | \"_5\"F,,4 \"_1\"C,4 | \"_5\"G,,4 \"_1\"D,4 | \"_5\"C,8 |]",
     "goals": [
       "Acompañar la extensión de la octava con una rotación suave de muñeca",
       "Usar 1-2-3-5 en fundamental y 1-2-4-5 en las 2.ª inversiones (F y G) sin rigidez"
@@ -159,7 +159,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 60, "target": 95, "step": 5 },
-    "abc": "X:1\nT:Cadencia I-IV-V-I con inversiones\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"[CEG] [CEG] | \"F\"[CFA] [CFA] | \"G\"[B,DG] [B,DG] | \"C\"[CEG]2 | \"F\"[CFA] [CFA] | \"C/G\"[CEG] [CEG] | \"G7\"[B,FG] [B,FG] | \"C\"[CEG]2 |]\nV:2 clef=bass\nC,2 | F,,2 | G,,2 | C,2 | F,,2 | G,,2 | G,,2 | C,2 |]",
+    "abc": "X:1\nT:Cadencia I-IV-V-I con inversiones\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1-3-5\"[CEG] [CEG] | \"F\"\"^1-3-5\"[CFA] [CFA] | \"G\"\"^1-2-5\"[B,DG] [B,DG] | \"C\"\"^1-3-5\"[CEG]2 | \"F\"\"^1-3-5\"[CFA] [CFA] | \"C/G\"\"^1-3-5\"[CEG] [CEG] | \"G7\"\"^1-4-5\"[B,FG] [B,FG] | \"C\"\"^1-3-5\"[CEG]2 |]\nV:2 clef=bass\n\"_1\"C,2 | \"_5\"F,,2 | \"_4\"G,,2 | \"_1\"C,2 | \"_5\"F,,2 | \"_4\"G,,2 | \"_4\"G,,2 | \"_1\"C,2 |]",
     "goals": [
       "Enlazar las tríadas manteniendo siempre la nota común fija en la mano derecha",
       "Reconocer al tacto la 2.ª inversión de Fa ([CFA]) y la 1.ª inversión de Sol ([B,DG])"
@@ -180,7 +180,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 68, "target": 108, "step": 5 },
-    "abc": "X:1\nT:Bajo Alberti clásico\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"E4 G4 | \"G7\"F4 D4 | \"C\"E2 G2 c2 G2 | \"G\"B4 z4 | \"C\"c4 G4 | \"F\"A4 F4 | \"C/G\"G2 E2 \"G7\"F2 D2 | \"C\"C8 |]\nV:2 clef=bass\nC,G, E,G, C,G, E,G, | B,,G, F,G, B,,G, F,G, | C,G, E,G, C,G, E,G, | G,,D, B,,D, G,,D, B,,D, | C,G, E,G, C,G, E,G, | C,A, F,A, C,A, F,A, | C,G, E,G, B,,G, F,G, | C,G, E,G, C,4 |]",
+    "abc": "X:1\nT:Bajo Alberti clásico\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^3\"E4 \"^5\"G4 | \"G7\"\"^4\"F4 \"^2\"D4 | \"C\"\"^1\"E2 \"^2\"G2 \"^5\"c2 \"^2\"G2 | \"G\"\"^4\"B4 z4 | \"C\"\"^5\"c4 \"^2\"G4 | \"F\"\"^3\"A4 \"^1\"F4 | \"C/G\"\"^4\"G2 \"^2\"E2 \"G7\"\"^3\"F2 \"^2\"D2 | \"C\"\"^1\"C8 |]\nV:2 clef=bass\n\"_5\"C,\"_1\"G, \"_3\"E,\"_1\"G, C,G, E,G, | \"_5\"B,,\"_1\"G, \"_2\"F,\"_1\"G, B,,G, F,G, | C,G, E,G, C,G, E,G, | \"_5\"G,,\"_1\"D, \"_3\"B,,\"_1\"D, G,,D, B,,D, | \"_5\"C,\"_1\"G, \"_3\"E,\"_1\"G, C,G, E,G, | \"_5\"C,\"_1\"A, \"_2\"F,\"_1\"A, C,A, F,A, | C,G, E,G, B,,G, F,G, | C,G, E,G, \"_5\"C,4 |]",
     "goals": [
       "Tocar el bajo Alberti (grave–agudo–medio–agudo) mucho más suave que la melodía",
       "Usar rotación leve del antebrazo izquierdo (5-1-3-1 en C/G y 5-1-2-1 en G7/F)"
@@ -390,7 +390,7 @@
     "key": "C",
     "timeSignature": "4/4",
     "tempo": { "start": 70, "target": 116, "step": 5 },
-    "abc": "X:1\nT:Arpegios de cuatríadas\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c \"^4\"B \"^3\"G \"^2\"E | \"Dm7\"\"^1\"D \"^2\"F \"^3\"A \"^4\"c \"^5\"d \"^4\"c \"^3\"A \"^2\"F | \"G7\"\"^1\"G \"^2\"B \"^3\"d \"^4\"f \"^5\"g \"^4\"f \"^3\"d \"^2\"B | \"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c4 |]\nV:2 clef=bass\nC,4 G,4 | D,4 A,4 | G,,4 D,4 | C,8 |]",
+    "abc": "X:1\nT:Arpegios de cuatríadas\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c \"^4\"B \"^3\"G \"^2\"E | \"Dm7\"\"^1\"D \"^2\"F \"^3\"A \"^4\"c \"^5\"d \"^4\"c \"^3\"A \"^2\"F | \"G7\"\"^1\"G \"^2\"B \"^3\"d \"^4\"f \"^5\"g \"^4\"f \"^3\"d \"^2\"B | \"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c4 |]\nV:2 clef=bass\n\"_5\"C,4 \"_1\"G,4 | \"_5\"D,4 \"_1\"A,4 | \"_5\"G,,4 \"_1\"D,4 | \"_5\"C,8 |]",
     "goals": [
       "Tocar las 4 notas de cada acorde con séptima (1–2–3–4–5) sin quiebres de muñeca",
       "Reconocer de oído la diferencia entre maj7, m7 y dominante 7"
@@ -546,10 +546,10 @@
     "focus": {
       "piano": "Posición de 5 dedos en mano derecha, fraseo legato de 4 compases y acompañamiento sencillo en clave de fa."
     },
-    "abc": "X:1\nT:Oda a la Alegría (Beethoven)\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^3\"E3/2 \"^2\"D/2 \"^2\"D2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"C\"\"^1\"C2 |\n\"G\"\"^2\"D \"^2\"D \"C\"\"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"C\"\"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"^3\"E \"^2\"D | \"C\"\"^2\"C \"^3\"D \"G\"\"^1\"G,2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"C\"\"^1\"C2 |]\nV:2 clef=bass\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,4 |\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,2 C,2 |\nG,,2 C,2 | G,,2 C,2 | G,,2 G,,2 | C,2 G,,2 |\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,2 C,2 |]",
+    "abc": "X:1\nT:Oda a la Alegría (Beethoven)\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^3\"E3/2 \"^2\"D/2 \"^2\"D2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"C\"\"^1\"C2 |\n\"G\"\"^2\"D \"^2\"D \"C\"\"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"C\"\"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^2\"D \"G\"\"^1\"G,2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"C\"\"^1\"C2 |]\nV:2 clef=bass\n\"_3\"C,2 \"_1\"G,2 | \"_5\"G,,2 \"_1\"G,2 | \"_3\"C,2 \"_1\"G,2 | \"_5\"G,,4 |\n\"_3\"C,2 \"_1\"G,2 | \"_5\"G,,2 \"_1\"G,2 | \"_3\"C,2 \"_1\"G,2 | \"_5\"G,,2 \"_3\"C,2 |\n\"_5\"G,,2 \"_3\"C,2 | \"_5\"G,,2 \"_3\"C,2 | \"_5\"G,,2 G,,2 | \"_3\"C,2 \"_5\"G,,2 |\n\"_3\"C,2 \"_1\"G,2 | \"_5\"G,,2 \"_1\"G,2 | \"_3\"C,2 \"_1\"G,2 | \"_5\"G,,2 \"_3\"C,2 |]",
     "goals": [
       "Respirar al final de cada frase de 4 compases con legato continuo",
-      "Preparar el compás 12 con dedos 2–3–1 (C–D–G,) para regresar naturalmente con dedo 3 en Mi"
+      "Preparar el compás 12 con dedos 1–2–1 (C–D–G,) para regresar naturalmente con dedo 3 en Mi"
     ],
     "notes": "Ideal como primera pieza completa en gran pentagrama. Practicá cada mano por separado con el selector MD / MI.",
     "origin": "builtin",
@@ -636,7 +636,7 @@
     "focus": {
       "piano": "Equilibrio entre melodía clásica cantabile en mano derecha y bajo Alberti liviano en mano izquierda."
     },
-    "abc": "X:1\nT:Sonatina en Sol mayor Anh. 5 n.º 1 (Moderato)\nM:4/4\nL:1/8\nK:G\n%%staves {1 2}\nV:1 clef=treble\nd2 | B2 G2 G2 AB | c2 A2 A2 Bc | d2 B2 G2 d2 | cB AG A2 d2 |\nB2 G2 G2 AB | c2 A2 A2 Bc | d2 B2 cA GF | G4 z2 |]\nV:2 clef=bass\nz2 | G,D B,D G,D B,D | F,D A,D F,D A,D | G,D B,D G,D B,D | D,2 F,2 D,2 z2 |\nG,D B,D G,D B,D | F,D A,D F,D A,D | G,2 B,2 C2 D2 | G,4 z2 |]",
+    "abc": "X:1\nT:Sonatina en Sol mayor Anh. 5 n.º 1 (Moderato)\nM:4/4\nL:1/8\nK:G\n%%staves {1 2}\nV:1 clef=treble\n\"^5\"d2 | \"^3\"B2 \"^1\"G2 G2 \"^2\"A\"^3\"B | \"^4\"c2 \"^2\"A2 A2 \"^3\"B\"^4\"c | \"^5\"d2 \"^3\"B2 \"^1\"G2 \"^5\"d2 | \"^4\"c\"^3\"B \"^2\"A\"^1\"G \"^2\"A2 \"^5\"d2 |\n\"^3\"B2 \"^1\"G2 G2 \"^2\"A\"^3\"B | \"^4\"c2 \"^2\"A2 A2 \"^3\"B\"^4\"c | \"^5\"d2 \"^3\"B2 \"^4\"c\"^2\"A \"^1\"G\"^2\"F | \"^3\"G4 z2 |]\nV:2 clef=bass\nz2 | \"_5\"G,\"_1\"D \"_3\"B,\"_1\"D G,D B,D | \"_5\"F,\"_1\"D \"_3\"A,\"_1\"D F,D A,D | G,D B,D G,D B,D | \"_5\"D,2 \"_3\"F,2 \"_5\"D,2 z2 |\nG,D B,D G,D B,D | F,D A,D F,D A,D | \"_5\"G,2 \"_3\"B,2 \"_2\"C2 \"_1\"D2 | \"_5\"G,4 z2 |]",
     "goals": [
       "Conectar la anacrusa de Re hacia el tiempo 1 con ligereza clásica",
       "Mantener el bajo Alberti de mano izquierda por debajo del volumen de la melodía"
@@ -696,7 +696,7 @@
     "focus": {
       "piano": "Relevo continuo de arpegios entre mano izquierda y mano derecha sin cortes rítmicos, y control expresivo de la anacrusa."
     },
-    "abc": "X:1\nT:Para Elisa WoO 59 (Beethoven)\nM:3/8\nL:1/16\nK:Am\n%%staves {1 2}\nV:1 clef=treble\ne^d | e^deB=dc | A2 z CEA | B2 z E^GB | c2 z Ee^d |\ne^deB=dc | A2 z CEA | B2 z EcB | A4 |]\nV:2 clef=bass\nz2 | z6 | A,,E,A, z3 | E,,E,^G, z3 | A,,E,A, z3 |\nz6 | A,,E,A, z3 | E,,E,^G, z3 | A,,E,A, z |]",
+    "abc": "X:1\nT:Para Elisa WoO 59 (Beethoven)\nM:3/8\nL:1/16\nK:Am\n%%staves {1 2}\nV:1 clef=treble\n\"^5\"e\"^4\"^d | \"^5\"e\"^4\"^d\"^5\"e\"^2\"B\"^4\"=d\"^3\"c | \"^1\"A2 z \"^1\"C\"^2\"E\"^4\"A | \"^5\"B2 z \"^1\"E\"^2\"^G\"^4\"B | \"^5\"c2 z \"^1\"E\"^5\"e\"^4\"^d |\n\"^5\"e\"^4\"^d\"^5\"e\"^2\"B\"^4\"=d\"^3\"c | \"^1\"A2 z \"^1\"C\"^2\"E\"^4\"A | \"^5\"B2 z \"^1\"E\"^3\"c\"^2\"B | \"^1\"A4 |]\nV:2 clef=bass\nz2 | z6 | \"_5\"A,,\"_2\"E,\"_1\"A, z3 | \"_5\"E,,\"_2\"E,\"_1\"^G, z3 | \"_5\"A,,\"_2\"E,\"_1\"A, z3 |\nz6 | A,,E,A, z3 | E,,E,^G, z3 | A,,E,A, z |]",
     "goals": [
       "Unir el arpegio de mano izquierda (A,, E, A,) con la entrada de mano derecha (C E A) como una sola línea",
       "Respetar el contraste entre Re# y Re natural (=d) con fraseo cantabile en 3/8"

@@ -121,7 +121,8 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
   const whiteH = size === 'sm' ? 76 : size === 'md' ? 104 : 118;
   const blackH = Math.round(whiteH * 0.62);
   const padX = 4;
-  const padTop = 6;
+  const showHandBands = size !== 'sm' && ((pianoVoicing.lhMidis?.length > 0) || (pianoVoicing.rhMidis?.length > 0));
+  const padTop = showHandBands ? 22 : 6;
   const padBottom = size === 'sm' ? 8 : 16;
 
   const { whites, blacks, totalWidth } = buildKeyboardGeometry(startMidi, endMidi, whiteW);
@@ -134,6 +135,45 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
     role: 'img',
     'aria-label': `Teclado de piano para ${formatChordSymbol(pianoVoicing.chord, notation)} (${pianoVoicing.label})`
   });
+
+  // Indicadores superiores claros de mano (MI / MD) alineados con el rango real de teclas de cada mano
+  if (showHandBands) {
+    const keyCenterByMidi = new Map();
+    for (const w of whites) keyCenterByMidi.set(w.midi, { left: padX + w.x, right: padX + w.x + w.w, cx: padX + w.x + w.w / 2 });
+    for (const b of blacks) keyCenterByMidi.set(b.midi, { left: padX + b.x, right: padX + b.x + b.w, cx: padX + b.x + b.w / 2 });
+
+    const drawHandSpan = (handMidis, label, colorVar) => {
+      const spans = (handMidis || []).map((m) => keyCenterByMidi.get(m)).filter(Boolean);
+      if (spans.length === 0) return;
+      const x1 = Math.min(...spans.map((s) => s.left)) + 2;
+      const x2 = Math.max(...spans.map((s) => s.right)) - 2;
+      const cx = (x1 + x2) / 2;
+      if (x2 - x1 >= 14) {
+        svg.appendChild(
+          svgEl('path', {
+            d: `M ${x1.toFixed(1)} 17 L ${x1.toFixed(1)} 14 L ${x2.toFixed(1)} 14 L ${x2.toFixed(1)} 17`,
+            fill: 'none',
+            stroke: colorVar,
+            'stroke-width': 1.4,
+            'stroke-linecap': 'round'
+          })
+        );
+      }
+      const badge = svgEl('text', {
+        x: cx.toFixed(1),
+        y: 11,
+        'text-anchor': 'middle',
+        fill: colorVar,
+        'font-size': 9.5,
+        'font-weight': '700'
+      });
+      badge.textContent = label;
+      svg.appendChild(badge);
+    };
+
+    drawHandSpan(pianoVoicing.lhMidis, 'MI', 'var(--md-sys-color-on-surface)');
+    drawHandSpan(pianoVoicing.rhMidis, 'MD', 'var(--md-sys-color-tertiary)');
+  }
 
   // Marco sutil superior (listón de fieltro rojo/oscuro de estudio)
   svg.appendChild(
@@ -315,7 +355,8 @@ export class PianoKeyboardView {
     const whiteH = 136;
     const blackH = 84;
     const padX = 8;
-    const padTop = 10;
+    const showScaleHandBands = labelMode === 'finger';
+    const padTop = showScaleHandBands ? 24 : 10;
     const padBottom = 20;
 
     const { whites, blacks, totalWidth } = buildKeyboardGeometry(startMidi, endMidi, whiteW);
@@ -328,6 +369,45 @@ export class PianoKeyboardView {
       role: 'img',
       'aria-label': `Teclado de piano para ${formatChordSymbol(root, notation)} ${scale.name}`
     });
+
+    if (showScaleHandBands) {
+      const keyRects = new Map();
+      for (const w of whites) keyRects.set(w.midi, { left: padX + w.x, right: padX + w.x + w.w });
+      for (const b of blacks) keyRects.set(b.midi, { left: padX + b.x, right: padX + b.x + b.w });
+      const activeDots = (dots || []).filter((d) => d.inPosition && d.finger);
+      const lhDots = activeDots.filter((d) => d.hand === 'lh');
+      const rhDots = activeDots.filter((d) => d.hand !== 'lh');
+
+      const drawScaleSpan = (list, label, colorVar) => {
+        const boxes = list.map((d) => keyRects.get(d.midi)).filter(Boolean);
+        if (boxes.length === 0) return;
+        const x1 = Math.min(...boxes.map((b) => b.left)) + 3;
+        const x2 = Math.max(...boxes.map((b) => b.right)) - 3;
+        const cx = (x1 + x2) / 2;
+        svg.appendChild(
+          svgEl('path', {
+            d: `M ${x1.toFixed(1)} 19 L ${x1.toFixed(1)} 15 L ${x2.toFixed(1)} 15 L ${x2.toFixed(1)} 19`,
+            fill: 'none',
+            stroke: colorVar,
+            'stroke-width': 1.5,
+            'stroke-linecap': 'round'
+          })
+        );
+        const lbl = svgEl('text', {
+          x: cx.toFixed(1),
+          y: 12,
+          'text-anchor': 'middle',
+          fill: colorVar,
+          'font-size': 10.5,
+          'font-weight': '700'
+        });
+        lbl.textContent = label;
+        svg.appendChild(lbl);
+      };
+
+      drawScaleSpan(lhDots, 'MI (5–1)', 'var(--md-sys-color-on-surface)');
+      drawScaleSpan(rhDots, 'MD (1–5)', 'var(--md-sys-color-tertiary)');
+    }
 
     svg.appendChild(
       svgEl('rect', {

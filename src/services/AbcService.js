@@ -361,6 +361,10 @@ export class AbcService {
 
     // 3) Filtra de forma independiente las 4 capas de anotaciones ("...") y respeta cifrado latino/americano
     if (isPiano) {
+      // En gran pentagrama de piano, asegura aire vertical limpio entre sistemas para cifrados y digitaciones 1-5
+      if (!/^%%staffsep\b/m.test(result)) {
+        result = result.replace(/^(K:[^\n]*)/m, '$1\n%%staffsep 50\n%%sysstaffsep 44');
+      }
       // En piano, los números 1–5 en V:1 (o voz única en sol) corresponden a Mano Derecha y en V:2 (clave de fa) a Mano Izquierda
       let currentVoiceId = '1';
       result = result
@@ -575,51 +579,227 @@ export class AbcService {
 
   /**
    * Clasifica visualmente cada texto `.abcjs-chord` / `.abcjs-annotation` dentro del SVG
-   * (aplicando clases semánticas por capa) y desplaza con precisión geométrica cualquier par
-   * de etiquetas cuyas cajas se pisen, garantizando lectura limpia de acordes, mano izq. y mano der.
+   * (aplicando clases semánticas por capa), centra horizontalmente cada digitación sobre la
+   * cabeza de su nota real y organiza estrictamente las bandas verticales (digitaciones pegadas
+   * al pentagrama/nota, cifrados de acorde siempre arriba en una línea uniforme y MI de piano
+   * siempre centrada debajo del pentagrama en clave de Fa) sin saltos ni inversiones.
    * @param {HTMLElement} container Contenedor DOM del SVG renderizado por abcjs.
+   * @param {{ isPiano?: boolean }} [options={}] Opciones de instrumento.
    */
   _tagAndResolveAnnotationCollisions(container, { isPiano = false } = {}) {
     const svg = container.querySelector('svg');
     if (!svg || typeof svg.getBBox !== 'function') return;
 
+    const extractClassNum = (elNode, prefix) => {
+      const cls = elNode?.getAttribute?.('class') || '';
+      const m = cls.match(new RegExp(`\\b${prefix}(\\d+)\\b`));
+      return m ? Number(m[1]) : null;
+    };
+
+    const setTextCenterX = (textNode, cx) => {
+      const val = cx.toFixed(2);
+      textNode.setAttribute('text-anchor', 'middle');
+      textNode.setAttribute('x', val);
+      const tspans = textNode.querySelectorAll('tspan');
+      for (const ts of tspans) {
+        ts.setAttribute('x', val);
+      }
+    };
+
+    const shiftTextY = (textNode, dy) => {
+      if (!Number.isFinite(dy) || Math.abs(dy) < 0.3) return;
+      const curYAttr = parseFloat(textNode.getAttribute('y'));
+      if (Number.isFinite(curYAttr)) {
+        textNode.setAttribute('y', (curYAttr + dy).toFixed(2));
+      } else {
+        const existingT = textNode.getAttribute('transform') || '';
+        textNode.setAttribute('transform', `${existingT} translate(0, ${dy.toFixed(2)})`.trim());
+      }
+    };
+
+    const measureNoteInk = (noteGroup) => {
+      if (!noteGroup) return null;
+      const heads = [...noteGroup.querySelectorAll('.abcjs-notehead')];
+      const inkParts = [...noteGroup.querySelectorAll('.abcjs-notehead, .abcjs-stem, .abcjs-ledger, .abcjs-flag, .abcjs-dot')];
+      let headMinX = Infinity;
+      let headMaxX = -Infinity;
+      for (const h of heads) {
+        try {
+          const hb = h.getBBox();
+          if (hb && hb.width > 0) {
+            headMinX = Math.min(headMinX, hb.x);
+            headMaxX = Math.max(headMaxX, hb.x + hb.width);
+          }
+        } catch {
+          // Ignora cabezas sin layout
+        }
+      }
+      let inkTop = Infinity;
+      let inkBottom = -Infinity;
+      for (const p of inkParts) {
+        try {
+          const pb = p.getBBox();
+          if (pb && (pb.width > 0 || pb.height > 0)) {
+            inkTop = Math.min(inkTop, pb.y);
+            inkBottom = Math.max(inkBottom, pb.y + pb.height);
+          }
+        } catch {
+          // Ignora trazos sin layout
+        }
+      }
+      if (!Number.isFinite(headMinX) || !Number.isFinite(inkTop)) return null;
+      return {
+        headCx: (headMinX + headMaxX) / 2,
+        inkTop,
+        inkBottom
+      };
+    };
+
     try {
-      // Mide el centro vertical de cada sistema/pentagrama para distinguir etiquetas arriba vs abajo
-      const staffLines = [...svg.querySelectorAll('.abcjs-staff')];
-      const staffCenters = [];
-      for (const st of staffLines) {
+      // 1) Inventario exacto de cada pentagrama individual (.abcjs-staff) con su línea (l) y voz (v)
+      const staffEls = [...svg.querySelectorAll('.abcjs-staff')];
+      const staffs = [];
+      for (const st of staffEls) {
         try {
           const b = st.getBBox();
-          if (b && b.width > 0) staffCenters.push(b.y + b.height / 2);
+          if (b && b.width > 0) {
+            staffs.push({
+              el: st,
+              top: b.y,
+              bottom: b.y + b.height,
+              center: b.y + b.height / 2,
+              lineIdx: extractClassNum(st, 'abcjs-l'),
+              voiceIdx: extractClassNum(st, 'abcjs-v'),
+              inkTop: b.y,
+              inkBottom: b.y + b.height
+            });
+          }
         } catch {
           // Ignora nodos ocultos
         }
       }
-      staffCenters.sort((a, b) => a - b);
-      // Agrupa líneas de un mismo pentagrama que estén a menos de 45px entre sí
-      const systems = [];
-      for (const cy of staffCenters) {
-        if (systems.length === 0 || cy - systems[systems.length - 1].center > 45) {
-          systems.push({ center: cy, sum: cy, count: 1 });
-        } else {
-          const last = systems[systems.length - 1];
-          last.sum += cy;
-          last.count += 1;
-          last.center = last.sum / last.count;
+      staffs.sort((a, b) => a.top - b.top);
+
+      // Agrupa por línea para distinguir pentagrama superior (Sol/MD) e inferior (Fa/MI) en gran pentagrama
+      const staffsByLine = new Map();
+      for (const st of staffs) {
+        const lk = st.lineIdx ?? 0;
+        if (!staffsByLine.has(lk)) staffsByLine.set(lk, []);
+        st.staffInLine = staffsByLine.get(lk).length;
+        staffsByLine.get(lk).push(st);
+      }
+
+      const findStaffForNode = (node, cy) => {
+        const lineIdx = extractClassNum(node, 'abcjs-l');
+        const voiceIdx = extractClassNum(node, 'abcjs-v');
+        if (lineIdx !== null && staffsByLine.has(lineIdx)) {
+          const lineStaffs = staffsByLine.get(lineIdx);
+          if (lineStaffs.length === 1) return lineStaffs[0];
+          if (isPiano && voiceIdx !== null) {
+            return voiceIdx === 0 ? lineStaffs[0] : lineStaffs[Math.min(1, lineStaffs.length - 1)];
+          }
+          const exactVoice = voiceIdx !== null ? lineStaffs.find((s) => s.voiceIdx === voiceIdx) : null;
+          if (exactVoice) return exactVoice;
+          let best = lineStaffs[0];
+          let bestD = Math.abs(cy - best.center);
+          for (const cand of lineStaffs) {
+            const d = Math.abs(cy - cand.center);
+            if (d < bestD) { best = cand; bestD = d; }
+          }
+          return best;
+        }
+        let best = staffs[0] || null;
+        let bestD = best ? Math.abs(cy - best.center) : Infinity;
+        for (const cand of staffs) {
+          const d = Math.abs(cy - cand.center);
+          if (d < bestD) { best = cand; bestD = d; }
+        }
+        return best;
+      };
+
+      // Mide también corchetes/barras de corcheas y ligaduras para que nunca queden pisados
+      for (const beam of svg.querySelectorAll('.abcjs-beam-elem, .abcjs-slur')) {
+        try {
+          const bb = beam.getBBox();
+          if (!bb || (bb.width === 0 && bb.height === 0)) continue;
+          const st = findStaffForNode(beam, bb.y + bb.height / 2);
+          if (st) {
+            st.inkTop = Math.min(st.inkTop, bb.y);
+            st.inkBottom = Math.max(st.inkBottom, bb.y + bb.height);
+          }
+        } catch {
+          // Ignora elementos sin layout
         }
       }
 
       const textNodes = [...svg.querySelectorAll('text.abcjs-chord, text.abcjs-annotation')];
       if (textNodes.length === 0) return;
 
+      // 2) Clasifica semánticamente, aplica clases CSS finales y centra horizontalmente sobre la cabeza de nota
       const byZone = new Map();
-      const tierAbove = { leftHand: 0, rightHand: 1, other: 2, chord: 3 };
-      const tierBelow = { leftHand: 0, rightHand: 0, other: 1, chord: 2 };
 
       for (const node of textNodes) {
         const text = (node.textContent || '').trim();
         if (!text) continue;
 
+        let initBox;
+        try {
+          initBox = node.getBBox();
+        } catch {
+          continue;
+        }
+        if (!initBox || initBox.width === 0 || initBox.height === 0) continue;
+
+        const initCy = initBox.y + initBox.height / 2;
+        const staff = findStaffForNode(node, initCy);
+        const staffId = staff ? staffs.indexOf(staff) : 0;
+        const voiceIdx = extractClassNum(node, 'abcjs-v') ?? 0;
+        const isExplicitChord = node.classList.contains('abcjs-chord');
+        const isPianoDigit = isPiano && !isExplicitChord && /^[1-5](?:[\s–-][1-5])*$/.test(text);
+
+        let side = staff ? (initCy <= staff.center ? 'up' : 'down') : 'up';
+        let kind;
+
+        if (isExplicitChord) {
+          kind = 'chord';
+          side = 'up';
+        } else if (isPianoDigit) {
+          const isLowerStaff = voiceIdx >= 1 || (staff && staff.staffInLine >= 1);
+          if (isLowerStaff) {
+            kind = 'leftHand';
+            side = 'down';
+            node.classList.add('acordate-ann--lh', 'acordate-ann--fingering', 'acordate-ann--piano-lh');
+          } else {
+            kind = 'rightHand';
+            side = 'up';
+            node.classList.add('acordate-ann--rh', 'acordate-ann--fingering', 'acordate-ann--piano-rh');
+          }
+        } else if (side === 'down') {
+          kind = classifyAbcAnnotation(`_${text}`, { isRenderedSvg: true });
+          node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : 'other'}`);
+        } else {
+          kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
+          if (kind === 'chord' && node.classList.contains('abcjs-annotation')) {
+            kind = classifyAbcAnnotation(`^${text}`, { isRenderedSvg: true });
+          }
+          node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : kind === 'chord' ? 'chord' : 'other'}`);
+          if (kind === 'leftHand' || kind === 'rightHand') {
+            node.classList.add('acordate-ann--fingering');
+          }
+        }
+
+        if (isExplicitChord) {
+          node.classList.add('acordate-ann--chord');
+        }
+
+        // Centra horizontalmente digitaciones y marcas de nota exactamente sobre la cabeza de nota padre
+        const noteGroup = node.closest ? node.closest('.abcjs-note') : null;
+        const noteInk = measureNoteInk(noteGroup);
+        if (noteInk && (kind === 'leftHand' || kind === 'rightHand' || (kind === 'other' && side === 'down'))) {
+          setTextCenterX(node, noteInk.headCx);
+        }
+
+        // Vuelve a medir tras aplicar tipografía final y centrado
         let bbox;
         try {
           bbox = node.getBBox();
@@ -628,64 +808,118 @@ export class AbcService {
         }
         if (!bbox || bbox.width === 0 || bbox.height === 0) continue;
 
-        // Encuentra el sistema más cercano verticalmente y si la etiqueta está arriba o abajo del pentagrama
-        const cy = bbox.y + bbox.height / 2;
-        let sysIdx = 0;
-        let bestDist = Infinity;
-        systems.forEach((sys, idx) => {
-          const d = Math.abs(cy - sys.center);
-          if (d < bestDist) {
-            bestDist = d;
-            sysIdx = idx;
-          }
-        });
-
-        const sysCenter = systems[sysIdx]?.center ?? cy + 1;
-        const side = cy <= sysCenter ? 'up' : 'down';
-
-        const isExplicitChord = node.classList.contains('abcjs-chord');
-        let kind;
-        if (isPiano && !isExplicitChord && /^[1-5](?:[\s–-][1-5])*$/.test(text)) {
-          // En piano, los dígitos 1–5 (tanto arriba en Sol como debajo en Fa) son digitaciones de dedos
-          kind = 'leftHand';
-        } else if (side === 'down' && !isExplicitChord) {
-          // Todo texto debajo del pentagrama en bajo/guitarra (funciones R/2/3/4/5/6/7 o grados romanos) pertenece a análisis/otros
-          kind = classifyAbcAnnotation(`_${text}`, { isRenderedSvg: true });
-        } else {
-          kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
-          if (kind === 'chord' && !isExplicitChord && node.classList.contains('abcjs-annotation')) {
-            kind = classifyAbcAnnotation(`^${text}`, { isRenderedSvg: true });
-          }
-        }
-
-        node.classList.add(`acordate-ann--${kind === 'leftHand' ? 'lh' : kind === 'rightHand' ? 'rh' : kind === 'chord' ? 'chord' : 'other'}`);
-
-        const zoneKey = `${sysIdx}:${side}`;
-        if (!byZone.has(zoneKey)) byZone.set(zoneKey, { side, items: [] });
-
+        const zoneKey = `${staffId}:${side}`;
+        if (!byZone.has(zoneKey)) byZone.set(zoneKey, { staff, side, items: [] });
         byZone.get(zoneKey).items.push({
           node,
           kind,
+          noteInk,
           x: bbox.x,
           y: bbox.y,
           width: bbox.width,
-          height: bbox.height,
-          tier: side === 'up' ? (tierAbove[kind] ?? 2) : (tierBelow[kind] ?? 1)
+          height: bbox.height
         });
       }
 
-      for (const { side, items } of byZone.values()) {
-        if (items.length < 2) continue;
-        const resolved = resolveRectCollisions(items, side, { padX: 3.5, gapY: 3 });
-        for (const res of resolved) {
-          if (Math.abs(res.dy) < 0.5) continue;
-          const node = res.item.node;
-          const curYAttr = parseFloat(node.getAttribute('y'));
-          if (Number.isFinite(curYAttr)) {
-            node.setAttribute('y', (curYAttr + res.dy).toFixed(2));
-          } else {
-            const existingT = node.getAttribute('transform') || '';
-            node.setAttribute('transform', `${existingT} translate(0, ${res.dy.toFixed(2)})`.trim());
+      // 3) Posiciona cada zona por bandas estrictas (digitaciones junto al pentagrama, acordes siempre arriba)
+      for (const { staff, side, items } of byZone.values()) {
+        if (items.length === 0) continue;
+
+        if (side === 'up') {
+          const staffTop = staff ? staff.top : Math.min(...items.map((it) => it.y + it.height));
+          const fingerings = items.filter((it) => it.kind === 'leftHand' || it.kind === 'rightHand');
+          const others = items.filter((it) => it.kind === 'other');
+          const chords = items.filter((it) => it.kind === 'chord');
+
+          // Banda 1: digitaciones alineadas sobre una línea base uniforme junto al pentagrama/nota
+          // (evita zigzag entre plicas arriba/abajo, elevándose solo en líneas adicionales muy agudas)
+          const clearance = isPiano ? 6.5 : 7.5;
+          const staffInkTop = staff ? staff.inkTop : staffTop;
+          const unifiedTopBaseline = Math.min(staffTop - clearance, Math.max(staffTop - 16, staffInkTop - 4.5));
+          const lowerBand = [];
+          for (const it of fingerings) {
+            const noteTop = it.noteInk ? it.noteInk.inkTop : staffTop;
+            const targetBottom = Math.min(unifiedTopBaseline, noteTop - 4.5);
+            const targetY = targetBottom - it.height;
+            shiftTextY(it.node, targetY - it.y);
+            it.y = targetY;
+            it.tier = it.kind === 'leftHand' ? 0 : 1;
+            lowerBand.push(it);
+          }
+
+          for (const it of others) {
+            const noteTop = it.noteInk ? it.noteInk.inkTop : staffTop;
+            const targetBottom = Math.min(unifiedTopBaseline, noteTop - 5);
+            const targetY = targetBottom - it.height;
+            shiftTextY(it.node, targetY - it.y);
+            it.y = targetY;
+            it.tier = 2;
+            lowerBand.push(it);
+          }
+
+          if (lowerBand.length > 1) {
+            const resolvedLower = resolveRectCollisions(lowerBand, 'up', { padX: 2.5, gapY: 2.5 });
+            for (const res of resolvedLower) {
+              if (Math.abs(res.dy) >= 0.3) {
+                shiftTextY(res.item.node, res.dy);
+                res.item.y = res.y;
+              }
+            }
+          }
+
+          // Banda 2: acordes siempre en una fila uniforme estrictamente ENCIMA de todas las digitaciones
+          if (chords.length > 0) {
+            let chordBaselineBottom;
+            if (lowerBand.length > 0) {
+              // Usa el tope típico de la banda de digitaciones para una línea horizontal prolija de cifrados
+              const sortedTops = lowerBand.map((it) => it.y).sort((a, b) => a - b);
+              const refTop = sortedTops[Math.min(sortedTops.length - 1, Math.floor(sortedTops.length * 0.2))];
+              chordBaselineBottom = Math.min(staffTop - 11, refTop - 5);
+            } else {
+              const staffInkTop = staff ? staff.inkTop : staffTop;
+              chordBaselineBottom = Math.min(staffTop - 9, staffInkTop - 5);
+            }
+
+            for (const ch of chords) {
+              const targetY = chordBaselineBottom - ch.height;
+              shiftTextY(ch.node, targetY - ch.y);
+              ch.y = targetY;
+              ch.tier = 3;
+            }
+
+            // Resuelve cualquier choque remanente entre acordes y digitaciones sobresalientes (ej. líneas adicionales agudas)
+            const allUp = [...lowerBand, ...chords];
+            const resolvedAll = resolveRectCollisions(allUp, 'up', { padX: 3, gapY: 3.5 });
+            for (const res of resolvedAll) {
+              if (res.item.kind === 'chord' && Math.abs(res.dy) >= 0.3) {
+                shiftTextY(res.item.node, res.dy);
+                res.item.y = res.y;
+              }
+            }
+          }
+        } else {
+          // Zona inferior (MI en clave de Fa de piano, funciones de bajo R/3/5/7, grados romanos)
+          // Usa una línea base uniforme acotada para evitar zigzag por plicas hacia abajo
+          const staffBottom = staff ? staff.bottom : Math.max(...items.map((it) => it.y));
+          const clearance = isPiano ? 6.5 : 7.5;
+          const staffInkBottom = staff ? staff.inkBottom : staffBottom;
+          const unifiedBottomBaseline = Math.max(staffBottom + clearance, Math.min(staffBottom + 16, staffInkBottom + 4.5));
+          for (const it of items) {
+            const noteBottom = it.noteInk ? it.noteInk.inkBottom : staffBottom;
+            const targetTop = Math.max(unifiedBottomBaseline, noteBottom + 4.5);
+            shiftTextY(it.node, targetTop - it.y);
+            it.y = targetTop;
+            it.tier = it.kind === 'leftHand' || it.kind === 'rightHand' ? 0 : 1;
+          }
+
+          if (items.length > 1) {
+            const resolvedDown = resolveRectCollisions(items, 'down', { padX: 2.5, gapY: 2.5 });
+            for (const res of resolvedDown) {
+              if (Math.abs(res.dy) >= 0.3) {
+                shiftTextY(res.item.node, res.dy);
+                res.item.y = res.y;
+              }
+            }
           }
         }
       }

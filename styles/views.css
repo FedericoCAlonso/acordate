@@ -719,12 +719,14 @@
 .score-surface svg .acordate-ann--chord {
   fill: var(--md-sys-color-primary) !important;
   stroke: none !important;
+  font-size: 13.5px !important;
   font-weight: 700;
 }
 
 .score-surface svg .abcjs-annotation {
   fill: var(--md-sys-color-tertiary) !important;
   stroke: none !important;
+  font-size: 12px !important;
   font-weight: 600;
 }
 
@@ -742,9 +744,29 @@
   font-weight: 700;
 }
 
+.score-surface svg .acordate-ann--fingering {
+  font-size: 11.5px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-surface svg .acordate-ann--piano-rh {
+  fill: var(--md-sys-color-tertiary) !important;
+  font-size: 11px !important;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.score-surface svg .acordate-ann--piano-lh {
+  fill: var(--md-sys-color-on-surface) !important;
+  font-size: 11px !important;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .score-surface svg .acordate-ann--other {
   fill: var(--md-sys-color-secondary) !important;
   stroke: none !important;
+  font-size: 11.5px !important;
   font-weight: 600;
 }
 

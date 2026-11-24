@@ -912,12 +912,17 @@ export class ScalesHubView {
 
     // Renderiza la partitura ABC usando AbcService (100 % pentagrama, cero tablatura)
     if (this._abc) {
+      const isPianoInst = this._vm.voicingInstrument.value === 'piano';
       const prepared = this._abc.prepareAbcForRender(this._vm.previewAbc.value, {
         chordNotation: notation,
         showFingerings: true,
-        isBass: this._vm.voicingInstrument.value.startsWith('bajo')
+        isBass: !isPianoInst && this._vm.voicingInstrument.value.startsWith('bajo'),
+        isPiano: isPianoInst
       });
-      this._abc.renderScore(scoreBox, prepared, { width: Math.max(300, scoreBox.clientWidth || 680) });
+      this._abc.renderScore(scoreBox, prepared, {
+        width: Math.max(300, scoreBox.clientWidth || 680),
+        isPiano: isPianoInst
+      });
     }
   }
 

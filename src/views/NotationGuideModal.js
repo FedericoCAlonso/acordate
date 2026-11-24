@@ -80,9 +80,10 @@ export function openNotationGuideModal() {
     el('section', { className: 'ref-guide__section' }, [
       el('h3', { className: 'm3-title-md' }, ['Piano (gran pentagrama y dedos 1–5)']),
       el('div', { className: 'ref-guide__list' }, [
-        refRow('1 – 5', 'Dedos en ambas manos', '1 = Pulgar · 2 = Índice · 3 = Medio · 4 = Anular · 5 = Meñique (simétricos entre mano derecha e izquierda).', 'lh'),
-        refRow('𝄞 / 𝄢', 'Gran pentagrama', 'Pentagrama superior en clave de Sol (Mano derecha) e inferior en clave de Fa (Mano izquierda), ambos a altura real.', 'pos'),
-        refRow('MD / MI', 'Estudio por manos separadas', 'En obras de piano podés silenciar una mano desde la barra del reproductor (Ambas / Mano der. / Mano izq.).', 'rh')
+        refRow('1 – 5', 'Mano derecha (MD · encima de clave de Sol)', 'Números en cursiva sobre cada nota del pentagrama superior (siempre debajo del cifrado de acordes): 1 = Pulgar, 2 = Índice, 3 = Medio, 4 = Anular, 5 = Meñique.', 'rh'),
+        refRow('1 – 5', 'Mano izquierda (MI · debajo de clave de Fa)', 'Números en negrita centrados debajo de cada nota del pentagrama inferior (simétricos: 1 = Pulgar .. 5 = Meñique).', 'lh'),
+        refRow('1–3–5', 'Acordes en bloque', 'Dedos ordenados de izquierda a derecha en el teclado (nota grave a aguda, ej. MD 1–3–5 o 1–2–5; MI 5–3–1).', 'pos'),
+        refRow('𝄞 / 𝄢', 'Gran pentagrama y estudio por manos', 'Pentagrama superior en Sol (MD) e inferior en Fa (MI) a altura real. Podés silenciar una mano desde la barra (Ambas / Mano der. / Mano izq.).', 'pos')
       ])
     ]),
 

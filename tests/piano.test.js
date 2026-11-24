@@ -374,3 +374,64 @@ test('Auditoría especialista de Piano: funciones armónicas, LIL, Rootless MI, 
     if (chromRh[i] === 1) assert.equal(isBlackKeyMidi(60 + i), false, 'Cromática MD nunca pone pulgar en tecla negra');
   }
 });
+
+test('Digitación en Piano: toAbcStaff incluye dedos MD/MI, catálogo sin prefijos cruzados ni repeticiones ilegales', async () => {
+  // 1) PianoVoicingService.toAbcStaff incluye digitaciones "^..." en Sol (MD) y "_..." en Fa (MI)
+  const cmaj7Root = generatePianoVoicings('Cmaj7').find((v) => v.family === 'fundamental');
+  const abcStaff = cmaj7Root.toAbcStaff('americano');
+  assert.ok(abcStaff.includes('"^1-2-3-5"'), `toAbcStaff debe anotar MD "^1-2-3-5": ${abcStaff}`);
+  assert.ok(abcStaff.includes('"_5"'), `toAbcStaff debe anotar MI "_5": ${abcStaff}`);
+
+  // 2) AbcService.prepareAbcForRender agrega aire vertical en piano y filtra capas MD/MI sin mezclar
+  const abcSvc = new AbcService();
+  const prepBoth = abcSvc.prepareAbcForRender(abcStaff, { isPiano: true, showLeftHand: true, showRightHand: true, showChords: true });
+  assert.ok(prepBoth.includes('%%staffsep'), 'Gran pentagrama de piano debe incluir %%staffsep para aire vertical');
+  assert.ok(prepBoth.includes('"^1-2-3-5"') && prepBoth.includes('"_5"'));
+  const prepOnlyRh = abcSvc.prepareAbcForRender(abcStaff, { isPiano: true, showLeftHand: false, showRightHand: true, showChords: true });
+  assert.ok(prepOnlyRh.includes('"^1-2-3-5"') && !prepOnlyRh.includes('"_5"'), 'Ocultar MI solo quita dedos de clave de Fa');
+  const prepOnlyLh = abcSvc.prepareAbcForRender(abcStaff, { isPiano: true, showLeftHand: true, showRightHand: false, showChords: true });
+  assert.ok(!prepOnlyLh.includes('"^1-2-3-5"') && prepOnlyLh.includes('"_5"'), 'Ocultar MD solo quita dedos de clave de Sol');
+
+  // 3) Todas las digitaciones de pianoCatalog.json usan "^" en V:1 (MD) y "_" en V:2 (MI) sin dedos repetidos en notas distintas adyacentes
+  const catalog = await loadBuiltinCatalog();
+  const pianoPractices = catalog.filter((p) => p.instruments.includes('piano') && p.abc);
+  let totalAnnotated = 0;
+  for (const p of pianoPractices) {
+    let voice = '1';
+    const voiceNotes = { '1': [], '2': [] };
+    for (const rawLine of p.abc.split('\n')) {
+      const t = rawLine.trim();
+      const vm = t.match(/^V:\s*(\S+)/);
+      if (vm) { voice = vm[1]; continue; }
+      if (!t || t.startsWith('%') || /^[A-Za-z]:/.test(t)) continue;
+      const re = /(?:"([^"]+)")*(?:\[[^\]]+\]|(\^{1,2}|_{1,2}|=)?([A-Ga-g])([,']*))/g;
+      let m;
+      while ((m = re.exec(t)) !== null) {
+        const quotes = [...m[0].matchAll(/"([^"]+)"/g)].map((q) => q[1]);
+        const fing = quotes.find((q) => /^[\^_][1-5](?:[-–][1-5])*$/.test(q));
+        if (!fing) continue;
+        totalAnnotated += 1;
+        if (voice === '1') assert.ok(fing.startsWith('^'), `${p.id} V:1 debe usar prefijo "^" (obtenido ${fing})`);
+        if (voice === '2') assert.ok(fing.startsWith('_'), `${p.id} V:2 debe usar prefijo "_" (obtenido ${fing})`);
+        const note = m[0].replace(/"[^"]+"/g, '');
+        voiceNotes[voice]?.push({ note, fing });
+      }
+    }
+    // En melodía de notas individuales (sin acordes en bloque), no repetir el mismo dedo en dos alturas distintas seguidas en Oda a la Alegría ni escalas
+    if (p.id === 'rep-piano-beethoven-oda-alegria' || p.category === 'escala') {
+      for (const v of ['1', '2']) {
+        const arr = voiceNotes[v];
+        for (let i = 1; i < arr.length; i++) {
+          if (arr[i].note !== arr[i - 1].note) {
+            assert.notEqual(
+              arr[i].fing,
+              arr[i - 1].fing,
+              `${p.id} V:${v} repite dedo ${arr[i].fing} entre ${arr[i - 1].note} y ${arr[i].note}`
+            );
+          }
+        }
+      }
+    }
+  }
+  assert.ok(totalAnnotated >= 450, `El catálogo de piano debe ofrecer amplia guía de digitaciones (actual: ${totalAnnotated})`);
+});

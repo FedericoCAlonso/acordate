@@ -375,7 +375,7 @@ function createPianoVoicingObject({
       return formatChordSymbol(pcToNoteName(bassPc, useFlats), notation);
     },
 
-    /** Genera partitura ABC en Gran Pentagrama (Sol + Fa) para mostrar este acorde en modo Pentagrama/Ambos. */
+    /** Genera partitura ABC en Gran Pentagrama (Sol + Fa) con digitaciones 1–5 por mano para mostrar en Pentagrama/Ambos. */
     toAbcStaff(notation = 'americano') {
       const sym = formatChordSymbol(chord.americanSymbol, notation);
       const formatChordGroup = (list) => {
@@ -383,8 +383,14 @@ function createPianoVoicingObject({
         if (list.length === 1) return `${midiToAbcPitch(list[0], useFlats)}4`;
         return `[${list.map((m) => midiToAbcPitch(m, useFlats)).join('')}]4`;
       };
-      const rhBar = cleanRh.length > 0 ? `"${sym}"${formatChordGroup(cleanRh)}` : `"${sym}"z4`;
-      const lhBar = formatChordGroup(cleanLh);
+      const rhFing = cleanRh.map((m) => fingersRh[m]).filter(Boolean).join('-');
+      const lhFing = cleanLh.map((m) => fingersLh[m]).filter(Boolean).join('-');
+      const rhBar = cleanRh.length > 0
+        ? `"${sym}"${rhFing ? `"^${rhFing}"` : ''}${formatChordGroup(cleanRh)}`
+        : `"${sym}"z4`;
+      const lhBar = cleanLh.length > 0
+        ? `${lhFing ? `"_${lhFing}"` : ''}${formatChordGroup(cleanLh)}`
+        : 'z4';
       return [
         'X:1',
         'M:4/4',
