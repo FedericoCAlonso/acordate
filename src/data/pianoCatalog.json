@@ -1,0 +1,900 @@
+[
+  {
+    "id": "p-n1-escala-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Posición de 5 dedos en Do mayor (ambas manos)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "escala",
+    "level": 1,
+    "tags": [
+      "piano",
+      "5-dedos",
+      "do-mayor",
+      "postura",
+      "gran-pentagrama"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 95,
+      "step": 5
+    },
+    "abc": "X:1\nT:Posición de 5 dedos en Do mayor\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"^1\"C \"^2\"D \"^3\"E \"^4\"F | \"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"^1\"C \"^3\"E \"^5\"G \"^3\"E | \"^1\"C4 |]\nV:2 clef=bass\n\"_5\"C, \"_4\"D, \"_3\"E, \"_2\"F, | \"_1\"G, \"_2\"F, \"_3\"E, \"_4\"D, | \"_5\"C, \"_3\"E, \"_1\"G, \"_3\"E, | \"_5\"C,4 |]",
+    "goals": [
+      "Mantener los dedos curvos y las muñecas relajadas sobre las teclas",
+      "Atacar ambas manos exactamente juntas sin anticipar ninguna",
+      "Controlar el volumen parejo del pulgar (1) y del meñique (5)"
+    ],
+    "notes": "Estudiá primero manos separadas usando el selector MD / MI en la barra superior, luego juntá ambas manos en movimiento paralelo.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n1-lectura-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Lectura en gran pentagrama: Do central a Sol y Fa",
+    "instruments": [
+      "piano"
+    ],
+    "category": "lectura",
+    "level": 1,
+    "tags": [
+      "piano",
+      "lectura",
+      "gran-pentagrama",
+      "do-central"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 85,
+      "step": 5
+    },
+    "abc": "X:1\nT:Lectura en gran pentagrama\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"^1\"C \"^2\"D \"^3\"E2 | \"^4\"F \"^3\"E \"^2\"D2 | z4 | z4 | \"^1\"C \"^3\"E \"^5\"G \"^4\"F | \"^3\"E \"^2\"D \"^1\"C2 | z4 | \"^3\"E2 \"^1\"C2 |]\nV:2 clef=bass\nz4 | z4 | \"_1\"C \"_2\"B, \"_3\"A,2 | \"_4\"G, \"_3\"A, \"_2\"B,2 | z4 | z4 | \"_5\"F, \"_3\"A, \"_1\"C \"_2\"B, | \"_5\"C,4 |]",
+    "goals": [
+      "Leer los dos pentagramas como una sola frase continua alrededor del Do central",
+      "Anticipar el compás siguiente sin mirar el teclado en cada nota"
+    ],
+    "notes": "Ambas manos comparten el Do central como punto de referencia visual entre la clave de sol y la clave de fa.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n1-acordes-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Tríadas en bloque: C – Am – F – G",
+    "instruments": [
+      "piano"
+    ],
+    "category": "acordes",
+    "level": 1,
+    "tags": [
+      "piano",
+      "triadas",
+      "acordes",
+      "bloque"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 55,
+      "target": 88,
+      "step": 5
+    },
+    "abc": "X:1\nT:Tríadas en bloque en Do\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"[CEG] [CEG] | \"Am\"[CEA] [CEA] | \"F\"[CFA] [CFA] | \"G\"[B,DG] [B,DG] | \"C\"[CEG]2 |]\nV:2 clef=bass\nC,2 | A,,2 | F,,2 | G,,2 | C,2 |]",
+    "goals": [
+      "Hacer sonar las tres notas del acorde exactamente al mismo tiempo",
+      "Reconocer las notas comunes entre C, Am y F para minimizar saltos"
+    ],
+    "notes": "Tocá las tríadas con dedos 1-3-5 (o 1-2-5 en Am/F) y dejá caer el peso del brazo con suavidad sobre el bajo.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n1-ritmo-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Pulso y coordinación básica en Do mayor",
+    "instruments": [
+      "piano"
+    ],
+    "category": "ritmo",
+    "level": 1,
+    "tags": [
+      "piano",
+      "ritmo",
+      "coordinacion",
+      "nivel-1"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 92,
+      "step": 5
+    },
+    "abc": "X:1\nT:Pulso y coordinación básica\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"E E G G | \"F\"A A G2 | \"G\"F F E E | \"C\"D D C2 | \"C\"E G c G | \"F\"A F G2 | \"G\"F D E G | \"C\"C4 |]\nV:2 clef=bass\nC,2 G,2 | F,2 C,2 | G,,2 C,2 | G,,2 C,2 | C,2 E,2 | F,2 C,2 | G,,2 G,,2 | C,4 |]",
+    "goals": [
+      "Sostener las blancas de mano izquierda durante sus dos tiempos completos",
+      "Mantener el tempo constante al cambiar de negras a blancas"
+    ],
+    "notes": "Escuchá cómo la mano izquierda marca un pulso estable en blancas mientras la derecha canta en negras.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n2-escala-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Escala mayor de Do (1 octava) con paso de pulgar",
+    "instruments": [
+      "piano"
+    ],
+    "category": "escala",
+    "level": 2,
+    "tags": [
+      "piano",
+      "escala-mayor",
+      "paso-de-pulgar",
+      "digitacion"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 65,
+      "target": 108,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala mayor de Do con paso de pulgar\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"^1\"C \"^2\"D \"^3\"E \"^1\"F \"^2\"G \"^3\"A \"^4\"B \"^5\"c | \"^5\"c \"^4\"B \"^3\"A \"^2\"G \"^1\"F \"^3\"E \"^2\"D \"^1\"C |]\nV:2 clef=bass\n\"_5\"C, \"_4\"D, \"_3\"E, \"_2\"F, \"_1\"G, \"_3\"A, \"_2\"B, \"_1\"C | \"_1\"C \"_2\"B, \"_3\"A, \"_1\"G, \"_2\"F, \"_3\"E, \"_4\"D, \"_5\"C, |]",
+    "goals": [
+      "Pasar el pulgar por debajo del dedo 3 (MD en Fa, MI bajando en Sol) sin levantar el codo",
+      "Lograr corcheas parejas sin acentuar el paso del pulgar"
+    ],
+    "notes": "Digitación canónica de piano: MD 1-2-3-1-2-3-4-5 subiendo; MI 5-4-3-2-1-3-2-1 subiendo. Practicá manos separadas antes de unirlas.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n2-arpegio-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Arpegios de tríadas en Do mayor (C – F – G – C)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "arpegio",
+    "level": 2,
+    "tags": [
+      "piano",
+      "arpegios",
+      "triadas",
+      "mano-derecha"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 65,
+      "target": 105,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegios de tríadas en Do\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^3\"G \"^2\"E \"^1\"C \"^2\"E | \"F\"\"^1\"C \"^2\"F \"^3\"A \"^5\"c \"^3\"A \"^2\"F \"^1\"C \"^2\"F | \"G\"\"^1\"D \"^2\"G \"^3\"B \"^5\"d \"^3\"B \"^2\"G \"^1\"D \"^2\"G | \"C\"\"^1\"C \"^2\"E \"^3\"G \"^5\"c \"^1\"C4 |]\nV:2 clef=bass\nC,4 G,4 | F,,4 C,4 | G,,4 D,4 | C,8 |]",
+    "goals": [
+      "Acompañar la extensión de la octava con una rotación suave de muñeca",
+      "Mantener legato cantabile en la mano derecha sin rigidez"
+    ],
+    "notes": "Usá dedos 1-2-3-5 en los arpegios de 4 notas de mano derecha y evitá estirar los dedos en bloque: dejá que la mano se desplace lateralmente.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n2-inversiones-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Cadencia I – IV – V – I con inversiones enlazadas",
+    "instruments": [
+      "piano"
+    ],
+    "category": "inversiones",
+    "level": 2,
+    "tags": [
+      "piano",
+      "inversiones",
+      "cadencia",
+      "conduccion-de-voces"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 60,
+      "target": 95,
+      "step": 5
+    },
+    "abc": "X:1\nT:Cadencia I-IV-V-I con inversiones\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"[CEG] [CEG] | \"F\"[CFA] [CFA] | \"G\"[B,DG] [B,DG] | \"C\"[CEG]2 | \"F\"[CFA] [CFA] | \"C/G\"[CEG] [CEG] | \"G7\"[B,FG] [B,FG] | \"C\"[CEG]2 |]\nV:2 clef=bass\nC,2 | F,,2 | G,,2 | C,2 | F,,2 | G,,2 | G,,2 | C,2 |]",
+    "goals": [
+      "Enlazar las tríadas manteniendo siempre la nota común fija en la mano derecha",
+      "Reconocer al tacto la 2.ª inversión de Fa ([CFA]) y la 1.ª inversión de Sol ([B,DG])"
+    ],
+    "notes": "Esta cadencia es la base del acompañamiento pianístico: la mano derecha apenas se mueve 1 o 2 teclas entre acordes.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n2-acompanamiento-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Bajo Alberti clásico en Do mayor",
+    "instruments": [
+      "piano"
+    ],
+    "category": "acompanamiento",
+    "level": 2,
+    "tags": [
+      "piano",
+      "alberti",
+      "clasico",
+      "independencia"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 68,
+      "target": 108,
+      "step": 5
+    },
+    "abc": "X:1\nT:Bajo Alberti clásico\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"E4 G4 | \"G7\"F4 D4 | \"C\"E2 G2 c2 G2 | \"G\"B4 z4 | \"C\"c4 G4 | \"F\"A4 F4 | \"G7\"G2 F2 E2 D2 | \"C\"C8 |]\nV:2 clef=bass\nC,G, E,G, C,G, E,G, | B,,G, F,G, B,,G, F,G, | C,G, E,G, C,G, E,G, | G,,D, B,,D, G,,D, B,,D, | C,G, E,G, C,G, E,G, | C,A, F,A, C,A, F,A, | B,,G, F,G, B,,G, F,G, | C,G, E,G, C,4 |]",
+    "goals": [
+      "Tocar el bajo Alberti (grave–agudo–medio–agudo) mucho más suave que la melodía",
+      "Usar una rotación leve del antebrazo izquierdo para no cansar el meñique"
+    ],
+    "notes": "El patrón Alberti (5–1–3–1 en MI) aparece en casi todas las sonatinas de Mozart y Clementi. Priorizá el equilibrio sonoro: melodía cantada y acompañamiento liviano.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n3-escala-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Escala mayor de Sol (2 octavas, manos juntas)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "escala",
+    "level": 3,
+    "tags": [
+      "piano",
+      "escala-mayor",
+      "sol-mayor",
+      "dos-octavas"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 70,
+      "target": 116,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala mayor de Sol en 2 octavas\nM:4/4\nL:1/8\nK:G\n%%staves {1 2}\nV:1 clef=treble\n\"^1\"G \"^2\"A \"^3\"B \"^1\"c \"^2\"d \"^3\"e \"^4\"f \"^1\"g | \"^2\"a \"^3\"b \"^1\"c' \"^2\"d' \"^3\"e' \"^4\"f' \"^5\"g'2 | \"^5\"g' \"^4\"f' \"^3\"e' \"^2\"d' \"^1\"c' \"^3\"b \"^2\"a \"^1\"g | \"^4\"f \"^3\"e \"^2\"d \"^1\"c \"^3\"B \"^2\"A \"^1\"G2 |]\nV:2 clef=bass\n\"_5\"G,, \"_4\"A,, \"_3\"B,, \"_2\"C, \"_1\"D, \"_3\"E, \"_2\"F, \"_1\"G, | \"_4\"A, \"_3\"B, \"_2\"C \"_1\"D \"_3\"E \"_2\"F \"_1\"G2 | \"_1\"G \"_2\"F \"_3\"E \"_1\"D \"_2\"C \"_3\"B, \"_4\"A, \"_1\"G, | \"_2\"F, \"_3\"E, \"_1\"D, \"_2\"C, \"_3\"B,, \"_4\"A,, \"_5\"G,,2 |]",
+    "goals": [
+      "Ejecutar el paso del dedo 4 en la segunda octava sin perder el pulso",
+      "Mantener el Fa# preciso en ambas octavas con articulación uniforme"
+    ],
+    "notes": "En dos octavas, el dedo 4 cae siempre en el Fa# en la mano derecha y en el La en la mano izquierda: usalo como ancla mental.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n3-acompanamiento-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Acompañamiento de vals en La menor (3/4)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "acompanamiento",
+    "level": 3,
+    "tags": [
+      "piano",
+      "vals",
+      "3-4",
+      "la-menor"
+    ],
+    "key": "Am",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 84,
+      "target": 132,
+      "step": 6
+    },
+    "abc": "X:1\nT:Estudio de vals en La menor\nM:3/4\nL:1/4\nK:Am\n%%staves {1 2}\nV:1 clef=treble\n\"Am\"e2 c | A2 c | \"Dm\"d2 f | e d c | \"E7\"B2 ^G | E2 B | \"Am\"c2 B | A3 |]\nV:2 clef=bass\nA,, [E,A,C] [E,A,C] | A,, [E,A,C] [E,A,C] | D, [F,A,D] [F,A,D] | D, [F,A,D] [F,A,D] | E,, [E,^G,B,] [E,^G,B,] | E,, [E,^G,B,] [E,^G,B,] | A,, [E,A,C] [E,A,C] | A,,3 |]",
+    "goals": [
+      "Apoyar el tiempo 1 del bajo y tocar ligeros los acordes en tiempos 2 y 3",
+      "Cantar la melodía en la mano derecha con fraseo legato de dos compases"
+    ],
+    "notes": "El secreto del vals al piano está en el impulso 'UM–pa–pa': peso suave en el primer tiempo y rebote liviano en 2 y 3.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n3-arpegio-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Arpegio de balada pop en Sol (I – V – vi – IV)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "arpegio",
+    "level": 3,
+    "tags": [
+      "piano",
+      "balada",
+      "pop",
+      "arpegio-mano-izquierda"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 66,
+      "target": 98,
+      "step": 4
+    },
+    "abc": "X:1\nT:Arpegio de balada pop en Sol\nM:4/4\nL:1/8\nK:G\n%%staves {1 2}\nV:1 clef=treble\n\"G\"[B,DG]4 [DG]2 B2 | \"D\"[A,DF]4 [DF]2 A2 | \"Em\"[B,EG]4 [EG]2 B2 | \"C\"[CEG]4 [EG]2 c2 | \"G\"[B,DG]8 |]\nV:2 clef=bass\nG,,D, G,A, B,2 G,2 | D,,A,, D,E, F,2 D,2 | E,,B,, E,F, G,2 E,2 | C,,G,, C,D, E,2 C,2 | G,,D, G,B, G,,4 |]",
+    "goals": [
+      "Desplegar el patrón 1–5–8–9–10 de mano izquierda con rotación fluida",
+      "Mantener el acompañamiento cálido sin tapar la armonía superior"
+    ],
+    "notes": "Este patrón de mano izquierda (raíz–quinta–octava–novena–décima) es el recurso más usado en baladas modernas de pop y canción.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n3-lectura-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Independencia de manos y contrapunto en Fa mayor",
+    "instruments": [
+      "piano"
+    ],
+    "category": "lectura",
+    "level": 3,
+    "tags": [
+      "piano",
+      "contrapunto",
+      "independencia",
+      "fa-mayor"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 64,
+      "target": 100,
+      "step": 5
+    },
+    "abc": "X:1\nT:Contrapunto sencillo en Fa\nM:4/4\nL:1/8\nK:F\n%%staves {1 2}\nV:1 clef=treble\nF2 GA B2 AG | A2 c2 G4 | A2 GF G2 FE | F4 z4 | c2 BA B2 AG | A2 GF G2 C2 | F2 GA B2 G2 | F8 |]\nV:2 clef=bass\nF,4 G,4 | F,2 A,2 C2 B,2 | A,4 C,4 | F,2 G,A, B,2 A,G, | A,4 G,4 | F,4 E,2 C,2 | D,2 B,,2 C,2 C,,2 | F,,8 |]",
+    "goals": [
+      "Sostener líneas independientes con movimiento contrario entre ambas manos",
+      "Respetar el Si bemol de la armadura en ambos pentagramas"
+    ],
+    "notes": "Prestá atención al compás 4: la mano izquierda toma el motivo de corcheas mientras la derecha descansa.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n4-escala-01",
+    "version": 3,
+    "type": "melody",
+    "title": "Escala menor armónica de La (manos juntas)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "escala",
+    "level": 4,
+    "tags": [
+      "piano",
+      "menor-armonica",
+      "sensible",
+      "digitacion"
+    ],
+    "key": "Am",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 72,
+      "target": 120,
+      "step": 5
+    },
+    "abc": "X:1\nT:Escala menor armónica de La\nM:4/4\nL:1/8\nK:Am\n%%staves {1 2}\nV:1 clef=treble\n\"^1\"A \"^2\"B \"^3\"c \"^1\"d \"^2\"e \"^3\"f \"^4\"^g \"^5\"a | \"^5\"a \"^4\"^g \"^3\"f \"^2\"e \"^1\"d \"^3\"c \"^2\"B \"^1\"A |]\nV:2 clef=bass\n\"_5\"A,, \"_4\"B,, \"_3\"C, \"_2\"D, \"_1\"E, \"_3\"F, \"_2\"^G, \"_1\"A, | \"_1\"A, \"_2\"^G, \"_3\"F, \"_1\"E, \"_2\"D, \"_3\"C, \"_4\"B,, \"_5\"A,, |]",
+    "goals": [
+      "Controlar la segunda aumentada (Fa–Sol#) sin tensar la mano entre dedos 3 y 4",
+      "Articular con igual claridad en el descenso desde la sensible"
+    ],
+    "notes": "Mantené los dedos cerca de las teclas negras al acercarte al Sol# para evitar movimientos bruscos hacia adentro del teclado.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n4-conduccion-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "ii – V – I – VI en Do con voicings Shell (R–7 / R–3)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 4,
+    "tags": [
+      "piano",
+      "jazz",
+      "shell-voicings",
+      "ii-v-i"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 72,
+      "target": 120,
+      "step": 6
+    },
+    "abc": "X:1\nT:ii-V-I-VI con Shell voicings\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Dm7\"[FAc]2 | \"G7\"[FBd]2 | \"Cmaj7\"[EGB]2 | \"A7\"[EG^c]2 | \"Dm7\"[FAc] [FAc] | \"G7\"[FBd] [FBd] | \"Cmaj7\"[EGd]2 |]\nV:2 clef=bass\n[D,C]2 | [G,,F,]2 | [C,B,]2 | [A,,G,]2 | [D,C]2 | [G,,F,]2 | [C,B,]2 |]",
+    "goals": [
+      "Escuchar cómo la 7.ª de Dm7 (Do) desciende por semitono a la 3.ª de G7 (Si)",
+      "Mantener el registro de mano izquierda limpio (evitando acordes cerrados muy graves)"
+    ],
+    "notes": "La mano izquierda sostiene el esqueleto R–7 mientras la derecha completa 3.ª, 5.ª y 9.ª: es el pilar del piano de jazz moderno.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n4-ritmo-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Patrón de bossa nova al piano en Do mayor",
+    "instruments": [
+      "piano"
+    ],
+    "category": "ritmo",
+    "level": 4,
+    "tags": [
+      "piano",
+      "bossa-nova",
+      "sincopa",
+      "comping"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 128,
+      "step": 6
+    },
+    "abc": "X:1\nT:Comping de bossa nova al piano\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Cmaj7\"[EGBd]2 z [EGBd]- [EGBd]2 [EGBd]2 | \"A7\"z [G^ce]2 [G^ce]- [G^ce]2 z2 | \"Dm7\"[FAce]2 z [FAce]- [FAce]2 [FAce]2 | \"G7\"z [FBde]2 [FBde]- [FBde]2 z2 |]\nV:2 clef=bass\nC,3 G,, C,3 G,, | A,,3 E,, A,,3 E,, | D,3 A,, D,3 A,, | G,,3 D,, G,,3 D,, |]",
+    "goals": [
+      "Mantener el bajo de bossa (negra con puntillo + corchea) totalmente estable",
+      "Colocar las síncopas de mano derecha con suavidad y sin apresurar el tempo"
+    ],
+    "notes": "Estudiá primero la clave rítmica de mano derecha golpeando sobre la tapa cerrada mientras tocás el bajo real con la izquierda.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n4-arpegio-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Arpegios de cuatríadas (Cmaj7 – Dm7 – G7 – Cmaj7)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "arpegios-de-acorde",
+    "level": 4,
+    "tags": [
+      "piano",
+      "arpegios",
+      "septimas",
+      "cuatriadas"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 70,
+      "target": 116,
+      "step": 5
+    },
+    "abc": "X:1\nT:Arpegios de cuatríadas\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c \"^4\"B \"^3\"G \"^2\"E | \"Dm7\"\"^1\"D \"^2\"F \"^3\"A \"^4\"c \"^5\"d \"^4\"c \"^3\"A \"^2\"F | \"G7\"\"^1\"G \"^2\"B \"^3\"d \"^4\"f \"^5\"g \"^4\"f \"^3\"d \"^2\"B | \"Cmaj7\"\"^1\"C \"^2\"E \"^3\"G \"^4\"B \"^5\"c4 |]\nV:2 clef=bass\nC,4 G,4 | D,4 A,4 | G,,4 D,4 | C,8 |]",
+    "goals": [
+      "Tocar las 4 notas de cada acorde con séptima (1–2–3–4–5) sin quiebres de muñeca",
+      "Reconocer de oído la diferencia entre maj7, m7 y dominante 7"
+    ],
+    "notes": "Al volver de la octava, mantené la mano orientada hacia la próxima tónica para enlazar el cambio de acorde sin pausa.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n5-conduccion-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Voicings Rootless (Bill Evans) sobre ii – V – I en Fa",
+    "instruments": [
+      "piano"
+    ],
+    "category": "conduccion-de-voces",
+    "level": 5,
+    "tags": [
+      "piano",
+      "rootless",
+      "jazz",
+      "bill-evans",
+      "extensiones"
+    ],
+    "key": "F",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 132,
+      "step": 6
+    },
+    "abc": "X:1\nT:Voicings Rootless en Fa\nM:4/4\nL:1/2\nK:F\n%%staves {1 2}\nV:1 clef=treble\n\"Gm9\"[B,DFA]2 | \"C13\"[B,DEA]2 | \"Fmaj9\"[ACEG]2 | \"D7b9\"[C^FA]2 | \"Gm9\"[FAc]2 | \"C13\"[EA_B]2 | \"Fmaj9\"[EGAc]2 |]\nV:2 clef=bass\nG,,2 | C,2 | F,,2 | D,2 | G,,2 | C,2 | F,,2 |]",
+    "goals": [
+      "Enlazar voicings sin fundamental (3–5–7–9 y 7–9–3–13) moviendo solo 1 o 2 notas",
+      "Proyectar suavemente las tensiones (9.ª y 13.ª) en las voces superiores"
+    ],
+    "notes": "En contexto de trío (con contrabajo), estos mismos voicings se pasan a la mano izquierda para dejar libre la derecha para improvisar.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n5-escala-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Fraseo Dórico en Re sobre shells de mano izquierda",
+    "instruments": [
+      "piano"
+    ],
+    "category": "escala",
+    "level": 5,
+    "tags": [
+      "piano",
+      "dorico",
+      "improvisacion",
+      "jazz-modal"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 138,
+      "step": 6
+    },
+    "abc": "X:1\nT:Fraseo Dórico en Re\nM:4/4\nL:1/8\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"Dm7\"z2 DE FG AB | c2 BA GF E2 | \"G7\"z2 FG AB cd | B2 AG FE D2 | \"Dm7\"d2 cB AG FE | F2 A2 c2 B2 | \"G7\"A2 GF ED C2 | \"Dm7\"D8 |]\nV:2 clef=bass\n[D,F,C]4 z4 | [D,F,C]4 z4 | [G,,F,B,]4 z4 | [G,,F,B,]4 z4 | [D,F,C]4 z4 | [D,F,C]4 z4 | [G,,F,B,]4 z4 | [D,F,C]8 |]",
+    "goals": [
+      "Destacar el Si natural (6.ª mayor) característico del modo Dórico de Re",
+      "Coordinar ataques secos de mano izquierda con fraseo legato en la derecha"
+    ],
+    "notes": "Escuchá el color luminoso del Si natural sobre Dm7; probá luego variar el ritmo de los acordes de mano izquierda.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n5-ritmo-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Walking bass en MI + comping sincopado en MD (Sib)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "ritmo",
+    "level": 5,
+    "tags": [
+      "piano",
+      "walking-bass",
+      "comping",
+      "jazz",
+      "sib"
+    ],
+    "key": "Bb",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 84,
+      "target": 136,
+      "step": 6
+    },
+    "abc": "X:1\nT:Walking bass y comping en Sib\nM:4/4\nL:1/8\nK:Bb\n%%staves {1 2}\nV:1 clef=treble\n\"Cm7\"z2 [EGBd]2 z2 z [EGBd] | \"F7\"z2 [EGAe]2 z4 | \"Bbmaj7\"z2 [DFAc]2 z2 z [DFAc] | \"G7\"z2 [F=Bde]2 z4 |]\nV:2 clef=bass\nC,2 E,2 G,2 ^F,2 | F,2 A,2 C2 =B,2 | B,,2 D,2 F,2 ^F,2 | G,2 D,2 B,,2 =B,,2 |]",
+    "goals": [
+      "Sostener el walking en negras legato con la mano izquierda sin vacilar",
+      "Colocar los acordes de mano derecha en tiempo 2 y contratiempo del 4 (Charleston)"
+    ],
+    "notes": "Recurso esencial para tocar piano solo en jazz: la mano izquierda simula el contrabajo y la derecha hace comping rítmico.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-n5-lectura-01",
+    "version": 3,
+    "type": "mixed",
+    "title": "Coral pianístico a 4 voces (conducción Drop 2)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "lectura",
+    "level": 5,
+    "tags": [
+      "piano",
+      "coral",
+      "drop-2",
+      "cuatro-voces"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 56,
+      "target": 88,
+      "step": 4
+    },
+    "abc": "X:1\nT:Coral pianístico a 4 voces\nM:4/4\nL:1/2\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"[Ge] [Fd] | \"Am\"[Ec] [EB] | \"F\"[FA] [EA] | \"G\"[DG]2 | \"Em\"[GB] [Ac] | \"Dm7\"[Ad] [Fc] | \"G7\"[FB] [DB] | \"C\"[Ec]2 |]\nV:2 clef=bass\n[C,C] [G,,B,] | [A,,A,] [E,G,] | [F,,A,] [C,C] | [G,,B,]2 | [E,,B,] [A,,C] | [D,F,] [D,A,] | [G,,G,] [G,,G,] | [C,G,]2 |]",
+    "goals": [
+      "Cantar la voz superior (soprano) con más presencia que las tres voces internas",
+      "Escuchar la línea de bajo y los enlaces interiores sin cortes"
+    ],
+    "notes": "Usá el peso del 5.º y 4.º dedo derecho para proyectar la melodía superior mientras el resto de las voces acompañan en piano.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-beethoven-oda-alegria",
+    "version": 3,
+    "type": "mixed",
+    "title": "Beethoven — Oda a la Alegría (Sinfonía n.º 9, arreglo piano)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 1,
+    "tags": [
+      "repertorio",
+      "piano",
+      "clasico",
+      "beethoven",
+      "gran-pentagrama"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 76,
+      "target": 112,
+      "step": 5
+    },
+    "form": "A–A'–B–A', 16 compases",
+    "rights": "public_domain",
+    "sourceRef": "L. van Beethoven, Sinfonía n.º 9 Op. 125 (1824) — Dominio público, reducción didáctica en Do mayor",
+    "verified": false,
+    "style": "clasico-romantico",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Posición de 5 dedos en mano derecha, fraseo legato de 4 compases y acompañamiento sencillo en clave de fa."
+    },
+    "abc": "X:1\nT:Oda a la Alegría (Beethoven)\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^3\"E3/2 \"^2\"D/2 \"^2\"D2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"^1\"C2 |\n\"G\"\"^2\"D \"^2\"D \"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"^3\"E \"^1\"C | \"G\"\"^2\"D \"^3\"E/2\"^4\"F/2 \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^2\"D \"^1\"G,2 |\n\"C\"\"^3\"E \"^3\"E \"^4\"F \"^5\"G | \"G\"\"^5\"G \"^4\"F \"^3\"E \"^2\"D | \"C\"\"^1\"C \"^1\"C \"^2\"D \"^3\"E | \"G\"\"^2\"D3/2 \"^1\"C/2 \"^1\"C2 |]\nV:2 clef=bass\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,4 |\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,2 C,2 |\nG,,2 C,2 | G,,2 C,2 | G,,2 G,,2 | C,2 G,,2 |\nC,2 G,2 | G,,2 G,2 | C,2 G,2 | G,,2 C,2 |]",
+    "goals": [
+      "Respirar al final de cada frase de 4 compases con legato continuo",
+      "Marcar con precisión la negra con puntillo y corchea en los compases 4, 8 y 16"
+    ],
+    "notes": "Ideal como primera pieza completa en gran pentagrama. Practicá cada mano por separado con el selector MD / MI.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-bach-minueto-sol",
+    "version": 3,
+    "type": "melody",
+    "title": "J. S. Bach (Petzold) — Minueto en Sol mayor BWV Anh. 114",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "piano",
+      "barroco",
+      "bach",
+      "minueto",
+      "gran-pentagrama"
+    ],
+    "key": "G",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 84,
+      "target": 120,
+      "step": 6
+    },
+    "form": "Sección A completa, 16 compases",
+    "rights": "public_domain",
+    "sourceRef": "Notebook for Anna Magdalena Bach (1725), Christian Petzold — BWV Anh. 114 (IMSLP Urtext, Dominio público)",
+    "verified": false,
+    "style": "barroco",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Contrapunto barroco a dos voces en gran pentagrama, independencia de articulación y elegancia rítmica en 3/4."
+    },
+    "abc": "X:1\nT:Minueto en Sol mayor BWV Anh. 114\nM:3/4\nL:1/8\nK:G\n%%staves {1 2}\nV:1 clef=treble\nd2 GA Bc | d2 G2 G2 | e2 cd ef | g2 G2 G2 |\nc2 dc BA | B2 cB AG | F2 GA BG | A6 |\nd2 GA Bc | d2 G2 G2 | e2 cd ef | g2 G2 G2 |\nc2 dc BA | B2 cB AG | A2 BA GF | G6 |]\nV:2 clef=bass\nG,4 A,2 | B,6 | C6 | B,6 |\nA,6 | G,6 | D,2 B,,2 G,,2 | D,2 D,C, B,,A,, |\nB,,4 A,,2 | G,,2 B,,2 G,,2 | C,6 | B,,2 C,B,, A,,G,, |\nA,,6 | G,,4 B,,2 | C,2 D,2 D,,2 | G,,6 |]",
+    "goals": [
+      "Tocar las negras ligeramente articuladas y las corcheas ligadas con estilo barroco",
+      "Escuchar la línea independiente del bajo en clave de fa como segunda melodía"
+    ],
+    "notes": "Una de las piezas fundacionales del repertorio pianístico. Usá el selector MD / MI para estudiar cada voz por separado.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-bach-musette-re",
+    "version": 3,
+    "type": "melody",
+    "title": "J. S. Bach — Musette en Re mayor BWV Anh. 126",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "piano",
+      "barroco",
+      "bach",
+      "musette"
+    ],
+    "key": "D",
+    "timeSignature": "2/4",
+    "tempo": {
+      "start": 76,
+      "target": 112,
+      "step": 6
+    },
+    "form": "Sección A, 8 compases",
+    "rights": "public_domain",
+    "sourceRef": "Notebook for Anna Magdalena Bach (1725) — BWV Anh. 126 (IMSLP Urtext, Dominio público)",
+    "verified": false,
+    "style": "barroco",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Ostinato rítmico en octavas de mano izquierda (efecto gaita/musette) y articulación alegre en semicorcheas y corcheas."
+    },
+    "abc": "X:1\nT:Musette en Re mayor BWV Anh. 126\nM:2/4\nL:1/8\nK:D\n%%staves {1 2}\nV:1 clef=treble\na2 fd | eg fe | df ed | cB A2 |\na2 fd | eg fe | df ec | d4 |]\nV:2 clef=bass\nD,A, D,A, | D,A, D,A, | D,A, D,A, | D,A, D,A, |\nD,A, D,A, | D,A, D,A, | D,A, A,,A, | D,4 |]",
+    "goals": [
+      "Mantener el ostinato Re–La de mano izquierda liviano y regular",
+      "Resaltar el carácter de danza con ligeros acentos en el primer tiempo"
+    ],
+    "notes": "Pieza breve y enérgica ideal para practicar precisión rítmica y estabilidad de mano izquierda.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-satie-gymnopedie-1",
+    "version": 3,
+    "type": "mixed",
+    "title": "Erik Satie — Gymnopédie n.º 1 (sección A)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "piano",
+      "impresionismo",
+      "satie",
+      "valse-lente"
+    ],
+    "key": "D",
+    "timeSignature": "3/4",
+    "tempo": {
+      "start": 66,
+      "target": 84,
+      "step": 4
+    },
+    "form": "Introducción + frase principal, 12 compases",
+    "rights": "public_domain",
+    "sourceRef": "Erik Satie, Trois Gymnopédies n.º 1 (1888) — Edición original francesa (IMSLP, Dominio público)",
+    "verified": false,
+    "style": "clasico-romantico",
+    "feeling": "ballad",
+    "focus": {
+      "piano": "Control del toque cantabile en tiempo lento, balance armónico entre acordes de séptima mayor (Gmaj7 / Dmaj7) y saltos suaves de mano izquierda."
+    },
+    "abc": "X:1\nT:Gymnopédie n.º 1 (E. Satie)\nM:3/4\nL:1/4\nK:D\n%%staves {1 2}\nV:1 clef=treble\n\"Gmaj7\"z3 | \"Dmaj7\"z3 | \"Gmaj7\"z3 | \"Dmaj7\"z3 |\n\"Gmaj7\"z f a | \"Dmaj7\"g f c | \"Gmaj7\"B c d | \"Dmaj7\"A3 |\n\"Gmaj7\"F3- | \"Dmaj7\"F3- | \"Gmaj7\"F3- | \"Dmaj7\"F3 |]\nV:2 clef=bass\nG,, [B,DF]2 | D,, [A,CF]2 | G,, [B,DF]2 | D,, [A,CF]2 |\nG,, [B,DF]2 | D,, [A,CF]2 | G,, [B,DF]2 | D,, [A,CF]2 |\nG,, [B,DF]2 | D,, [A,CF]2 | G,, [B,DF]2 | D,, [A,CF]2 |]",
+    "goals": [
+      "Tocar los acordes de acompañamiento en piano/pianissimo sin golpear el tiempo 2",
+      "Cantar la melodía desde el compás 5 con fraseo respirado y sin prisa"
+    ],
+    "notes": "Indicación original de Satie: 'Lent et douloureux'. Escuchá la resonancia de las séptimas mayores (Fa# y Do#) sobre los bajos Sol y Re.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-beethoven-para-elisa",
+    "version": 3,
+    "type": "melody",
+    "title": "L. van Beethoven — Para Elisa WoO 59 (tema principal)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 3,
+    "tags": [
+      "repertorio",
+      "piano",
+      "clasico",
+      "beethoven",
+      "para-elisa"
+    ],
+    "key": "Am",
+    "timeSignature": "3/8",
+    "tempo": {
+      "start": 64,
+      "target": 92,
+      "step": 4
+    },
+    "form": "Tema principal A, 9 compases",
+    "rights": "public_domain",
+    "sourceRef": "L. van Beethoven, Bagatela en La menor WoO 59 (1810, publ. 1867) — IMSLP Urtext, Dominio público",
+    "verified": false,
+    "style": "clasico-romantico",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Relevo continuo de arpegios entre mano izquierda y mano derecha sin cortes rítmicos, y control expresivo de la anacrusa."
+    },
+    "abc": "X:1\nT:Para Elisa WoO 59 (Beethoven)\nM:3/8\nL:1/16\nK:Am\n%%staves {1 2}\nV:1 clef=treble\ne^d | e^deBdc | A2 z CEA | B2 z E^GB | c2 z Ee^d |\ne^deBdc | A2 z CEA | B2 z EcB | A4 |]\nV:2 clef=bass\nz2 | z6 | A,,E,A, z3 | E,,E,^G, z3 | A,,E,A, z3 |\nz6 | A,,E,A, z3 | E,,E,^G, z3 | A,,E,A, z |]",
+    "goals": [
+      "Unir el arpegio de mano izquierda (A,, E, A,) con la entrada de mano derecha (C E A) como una sola línea",
+      "Respetar el carácter cantabile del 3/8 sin acelerar en las semicorcheas"
+    ],
+    "notes": "Prestá atención al Re# y Sol# accidentales; la fluidez del tema depende de que el relevo entre ambas manos sea imperceptible.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-piano-bach-preludio-do",
+    "version": 3,
+    "type": "mixed",
+    "title": "J. S. Bach — Preludio en Do mayor BWV 846 (cc. 1–11)",
+    "instruments": [
+      "piano"
+    ],
+    "category": "repertorio",
+    "level": 4,
+    "tags": [
+      "repertorio",
+      "piano",
+      "barroco",
+      "bach",
+      "arpegios",
+      "clave-bien-temperado"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 64,
+      "target": 92,
+      "step": 4
+    },
+    "form": "Exposición armónica inicial, 11 compases",
+    "rights": "public_domain",
+    "sourceRef": "J. S. Bach, El clave bien temperado, Libro I (1722), BWV 846 — Bach-Gesellschaft / IMSLP Urtext, Dominio público",
+    "verified": false,
+    "style": "barroco",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Conducción armónica continua en semicorcheas repartidas entre ambas manos, sosteniendo las notas del bajo como un acorde resonante."
+    },
+    "abc": "X:1\nT:Preludio en Do mayor BWV 846\nM:4/4\nL:1/16\nK:C\n%%staves {1 2}\nV:1 clef=treble\n\"C\"z2 GceGce z2 GceGce | \"Dm7/C\"z2 AdfAdf z2 AdfAdf | \"G7/B\"z2 GdfGdf z2 GdfGdf | \"C\"z2 GceGce z2 GceGce |\n\"Am/C\"z2 AeaAea z2 AeaAea | \"D7/C\"z2 ^FAdFAd z2 FAdFAd | \"G/B\"z2 GdgGdg z2 GdgGdg | \"Cmaj7/B\"z2 EGcEGc z2 EGcEGc |\n\"Am7\"z2 EGcEGc z2 EGcEGc | \"D7\"z2 D^FcDFc z2 DFcDFc | \"G\"z2 DGBDGB z2 DGBDGB |]\nV:2 clef=bass\nC,E, z6 C,E, z6 | C,D, z6 C,D, z6 | B,,D, z6 B,,D, z6 | C,E, z6 C,E, z6 |\nC,E, z6 C,E, z6 | C,D, z6 C,D, z6 | B,,D, z6 B,,D, z6 | B,,C, z6 B,,C, z6 |\nA,,C, z6 A,,C, z6 | D,,A,, z6 D,,A,, z6 | G,,B,, z6 G,,B,, z6 |]",
+    "goals": [
+      "Mantener un flujo constante de semicorcheas sin acentos mecánicos",
+      "Escuchar la progresión armónica subyacente (cada compás es un acorde desplegado)"
+    ],
+    "notes": "En el piano real, dejá los dedos de la mano izquierda apoyados sobre las dos primeras notas de cada mitad de compás para sostener la armonía.",
+    "origin": "builtin",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  }
+]

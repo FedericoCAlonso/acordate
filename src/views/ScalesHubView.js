@@ -1,8 +1,15 @@
 import { formatChordSymbol } from '../core/i18n.js';
 import { FLAT_NOTES, SHARP_NOTES } from '../core/MusicTheory.js';
 import { VOICING_INSTRUMENT_OPTIONS } from '../services/FingeringDesignService.js';
+import { PianoKeyboardView } from './PianoKeyboardView.js';
 import { ScaleFretboardView } from './ScaleFretboardView.js';
 import { el, icon } from './uiHelpers.js';
+
+/** Instrumentos seleccionables en Escalas y Modos (incluye teclado SVG de Piano). */
+const SCALE_INSTRUMENT_OPTIONS = [
+  ...VOICING_INSTRUMENT_OPTIONS,
+  { id: 'piano', label: 'Piano' }
+];
 
 /** Pestañas del módulo Escalas y Modos (#/escalas). */
 const SCALES_TABS = [
@@ -68,6 +75,10 @@ export class ScalesHubView {
     this._fretboardView = new ScaleFretboardView({
       onNoteClick: (dot) => this._vm.playSingleNote(dot.midi)
     });
+    /** Instancia viva del teclado SVG de piano para escalas y modos. */
+    this._pianoKeyboardView = new PianoKeyboardView({
+      onNoteClick: (dot) => this._vm.playSingleNote(dot.midi)
+    });
     /** Lista de desuscripciones activas. */
     this._unsubs = [];
   }
@@ -110,7 +121,10 @@ export class ScalesHubView {
       this._vm.bpm.subscribe(() => this._renderPanel()),
       this._vm.droneActive.subscribe(() => this._renderPanel()),
       this._vm.isPlayingSequence.subscribe(() => this._renderPanel()),
-      this._vm.activeHighlightMidi.subscribe((midi) => this._fretboardView.highlightMidi(midi)),
+      this._vm.activeHighlightMidi.subscribe((midi) => {
+        this._fretboardView.highlightMidi(midi);
+        this._pianoKeyboardView.highlightMidi(midi);
+      }),
       this._vm.earLevel.subscribe(() => this._renderPanel()),
       this._vm.earQuestion.subscribe(() => this._renderPanel()),
       this._vm.earSelectedId.subscribe(() => this._renderPanel()),
@@ -136,6 +150,7 @@ export class ScalesHubView {
   unmount() {
     this._vm.stopAudio();
     this._fretboardView.dispose();
+    this._pianoKeyboardView.dispose();
     for (const unsub of this._unsubs) unsub();
     this._unsubs = [];
     this._container = null;
@@ -188,20 +203,28 @@ export class ScalesHubView {
    */
   _buildInstrumentAndRootBar(notation) {
     const activeInst = this._vm.voicingInstrument.value;
+    const shortLabels = {
+      guitarra: 'Guit.',
+      'guitarra-clasica': 'Clás.',
+      bajo: 'Bajo 4',
+      'bajo-5': 'Bajo 5',
+      piano: 'Piano'
+    };
     const instSeg = el(
       'div',
-      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Instrumento de digitación' },
-      VOICING_INSTRUMENT_OPTIONS.map((inst) =>
+      { className: 'm3-segmented m3-segmented--full scales-inst-seg', role: 'group', 'aria-label': 'Instrumento de digitación' },
+      SCALE_INSTRUMENT_OPTIONS.map((inst) =>
         el(
           'button',
           {
             type: 'button',
             className: 'm3-segmented__btn',
             ripple: true,
+            title: inst.label,
             'aria-pressed': String(activeInst === inst.id),
             onClick: () => this._vm.setVoicingInstrument(inst.id)
           },
-          [inst.id === 'guitarra-clasica' ? 'Clásica' : inst.label]
+          [shortLabels[inst.id] || inst.label]
         )
       )
     );
@@ -306,6 +329,7 @@ export class ScalesHubView {
     const associatedChords = this._vm.associatedChords.value;
     const linkedRepertoire = this._vm.linkedRepertoirePractices.value;
     const relLabel = this._vm.relativeParentLabel.value;
+    const isPiano = this._vm.voicingInstrument.value === 'piano';
     const isClassical = this._vm.voicingInstrument.value === 'guitarra-clasica';
 
     // 1) Barra superior de instrumento y raíz
@@ -424,27 +448,41 @@ export class ScalesHubView {
         },
         ['Notas a evitar']
       ),
-      el(
-        'button',
-        {
-          type: 'button',
-          className: `m3-chip ${this._vm.leftHanded.value ? 'm3-chip--selected' : ''}`,
-          'aria-pressed': String(this._vm.leftHanded.value),
-          onClick: () => this._vm.leftHanded.set(!this._vm.leftHanded.value)
-        },
-        ['Zurdo']
-      )
+      !isPiano
+        ? el(
+            'button',
+            {
+              type: 'button',
+              className: `m3-chip ${this._vm.leftHanded.value ? 'm3-chip--selected' : ''}`,
+              'aria-pressed': String(this._vm.leftHanded.value),
+              onClick: () => this._vm.leftHanded.set(!this._vm.leftHanded.value)
+            },
+            ['Zurdo']
+          )
+        : null
     ]);
 
-    // Contenedor del diapasón SVG interactivo (con pista de deslizamiento en móvil)
+    // Contenedor del diapasón o teclado SVG interactivo (con pista de deslizamiento en móvil)
     const fretboardHost = el('div', { className: 'scale-fretboard-wrap' });
-    this._fretboardView.render(fretboardHost, layout, {
-      labelMode: this._vm.labelMode.value,
-      notation,
-      showAvoidNotes: this._vm.showAvoidNotes.value,
-      leftHanded: this._vm.leftHanded.value
-    });
-    const fretboardHint = el('div', { className: 'fretboard-scroll-hint' }, ['Deslizá el mástil horizontalmente ↔']);
+    if (isPiano) {
+      this._pianoKeyboardView.render(fretboardHost, layout, {
+        labelMode: this._vm.labelMode.value,
+        notation,
+        showAvoidNotes: this._vm.showAvoidNotes.value
+      });
+    } else {
+      this._fretboardView.render(fretboardHost, layout, {
+        labelMode: this._vm.labelMode.value,
+        notation,
+        showAvoidNotes: this._vm.showAvoidNotes.value,
+        leftHanded: this._vm.leftHanded.value
+      });
+    }
+    const fretboardHint = el('div', { className: 'fretboard-scroll-hint' }, [
+      isPiano
+        ? 'Tocá una tecla · Deslizá el teclado ↔'
+        : 'Deslizá el mástil horizontalmente ↔'
+    ]);
 
     // Leyenda visual del diapasón
     const legend = el('div', { className: 'scale-legend', 'aria-label': 'Leyenda de colores del diapasón' }, [

@@ -203,6 +203,7 @@ export class PracticePlayerViewModel {
         const pr = this.practice.value;
         if (!pr) return '';
         const mode = this.viewMode.value;
+        const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
         return this._abc.prepareAbcForRender(this.transposedAbc.value, {
           viewMode: mode,
           chordNotation: this._appVm.settings.value.chordNotation,
@@ -215,7 +216,8 @@ export class PracticePlayerViewModel {
           showBassFunctions: this.showBassFunctions.value,
           showHarmonicAnalysis: this.showHarmonicAnalysis.value,
           harmonicAnalysis: pr.harmonicAnalysis || [],
-          isBass: pr.instruments.includes('bajo'),
+          isBass: !isPiano && pr.instruments.includes('bajo'),
+          isPiano,
           stripTitle: true
         });
       }
@@ -256,7 +258,12 @@ export class PracticePlayerViewModel {
     if (!practice) return;
 
     this.bpm.set(practice.tempo.start);
-    if (practice.type === 'harmony') this.viewMode.set('diagramas');
+    const activeDefaultInst = this._appVm.settings.value.defaultInstrument;
+    const preferPianoHarmony =
+      practice.type === 'harmony' &&
+      practice.instruments.includes('piano') &&
+      (practice.instruments.length === 1 || activeDefaultInst === 'piano');
+    if (practice.type === 'harmony') this.viewMode.set(preferPianoHarmony ? 'cifrado' : 'diagramas');
     else if (this.viewMode.value === 'diagramas') this.viewMode.set('mixto');
 
     if (practice.type === 'harmony') {
@@ -272,9 +279,11 @@ export class PracticePlayerViewModel {
 
   /** Extrae y carga en audio la timeline melódica/mixta de la práctica activa. */
   _loadMelodicTimeline(practice) {
+    const isPiano = practice.instruments.includes('piano') && (practice.instruments.length === 1 || practice.instruments[0] === 'piano');
     const timeline = this._abc.extractTimeline(null, this.transposedAbc.value, {
-      instrument: practice.instruments[0] || 'guitarra',
-      isBass: practice.instruments.includes('bajo'),
+      instrument: isPiano ? 'piano' : (practice.instruments[0] || 'guitarra'),
+      isBass: !isPiano && practice.instruments.includes('bajo'),
+      isPiano,
       timeSignature: practice.timeSignature
     });
     enrichTimelineWithHarmonyVoicings(timeline, {

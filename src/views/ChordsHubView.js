@@ -10,6 +10,7 @@ import {
   createChordSymbolElement,
   createVoiceLeadingConnector
 } from './ChordDiagramView.js';
+import { createPianoChordElement } from './PianoKeyboardView.js';
 import { el, icon, openModalDialog } from './uiHelpers.js';
 
 /**
@@ -199,11 +200,12 @@ export class ChordsHubView {
    * @returns {HTMLElement} Barra de instrumento y afinación.
    */
   _buildInstrumentTuningBar() {
-    const isBass = this._vm.instrument.value === 'bajo';
+    const isPiano = this._vm.instrument.value === 'piano';
+    const isBass = !isPiano && this._vm.instrument.value === 'bajo';
     const instSeg = el(
       'div',
-      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Instrumento' },
-      ['guitarra-clasica', 'guitarra', 'bajo'].map((inst) =>
+      { className: 'm3-segmented m3-segmented--full chords-inst-seg', role: 'group', 'aria-label': 'Instrumento' },
+      ['guitarra-clasica', 'guitarra', 'bajo', 'piano'].map((inst) =>
         el(
           'button',
           {
@@ -217,6 +219,10 @@ export class ChordsHubView {
         )
       )
     );
+
+    if (isPiano) {
+      return el('div', { style: 'display:flex; flex-direction:column; gap:8px' }, [instSeg]);
+    }
 
     const tuningOptions = Object.values(PRESET_TUNINGS).filter((t) => t.instrument === (isBass ? 'bass' : 'guitar'));
     const tuningSelect = el(
@@ -312,7 +318,8 @@ export class ChordsHubView {
     const notation = this._appVm.settings.value.chordNotation;
     const chord = this._vm.activeChord.value;
     const tuning = this._vm.activeTuning.value;
-    const isBass = this._vm.instrument.value === 'bajo';
+    const isPiano = this._vm.instrument.value === 'piano';
+    const isBass = !isPiano && this._vm.instrument.value === 'bajo';
     const voicings = this._vm.voicingsList.value;
     const safeIdx = Math.min(this._vm.activeVoicingIndex.value, Math.max(0, voicings.length - 1));
     const currentVoicing = voicings[safeIdx] || null;
@@ -394,27 +401,36 @@ export class ChordsHubView {
     );
     slashSelect.value = this._vm.selectedBass.value;
 
-    const voicingTypeOptions = isBass
+    const voicingTypeOptions = isPiano
       ? [
-          { value: 'todos', label: 'Todos los acordes de bajo' },
-          { value: 'decima', label: 'Décimas (R–10)' },
-          { value: 'shell', label: 'Shells (R–7–10 / R–3–7)' },
-          { value: 'triada', label: 'Tríadas (abiertas / agudas)' },
-          { value: 'guias', label: 'Notas guía (3–7)' },
-          { value: 'inversion', label: 'Inversiones / slash' },
-          { value: 'extension', label: 'Extensiones (6, 9, 13)' },
-          { value: 'sugerido', label: 'Sugeridos' }
+          { value: 'todos', label: 'Todos los voicings de piano' },
+          { value: 'fundamental', label: 'Posición fundamental' },
+          { value: 'inversion', label: 'Inversiones' },
+          { value: 'shell', label: 'Shell (MI + MD)' },
+          { value: 'rootless', label: 'Rootless (Jazz)' },
+          { value: 'drop2', label: 'Drop 2 (abierto)' }
         ]
-      : [
-          { value: 'todos', label: 'Todos los tipos' },
-          { value: 'abierto', label: 'Abierto' },
-          { value: 'cejilla', label: 'Cejilla' },
-          { value: 'triada', label: 'Tríada' },
-          { value: 'drop2', label: 'Drop 2' },
-          { value: 'drop3', label: 'Drop 3' },
-          { value: 'shell', label: 'Shell' },
-          { value: 'sugerido', label: 'Sugeridos' }
-        ];
+      : isBass
+        ? [
+            { value: 'todos', label: 'Todos los acordes de bajo' },
+            { value: 'decima', label: 'Décimas (R–10)' },
+            { value: 'shell', label: 'Shells (R–7–10 / R–3–7)' },
+            { value: 'triada', label: 'Tríadas (abiertas / agudas)' },
+            { value: 'guias', label: 'Notas guía (3–7)' },
+            { value: 'inversion', label: 'Inversiones / slash' },
+            { value: 'extension', label: 'Extensiones (6, 9, 13)' },
+            { value: 'sugerido', label: 'Sugeridos' }
+          ]
+        : [
+            { value: 'todos', label: 'Todos los tipos' },
+            { value: 'abierto', label: 'Abierto' },
+            { value: 'cejilla', label: 'Cejilla' },
+            { value: 'triada', label: 'Tríada' },
+            { value: 'drop2', label: 'Drop 2' },
+            { value: 'drop3', label: 'Drop 3' },
+            { value: 'shell', label: 'Shell' },
+            { value: 'sugerido', label: 'Sugeridos' }
+          ];
 
     // Selector de afinación reutilizable (se aloja en opciones avanzadas para despejar la biblioteca)
     const tuningOptions = Object.values(PRESET_TUNINGS).filter((t) => t.instrument === (isBass ? 'bass' : 'guitar'));
@@ -432,8 +448,8 @@ export class ChordsHubView {
 
     const instSegLib = el(
       'div',
-      { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Instrumento' },
-      ['guitarra-clasica', 'guitarra', 'bajo'].map((inst) =>
+      { className: 'm3-segmented m3-segmented--full chords-inst-seg', role: 'group', 'aria-label': 'Instrumento' },
+      ['guitarra-clasica', 'guitarra', 'bajo', 'piano'].map((inst) =>
         el(
           'button',
           {
@@ -450,13 +466,15 @@ export class ChordsHubView {
 
     // Filtros secundarios plegables (afinación, bajo slash, tipo, inversión, trastes, zurdo, etiquetas)
     const filtersCollapsible = el('details', { className: 'm3-collapsible m3-collapsible--subtle' }, [
-      el('summary', {}, [el('span', {}, ['Afinación, bajo alternativo y opciones']), icon('chevronDown', 18)]),
+      el('summary', {}, [el('span', {}, [isPiano ? 'Bajo alternativo y opciones de teclado' : 'Afinación, bajo alternativo y opciones']), icon('chevronDown', 18)]),
       el('div', { className: 'm3-collapsible__content' }, [
         el('div', { className: 'controls-grid' }, [
-          el('div', {}, [
-            el('label', { className: 'm3-label-md', style: 'display:block; margin-bottom:4px' }, ['Afinación']),
-            tuningSelectLib
-          ]),
+          !isPiano
+            ? el('div', {}, [
+                el('label', { className: 'm3-label-md', style: 'display:block; margin-bottom:4px' }, ['Afinación']),
+                tuningSelectLib
+              ])
+            : null,
           el('div', {}, [
             el('label', { className: 'm3-label-md', style: 'display:block; margin-bottom:4px' }, ['Bajo alternativo (slash)']),
             slashSelect
@@ -470,44 +488,51 @@ export class ChordsHubView {
             { value: '3', label: '3.ª inversión' }
           ], (v) => this._vm.inversionFilter.set(v === 'todas' ? 'todas' : Number(v))),
           this._buildMiniSelect('Etiquetas en puntos', this._vm.labelMode.value, [
-            { value: 'fingers', label: 'Dedos (1–4)' },
+            { value: 'fingers', label: isPiano ? 'Dedos (1–5)' : 'Dedos (1–4)' },
             { value: 'functions', label: 'Funciones (R 3 5 7)' },
             { value: 'notes', label: 'Nombres de nota' }
           ], (v) => this._vm.labelMode.set(v)),
-          this._buildMiniSelect('Reproducción al tocar', this._vm.playMode.value, [
-            { value: 'block', label: 'En bloque (acorde pulsado)' },
-            { value: 'strum-down', label: 'Rasgueo abajo' },
-            { value: 'strum-up', label: 'Rasgueo arriba' },
-            { value: 'arpeggio-asc', label: 'Arpegio ascendente' },
-            { value: 'arpeggio-pima', label: 'Arpegio p-i-m-a' }
-          ], (v) => this._vm.playMode.set(v))
+          this._buildMiniSelect('Reproducción al tocar', this._vm.playMode.value, isPiano
+            ? [
+                { value: 'block', label: 'En bloque (simultáneo)' },
+                { value: 'arpeggio-asc', label: 'Arpegio ascendente' }
+              ]
+            : [
+                { value: 'block', label: 'En bloque (acorde pulsado)' },
+                { value: 'strum-down', label: 'Rasgueo abajo' },
+                { value: 'strum-up', label: 'Rasgueo arriba' },
+                { value: 'arpeggio-asc', label: 'Arpegio ascendente' },
+                { value: 'arpeggio-pima', label: 'Arpegio p-i-m-a' }
+              ], (v) => this._vm.playMode.set(v))
         ]),
-        el('div', { className: 'm3-chip-row' }, [
-          el(
-            'button',
-            {
-              type: 'button',
-              className: 'm3-chip m3-chip--compact',
-              ripple: true,
-              'aria-pressed': String(this._vm.leftHanded.value),
-              onClick: () => this._vm.leftHanded.set(!this._vm.leftHanded.value)
-            },
-            ['Vista para zurdos']
-          ),
-          ...['todos', 'abierto', 'medio', 'agudo'].map((rng) =>
-            el(
-              'button',
-              {
-                type: 'button',
-                className: 'm3-chip m3-chip--compact',
-                ripple: true,
-                'aria-pressed': String(this._vm.fretRangeFilter.value === rng),
-                onClick: () => this._vm.fretRangeFilter.set(rng)
-              },
-              [rng === 'todos' ? 'Todo el mango' : rng === 'abierto' ? 'Trastes 0–4' : rng === 'medio' ? 'Trastes 3–7' : 'Trastes 8+']
-            )
-          )
-        ])
+        !isPiano
+          ? el('div', { className: 'm3-chip-row' }, [
+              el(
+                'button',
+                {
+                  type: 'button',
+                  className: 'm3-chip m3-chip--compact',
+                  ripple: true,
+                  'aria-pressed': String(this._vm.leftHanded.value),
+                  onClick: () => this._vm.leftHanded.set(!this._vm.leftHanded.value)
+                },
+                ['Vista para zurdos']
+              ),
+              ...['todos', 'abierto', 'medio', 'agudo'].map((rng) =>
+                el(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'm3-chip m3-chip--compact',
+                    ripple: true,
+                    'aria-pressed': String(this._vm.fretRangeFilter.value === rng),
+                    onClick: () => this._vm.fretRangeFilter.set(rng)
+                  },
+                  [rng === 'todos' ? 'Todo el mango' : rng === 'abierto' ? 'Trastes 0–4' : rng === 'medio' ? 'Trastes 3–7' : 'Trastes 8+']
+                )
+              )
+            ])
+          : null
       ])
     ]);
 
@@ -543,22 +568,31 @@ export class ChordsHubView {
       const mode = this._vm.diagramViewMode.value;
       if (mode === 'diagrama' || mode === 'ambos') {
         visualHost.appendChild(
-          createChordDiagramElement(currentVoicing, {
-            tuning,
-            notation,
-            labelMode: this._vm.labelMode.value,
-            leftHanded: this._vm.leftHanded.value,
-            size: 'lg',
-            showTitle: false,
-            onPlay: (v) => this._vm.playVoicing(v)
-          })
+          isPiano
+            ? createPianoChordElement(currentVoicing, {
+                notation,
+                labelMode: this._vm.labelMode.value,
+                size: 'lg',
+                onPlay: (v) => this._vm.playVoicing(v),
+                onNoteClick: ({ midi }) => this._vm.playSingleNote(midi)
+              })
+            : createChordDiagramElement(currentVoicing, {
+                tuning,
+                notation,
+                labelMode: this._vm.labelMode.value,
+                leftHanded: this._vm.leftHanded.value,
+                size: 'lg',
+                showTitle: false,
+                onPlay: (v) => this._vm.playVoicing(v)
+              })
         );
       }
       if (mode === 'pentagrama' || mode === 'ambos') {
         const staffBox = el('div', { className: 'score-surface', style: 'min-width:200px; flex:1 1 220px' });
         visualHost.appendChild(staffBox);
+        const abcSnippet = isPiano ? currentVoicing.toAbcStaff(notation) : currentVoicing.toAbcStaff(tuning, notation);
         setTimeout(() => {
-          this._abc.renderScore(staffBox, currentVoicing.toAbcStaff(tuning, notation), { width: 280, zoom: 1.0 });
+          this._abc.renderScore(staffBox, abcSnippet, { width: 280, zoom: 1.0, isPiano });
         }, 0);
       }
     } else {
@@ -595,6 +629,27 @@ export class ChordsHubView {
                 { className: 'voicing-group-grid' },
                 grp.items.map(({ voicing: v, flatIndex }) => {
                   const isActive = flatIndex === safeIdx;
+                  if (isPiano) {
+                    return el(
+                      'div',
+                      { className: `voicing-grid-card ${isActive ? 'voicing-grid-card--active' : ''}` },
+                      [
+                        createPianoChordElement(v, {
+                          notation,
+                          labelMode: this._vm.labelMode.value,
+                          size: 'sm',
+                          onPlay: (vo) => {
+                            this._vm.activeVoicingIndex.set(flatIndex);
+                            this._vm.playVoicing(vo);
+                          }
+                        }),
+                        el('div', { className: 'voicing-grid-card__meta' }, [
+                          el('strong', { className: 'm3-label' }, [v.label]),
+                          el('span', { className: 'm3-body-md' }, [`Bajo en ${v.computeBassNote(notation)}`])
+                        ])
+                      ]
+                    );
+                  }
                   const invLbl = INVERSION_LABELS[v.computeInversion(tuning)] || 'Fundamental';
                   const tagText = (v.tags || []).slice(0, 2).map(formatVoicingTag).join(' · ');
                   return el(
@@ -645,7 +700,7 @@ export class ChordsHubView {
         type: 'button', className: 'm3-btn m3-btn--filled', ripple: true,
         onClick: () => (currentVoicing ? this._vm.playVoicing(currentVoicing) : this._vm.playChordArpeggio())
       }, [icon('play', 18), isBass ? 'Escuchar acorde' : 'Escuchar']),
-      isBass
+      isBass || isPiano
         ? el('button', {
             type: 'button', className: 'm3-btn m3-btn--tonal', ripple: true,
             onClick: () => (currentVoicing ? this._vm.playVoicing(currentVoicing, 'arpeggio-asc') : this._vm.playChordArpeggio())
@@ -655,15 +710,17 @@ export class ChordsHubView {
         type: 'button', className: 'm3-btn m3-btn--tonal', ripple: true,
         onClick: () => this._vm.practiceActiveChord(currentVoicing)
       }, [icon('music', 18), 'Practicar acorde']),
-      el('button', {
-        type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
-        onClick: () => this._vm.generateSuggestedVoicings()
-      }, [icon('wand', 18), 'Generar voicings']),
+      !isPiano
+        ? el('button', {
+            type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
+            onClick: () => this._vm.generateSuggestedVoicings()
+          }, [icon('wand', 18), 'Generar voicings'])
+        : null,
       el('button', {
         type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
         onClick: () => this._vm.openCompatibleScale()
       }, [icon('scales', 18), 'Escalas compatibles']),
-      currentVoicing
+      currentVoicing && !isPiano
         ? el('button', {
             type: 'button', className: 'm3-btn m3-btn--outlined', ripple: true,
             onClick: () => this._openZoomVoicingModal(currentVoicing, tuning, notation)
@@ -688,7 +745,9 @@ export class ChordsHubView {
         el('div', {}, [
           el('h2', { className: 'm3-headline' }, [createChordSymbolElement(chord.americanSymbol, notation)]),
           el('span', { className: 'm3-body-md' }, [
-            `${chord.quality.name}${currentVoicing ? ` · ${currentVoicing.getPositionLabel()} (${currentVoicing.getUsedStringsLabel(tuning)}) · ${INVERSION_LABELS[currentVoicing.computeInversion(tuning)]} · Bajo en ${currentVoicing.computeBassNote(tuning, notation)}` : ''}`
+            isPiano
+              ? `${chord.quality.name}${currentVoicing ? ` · ${currentVoicing.label} · Bajo en ${currentVoicing.computeBassNote(notation)}` : ''}`
+              : `${chord.quality.name}${currentVoicing ? ` · ${currentVoicing.getPositionLabel()} (${currentVoicing.getUsedStringsLabel(tuning)}) · ${INVERSION_LABELS[currentVoicing.computeInversion(tuning)]} · Bajo en ${currentVoicing.computeBassNote(tuning, notation)}` : ''}`
           ])
         ]),
         viewModeSeg
@@ -865,7 +924,8 @@ export class ChordsHubView {
   _renderTrainerAndVoiceLeadingTab() {
     const notation = this._appVm.settings.value.chordNotation;
     const tuning = this._vm.activeTuning.value;
-    const isBass = tuning.instrument === 'bass';
+    const isPiano = this._vm.instrument.value === 'piano';
+    const isBass = !isPiano && tuning.instrument === 'bass';
 
     // Barra superior de instrumento y afinación compartida
     const instCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:8px' }, [
@@ -1004,7 +1064,9 @@ export class ChordsHubView {
               : null
           ]),
           curVoicing
-            ? createChordDiagramElement(curVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) })
+            ? (isPiano
+                ? createPianoChordElement(curVoicing, { notation, labelMode: 'functions', size: 'md', onPlay: (v) => this._vm.playVoicing(v) })
+                : createChordDiagramElement(curVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) }))
             : el('strong', { className: 'm3-headline' }, [formatChordSymbol(curChord, notation)])
         ]),
         el('div', { className: 'trainer-slot' }, [
@@ -1015,32 +1077,41 @@ export class ChordsHubView {
               : null
           ]),
           nextVoicing
-            ? createChordDiagramElement(nextVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) })
+            ? (isPiano
+                ? createPianoChordElement(nextVoicing, { notation, labelMode: 'functions', size: 'md', onPlay: (v) => this._vm.playVoicing(v) })
+                : createChordDiagramElement(nextVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) }))
             : el('strong', { className: 'm3-headline' }, [formatChordSymbol(nextChord, notation)])
         ])
       ])
     ]);
 
     // =========================================================================
-    // 2) CONDUCCIÓN DE VOCES — 100 % CONFIGURABLE (GUITARRA Y BAJO)
+    // 2) CONDUCCIÓN DE VOCES — 100 % CONFIGURABLE (GUITARRA, BAJO Y PIANO)
     // =========================================================================
     const vlChords = this._vm.voiceLeadingChords.value;
     const vlSteps = this._vm.voiceLedSequence.value;
-    const vlStyleOptions = isBass
+    const vlStyleOptions = isPiano
       ? [
-          { value: 'auto', label: 'Estilo: Auto (bajo)' },
-          { value: 'decima', label: 'Décimas (R–10)' },
-          { value: 'shell', label: 'Shells (R–7–10 / R–3–7)' },
-          { value: 'triadas-agudas', label: 'Tríadas agudas (A-D-G)' },
-          { value: 'guias', label: 'Notas guía (3–7)' }
+          { value: 'todos', label: 'Estilo: Auto (piano)' },
+          { value: 'cerrado', label: 'Inversiones cerradas' },
+          { value: 'shell', label: 'Shell / Drop 2' },
+          { value: 'rootless', label: 'Rootless (Bill Evans)' }
         ]
-      : [
-          { value: 'auto', label: 'Estilo: Auto' },
-          { value: '321', label: 'Tríadas 3-2-1' },
-          { value: '432', label: 'Tríadas 4-3-2' },
-          { value: '5432', label: 'Drop 2 (5-4-3-2)' },
-          { value: 'shell', label: 'Shell voicings' }
-        ];
+      : isBass
+        ? [
+            { value: 'auto', label: 'Estilo: Auto (bajo)' },
+            { value: 'decima', label: 'Décimas (R–10)' },
+            { value: 'shell', label: 'Shells (R–7–10 / R–3–7)' },
+            { value: 'triadas-agudas', label: 'Tríadas agudas (A-D-G)' },
+            { value: 'guias', label: 'Notas guía (3–7)' }
+          ]
+        : [
+            { value: 'auto', label: 'Estilo: Auto' },
+            { value: '321', label: 'Tríadas 3-2-1' },
+            { value: '432', label: 'Tríadas 4-3-2' },
+            { value: '5432', label: 'Drop 2 (5-4-3-2)' },
+            { value: 'shell', label: 'Shell voicings' }
+          ];
 
     const vlPills = el(
       'div',
@@ -1063,6 +1134,31 @@ export class ChordsHubView {
 
     const vlStrip = el('div', { className: 'voice-leading-strip' });
     vlSteps.forEach((step, idx) => {
+      if (isPiano && step.voicing?.isPianoVoicing) {
+        vlStrip.appendChild(
+          el('div', { className: 'piano-vl-card' }, [
+            el('strong', { className: 'm3-label' }, [formatChordSymbol(step.chord, notation)]),
+            createPianoChordElement(step.voicing, {
+              notation,
+              labelMode: 'functions',
+              size: 'sm',
+              onPlay: (v) => this._vm.playVoicing(v)
+            }),
+            el('span', { className: 'm3-body-md', style: 'font-size:0.74rem; text-align:center' }, [step.voicing.label])
+          ])
+        );
+        if (idx < vlSteps.length - 1) {
+          const next = vlSteps[idx + 1];
+          vlStrip.appendChild(
+            el('div', { className: 'piano-vl-arrow' }, [
+              el('strong', {}, ['→']),
+              el('span', {}, [`${next.voiceLeadingCost ?? 0} st`]),
+              next.commonTones > 0 ? el('span', { className: 'm3-badge' }, [`${next.commonTones} común`]) : null
+            ])
+          );
+        }
+        return;
+      }
       vlStrip.appendChild(
         el('div', { style: 'display:flex; flex-direction:column; align-items:center; gap:4px' }, [
           createChordDiagramElement(step.voicing, {
@@ -1085,7 +1181,11 @@ export class ChordsHubView {
       el('div', { className: 'player-toolbar' }, [
         el('div', {}, [
           el('h2', { className: 'm3-title-md' }, ['Conducción de voces']),
-          el('span', { className: 'm3-body-md' }, ['Editá cualquier progresión, zona y estilo (verde = nota común, azul = grado conjunto)'])
+          el('span', { className: 'm3-body-md' }, [
+            isPiano
+              ? 'Enlace óptimo de inversiones, Shell y Rootless minimizando saltos en el teclado'
+              : 'Editá cualquier progresión, zona y estilo (verde = nota común, azul = grado conjunto)'
+          ])
         ]),
         el('div', { className: 'm3-chip-row' }, [
           el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--filled', ripple: true, onClick: () => this._vm.playBuilderProgression(true) }, [icon('play', 16), 'Escuchar']),
@@ -1105,19 +1205,21 @@ export class ChordsHubView {
       vlPills,
       this._buildInlineChordAdder(this._draftVl, notation, (sym) => this._vm.addVoiceLeadingChord(sym), true),
       el('div', { className: 'controls-grid' }, [
-        this._buildMiniSelect('Zona del diapasón', this._vm.voiceLeadingZone.value, [
-          { value: 'libre', label: 'Libre (todo el mango)' },
-          { value: 'abierto', label: isBass ? 'Grave / medio (T0–8)' : 'Abierta (T0–5)' },
-          { value: 'medio', label: isBass ? 'Media (T3–12)' : 'Media (T3–9)' },
-          { value: 'agudo', label: isBass ? 'Aguda (T7–17)' : 'Aguda (T7–14)' }
-        ], (z) => this._vm.setVoiceLeadingZone(z)),
-        this._buildMiniSelect('Estilo / juego de cuerdas', this._vm.voiceLeadingStyle.value, vlStyleOptions, (st) => this._vm.setVoiceLeadingStyle(st))
+        !isPiano
+          ? this._buildMiniSelect('Zona del diapasón', this._vm.voiceLeadingZone.value, [
+              { value: 'libre', label: 'Libre (todo el mango)' },
+              { value: 'abierto', label: isBass ? 'Grave / medio (T0–8)' : 'Abierta (T0–5)' },
+              { value: 'medio', label: isBass ? 'Media (T3–12)' : 'Media (T3–9)' },
+              { value: 'agudo', label: isBass ? 'Aguda (T7–17)' : 'Aguda (T7–14)' }
+            ], (z) => this._vm.setVoiceLeadingZone(z))
+          : null,
+        this._buildMiniSelect(isPiano ? 'Estilo de voicing' : 'Estilo / juego de cuerdas', this._vm.voiceLeadingStyle.value, vlStyleOptions, (st) => this._vm.setVoiceLeadingStyle(st))
       ]),
       vlStrip
     ]);
 
     // =========================================================================
-    // 3) INVERSIONES POR EL MANGO — 100 % CONFIGURABLE (GUITARRA Y BAJO)
+    // 3) INVERSIONES POR EL MANGO O TECLADO — 100 % CONFIGURABLE
     // =========================================================================
     const invChord = this._vm.inversionChord.value;
     const invVoicings = this._vm.getInversionWalkVoicings();
@@ -1148,29 +1250,40 @@ export class ChordsHubView {
     );
     invQualSel.value = this._vm.inversionQuality.value;
 
-    const invSets = isBass
+    const invSets = isPiano
       ? [
-          { id: 'bass-triadas', label: 'Tríadas agudas' },
-          { id: 'bass-shells', label: 'Shells' },
-          { id: 'bass-decimas', label: 'Décimas / díadas' },
-          { id: 'bass-4c', label: '4 cuerdas' }
+          { id: 'piano-inv', label: 'Inversiones cerradas' },
+          { id: 'piano-jazz', label: 'Shell / Rootless / Drop 2' }
         ]
-      : [
-          { id: '321', label: '3-2-1' },
-          { id: '432', label: '4-3-2' },
-          { id: '543', label: '5-4-3' },
-          { id: '4321', label: 'Drop 2 (4-3-2-1)' },
-          { id: '5432', label: 'Drop 2 (5-4-3-2)' }
-        ];
+      : isBass
+        ? [
+            { id: 'bass-triadas', label: 'Tríadas agudas' },
+            { id: 'bass-shells', label: 'Shells' },
+            { id: 'bass-decimas', label: 'Décimas / díadas' },
+            { id: 'bass-4c', label: '4 cuerdas' }
+          ]
+        : [
+            { id: '321', label: '3-2-1' },
+            { id: '432', label: '4-3-2' },
+            { id: '543', label: '5-4-3' },
+            { id: '4321', label: 'Drop 2 (4-3-2-1)' },
+            { id: '5432', label: 'Drop 2 (5-4-3-2)' }
+          ];
 
     const invCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('div', {}, [
-          el('h2', { className: 'm3-title-md' }, [`Inversiones de ${invChord.getSymbol(notation)} por el mango`]),
+          el('h2', { className: 'm3-title-md' }, [
+            isPiano
+              ? `Inversiones y voicings de ${invChord.getSymbol(notation)} en el teclado`
+              : `Inversiones de ${invChord.getSymbol(notation)} por el mango`
+          ]),
           el('span', { className: 'm3-body-md' }, [
-            isBass
-              ? 'Elegí cualquier acorde y explorá sus posiciones de bajo ascendiendo por el diapasón'
-              : 'Elegí cualquier acorde y juego de cuerdas para recorrer sus inversiones ascendiendo por el mango'
+            isPiano
+              ? 'Recorré fundamental, inversiones cerradas y disposiciones abiertas/jazz sobre el teclado'
+              : isBass
+                ? 'Elegí cualquier acorde y explorá sus posiciones de bajo ascendiendo por el diapasón'
+                : 'Elegí cualquier acorde y juego de cuerdas para recorrer sus inversiones ascendiendo por el mango'
           ])
         ]),
         el('div', { className: 'm3-chip-row' }, [
@@ -1181,7 +1294,7 @@ export class ChordsHubView {
       el('div', { className: 'm3-chip-row', style: 'align-items:center' }, [invRootSel, invQualSel]),
       el(
         'div',
-        { className: 'm3-chip-row', role: 'group', 'aria-label': 'Juego de cuerdas para inversiones' },
+        { className: 'm3-chip-row', role: 'group', 'aria-label': isPiano ? 'Familia de voicings de piano' : 'Juego de cuerdas para inversiones' },
         invSets.map((s) =>
           el(
             'button',
@@ -1201,21 +1314,32 @@ export class ChordsHubView {
             'div',
             { className: 'voice-leading-strip' },
             invVoicings.map((v) =>
-              el('div', { style: 'display:flex; flex-direction:column; align-items:center; gap:4px' }, [
-                el('span', { className: 'm3-badge m3-badge--primary' }, [`${INVERSION_LABELS[v.computeInversion(tuning)]} · ${v.getPositionLabel()}`]),
-                el('span', { className: 'm3-body-md', style: 'font-size:0.75rem' }, [v.getUsedStringsLabel(tuning)]),
-                createChordDiagramElement(v, {
-                  tuning,
-                  notation,
-                  labelMode: 'functions',
-                  leftHanded: this._vm.leftHanded.value,
-                  size: 'sm',
-                  onPlay: (vo) => this._vm.playVoicing(vo)
-                })
-              ])
+              isPiano && v.isPianoVoicing
+                ? el('div', { className: 'piano-vl-card' }, [
+                    el('span', { className: 'm3-badge m3-badge--primary' }, [v.label]),
+                    el('span', { className: 'm3-body-md', style: 'font-size:0.75rem' }, [`Bajo en ${v.computeBassNote(notation)}`]),
+                    createPianoChordElement(v, {
+                      notation,
+                      labelMode: 'functions',
+                      size: 'sm',
+                      onPlay: (vo) => this._vm.playVoicing(vo)
+                    })
+                  ])
+                : el('div', { style: 'display:flex; flex-direction:column; align-items:center; gap:4px' }, [
+                    el('span', { className: 'm3-badge m3-badge--primary' }, [`${INVERSION_LABELS[v.computeInversion(tuning)]} · ${v.getPositionLabel()}`]),
+                    el('span', { className: 'm3-body-md', style: 'font-size:0.75rem' }, [v.getUsedStringsLabel(tuning)]),
+                    createChordDiagramElement(v, {
+                      tuning,
+                      notation,
+                      labelMode: 'functions',
+                      leftHanded: this._vm.leftHanded.value,
+                      size: 'sm',
+                      onPlay: (vo) => this._vm.playVoicing(vo)
+                    })
+                  ])
             )
           )
-        : el('p', { className: 'm3-body-md' }, ['No se encontraron inversiones en ese juego de cuerdas para esa calidad; probá otro juego o estilo.'])
+        : el('p', { className: 'm3-body-md' }, ['No se encontraron inversiones para esa combinación; probá otra opción.'])
     ]);
 
     this._panelHost.append(instCard, trainerCard, vlCard, invCard);

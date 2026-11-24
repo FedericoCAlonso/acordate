@@ -117,7 +117,8 @@ export class EditorImportExportViewModel {
       return;
     }
     const f = this._form.value;
-    const isBass = f.instruments.includes('bajo') && f.instruments.length === 1;
+    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
+    const isBass = !isPiano && f.instruments.includes('bajo') && f.instruments.length === 1;
     const tuning = Tuning.defaultForInstrument(isBass ? 'bass' : 'guitar');
 
     const timeline = f.type === 'harmony'
@@ -128,15 +129,22 @@ export class EditorImportExportViewModel {
           tuning
         })
       : this._abc.extractTimeline(visualObj, f.abc, {
-          instrument: f.instruments[0] || 'guitarra',
+          instrument: isPiano ? 'piano' : (f.instruments[0] || 'guitarra'),
           isBass,
+          isPiano,
           timeSignature: f.timeSignature
         });
 
     this._audio.loadTimeline(timeline);
     this._audio.configure({
       bpm: Number(f.tempoStart) || 85,
-      instrument: isBass ? 'electric-bass' : f.instruments.includes('guitarra-clasica') ? 'nylon-guitar' : 'acoustic-guitar',
+      instrument: isPiano
+        ? 'acoustic-piano'
+        : isBass
+          ? 'electric-bass'
+          : f.instruments.includes('guitarra-clasica')
+            ? 'nylon-guitar'
+            : 'acoustic-guitar',
       comping: f.comping || 'negras-abajo',
       countInMeasures: 0,
       loopEnabled: false,

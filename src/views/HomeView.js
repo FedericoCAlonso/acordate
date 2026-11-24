@@ -6,7 +6,8 @@ import { createFloatingField, el, icon, openModalDialog } from './uiHelpers.js';
 const INSTRUMENT_TABS = [
   { value: 'guitarra-clasica', label: 'Clásica', fullLabel: 'Guitarra clásica' },
   { value: 'guitarra', label: 'Guitarra', fullLabel: 'Guitarra' },
-  { value: 'bajo', label: 'Bajo', fullLabel: 'Bajo' }
+  { value: 'bajo', label: 'Bajo', fullLabel: 'Bajo' },
+  { value: 'piano', label: 'Piano', fullLabel: 'Piano' }
 ];
 
 /**

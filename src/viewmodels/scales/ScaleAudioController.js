@@ -30,6 +30,7 @@ export class ScaleAudioController {
   /** Resuelve el timbre sintetizado coherente con el instrumento de digitación activo. */
   _getTimbre() {
     const inst = this._getState().voicingInstrument;
+    if (inst === 'piano') return 'acoustic-piano';
     if (inst === 'guitarra-clasica') return 'nylon-guitar';
     if (inst === 'bajo' || inst === 'bajo-5') return 'electric-bass';
     return 'acoustic-guitar';
@@ -124,10 +125,11 @@ export class ScaleAudioController {
   /** Reproduce un acorde asociado desde su chip armónico. */
   playAssociatedChord(chordSymbol) {
     const timbre = this._getTimbre();
-    const voicing = getChordVoicingMidi(chordSymbol, timbre === 'electric-bass' ? 43 : 52);
+    const isPianoOrBass = timbre === 'electric-bass' || timbre === 'acoustic-piano';
+    const voicing = getChordVoicingMidi(chordSymbol, timbre === 'electric-bass' ? 43 : timbre === 'acoustic-piano' ? 60 : 52);
     if (!voicing) return;
     this._audio.playVoicing([voicing.bassMidi, ...voicing.chordMidis], {
-      mode: timbre === 'electric-bass' ? 'block' : 'strum-down',
+      mode: isPianoOrBass ? 'block' : 'strum-down',
       instrument: timbre,
       duration: 1.6,
       volume: 0.85

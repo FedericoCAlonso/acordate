@@ -70,6 +70,18 @@ export const EDITOR_TEMPLATES = {
     notes: 'Mirá primero la armadura y el compás antes de contar.',
     abc: 'X:1\nT:Lectura melódica en Do\nM:4/4\nL:1/4\nK:C clef=treble-8\nC E G F | E D C2 | G A B c | d B G2 |\nc B A G | F E D F | E G D B, | C4 |]'
   },
+  piano: {
+    label: 'Piano (gran pentagrama)',
+    category: 'lectura',
+    level: 1,
+    key: 'C',
+    timeSignature: '4/4',
+    instruments: ['piano'],
+    tempo: { start: 65, target: 95, step: 5 },
+    goals: ['Coordinar mano derecha (clave de sol) e izquierda (clave de fa)', 'Respetar digitación 1–5'],
+    notes: 'Estudiá primero manos separadas usando el selector MD / MI del reproductor.',
+    abc: 'X:1\nT:Estudio en gran pentagrama\nM:4/4\nL:1/4\nK:C\n%%staves {1 2}\nV:1 clef=treble\n"C""^1"C "^2"D "^3"E "^4"F | "G""^5"G2 "^3"E2 | "F""^4"F "^3"E "^2"D "^1"C | "C""^3"E2 "^1"C2 |]\nV:2 clef=bass\n"_5"C,2 "_1"G,2 | "_5"B,,2 "_1"G,2 | "_4"A,,2 "_1"F,2 | "_5"C,4 |]'
+  },
   blanco: {
     label: 'En blanco',
     category: 'lectura',
@@ -355,6 +367,32 @@ export function createScalePractice({
  */
 export function createChordStudyPractice({ chord, instrument, voicing, tuning }) {
   const title = `Estudio de acorde: ${chord.americanSymbol}`;
+  if (instrument === 'piano' || voicing?.isPianoVoicing) {
+    const abc = typeof voicing?.toAbcStaff === 'function' ? voicing.toAbcStaff('americano') : null;
+    return new Practice({
+      id: generatePracticeId(title),
+      version: 3,
+      type: abc ? 'mixed' : 'harmony',
+      title,
+      instruments: ['piano'],
+      category: 'formas',
+      level: 2,
+      tags: ['biblioteca', 'piano', chord.americanSymbol],
+      key: chord.root,
+      timeSignature: '4/4',
+      tempo: { start: 65, target: 100, step: 5 },
+      abc,
+      progression: [
+        { bars: 2, chord: chord.americanSymbol },
+        { bars: 2, chord: chord.americanSymbol }
+      ],
+      comping: 'bloque',
+      goals: ['Hacer sonar todas las notas del acorde simultáneamente', 'Reconocer la disposición en el teclado sin mirar'],
+      notes: `Creada desde la Biblioteca de Acordes de Piano (${voicing ? voicing.label : chord.americanSymbol}).`,
+      origin: 'user',
+      createdAt: new Date().toISOString()
+    });
+  }
   return new Practice({
     id: generatePracticeId(title),
     version: 2,

@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from '../models/Settings.js';
-import { getTuningStrings } from '../core/PitchPolicy.js';
+import { PIANO_REFERENCE_TONES, getTuningStrings } from '../core/PitchPolicy.js';
 
 /**
  * ViewModel de la pantalla de Ajustes (#/ajustes).
@@ -74,22 +74,25 @@ export class SettingsViewModel {
     if (!this._audio) return;
     this._audio.configure({ listeningRegister: this.settings.value.listeningRegister });
     const synthVoice =
-      instrument === 'bajo'
-        ? 'electric-bass'
-        : instrument === 'guitarra-clasica'
-          ? 'nylon-guitar'
-          : 'acoustic-guitar';
+      instrument === 'piano'
+        ? 'acoustic-piano'
+        : instrument === 'bajo'
+          ? 'electric-bass'
+          : instrument === 'guitarra-clasica'
+            ? 'nylon-guitar'
+            : 'acoustic-guitar';
     this._audio.playReferenceTone(midi, synthVoice);
   }
 
   /**
-   * Devuelve las cuerdas al aire de referencia de afinación para guitarra y bajo.
-   * @returns {{ guitar: Array<object>, bass: Array<object> }} Cuerdas al aire.
+   * Devuelve las cuerdas al aire de referencia de afinación para guitarra y bajo, y notas de referencia para piano.
+   * @returns {{ guitar: Array<object>, bass: Array<object>, piano: Array<object> }} Referencias sonoras.
    */
   getTuningReferenceStrings() {
     return {
       guitar: getTuningStrings('guitarra'),
-      bass: getTuningStrings('bajo')
+      bass: getTuningStrings('bajo'),
+      piano: [...PIANO_REFERENCE_TONES]
     };
   }
 

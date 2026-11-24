@@ -25,15 +25,16 @@ async function readJsonFile(relativePath) {
  * @returns {Promise<Practice[]>} Lista combinada de instancias Practice (origin: "builtin").
  */
 export async function loadBuiltinCatalog() {
-  const [melodyList, harmonyList, jazzRep, tradRep, classicalRep] = await Promise.all([
+  const [melodyList, harmonyList, pianoList, jazzRep, tradRep, classicalRep] = await Promise.all([
     readJsonFile('./catalog.json'),
     readJsonFile('./harmonyCatalog.json'),
+    readJsonFile('./pianoCatalog.json'),
     readJsonFile('./repertoireJazz.json'),
     readJsonFile('./repertoireTraditional.json'),
     readJsonFile('./repertoireClassical.json')
   ]);
 
-  return [...melodyList, ...harmonyList, ...jazzRep, ...tradRep, ...classicalRep].map(
+  return [...melodyList, ...harmonyList, ...pianoList, ...jazzRep, ...tradRep, ...classicalRep].map(
     (item) => new Practice(item)
   );
 }

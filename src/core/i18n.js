@@ -30,7 +30,8 @@ export const LATIN_TO_AMERICAN_NOTE = {
 export const INSTRUMENT_LABELS = {
   'guitarra-clasica': 'Guitarra clásica',
   guitarra: 'Guitarra',
-  bajo: 'Bajo'
+  bajo: 'Bajo',
+  piano: 'Piano'
 };
 
 /**
@@ -142,7 +143,9 @@ export const SYNTH_INSTRUMENT_LABELS = {
   'nylon-guitar': 'Guitarra de nylon',
   'acoustic-guitar': 'Guitarra acústica',
   'electric-bass': 'Bajo eléctrico',
-  'acoustic-bass': 'Bajo acústico'
+  'acoustic-bass': 'Bajo acústico',
+  'acoustic-piano': 'Piano acústico',
+  'electric-piano': 'Piano eléctrico'
 };
 
 /**

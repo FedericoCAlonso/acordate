@@ -458,18 +458,23 @@ export class PracticePlayerView {
     this._annotationsBar.innerHTML = '';
 
     const isChordsDisabledByMode = mode === 'pentagrama';
-    const isBass = pr.instruments.includes('bajo');
+    const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
+    const isBass = !isPiano && pr.instruments.includes('bajo');
 
     const chips = [
       {
         label: 'Mano izq.',
-        title: 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
+        title: isPiano
+          ? 'Digitación 1–5 de mano izquierda (pentagrama inferior / clave de fa)'
+          : 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
         active: this._vm.showLeftHand.value,
         onClick: () => { this._vm.toggleLeftHand(); this._renderViewBar(); }
       },
       {
         label: 'Mano der.',
-        title: 'Dedos de pulsación (p, i, m, a) y rasgueos (↓ ↑)',
+        title: isPiano
+          ? 'Digitación 1–5 de mano derecha (pentagrama superior / clave de sol)'
+          : 'Dedos de pulsación (p, i, m, a) y rasgueos (↓ ↑)',
         active: this._vm.showRightHand.value,
         onClick: () => { this._vm.toggleRightHand(); this._renderViewBar(); }
       },
@@ -588,16 +593,24 @@ export class PracticePlayerView {
         : null;
     if (compingSelect) compingSelect.value = this._vm.compingPattern.value;
 
-    // Modo voces para piezas polifónicas clásicas (Ambas / Melodía V1 / Bajo V2)
+    // Modo voces para piezas polifónicas (en piano: Ambas / Mano der. / Mano izq.; en guitarra: Ambas / Melodía / Bajo)
+    const isPianoPiece = Boolean(pr?.instruments?.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
     const voiceControl = this._vm.hasMultipleVoices.value
       ? el(
           'div',
-          { className: 'm3-segmented', role: 'group', 'aria-label': 'Modo de voces' },
-          [
-            { id: 'both', label: 'Ambas' },
-            { id: 'v1', label: 'Melodía' },
-            { id: 'v2', label: 'Bajo' }
-          ].map((v) =>
+          { className: 'm3-segmented player-voice-seg', role: 'group', 'aria-label': isPianoPiece ? 'Selección de manos' : 'Modo de voces' },
+          (isPianoPiece
+            ? [
+                { id: 'both', label: 'Ambas' },
+                { id: 'v1', label: 'Mano der.' },
+                { id: 'v2', label: 'Mano izq.' }
+              ]
+            : [
+                { id: 'both', label: 'Ambas' },
+                { id: 'v1', label: 'Melodía' },
+                { id: 'v2', label: 'Bajo' }
+              ]
+          ).map((v) =>
             el(
               'button',
               {
@@ -658,9 +671,7 @@ export class PracticePlayerView {
 
     const quickRight = el('div', { className: 'stepper-inline' }, [
       layersToggleBtn,
-      voiceControl,
       harmonicLayerBtn,
-      compingSelect,
       el(
         'button',
         {
@@ -677,6 +688,9 @@ export class PracticePlayerView {
 
     this._viewBar.appendChild(seg);
     this._viewBar.appendChild(quickRight);
+    if (voiceControl) this._viewBar.appendChild(voiceControl);
+    if (compingSelect) this._viewBar.appendChild(compingSelect);
+    this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(voiceControl || compingSelect));
   }
 
   /**
@@ -702,13 +716,16 @@ export class PracticePlayerView {
     if (showStaff) {
       const width = this._scoreEl.clientWidth || this._container?.clientWidth || 340;
       this._lastScoreWidth = width;
+      const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
       const { visualObj } = this._abc.renderScore(this._scoreEl, this._vm.renderableAbc.value, {
         width,
-        zoom: this._vm.zoom.value
+        zoom: this._vm.zoom.value,
+        isPiano
       });
       const timeline = this._abc.extractTimeline(visualObj, this._vm.transposedAbc.value, {
-        instrument: pr.instruments[0] || 'guitarra',
-        isBass: pr.instruments.includes('bajo'),
+        instrument: isPiano ? 'piano' : (pr.instruments[0] || 'guitarra'),
+        isBass: !isPiano && pr.instruments.includes('bajo'),
+        isPiano,
         timeSignature: pr.timeSignature
       });
       this._vm.registerVisualTimeline(timeline);
@@ -1620,18 +1637,23 @@ export class PracticePlayerView {
         );
       } else {
         const pr = this._vm.practice.value;
-        const isBass = pr?.instruments?.includes('bajo');
+        const isPiano = Boolean(pr?.instruments?.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
+        const isBass = !isPiano && pr?.instruments?.includes('bajo');
         const lhSwitch = createSwitchRow({
           id: 'sheet-lh-toggle',
           label: 'Mano izquierda',
-          description: 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
+          description: isPiano
+            ? 'Digitación 1–5 en pentagrama inferior (clave de fa)'
+            : 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
           checked: this._vm.showLeftHand.value,
           onChange: () => this._vm.toggleLeftHand()
         });
         const rhSwitch = createSwitchRow({
           id: 'sheet-rh-toggle',
           label: 'Mano derecha',
-          description: 'Dedos p, i, m, a y direcciones de rasgueo (↓ ↑)',
+          description: isPiano
+            ? 'Digitación 1–5 en pentagrama superior (clave de sol)'
+            : 'Dedos p, i, m, a y direcciones de rasgueo (↓ ↑)',
           checked: this._vm.showRightHand.value,
           onChange: () => this._vm.toggleRightHand()
         });

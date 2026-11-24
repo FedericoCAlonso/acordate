@@ -6,7 +6,8 @@
     "title": "Blues de 12 compases (shuffle) en A",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 2,
@@ -32,7 +33,8 @@
     "sourceRef": "Forma tradicional de blues de 12 compases en A (transponible a E con el botón de transporte).",
     "focus": {
       "guitarra": "Mantené el shuffle relajado en corcheas ternarias y diferenciá los cambios I7–IV7–V7 con voicings de séptima cercanos.",
-      "bajo": "Alterná patrón shuffle (raíz–3.ª–5.ª–6.ª) y notas de paso cromáticas al llegar al compás 5 (IV7) y al 9 (V7)."
+      "bajo": "Alterná patrón shuffle (raíz–3.ª–5.ª–6.ª) y notas de paso cromáticas al llegar al compás 5 (IV7) y al 9 (V7).",
+      "piano": "Acordes dominantes con séptima y novena, comping con swing en mano derecha y walking o bajos en octavas en mano izquierda."
     },
     "comping": {
       "pattern": "shuffle",
@@ -93,7 +95,8 @@
     "title": "Blues de 12 con cambio rápido en F",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 2,
@@ -119,7 +122,8 @@
     "sourceRef": "Progresión estándar de jazz blues en F con cambio al IV en compás 2 y cadencia ii–V–I (transponible a Bb).",
     "focus": {
       "guitarra": "Practicá acordes shell (R–3–7) en cuerdas 6–4–3 para enlazar F7 → Bb7 y Gm7 → C7 moviendo un solo semitono.",
-      "bajo": "Resolvé cada cambio de acorde en el tiempo 1 con aproximación cromática o diatónica desde el tiempo 4."
+      "bajo": "Resolvé cada cambio de acorde en el tiempo 1 con aproximación cromática o diatónica desde el tiempo 4.",
+      "piano": "Acordes dominantes con séptima y novena, comping con swing en mano derecha y walking o bajos en octavas en mano izquierda."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -205,7 +209,8 @@
     "title": "Blues menor de 12 compases en Am",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 2,
@@ -230,7 +235,8 @@
     "sourceRef": "Progresión tradicional de blues menor de 12 compases en Am (bVI7–V7 en compases 9–10; transponible a Dm).",
     "focus": {
       "guitarra": "Contrastá el color menor de Am7 y Dm7 con la tensión bVI7 → V7 (F7 → E7) y la cadencia Bm7b5 → E7.",
-      "bajo": "Usá la tercera menor en el tiempo 2 y descendé por semitono de F7 a E7 en los compases 9 y 10."
+      "bajo": "Usá la tercera menor en el tiempo 2 y descendé por semitono de F7 a E7 en los compases 9 y 10.",
+      "piano": "Acordes dominantes con séptima y novena, comping con swing en mano derecha y walking o bajos en octavas en mano izquierda."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -295,7 +301,8 @@
     "title": "Summertime (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 2,
@@ -320,7 +327,8 @@
     "sourceRef": "Progresión armónica estándar de 16 compases en Am (solo cifrado; sin melodía ni letra).",
     "focus": {
       "guitarra": "Trabajá el balanceo suave Am6–E7 con voicings cálidos en blancas y espacio entre ataques.",
-      "bajo": "Alterná blancas profundas (pedal en 2 tiempos) en los primeros 4 compases y pasá a walking tranquilo en el IVm."
+      "bajo": "Alterná blancas profundas (pedal en 2 tiempos) en los primeros 4 compases y pasá a walking tranquilo en el IVm.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "balada-lenta",
@@ -430,7 +438,8 @@
     "title": "So What (forma modal AABA)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -456,7 +465,8 @@
     "sourceRef": "Forma modal AABA de 32 compases en D dórico / Eb dórico (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Explorá voicings cuartales («So What» o drop 2 de Dm7) desplazándolos por la escala dórica y subiendo un semitono en el puente B.",
-      "bajo": "Mantené la cuenta exacta de los 16 compases en Dm7 para entrar con seguridad al salto cromático de Ebm7 en la sección B."
+      "bajo": "Mantené la cuenta exacta de los 16 compases en Dm7 para entrar con seguridad al salto cromático de Ebm7 en la sección B.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -521,7 +531,8 @@
     "title": "All of Me (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -547,7 +558,8 @@
     "sourceRef": "Progresión estándar ABAC de 32 compases en C mayor (solo cifrado; sin melodía ni letra).",
     "focus": {
       "guitarra": "Practicá comping Freddie Green (negras suaves) siguiendo la cadena de dominantes secundarios E7 → A7 → Dm7.",
-      "bajo": "Construí un walking claro sobre dos compases por acorde antes de acelerar el ritmo armónico en la sección C."
+      "bajo": "Construí un walking claro sobre dos compases por acorde antes de acelerar el ritmo armónico en la sección C.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -677,7 +689,8 @@
     "title": "Autumn Leaves (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -703,7 +716,8 @@
     "sourceRef": "Progresión estándar AABC de 32 compases en Sol menor / Sib mayor (solo armonía; sin melodía ni letra).",
     "focus": {
       "guitarra": "Estudiá la sucesión de ii–V–I mayor (Cm7–F7–Bbmaj7) y ii–V–i menor (Am7b5–D7–Gm7) manteniendo las notas guía (3.ª y 7.ª).",
-      "bajo": "Conectá el ciclo de cuartas diatónicas y el descenso cromático Gm7–C7–Fm7–Bb7 en la sección C."
+      "bajo": "Conectá el ciclo de cuartas diatónicas y el descenso cromático Gm7–C7–Fm7–Bb7 en la sección C.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -873,7 +887,8 @@
     "title": "Blue Bossa (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -898,7 +913,8 @@
     "sourceRef": "Progresión estándar de 16 compases en Cm con modulación a Db mayor (solo cifrado; sin melodía).",
     "focus": {
       "guitarra": "Mantené la clave rítmica de bossa nova (síncopas limpias) y prepará la modulación brillante a Ebm7–Ab7–Dbmaj7.",
-      "bajo": "Tocá bajo de bossa en 2 (negra con puntillo + corchea anticipada, alternando raíz y quinta)."
+      "bajo": "Tocá bajo de bossa en 2 (negra con puntillo + corchea anticipada, alternando raíz y quinta).",
+      "piano": "Bajo de bossa (negra con puntillo + corchea) en mano izquierda y acordes con extensiones (maj9, 6/9, 13) con clave sincopada en derecha."
     },
     "comping": {
       "pattern": "bossa",
@@ -988,7 +1004,8 @@
     "title": "Fly Me to the Moon (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -1014,7 +1031,8 @@
     "sourceRef": "Progresión estándar ABAC de 32 compases en C mayor / Am (solo armonía; sin melodía ni letra).",
     "focus": {
       "guitarra": "Aprovechá la cadena diatónica de cuartas (Am7–Dm7–G7–Cmaj7–Fmaj7–Bm7b5–E7–Am7) para practicar conducciones de voces en todo el mango.",
-      "bajo": "Alterná movimiento por grados conjuntos y saltos de cuarta limpios para realzar el ciclo armónico."
+      "bajo": "Alterná movimiento por grados conjuntos y saltos de cuarta limpios para realzar el ciclo armónico.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1209,7 +1227,8 @@
     "title": "Satin Doll (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -1235,7 +1254,8 @@
     "sourceRef": "Progresión estándar AABA de 32 compases en C mayor con cadenas de ii–V (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Deslizá los bloques ii–V paralelos (Dm7–G7 → Em7–A7 → Am7–D7 → Abm7–Db7) buscando voicings con movimiento cromático limpio.",
-      "bajo": "Alterná 2 tiempos por acorde en las secciones A con walking en negras fluidas durante el puente en F y G."
+      "bajo": "Alterná 2 tiempos por acorde en las secciones A con walking en negras fluidas durante el puente en F y G.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1485,7 +1505,8 @@
     "title": "Take the \"A\" Train (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 3,
@@ -1511,7 +1532,8 @@
     "sourceRef": "Progresión estándar AABA de 32 compases en C mayor con dominante II7 (D7/D7#11) (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Destacá el color lidio dominante del D7 en los compases 3–4 (podés agregar la #11 = Sol#) antes de resolver a Dm7–G7.",
-      "bajo": "Mantené un walking impulsivo hacia adelante y remarcá la bajada Cmaj7 → C7 hacia el puente en Fmaj7."
+      "bajo": "Mantené un walking impulsivo hacia adelante y remarcá la bajada Cmaj7 → C7 hacia el puente en Fmaj7.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1646,7 +1668,8 @@
     "title": "Billie's Bounce / Bebop Blues en F",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 4,
@@ -1672,7 +1695,8 @@
     "sourceRef": "Progresión estándar de jazz blues bebop en F (tipo Billie's Bounce / Now's the Time; solo armonía).",
     "focus": {
       "guitarra": "Practicá voicings económicos (3 notas) para el paso Bb7 → Bdim7 → F7/C → Am7–D7 y el turnaround rápido.",
-      "bajo": "Resaltá la subida cromática Bb → B natural → C (bajo de F7/C) en los compases 5–7."
+      "bajo": "Resaltá la subida cromática Bb → B natural → C (bajo de F7/C) en los compases 5–7.",
+      "piano": "Acordes dominantes con séptima y novena, comping con swing en mano derecha y walking o bajos en octavas en mano izquierda."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1777,7 +1801,8 @@
     "title": "Mr. P.C. (Blues menor rápido en Cm)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 4,
@@ -1802,7 +1827,8 @@
     "sourceRef": "Progresión estándar de blues menor rápido en Cm (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Usá voicings cortos y ágiles con comping sincopado; evitá acordes pesados de 6 cuerdas a tempo rápido.",
-      "bajo": "Entrená resistencia y claridad de articulación en walking up-tempo, con bajada Ab7 → G7 bien definida."
+      "bajo": "Entrená resistencia y claridad de articulación en walking up-tempo, con bajada Ab7 → G7 bien definida.",
+      "piano": "Acordes dominantes con séptima y novena, comping con swing en mano derecha y walking o bajos en octavas en mano izquierda."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1862,7 +1888,8 @@
     "title": "Misty (estructura armónica de balada)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 4,
@@ -1888,7 +1915,8 @@
     "sourceRef": "Progresión estándar AABA de 32 compases en Eb mayor (solo armonía; sin melodía ni letra).",
     "focus": {
       "guitarra": "Estudiá voicings Drop 2 y Drop 3 con conducción suave de voz superior en las cadencias Bbm7–Eb7–Abmaj7 y Abm7–Db7–Ebmaj7.",
-      "bajo": "Tocá en tiempo de balada (blancas cantables o walking muy espaciado) respetando el espacio armónico."
+      "bajo": "Tocá en tiempo de balada (blancas cantables o walking muy espaciado) respetando el espacio armónico.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "balada-lenta",
@@ -2138,7 +2166,8 @@
     "title": "The Girl from Ipanema (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 4,
@@ -2163,7 +2192,8 @@
     "sourceRef": "Progresión estándar AABA de 40 compases en F mayor con puente de 16 compases (solo armonía; sin melodía ni letra).",
     "focus": {
       "guitarra": "Cuidá el ataque con dedos (estilo João Gilberto) y las modulaciones secuenciales del puente (Gbmaj7 → F#m7/D7 → Gm7/Eb7).",
-      "bajo": "Mantené la figura de bossa en 2 estable en los 16 compases del puente modulante."
+      "bajo": "Mantené la figura de bossa en 2 estable en los 16 compases del puente modulante.",
+      "piano": "Bajo de bossa (negra con puntillo + corchea) en mano izquierda y acordes con extensiones (maj9, 6/9, 13) con clave sincopada en derecha."
     },
     "comping": {
       "pattern": "bossa",
@@ -2318,7 +2348,8 @@
     "title": "I Got Rhythm (Rhythm Changes en Bb)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 5,
@@ -2344,7 +2375,8 @@
     "sourceRef": "Progresión estándar Rhythm Changes AABA de 32 compases en Bb mayor (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Usá voicings compactos (shell o 3 notas) para el ritmo armónico rápido de dos acordes por compás en las secciones A y dominantes en ciclo de cuartas en el puente.",
-      "bajo": "Alterná movimiento lineal de 2 tiempos en las secciones A y construí arcos melódicos largos sobre D7–G7–C7–F7 en la sección B."
+      "bajo": "Alterná movimiento lineal de 2 tiempos en las secciones A y construí arcos melódicos largos sobre D7–G7–C7–F7 en la sección B.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -2619,7 +2651,8 @@
     "title": "All the Things You Are (estructura armónica)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 5,
@@ -2645,7 +2678,8 @@
     "sourceRef": "Progresión estándar de 36 compases recorriendo 5 centros tonales (Ab, C, Eb, G, E) (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Estudiá cada sección por separado con el bucle de forma para dominar los 5 centros tonales (Ab, C, Eb, G y E mayor).",
-      "bajo": "Practicá el paso suave por semitono en Cmaj7 → Cm7, Gmaj7 → Am7 y el final Dbmaj7 → Dbm7 → Cm7 → Bdim7 → Bbm7."
+      "bajo": "Practicá el paso suave por semitono en Cmaj7 → Cm7, Gmaj7 → Am7 y el final Dbmaj7 → Dbm7 → Cm7 → Bdim7 → Bbm7.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -2840,7 +2874,8 @@
     "title": "Giant Steps (Coltrane changes)",
     "instruments": [
       "guitarra",
-      "bajo"
+      "bajo",
+      "piano"
     ],
     "category": "repertorio",
     "level": 5,
@@ -2865,7 +2900,8 @@
     "sourceRef": "Progresión estándar de 16 compases con ciclo de terceras mayores B–G–Eb (solo armonía; sin melodía).",
     "focus": {
       "guitarra": "Practicá primero a 100 BPM con voicings Drop 2 o shell mínimos, anticipando el salto de tercera mayor entre Bmaj7, Gmaj7 y Ebmaj7.",
-      "bajo": "En la sección A (2 tiempos por acorde) priorizá raíz + nota de paso precisa; en la sección B abrí el walking sobre los ii–V–I."
+      "bajo": "En la sección A (2 tiempos por acorde) priorizá raíz + nota de paso precisa; en la sección B abrí el walking sobre los ii–V–I.",
+      "piano": "Voicings shell (R–7 / R–3) o rootless (tipo A/B) en mano izquierda, comping rítmico y conducción mínima de notas guía."
     },
     "comping": {
       "pattern": "swing-negras",

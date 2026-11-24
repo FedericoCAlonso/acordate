@@ -117,6 +117,28 @@ export class SettingsView {
       )
     );
 
+    const pianoTuningRow = el(
+      'div',
+      { className: 'tuning-row', role: 'group', 'aria-label': 'Notas de referencia de piano' },
+      (tuning.piano || []).map((tone) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'tuning-btn',
+            ripple: true,
+            title: `Escuchar ${tone.desc} en piano (${tone.note} · MIDI ${tone.midi})`,
+            'aria-label': `Escuchar ${tone.desc} ${isLatin ? tone.latinLabel : tone.label} (${tone.note})`,
+            onClick: () => this._vm.playTuningString('piano', tone.midi)
+          },
+          [
+            el('span', {}, [isLatin ? tone.latinLabel : tone.label]),
+            el('small', {}, [`${tone.desc} · ${tone.note}`])
+          ]
+        )
+      )
+    );
+
     const tuningCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('h2', { className: 'm3-title-md' }, ['Afinación y registro de escucha']),
       el('div', {}, [
@@ -132,6 +154,10 @@ export class SettingsView {
       el('div', {}, [
         el('div', { className: 'm3-body-md', style: 'margin-bottom:6px; font-weight:600' }, ['Referencia de afinación — Bajo (4ª a 1ª)']),
         bassTuningRow
+      ]),
+      el('div', {}, [
+        el('div', { className: 'm3-body-md', style: 'margin-bottom:6px; font-weight:600' }, ['Referencia sonora — Piano (altura real)']),
+        pianoTuningRow
       ])
     ]);
 

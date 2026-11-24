@@ -154,24 +154,26 @@ export class ChordsHubViewModel {
 
   /** Selecciona el instrumento compartido y sincroniza afinación y sub-ViewModels. */
   setInstrument(inst) {
-    const prevWasBass = this.instrument.value === 'bajo';
+    const prevInst = this.instrument.value;
+    const prevWasBass = prevInst === 'bajo';
     const nextIsBass = inst === 'bajo';
+    const nextIsPiano = inst === 'piano';
     this.instrument.set(inst);
 
-    const switchedFamily = prevWasBass !== nextIsBass;
+    const switchedFamily = prevWasBass !== nextIsBass || (prevInst === 'piano') !== nextIsPiano;
     if (nextIsBass) {
       if (!this.tuningId.value.startsWith('bass-')) this.tuningId.set('bass-4-standard');
-    } else if (this.tuningId.value.startsWith('bass-')) {
+    } else if (!nextIsPiano && this.tuningId.value.startsWith('bass-')) {
       this.tuningId.set('guitar-standard');
     }
 
     this.library.resetForInstrumentChange({
       resetFilters: switchedFamily,
       defaultPlayMode: switchedFamily
-        ? (nextIsBass ? 'block' : inst === 'guitarra-clasica' ? 'arpeggio-pima' : 'strum-down')
+        ? (nextIsBass || nextIsPiano ? 'block' : inst === 'guitarra-clasica' ? 'arpeggio-pima' : 'strum-down')
         : null
     });
-    this.changes.syncForInstrumentChange({ switchedFamily, isBass: nextIsBass });
+    this.changes.syncForInstrumentChange({ switchedFamily, isBass: nextIsBass, isPiano: nextIsPiano });
   }
 
   /** Cambia la afinación activa y actualiza Biblioteca y Conducción de voces. */
@@ -193,6 +195,7 @@ export class ChordsHubViewModel {
   setPreferSharps(v) { this.library.setPreferSharps(v); }
   getGroupedVoicings() { return this.library.getGroupedVoicings(); }
   playVoicing(v, mode) { this.library.playVoicing(v, mode); }
+  playSingleNote(midi) { this.library.playSingleNote(midi); }
   playChordArpeggio(sym) { this.library.playChordArpeggio(sym); }
   toggleFavoriteActiveChord() { return this.library.toggleFavoriteActiveChord(); }
   practiceActiveChord(v) { return this.library.practiceActiveChord(v); }

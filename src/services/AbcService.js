@@ -132,9 +132,11 @@ export function validateAbcInstrumentRange(abcText, instrument = 'guitarra') {
   const keyMatch = text.match(/^K:\s*([A-G][#b]?m?)/m);
   const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
   const clefMatch = text.match(/clef\s*=\s*([a-z0-9+-]+)/i);
-  const policyTarget = clefMatch
-    ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1])
-    : instrument;
+  const policyTarget = instrument === 'piano'
+    ? 'piano'
+    : clefMatch
+      ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1])
+      : instrument;
 
   const musicBody = text
     .split('\n')
@@ -202,8 +204,8 @@ export function classifyAbcAnnotation(rawText, { isRenderedSvg = false } = {}) {
     return 'other';
   }
 
-  // 3) Mano izquierda: dedos 0-4, cuerdas ①-⑥, combinaciones (1①, 0⑥, 2④), posiciones romanas sobre pentagrama (^V, ^VII, C.V, ½C.II, pos. V, tr. 5)
-  if (/^[0-4]?[①②③④⑤⑥]$/.test(body) || /^[0-4](?:[\s–-][0-4])*$/.test(body)) {
+  // 3) Mano izquierda (o digitación numérica 1-5 en piano): dedos 0-5, cuerdas ①-⑥, combinaciones (1①, 0⑥, 2④), posiciones romanas (^V, C.V, ½C.II, pos. V, tr. 5)
+  if (/^[0-5]?[①②③④⑤⑥]$/.test(body) || /^[0-5](?:[\s–-][0-5])*$/.test(body)) {
     return 'leftHand';
   }
   if (
@@ -313,6 +315,7 @@ export class AbcService {
       fingerings = {},
       showBassFunctions = false,
       isBass = false,
+      isPiano = false,
       stripTitle = true,
       showHarmonicAnalysis = false,
       harmonicAnalysis = []
@@ -336,7 +339,7 @@ export class AbcService {
     if (declaredVoices.length >= 2) {
       result = this._alignMultiVoiceLines(result);
       const hasExplicitBassVoice = /^V:\s*\S+[^\n]*clef\s*=\s*bass/im.test(result);
-      if (!/^%%score/m.test(result) && !hasExplicitBassVoice) {
+      if (!/^%%(?:score|staves)/m.test(result) && !hasExplicitBassVoice) {
         result = result.replace(/^(K:[^\n]*)/m, `$1\n%%score (${declaredVoices.join(' ')})`);
       }
     }
@@ -346,8 +349,8 @@ export class AbcService {
       result = this._injectHarmonicAnalysisLayer(result, harmonicAnalysis);
     }
 
-    // 1) En bajo con funciones armónicas activas, anota R, 3, 5, 7, Crom debajo de cada nota
-    if (effectiveOther && isBass && showBassFunctions && viewMode !== 'pentagrama') {
+    // 1) En bajo con funciones armónicas activas, anota R, 3, 5, 7, Crom debajo de cada nota (nunca en piano)
+    if (effectiveOther && isBass && !isPiano && showBassFunctions && viewMode !== 'pentagrama') {
       result = this._injectBassFunctionAnnotations(result);
     }
 
@@ -357,19 +360,50 @@ export class AbcService {
     }
 
     // 3) Filtra de forma independiente las 4 capas de anotaciones ("...") y respeta cifrado latino/americano
-    result = result.replace(/"([^"]+)"/g, (full, inner) => {
-      const kind = classifyAbcAnnotation(inner);
-      if (kind === 'chord') {
-        return effectiveChords ? full : '';
-      }
-      if (kind === 'leftHand') {
-        return effectiveLeftHand ? full : '';
-      }
-      if (kind === 'rightHand') {
-        return effectiveRightHand ? full : '';
-      }
-      return effectiveOther ? full : '';
-    });
+    if (isPiano) {
+      // En piano, los números 1–5 en V:1 (o voz única en sol) corresponden a Mano Derecha y en V:2 (clave de fa) a Mano Izquierda
+      let currentVoiceId = '1';
+      result = result
+        .split('\n')
+        .map((line) => {
+          const vm = line.trim().match(/^V:\s*(\S+)/);
+          if (vm) {
+            currentVoiceId = vm[1];
+            return line;
+          }
+          if (/^[A-Za-z]:|^%%/.test(line.trim())) return line;
+          return line.replace(/"([^"]+)"/g, (full, inner) => {
+            const trimmedInner = String(inner || '').trim();
+            const isPianoDigit = /^[\^_]?[1-5](?:[\s–-][1-5])*$/.test(trimmedInner);
+            if (isPianoDigit) {
+              const isPianoLhVoice = currentVoiceId === '2' || /^lh|mi$/i.test(currentVoiceId);
+              return isPianoLhVoice ? (effectiveLeftHand ? full : '') : (effectiveRightHand ? full : '');
+            }
+            const kind = classifyAbcAnnotation(inner);
+            if (kind === 'chord') return effectiveChords ? full : '';
+            if (kind === 'leftHand' || kind === 'rightHand') {
+              const isPianoLhVoice = currentVoiceId === '2' || /^lh|mi$/i.test(currentVoiceId);
+              return isPianoLhVoice ? (effectiveLeftHand ? full : '') : (effectiveRightHand ? full : '');
+            }
+            return effectiveOther ? full : '';
+          });
+        })
+        .join('\n');
+    } else {
+      result = result.replace(/"([^"]+)"/g, (full, inner) => {
+        const kind = classifyAbcAnnotation(inner);
+        if (kind === 'chord') {
+          return effectiveChords ? full : '';
+        }
+        if (kind === 'leftHand') {
+          return effectiveLeftHand ? full : '';
+        }
+        if (kind === 'rightHand') {
+          return effectiveRightHand ? full : '';
+        }
+        return effectiveOther ? full : '';
+      });
+    }
 
     if (effectiveChords && chordNotation === 'latino') {
       result = formatAbcChordsForDisplay(result, 'latino');
@@ -527,7 +561,7 @@ export class AbcService {
     const visualObj = tunes && tunes[0] ? tunes[0] : null;
 
     // Etiqueta cada capa (acordes, mano izq., mano der., otras) y resuelve cualquier choque vertical en el SVG
-    this._tagAndResolveAnnotationCollisions(container);
+    this._tagAndResolveAnnotationCollisions(container, { isPiano: Boolean(options.isPiano) });
 
     // Ajusta el viewBox si alguna digitación o cifrado superior/inferior sobresale del alto calculado
     this._ensureSvgNeverClips(container);
@@ -545,7 +579,7 @@ export class AbcService {
    * de etiquetas cuyas cajas se pisen, garantizando lectura limpia de acordes, mano izq. y mano der.
    * @param {HTMLElement} container Contenedor DOM del SVG renderizado por abcjs.
    */
-  _tagAndResolveAnnotationCollisions(container) {
+  _tagAndResolveAnnotationCollisions(container, { isPiano = false } = {}) {
     const svg = container.querySelector('svg');
     if (!svg || typeof svg.getBBox !== 'function') return;
 
@@ -611,8 +645,11 @@ export class AbcService {
 
         const isExplicitChord = node.classList.contains('abcjs-chord');
         let kind;
-        if (side === 'down' && !isExplicitChord) {
-          // Todo texto debajo del pentagrama (funciones de bajo R/2/3/4/5/6/7 o grados romanos) pertenece a análisis/otros
+        if (isPiano && !isExplicitChord && /^[1-5](?:[\s–-][1-5])*$/.test(text)) {
+          // En piano, los dígitos 1–5 (tanto arriba en Sol como debajo en Fa) son digitaciones de dedos
+          kind = 'leftHand';
+        } else if (side === 'down' && !isExplicitChord) {
+          // Todo texto debajo del pentagrama en bajo/guitarra (funciones R/2/3/4/5/6/7 o grados romanos) pertenece a análisis/otros
           kind = classifyAbcAnnotation(`_${text}`, { isRenderedSvg: true });
         } else {
           kind = classifyAbcAnnotation(text, { isRenderedSvg: true });
@@ -737,16 +774,17 @@ export class AbcService {
     const timeSig = extractTimeSignatureFromAbc(rawAbc, meta.timeSignature || '4/4');
     const { beats, beatUnit } = parseTimeSignature(timeSig);
     const beatsPerMeasure = beats * (4 / beatUnit);
-    const isBassPiece = Boolean(
-      meta.instrument === 'bajo' || meta.isBass || /clef\s*=\s*bass/i.test(rawAbc || '')
+    const isPianoPiece = Boolean(meta.instrument === 'piano' || meta.isPiano);
+    const isBassPiece = !isPianoPiece && Boolean(
+      meta.instrument === 'bajo' || meta.isBass || (!meta.instrument && /clef\s*=\s*bass/i.test(rawAbc || ''))
     );
-    const instrument = meta.instrument || (isBassPiece ? 'bajo' : 'guitarra');
+    const instrument = meta.instrument || (isPianoPiece ? 'piano' : isBassPiece ? 'bajo' : 'guitarra');
 
     if (visualObj && Array.isArray(visualObj.lines) && visualObj.lines.length > 0) {
-      return this._extractFromVisualObj(visualObj, rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, instrument });
+      return this._extractFromVisualObj(visualObj, rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, isPianoPiece, instrument });
     }
 
-    return this._extractFromRawAbc(rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, instrument });
+    return this._extractFromRawAbc(rawAbc, { beatsPerMeasure, beatUnit, isBassPiece, isPianoPiece, instrument });
   }
 
   /**
@@ -758,7 +796,7 @@ export class AbcService {
    * @returns {object} Timeline estructurada.
    */
   _extractFromVisualObj(visualObj, rawAbc, cfg) {
-    const { beatsPerMeasure, beatUnit, isBassPiece, instrument } = cfg;
+    const { beatsPerMeasure, beatUnit, isBassPiece, isPianoPiece = false, instrument } = cfg;
     const notes = [];
     const chords = [];
     const keyMatch = String(rawAbc || '').match(/^K:\s*([A-G][#b]?m?)/m);
@@ -802,9 +840,11 @@ export class AbcService {
     for (const line of visualObj.lines) {
       if (!Array.isArray(line.staff)) continue;
       line.staff.forEach((staff, staffIdx) => {
-        const clefType = staff.clef?.type || (isBassPiece ? 'bass' : 'treble-8');
+        const clefType = staff.clef?.type || (isBassPiece ? 'bass' : isPianoPiece ? 'treble' : 'treble-8');
         const isStaffBass = clefType.startsWith('bass');
-        const policyTarget = isStaffBass ? 'bajo' : clefType === 'treble-8' ? instrument : clefType;
+        const policyTarget = isPianoPiece
+          ? 'piano'
+          : (isStaffBass ? 'bajo' : clefType === 'treble-8' ? instrument : clefType);
 
         if (!Array.isArray(staff.voices)) return;
         staff.voices.forEach((voice, voiceIdx) => {
@@ -1029,6 +1069,7 @@ export class AbcService {
       beatUnit,
       measureCount,
       isBassPiece,
+      isPianoPiece,
       hasMultipleVoices: voiceCursors.size > 1
     };
   }
@@ -1073,11 +1114,13 @@ export class AbcService {
    * @returns {object} Timeline estructurada.
    */
   _extractFromRawAbc(rawAbc, cfg) {
-    const { beatsPerMeasure, beatUnit, isBassPiece, instrument } = cfg;
+    const { beatsPerMeasure, beatUnit, isBassPiece, isPianoPiece = false, instrument } = cfg;
     const keyMatch = String(rawAbc || '').match(/^K:\s*([A-G][#b]?m?)/m);
     const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
     const clefMatch = String(rawAbc || '').match(/clef\s*=\s*([a-z0-9+-]+)/i);
-    const policyTarget = clefMatch ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1]) : instrument;
+    const policyTarget = isPianoPiece
+      ? 'piano'
+      : (clefMatch ? (clefMatch[1].startsWith('bass') ? 'bajo' : clefMatch[1] === 'treble-8' ? instrument : clefMatch[1]) : instrument);
 
     const unitMatch = String(rawAbc || '').match(/^L:\s*(\d+)\/(\d+)/m);
     const unitBeats = unitMatch ? (Number(unitMatch[1]) / Number(unitMatch[2])) * 4 : 0.5;
@@ -1164,7 +1207,8 @@ export class AbcService {
       beatsPerMeasure,
       beatUnit,
       measureCount: Math.max(1, Math.ceil(totalBeats / beatsPerMeasure)),
-      isBassPiece
+      isBassPiece,
+      isPianoPiece
     };
   }
 

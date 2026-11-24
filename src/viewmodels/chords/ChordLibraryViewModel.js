@@ -1,6 +1,7 @@
 import { FLAT_NOTES, SHARP_NOTES } from '../../core/MusicTheory.js';
 import { ComputedObservable, Observable } from '../../core/Observable.js';
 import { Chord } from '../../models/Chord.js';
+import { generatePianoVoicings, groupPianoVoicingsByFamily } from '../../services/PianoVoicingService.js';
 import { createChordStudyPractice } from '../../services/PracticeFactoryService.js';
 
 /**
@@ -87,8 +88,18 @@ export class ChordLibraryViewModel {
         this.generatedVoicings,
         appVm.progress
       ],
-      () =>
-        this._libraryService.computeFilteredVoicings({
+      () => {
+        if (this._instrument.value === 'piano') {
+          const allPiano = generatePianoVoicings(this.activeChord.value);
+          const typeF = this.voicingTypeFilter.value;
+          const invF = this.inversionFilter.value;
+          return allPiano.filter((v) => {
+            if (typeF && typeF !== 'todos' && v.family !== typeF) return false;
+            if (invF !== 'todas' && invF !== undefined && Number(v.inversion) !== Number(invF)) return false;
+            return true;
+          });
+        }
+        return this._libraryService.computeFilteredVoicings({
           symbol: this.activeChord.value.americanSymbol,
           tuning: this._activeTuning.value,
           customChords: this._appVm.progress.value.customChords || [],
@@ -97,7 +108,8 @@ export class ChordLibraryViewModel {
           typeFilter: this.voicingTypeFilter.value,
           inversionFilter: this.inversionFilter.value,
           fretRangeFilter: this.fretRangeFilter.value
-        })
+        });
+      }
     );
   }
 
@@ -198,6 +210,9 @@ export class ChordLibraryViewModel {
    * @returns {Array<{ id: string, label: string, items: Array<{ voicing: object, flatIndex: number }> }>} Grupos.
    */
   getGroupedVoicings() {
+    if (this._instrument.value === 'piano') {
+      return groupPianoVoicingsByFamily(this.voicingsList.value);
+    }
     return this._libraryService.groupVoicingsByFamily(
       this.voicingsList.value,
       this._instrument.value === 'bajo'
@@ -205,12 +220,27 @@ export class ChordLibraryViewModel {
   }
 
   /**
-   * Reproduce un voicing exacto respetando PitchPolicy y el modo elegido.
-   * @param {import('../../models/Voicing.js').Voicing} voicing Voicing a sonar.
+   * Reproduce un voicing exacto respetando PitchPolicy y el modo elegido (guitarra, bajo o piano).
+   * @param {import('../../models/Voicing.js').Voicing|object} voicing Voicing a sonar.
    * @param {string} [overrideMode] Modo de ejecución opcional.
    */
   playVoicing(voicing, overrideMode) {
     if (!voicing) return;
+    const isPiano = this._instrument.value === 'piano' || Boolean(voicing.isPianoVoicing);
+    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
+
+    if (isPiano) {
+      const midis = typeof voicing.getMidiNotes === 'function' ? voicing.getMidiNotes() : voicing.midis || [];
+      const rawMode = overrideMode || this.playMode.value;
+      const pianoMode = rawMode === 'arpeggio-asc' || rawMode === 'arpeggio-pima' ? 'arpeggio-asc' : 'block';
+      this._audio.playVoicing(midis, {
+        mode: pianoMode,
+        instrument: 'acoustic-piano',
+        duration: 1.9
+      });
+      return;
+    }
+
     const tuning = this._activeTuning.value;
     const isBass = this._instrument.value === 'bajo';
     const synthInst = isBass
@@ -219,12 +249,23 @@ export class ChordLibraryViewModel {
         ? 'nylon-guitar'
         : 'acoustic-guitar';
 
-    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playVoicing(voicing, {
       mode: overrideMode || this.playMode.value,
       instrument: synthInst,
       tuning,
       duration: 1.7
+    });
+  }
+
+  /** Reproduce una nota individual al tocar una tecla del teclado SVG de piano. */
+  playSingleNote(midi) {
+    if (!Number.isFinite(midi)) return;
+    this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
+    this._audio.playVoicing([midi], {
+      mode: 'block',
+      instrument: 'acoustic-piano',
+      duration: 1.3,
+      volume: 0.9
     });
   }
 
@@ -234,13 +275,14 @@ export class ChordLibraryViewModel {
    */
   playChordArpeggio(chordSymbol = this.activeChord.value.americanSymbol) {
     const c = Chord.parse(chordSymbol);
+    const isPiano = this._instrument.value === 'piano';
     const isBass = this._instrument.value === 'bajo';
-    const baseMidi = isBass ? 28 + ((c.rootPc - 4 + 12) % 12) : 48 + c.rootPc;
+    const baseMidi = isPiano ? 60 + c.rootPc : isBass ? 28 + ((c.rootPc - 4 + 12) % 12) : 48 + c.rootPc;
     const midis = c.quality.intervals.map((iv) => baseMidi + iv);
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playVoicing(midis, {
       mode: 'arpeggio-asc',
-      instrument: isBass ? 'electric-bass' : 'nylon-guitar',
+      instrument: isPiano ? 'acoustic-piano' : isBass ? 'electric-bass' : 'nylon-guitar',
       duration: 1.5
     });
   }

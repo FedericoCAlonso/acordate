@@ -547,18 +547,21 @@ export class EditorView {
       return;
     }
 
+    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
     const prepared = this._abc.prepareAbcForRender(f.abc, {
       viewMode: 'mixto',
       chordNotation: this._appVm.settings.value.chordNotation,
       showFingerings: true,
       fingerings: f.fingerings || {},
-      showBassFunctions: f.instruments.includes('bajo'),
-      isBass: f.instruments.includes('bajo'),
+      showBassFunctions: !isPiano && f.instruments.includes('bajo'),
+      isBass: !isPiano && f.instruments.includes('bajo'),
+      isPiano,
       stripTitle: true
     });
     const { visualObj, warnings } = this._abc.renderScore(this._previewScoreEl, prepared, {
       width: this._previewScoreEl.clientWidth || 340,
-      zoom: 0.95
+      zoom: 0.95,
+      isPiano
     });
     this._lastVisualObj = visualObj;
     if (warnings.length > 0 && this._vm.abcWarnings.value.length === 0) {

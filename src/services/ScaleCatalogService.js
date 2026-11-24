@@ -8,6 +8,7 @@ import {
 } from '../core/MusicTheory.js';
 import { getPitchPolicy, soundingMidiToWrittenMidi } from '../core/PitchPolicy.js';
 import { getTuningForVoicingInstrument, normalizeVoicingInstrument } from './FingeringDesignService.js';
+import { computePianoScaleLayout } from './PianoVoicingService.js';
 
 /** Orden diatónico de letras naturales y sus clases de altura (C=0..B=11). */
 const DIATONIC_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -47,6 +48,11 @@ export const SCALE_FINGERING_SYSTEMS = {
     { id: 'caja-1oct', label: '3 cajas de 1 octava', description: 'Iniciando con dedo 1, dedo 2 o dedo 4; usa Simandl (1-2-4) en trastes 1–4 y 1FPC desde traste 5+.' },
     { id: 'diagonal-2oct', label: '2 octavas (aprovecha Si grave)', description: 'Explota la 5.ª cuerda (B0) para tocar 2 octavas sin desplazamientos bruscos.' },
     { id: 'completo', label: 'Todo el diapasón', description: 'Vista panorámica de trastes 0 a 15.' }
+  ],
+  piano: [
+    { id: 'md-1oct', label: 'Mano derecha (1 oct.)', description: 'Digitación pianística canónica 1–5 con paso de pulgar alrededor del Do central.' },
+    { id: 'mi-1oct', label: 'Mano izquierda (1 oct.)', description: 'Digitación pianística canónica 5–1 en clave de fa con cruce de dedos 3 y 4.' },
+    { id: 'ambas-2oct', label: 'Teclado completo (2 oct.)', description: 'Vista panorámica de 2 octavas en el teclado interactivo.' }
   ]
 };
 
@@ -844,6 +850,7 @@ export class ScaleCatalogService {
    * @returns {Array<object>} Sistemas de digitación disponibles.
    */
   getFingeringSystems(voicingInstrument) {
+    if (voicingInstrument === 'piano') return SCALE_FINGERING_SYSTEMS.piano;
     const norm = normalizeVoicingInstrument(voicingInstrument);
     return SCALE_FINGERING_SYSTEMS[norm] || SCALE_FINGERING_SYSTEMS.guitarra;
   }
@@ -866,6 +873,24 @@ export class ScaleCatalogService {
     systemId = null,
     positionIndex = 0
   }) {
+    if (voicingInstrument === 'piano') {
+      const cleanRoot = this._normalizeRoot(root);
+      const scale = this.getScaleById(scaleId);
+      const systems = this.getFingeringSystems('piano');
+      const activeSystem = systems.find((s) => s.id === systemId) || systems[0];
+      const notesMeta = this.spellScaleNotes(cleanRoot, scaleId);
+      const pianoLayout = computePianoScaleLayout({
+        root: cleanRoot,
+        scale,
+        notesMeta,
+        systemId: activeSystem.id
+      });
+      return {
+        ...pianoLayout,
+        system: activeSystem
+      };
+    }
+
     const normInst = normalizeVoicingInstrument(voicingInstrument);
     const tuning = getTuningForVoicingInstrument(normInst);
     const isBass = tuning.instrument === 'bass';
@@ -1756,15 +1781,16 @@ export class ScaleCatalogService {
     preferredBaseMidi = null
   }) {
     const scale = this.getScaleById(scaleId);
-    const normInst = normalizeVoicingInstrument(voicingInstrument);
-    const isBass = normInst === 'bajo' || normInst === 'bajo-5';
+    const isPiano = voicingInstrument === 'piano';
+    const normInst = isPiano ? 'piano' : normalizeVoicingInstrument(voicingInstrument);
+    const isBass = !isPiano && (normInst === 'bajo' || normInst === 'bajo-5');
     const rootPc = NOTE_TO_PC[this._normalizeRoot(root)] ?? 0;
 
-    // Altura base cómoda dentro del rango físico real del instrumento (alineada a la caja si se provee)
-    const minMidi = normInst === 'bajo-5' ? 23 : isBass ? 28 : 40;
-    const maxStartMidi = isBass ? 48 : 64;
-    let baseMidi = isBass ? 28 + mod12(rootPc - 4) : 40 + mod12(rootPc - 4);
-    if (!isBass && baseMidi < 45) baseMidi += 12;
+    // Altura base cómoda dentro del rango físico real del instrumento (alineada a la caja/teclado si se provee)
+    const minMidi = isPiano ? 36 : normInst === 'bajo-5' ? 23 : isBass ? 28 : 40;
+    const maxStartMidi = isPiano ? 72 : isBass ? 48 : 64;
+    let baseMidi = isPiano ? 60 + rootPc : isBass ? 28 + mod12(rootPc - 4) : 40 + mod12(rootPc - 4);
+    if (!isPiano && !isBass && baseMidi < 45) baseMidi += 12;
     if (baseMidi < minMidi) baseMidi += 12;
     if (
       Number.isFinite(preferredBaseMidi) &&
@@ -1874,7 +1900,8 @@ export class ScaleCatalogService {
     classicalMelodicDesc = false,
     rightHandPattern = 'i-m'
   }) {
-    const normInst = normalizeVoicingInstrument(voicingInstrument);
+    const isPiano = voicingInstrument === 'piano';
+    const normInst = isPiano ? 'piano' : normalizeVoicingInstrument(voicingInstrument);
     const policyInst = normInst === 'bajo-5' ? 'bajo' : normInst;
     const policy = getPitchPolicy(policyInst);
     const cleanRoot = this._normalizeRoot(root);

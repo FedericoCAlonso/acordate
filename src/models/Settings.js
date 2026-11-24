@@ -48,7 +48,7 @@ export class Settings {
       ? data.chordNotation
       : DEFAULT_SETTINGS.chordNotation;
     /** Instrumento seleccionado en la ruta de prácticas (recordado entre sesiones). */
-    this.defaultInstrument = ['guitarra-clasica', 'guitarra', 'bajo'].includes(data.defaultInstrument)
+    this.defaultInstrument = ['guitarra-clasica', 'guitarra', 'bajo', 'piano'].includes(data.defaultInstrument)
       ? data.defaultInstrument
       : DEFAULT_SETTINGS.defaultInstrument;
     /** Registro de escucha del sintetizador: 'real' (por defecto) o '+1oct' (útil para parlantes chicos en bajo). */

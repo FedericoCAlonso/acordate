@@ -76,7 +76,17 @@ export function openNotationGuideModal() {
       ])
     ]),
 
-    // 5) Otras anotaciones de estudio
+    // 5) Piano (Gran pentagrama y digitación 1–5)
+    el('section', { className: 'ref-guide__section' }, [
+      el('h3', { className: 'm3-title-md' }, ['Piano (gran pentagrama y dedos 1–5)']),
+      el('div', { className: 'ref-guide__list' }, [
+        refRow('1 – 5', 'Dedos en ambas manos', '1 = Pulgar · 2 = Índice · 3 = Medio · 4 = Anular · 5 = Meñique (simétricos entre mano derecha e izquierda).', 'lh'),
+        refRow('𝄞 / 𝄢', 'Gran pentagrama', 'Pentagrama superior en clave de Sol (Mano derecha) e inferior en clave de Fa (Mano izquierda), ambos a altura real.', 'pos'),
+        refRow('MD / MI', 'Estudio por manos separadas', 'En obras de piano podés silenciar una mano desde la barra del reproductor (Ambas / Mano der. / Mano izq.).', 'rh')
+      ])
+    ]),
+
+    // 6) Otras anotaciones de estudio
     el('section', { className: 'ref-guide__section' }, [
       el('h3', { className: 'm3-title-md' }, ['Análisis y expresión en partitura']),
       el('div', { className: 'ref-guide__list' }, [

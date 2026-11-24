@@ -56,8 +56,27 @@ export const INSTRUMENT_PITCH_POLICY = {
       { stringNumber: 2, label: 'D', latinLabel: 'Re', note: 'D2', midi: 38 },
       { stringNumber: 1, label: 'G', latinLabel: 'Sol', note: 'G2', midi: 43 }
     ]
+  },
+  piano: {
+    clef: 'treble',
+    /** El piano suena a altura real (0 semitonos de transposición) tanto en clave de sol como de fa. */
+    writtenToSoundingSemitones: 0,
+    /** La0 (tecla más grave de un piano de 88 teclas) = A0 (MIDI 21). */
+    minSoundingMidi: 21,
+    /** Do8 (tecla más aguda de un piano de 88 teclas) = C8 (MIDI 108). */
+    maxSoundingMidi: 108,
+    /** Sin cuerdas al aire; usa notas de referencia de teclado (Do central C4 y La 440 Hz A4). */
+    openStrings: []
   }
 };
+
+/**
+ * Notas de referencia sonora para piano (Do central y La de afinación 440 Hz).
+ */
+export const PIANO_REFERENCE_TONES = [
+  { label: 'C', latinLabel: 'Do', note: 'C4', desc: 'Do central', midi: 60 },
+  { label: 'A', latinLabel: 'La', note: 'A4', desc: 'La 440 Hz', midi: 69 }
+];
 
 /**
  * Desplazamiento en semitonos según el ajuste de registro de escucha del usuario.
@@ -100,9 +119,9 @@ export function getListeningOffset(listeningRegister = 'real') {
  * @returns {number} Número MIDI que debe reproducir el sintetizador.
  */
 export function writtenMidiToSoundingMidi(writtenMidi, instrumentOrClef = 'guitarra', listeningRegister = 'real') {
-  // Si se pasa explícitamente clave de sol sin octavar ('treble') no transpone; en instrumentos transpositores sí
+  // Clave de sol sin octavar ('treble'), clave de fa real ('bass-concert') y 'piano' suenan a altura real (0 st)
   const shift =
-    instrumentOrClef === 'treble'
+    instrumentOrClef === 'treble' || instrumentOrClef === 'bass-concert' || instrumentOrClef === 'piano'
       ? 0
       : getPitchPolicy(instrumentOrClef).writtenToSoundingSemitones;
   return writtenMidi + shift + getListeningOffset(listeningRegister);

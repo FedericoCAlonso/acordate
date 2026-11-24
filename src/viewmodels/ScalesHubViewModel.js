@@ -38,8 +38,9 @@ export class ScalesHubViewModel {
     /** Pestaña activa ('explorador' | 'modos' | 'patrones' | 'oido'). */
     this.activeTab = new Observable('explorador');
 
-    const initialInst = normalizeVoicingInstrument(appVm.settings.value.defaultInstrument || 'guitarra');
-    /** Instrumento de digitación activo ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5'). */
+    const rawDefault = appVm.settings.value.defaultInstrument || 'guitarra';
+    const initialInst = rawDefault === 'piano' ? 'piano' : normalizeVoicingInstrument(rawDefault);
+    /** Instrumento de digitación activo ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5' | 'piano'). */
     this.voicingInstrument = new Observable(initialInst);
     /** Raíz seleccionada en notación americana ('C'..'B'). */
     this.selectedRoot = new Observable('C');
@@ -172,6 +173,7 @@ export class ScalesHubViewModel {
   }
 
   _defaultSystemFor(inst) {
+    if (inst === 'piano') return 'md-1oct';
     if (inst === 'guitarra-clasica') return 'primera-posicion';
     if (inst === 'bajo' || inst === 'bajo-5') return 'caja-1oct';
     return 'caged';
@@ -184,7 +186,7 @@ export class ScalesHubViewModel {
   }
 
   setVoicingInstrument(inst) {
-    const norm = normalizeVoicingInstrument(inst);
+    const norm = inst === 'piano' ? 'piano' : normalizeVoicingInstrument(inst);
     this.voicingInstrument.set(norm);
     const systems = this._scales.getFingeringSystems(norm);
     if (!systems.some((s) => s.id === this.fingeringSystemId.value)) {

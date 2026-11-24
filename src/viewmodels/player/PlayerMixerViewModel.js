@@ -53,7 +53,12 @@ export class PlayerMixerViewModel {
     this.voiceMode.set('both');
     if (!practice) return;
 
-    this.synthInstrument.set(practice.getDefaultSynthInstrument());
+    const activeDefault = this._appVm.settings.value.defaultInstrument;
+    const defaultSynth =
+      activeDefault === 'piano' && practice.instruments.includes('piano')
+        ? 'acoustic-piano'
+        : practice.getDefaultSynthInstrument();
+    this.synthInstrument.set(defaultSynth);
     this.compingPattern.set(practice.comping || 'negras-abajo');
 
     const mix = this._appVm.getPracticeMix(practice);

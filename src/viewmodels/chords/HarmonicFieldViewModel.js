@@ -97,17 +97,28 @@ export class HarmonicFieldViewModel {
    * @param {boolean} [useVoiceLed=false] True para usar `voiceLedSequence`.
    */
   playBuilderProgression(voiceLedSequence = [], useVoiceLed = false) {
+    const isPiano = this._instrument.value === 'piano';
     const tuning = this._activeTuning.value;
     const fam = tuning.instrument;
-    const synthInst = fam === 'bass'
-      ? 'electric-bass'
-      : this._instrument.value === 'guitarra-clasica'
-        ? 'nylon-guitar'
-        : 'acoustic-guitar';
+    const synthInst = isPiano
+      ? 'acoustic-piano'
+      : fam === 'bass'
+        ? 'electric-bass'
+        : this._instrument.value === 'guitarra-clasica'
+          ? 'nylon-guitar'
+          : 'acoustic-guitar';
 
     const seq = useVoiceLed && voiceLedSequence.length > 0
-      ? voiceLedSequence.map((step) => step.voicing.getMidiNotes(tuning))
+      ? voiceLedSequence.map((step) =>
+          typeof step.voicing.getMidiNotes === 'function'
+            ? step.voicing.getMidiNotes(tuning)
+            : step.voicing.midis || []
+        )
       : this.builderChords.value.map((sym) => {
+          if (isPiano) {
+            const c = Chord.parse(sym);
+            return [48 + c.rootPc, ...c.quality.intervals.map((iv) => 60 + c.rootPc + iv)];
+          }
           const list = getCuratedVoicingsForChord(sym, fam, tuning);
           if (list[0]) return list[0].getMidiNotes(tuning);
           const c = Chord.parse(sym);
@@ -117,7 +128,7 @@ export class HarmonicFieldViewModel {
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playChordSequence(seq, {
       stepMs: 900,
-      mode: fam === 'bass' ? 'block' : 'strum-down',
+      mode: isPiano || fam === 'bass' ? 'block' : 'strum-down',
       instrument: synthInst
     });
   }

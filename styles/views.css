@@ -3022,16 +3022,26 @@
   min-width: 0;
 }
 
-/* Barra de vista de Modo Atril en 1 sola fila limpia también en móvil 360–390px */
+/* Barra de vista de Modo Atril en 1 sola fila limpia también en móvil 360–390px;
+   cuando hay selector de voces/manos (piano/clásica), baja a una 2.ª fila full-width sin recortar nada */
 @media (max-width: 599px) {
   .player-view-bar {
     flex-wrap: nowrap;
     gap: 6px;
   }
 
+  .player-view-bar.player-view-bar--has-extra {
+    flex-wrap: wrap;
+  }
+
   .player-view-bar .m3-segmented {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .player-view-bar .player-voice-seg {
+    flex: 1 0 100%;
+    width: 100%;
   }
 
   .player-view-bar .m3-segmented__btn {
@@ -3058,6 +3068,201 @@
     font-size: 0.82rem;
     min-height: 36px;
   }
+
+  /* 4–5 instrumentos en barras segmentadas sin desborde en 360px */
+  .home-inst-seg .m3-segmented__btn,
+  .practices-top-bar .m3-segmented__btn,
+  .chords-inst-seg .m3-segmented__btn {
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+
+  .scales-inst-seg .m3-segmented__btn {
+    padding: 0 4px;
+    font-size: 0.74rem;
+    min-height: 36px;
+  }
+}
+
+/* ==========================================================================
+   Fase 2 Piano: Teclado SVG interactivo (Acordes y Escalas) — Estudio Táctil
+   ========================================================================== */
+.piano-chord-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 6px 4px;
+  border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.piano-chord-card:hover,
+.piano-chord-card:focus-visible {
+  border-color: var(--md-sys-color-primary);
+  outline: none;
+}
+
+.piano-chord-card--sm {
+  padding: 6px 4px 2px;
+}
+
+.piano-chord-svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.piano-chord-svg--lg {
+  width: 100%;
+  max-width: 520px;
+}
+
+.piano-chord-svg--md {
+  width: 100%;
+  max-width: 340px;
+}
+
+.piano-chord-svg--sm {
+  width: 100%;
+  min-width: 185px;
+  max-width: 260px;
+}
+
+.piano-scale-svg {
+  display: block;
+  width: 100%;
+  min-width: 540px;
+  height: auto;
+}
+
+.piano-kb__rail {
+  fill: var(--md-sys-color-on-surface);
+  opacity: 0.85;
+}
+
+.piano-key--white .piano-key__rect {
+  fill: #ffffff;
+  stroke: var(--md-sys-color-outline-variant);
+  stroke-width: 1.25;
+  transition: fill 120ms ease;
+}
+
+[data-theme="dark"] .piano-key--white .piano-key__rect {
+  fill: #f3f4f8;
+  stroke: #464956;
+}
+
+.piano-key--black .piano-key__rect {
+  fill: #1c1f26;
+  stroke: #0e1015;
+  stroke-width: 1.1;
+  transition: fill 120ms ease;
+}
+
+.piano-key:hover .piano-key__rect {
+  filter: brightness(0.95);
+}
+
+.piano-key--black:hover .piano-key__rect {
+  fill: #2e3340;
+}
+
+.piano-key--dim .piano-scale-dot {
+  opacity: 0.36;
+}
+
+.piano-key--dim .piano-scale-dot__text {
+  opacity: 0.55;
+}
+
+.piano-key--playing .piano-key__rect {
+  fill: var(--md-sys-color-primary-container) !important;
+  stroke: var(--md-sys-color-primary) !important;
+  stroke-width: 2.2 !important;
+}
+
+.piano-key--black.piano-key--playing .piano-key__rect {
+  fill: var(--md-sys-color-primary) !important;
+}
+
+.piano-key__oct-label {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--md-sys-color-on-surface-variant);
+  user-select: none;
+}
+
+.piano-key__oct-label--middle {
+  fill: var(--md-sys-color-primary);
+  font-weight: 800;
+}
+
+.piano-scale-dot {
+  stroke: var(--md-sys-color-surface);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.piano-scale-dot--root {
+  fill: var(--md-sys-color-primary);
+}
+
+.piano-scale-dot--char {
+  fill: var(--md-sys-color-tertiary);
+}
+
+.piano-scale-dot--chord {
+  fill: var(--md-sys-color-secondary);
+}
+
+.piano-scale-dot--scale {
+  fill: var(--md-sys-color-on-surface);
+}
+
+.piano-scale-dot--avoid {
+  fill: var(--md-sys-color-surface);
+  stroke: var(--md-sys-color-error);
+  stroke-width: 1.8;
+  stroke-dasharray: 3 2;
+}
+
+.piano-scale-dot__text {
+  font-weight: 700;
+  fill: #ffffff;
+  pointer-events: none;
+  user-select: none;
+}
+
+.piano-scale-dot__text--avoid {
+  fill: var(--md-sys-color-error);
+}
+
+.piano-vl-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 205px;
+  flex-shrink: 0;
+}
+
+.piano-vl-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
 }
 
 /* En escritorio, centra el contenido del dock de transporte para que Play y Vuelta no queden separados 1000px */

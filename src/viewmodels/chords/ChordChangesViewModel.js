@@ -1,6 +1,7 @@
 import { ALL_KEYS } from '../../core/MusicTheory.js';
 import { ComputedObservable, Observable } from '../../core/Observable.js';
 import { Chord } from '../../models/Chord.js';
+import { computePianoVoiceLeading, generatePianoVoicings } from '../../services/PianoVoicingService.js';
 
 /**
  * Sub-ViewModel de la pestaña Cambios y Voces (#/acordes/cambios).
@@ -95,10 +96,10 @@ export class ChordChangesViewModel {
    * Ajusta estilos por defecto y recalcula conducción al cambiar instrumento o afinación.
    * @param {{ switchedFamily?: boolean, isBass?: boolean }} [opts={}] Opciones de cambio.
    */
-  syncForInstrumentChange({ switchedFamily = false, isBass = false } = {}) {
+  syncForInstrumentChange({ switchedFamily = false, isBass = false, isPiano = false } = {}) {
     if (switchedFamily) {
-      this.voiceLeadingStyle.set('auto');
-      this.inversionStringSet.set(isBass ? 'bass-triadas' : '432');
+      this.voiceLeadingStyle.set(isPiano ? 'todos' : 'auto');
+      this.inversionStringSet.set(isPiano ? 'piano-inv' : isBass ? 'bass-triadas' : '432');
     }
     this.trainerVoicingIndices.set({});
     this.recomputeVoiceLeading();
@@ -108,6 +109,9 @@ export class ChordChangesViewModel {
 
   /** Devuelve los voicings disponibles para un acorde del entrenador. */
   getTrainerSlotVoicings(chordSymbol) {
+    if (this._instrument.value === 'piano') {
+      return generatePianoVoicings(chordSymbol);
+    }
     return this._libraryService.getTrainerSlotVoicings({
       chordSymbol,
       tuning: this._activeTuning.value,
@@ -264,6 +268,14 @@ export class ChordChangesViewModel {
 
   /** Recalcula la secuencia óptima de conducción de voces. */
   recomputeVoiceLeading() {
+    if (this._instrument.value === 'piano') {
+      const style = ['cerrado', 'shell', 'rootless'].includes(this.voiceLeadingStyle.value)
+        ? this.voiceLeadingStyle.value
+        : 'todos';
+      const result = computePianoVoiceLeading(this.voiceLeadingChords.value, { style });
+      this.voiceLedSequence.set(result, true);
+      return;
+    }
     const tuning = this._activeTuning.value;
     const result = this._voicingGen.findVoiceLedProgression(
       this.voiceLeadingChords.value,
@@ -338,8 +350,17 @@ export class ChordChangesViewModel {
     this.selectInversionChord({ root, quality: qualities[Math.floor(Math.random() * qualities.length)] });
   }
 
-  /** Devuelve hasta 6 inversiones ordenadas ascendiendo por el diapasón. */
+  /** Devuelve hasta 6 inversiones ordenadas ascendiendo por el diapasón (o todas las disposiciones de piano). */
   getInversionWalkVoicings() {
+    if (this._instrument.value === 'piano') {
+      const all = generatePianoVoicings(this.inversionChord.value);
+      const mode = this.inversionStringSet.value;
+      if (mode === 'piano-jazz') {
+        const jazz = all.filter((v) => v.family === 'shell' || v.family === 'rootless' || v.family === 'drop2');
+        return jazz.length > 0 ? jazz : all;
+      }
+      return all.filter((v) => v.family === 'fundamental' || v.family === 'inversion');
+    }
     return this._libraryService.computeInversionWalkVoicings({
       symbol: this.inversionChord.value.americanSymbol,
       tuning: this._activeTuning.value,
@@ -348,21 +369,24 @@ export class ChordChangesViewModel {
     });
   }
 
-  /** Reproduce en secuencia ascendente todas las inversiones visibles por el mango. */
+  /** Reproduce en secuencia ascendente todas las inversiones visibles por el mango o teclado. */
   playInversionWalk() {
+    const isPiano = this._instrument.value === 'piano';
     const tuning = this._activeTuning.value;
-    const isBass = tuning.instrument === 'bass';
-    const synthInst = isBass
-      ? 'electric-bass'
-      : this._instrument.value === 'guitarra-clasica'
-        ? 'nylon-guitar'
-        : 'acoustic-guitar';
+    const isBass = !isPiano && tuning.instrument === 'bass';
+    const synthInst = isPiano
+      ? 'acoustic-piano'
+      : isBass
+        ? 'electric-bass'
+        : this._instrument.value === 'guitarra-clasica'
+          ? 'nylon-guitar'
+          : 'acoustic-guitar';
     const list = this.getInversionWalkVoicings();
     if (list.length === 0) return;
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playChordSequence(
-      list.map((v) => v.getMidiNotes(tuning)),
-      { stepMs: 950, mode: isBass ? 'block' : 'strum-down', instrument: synthInst }
+      list.map((v) => (typeof v.getMidiNotes === 'function' ? v.getMidiNotes(tuning) : v.midis || [])),
+      { stepMs: 950, mode: isPiano || isBass ? 'block' : 'strum-down', instrument: synthInst }
     );
   }
 

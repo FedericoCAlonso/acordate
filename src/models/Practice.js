@@ -4,7 +4,7 @@ import { Voicing } from './Voicing.js';
 /**
  * Instrumentos válidos admitidos por el esquema de prácticas.
  */
-export const VALID_INSTRUMENTS = ['guitarra-clasica', 'guitarra', 'bajo'];
+export const VALID_INSTRUMENTS = ['guitarra-clasica', 'guitarra', 'bajo', 'piano'];
 
 /**
  * Tipos principales de práctica en los esquemas v2 y v3: Melodía, Armonía o Mixta (lead sheet).
@@ -373,6 +373,9 @@ export class Practice {
    * @returns {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} Clave del sintetizador.
    */
   getDefaultSynthInstrument() {
+    if (this.instruments.includes('piano') && (this.instruments.length === 1 || this.instruments[0] === 'piano')) {
+      return 'acoustic-piano';
+    }
     if (this.instruments.includes('bajo') && this.instruments.length === 1) {
       return this.category === 'walking' || this.style === 'jazz' ? 'acoustic-bass' : 'electric-bass';
     }

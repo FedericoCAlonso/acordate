@@ -358,9 +358,16 @@ test('Multi-voz: todas las obras polifónicas alinean sistemas/duraciones y Audi
       Math.abs((endByVoice[0] || 0) - (endByVoice[1] || 0)) < 0.2,
       `${p.id}: V:1 (${endByVoice[0]}) y V:2 (${endByVoice[1]}) deben coincidir en duración total`
     );
+    const isGrandStaff = /%%(?:staves|score)\s*\{/.test(prepared);
     for (const line of vo.lines) {
-      if (line.staff?.[0]?.voices) {
-        assert.equal(line.staff[0].voices.length, 2, `${p.id}: cada sistema debe mantener ambas voces alineadas`);
+      if (Array.isArray(line.staff) && line.staff.length > 0) {
+        const totalVoicesInSystem = line.staff.reduce((acc, st) => acc + (st.voices?.length || 0), 0);
+        if (totalVoicesInSystem > 0) {
+          assert.equal(totalVoicesInSystem, 2, `${p.id}: cada sistema debe mantener ambas voces alineadas`);
+          if (isGrandStaff) {
+            assert.equal(line.staff.length, 2, `${p.id}: el gran pentagrama debe renderizar 2 pentagramas (Sol y Fa)`);
+          }
+        }
       }
     }
   }

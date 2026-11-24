@@ -493,15 +493,18 @@ export class AudioSynthService {
 
           if (!skipForVoiceMode) {
             if (!noteEv.isRest && noteEv.midis.length > 0) {
-              // En partituras polifónicas de guitarra/clásica todas las voces escritas (V:1, V:2, V:3...)
-              // suenan con el instrumento principal; solo pentagramas en clave de fa usan timbre de bajo.
-              const usesBassTimbre = Boolean(tl.isBassPiece || noteEv.isBassStaff);
+              // En partituras de piano ambas manos (V:1 sol y V:2 fa) usan el timbre de piano.
+              // En guitarra/clásica todas las voces usan el instrumento principal; solo bajo real usa timbre de bajo.
+              const isPianoPlayback = Boolean(tl.isPianoPiece || this.instrument.includes('piano'));
+              const usesBassTimbre = !isPianoPlayback && Boolean(tl.isBassPiece || noteEv.isBassStaff);
               const effectiveBassVol = this.bassEnabled ? this.bassVolume : 0;
-              const baseVol = tl.isBassPiece
-                ? (this.bassEnabled ? Math.max(this.melodyVolume, effectiveBassVol) : 0)
-                : noteEv.isBassStaff
-                  ? effectiveBassVol
-                  : this.melodyVolume * (vIdx === 0 ? 1.0 : 0.92);
+              const baseVol = isPianoPlayback
+                ? this.melodyVolume * (vIdx === 0 ? 1.0 : 0.88)
+                : tl.isBassPiece
+                  ? (this.bassEnabled ? Math.max(this.melodyVolume, effectiveBassVol) : 0)
+                  : noteEv.isBassStaff
+                    ? effectiveBassVol
+                    : this.melodyVolume * (vIdx === 0 ? 1.0 : 0.92);
               const vol = Math.min(1.25, baseVol * (noteEv.dynamicGain ?? 1.0));
               const voiceInst = usesBassTimbre
                 ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
@@ -834,6 +837,38 @@ export class AudioSynthService {
         filterMid: Math.max(820, freq * 3.4),
         filterClose: Math.max(620, freq * 2.0)
       });
+    } else if (instrument === 'acoustic-piano') {
+      // Piano acústico: ataque de macillo ágil, fundamental cálida + 2.º armónico suave y decaimiento natural
+      const atk = Math.min(0.028, 0.0045 * attackScale);
+      osc1.type = 'triangle';
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(freq * 2.002, safeStart);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.14 : 0.22, safeStart);
+      scheduleAdsr({
+        peak: 0.3,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.34 : 0.56,
+        sustainEndRatio: articulation === 'staccato' ? 0.1 : 0.24,
+        filterOpen: Math.min(6400, freq * 6.8 * brightScale),
+        filterMid: Math.max(720, freq * 2.9),
+        filterClose: Math.max(420, freq * 1.6)
+      });
+    } else if (instrument === 'electric-piano') {
+      // Piano eléctrico (estilo tines/Rhodes): ataque suave con brillo campanoso y sostén redondo
+      const atk = Math.min(0.032, 0.007 * attackScale);
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(freq * 3.0, safeStart);
+      osc2Gain.gain.setValueAtTime(articulation === 'legato' ? 0.09 : 0.16, safeStart);
+      scheduleAdsr({
+        peak: 0.32,
+        atk,
+        sustainStartRatio: articulation === 'staccato' ? 0.4 : 0.64,
+        sustainEndRatio: articulation === 'staccato' ? 0.14 : 0.34,
+        filterOpen: Math.min(4600, freq * 5.4 * brightScale),
+        filterMid: Math.max(600, freq * 2.4),
+        filterClose: Math.max(380, freq * 1.45)
+      });
     } else if (instrument === 'electric-bass') {
       const atk = Math.min(0.04, 0.01 * attackScale);
       osc1.type = 'triangle';
@@ -912,9 +947,11 @@ export class AudioSynthService {
           ? chordEv.voicingMidis
           : (getChordVoicingMidi(chordEv.symbol, 52)?.chordMidis || []);
         if (chordMidis.length > 0) {
-          const chordInst = tl.isBassPiece && !this.instrument.includes('guitar')
-            ? 'electric-bass'
-            : (this.instrument.includes('guitar') ? this.instrument : 'nylon-guitar');
+          const chordInst = this.instrument.includes('piano')
+            ? this.instrument
+            : tl.isBassPiece && !this.instrument.includes('guitar')
+              ? 'electric-bass'
+              : (this.instrument.includes('guitar') ? this.instrument : 'nylon-guitar');
           this._scheduleCompingPattern(
             ctx,
             chordMidis,
@@ -936,9 +973,11 @@ export class AudioSynthService {
     }
 
     if (hasVoicing && this.chordsEnabled && this.chordsVolume > 0.01) {
-      const inst = tl.isBassPiece
-        ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
-        : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
+      const inst = this.instrument.includes('piano')
+        ? this.instrument
+        : tl.isBassPiece
+          ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
+          : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
       this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, tl.isBassPiece);
       return;
     }

@@ -2,7 +2,7 @@
  * Versión del caché estático de la PWA Acordate (v14: Estudio Táctil Moderno y blindaje móvil cero-desborde 320–390px en toda la app).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v15';
+const CACHE_NAME = 'acordate-static-v17';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -57,6 +57,7 @@ const PRECACHE_ASSETS = [
   './src/services/ProgressionGenerator.js',
   './src/services/WalkingBassGenerator.js',
   './src/services/VoicingGenerator.js',
+  './src/services/PianoVoicingService.js',
   './src/services/ChordLibraryService.js',
   './src/services/FingeringDesignService.js',
   './src/services/HarmonyService.js',
@@ -67,6 +68,7 @@ const PRECACHE_ASSETS = [
   './src/data/catalog.js',
   './src/data/catalog.json',
   './src/data/harmonyCatalog.json',
+  './src/data/pianoCatalog.json',
   './src/data/repertoireJazz.json',
   './src/data/repertoireTraditional.json',
   './src/data/repertoireClassical.json',
@@ -97,6 +99,7 @@ const PRECACHE_ASSETS = [
   './src/views/uiHelpers.js',
   './src/views/NotationGuideModal.js',
   './src/views/ChordDiagramView.js',
+  './src/views/PianoKeyboardView.js',
   './src/views/ScaleFretboardView.js',
   './src/views/AppShellView.js',
   './src/views/HomeView.js',
