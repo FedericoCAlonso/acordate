@@ -13,6 +13,8 @@ import { EventBus } from '../src/core/EventBus.js';
 import { Router } from '../src/core/Router.js';
 import { AbcService, validateAbcInstrumentRange, validateAbcMeasures } from '../src/services/AbcService.js';
 import { AudioSynthService } from '../src/services/AudioSynthService.js';
+import { MetronomeService } from '../src/services/MetronomeService.js';
+import { Settings } from '../src/models/Settings.js';
 import { FingeringDesignService } from '../src/services/FingeringDesignService.js';
 import { ABC_IMPORT_RIGHTS_NOTICE, ImportExportService } from '../src/services/ImportExportService.js';
 import { ScaleGenerator } from '../src/services/ScaleGenerator.js';
@@ -654,4 +656,115 @@ test('Expresiones melódicas: ligaduras de prolongación (ties), fraseo legato (
   assert.ok(holdEvent && holdEvent.v > 0.05, 'Al final de una ligadura de 12 s la nota debe seguir audible antes del release');
   const releaseEvent = gainEvents[gainEvents.length - 1];
   assert.ok(releaseEvent.t > 12.1 && releaseEvent.v <= 0.002, 'El release debe caer a silencio después de los 12 s');
+});
+
+test('Sincronización audio/visual: compensación de outputLatency, getOutputTimestamp, offset Bluetooth y resume() seguro', async () => {
+  // 1) MetronomeService.getOutputAudioTime compensa outputLatency + baseLatency y offset manual
+  const metro = new MetronomeService();
+  let fakeNow = 1.0;
+  metro._audioCtx = {
+    get currentTime() { return fakeNow; },
+    baseLatency: 0.02,
+    outputLatency: 0.1
+  };
+  assert.ok(
+    Math.abs(metro.getOutputAudioTime() - 0.88) < 0.001,
+    'Con baseLatency=20ms y outputLatency=100ms, el tiempo audible en currentTime=1.0s debe ser 0.88s'
+  );
+  metro.configure({ audioVisualOffsetMs: 80 });
+  assert.ok(
+    Math.abs(metro.getOutputAudioTime() - 0.8) < 0.001,
+    'Con offset manual +80ms (Bluetooth), el reloj visual debe retrasarse 80ms adicionales'
+  );
+  metro.configure({ audioVisualOffsetMs: 0 });
+
+  // 2) Preferencia por getOutputTimestamp() cuando está disponible
+  const perfNow = performance.now();
+  metro._audioCtx = {
+    get currentTime() { return 2.0; },
+    baseLatency: 0.01,
+    outputLatency: 0.01,
+    getOutputTimestamp: () => ({ contextTime: 1.84, performanceTime: perfNow })
+  };
+  const tsTime = metro.getOutputAudioTime();
+  assert.ok(tsTime >= 1.83 && tsTime <= 1.88, `getOutputTimestamp() debe guiar el reloj audible (obtenido: ${tsTime})`);
+
+  // 3) AudioSynthService._visualLoop no adelanta el resaltado antes de que el audio salga del parlante
+  let synthNow = 0;
+  const latentCtx = {
+    state: 'running',
+    get currentTime() { return synthNow; },
+    baseLatency: 0.02,
+    outputLatency: 0.1
+  };
+  const metroForSynth = new MetronomeService();
+  metroForSynth._audioCtx = latentCtx;
+  metroForSynth.ensureAudioContext = () => latentCtx;
+  metroForSynth.playClickAt = () => {};
+
+  const synth = new AudioSynthService(metroForSynth);
+  synth._playPluckedNote = () => {};
+  const emitted = [];
+  synth.onVisualEvent = (ev) => emitted.push(ev);
+  synth.configure({ bpm: 60, countInMeasures: 0, metronomeEnabled: false, chordsEnabled: false, bassEnabled: false });
+  const abcSvc = new AbcService();
+  const tl = abcSvc.extractTimeline(null, 'X:1\nM:4/4\nL:1/4\nK:C\nC D E F |]', { instrument: 'piano', isPiano: true, timeSignature: '4/4' });
+  synth.loadTimeline(tl);
+
+  synth._recomputeRangeBeats();
+  synth._anchorAudioTime = 1.0;
+  synth._anchorBeat = 0;
+  synth._scheduledUntilBeat = -0.0001;
+  synth._isPlaying = true;
+
+  // Agenda la primera nota en t = 1.0s
+  synthNow = 0.95;
+  synth._schedulerLoop();
+  clearTimeout(synth._schedulerTimer);
+
+  // En currentTime = 1.00s, el sonido recién saldrá en 1.12s (latencia total 120ms): todavía NO debe iluminarse
+  synthNow = 1.0;
+  synth._visualLoop();
+  assert.equal(emitted.length, 0, 'No debe iluminar la nota en t=1.00s cuando outputLatency+baseLatency es 120ms');
+
+  // En currentTime = 1.12s (tiempo audible = 1.00s), la primera nota DEBE iluminarse exactamente al oírse
+  synthNow = 1.12;
+  synth._visualLoop();
+  assert.equal(emitted.length, 1, 'Debe iluminar la nota exactamente al alcanzar t + latencia (1.12s)');
+  assert.equal(emitted[0].activeNotes[0].midis[0], 60);
+  synth.stop();
+
+  // 4) AudioContext suspendido: play() aguarda resume() antes de anclar el reloj y aborta si stop() llega antes
+  let resolveResume;
+  const suspendedCtx = {
+    state: 'suspended',
+    currentTime: 0,
+    resume: () => new Promise((res) => {
+      resolveResume = () => {
+        suspendedCtx.state = 'running';
+        suspendedCtx.currentTime = 0.5;
+        res();
+      };
+    })
+  };
+  const suspendedSynth = new AudioSynthService({
+    ensureAudioContext: () => suspendedCtx,
+    playClickAt() {},
+    getOutputAudioTime: () => suspendedCtx.currentTime
+  });
+  suspendedSynth._playPluckedNote = () => {};
+  suspendedSynth.configure({ bpm: 120, countInMeasures: 0, metronomeEnabled: false });
+  suspendedSynth.loadTimeline(tl);
+  suspendedSynth.play();
+  assert.equal(suspendedSynth.isPlaying, true);
+  assert.equal(suspendedSynth._schedulerTimer, null, 'No debe iniciar el scheduler mientras AudioContext está suspendido');
+  resolveResume();
+  await Promise.resolve();
+  assert.ok(Math.abs(suspendedSynth._anchorAudioTime - 0.56) < 0.001, 'Debe anclar el reloj después de resume() con currentTime actualizado');
+  suspendedSynth.stop();
+
+  // 5) Settings persiste y acota audioVisualOffsetMs en [-250, 250]
+  assert.equal(new Settings({ audioVisualOffsetMs: 90 }).audioVisualOffsetMs, 90);
+  assert.equal(new Settings({ audioVisualOffsetMs: 999 }).audioVisualOffsetMs, 250);
+  assert.equal(new Settings({ audioVisualOffsetMs: -999 }).audioVisualOffsetMs, -250);
 });

@@ -27,7 +27,8 @@ export const DEFAULT_SETTINGS = {
   showOtherAnnotations: true,
   showBassFunctions: true,
   metronomeSound: 'woodblock',
-  countInMeasures: 1
+  countInMeasures: 1,
+  audioVisualOffsetMs: 0
 };
 
 /**
@@ -81,6 +82,11 @@ export class Settings {
     this.countInMeasures = [0, 1, 2].includes(Number(data.countInMeasures))
       ? Number(data.countInMeasures)
       : DEFAULT_SETTINGS.countInMeasures;
+    /** Calibración manual de sincronización audio/visual en ms (-250 a +250; positivo retrasa el resaltado visual). */
+    const rawOffset = Number(data.audioVisualOffsetMs);
+    this.audioVisualOffsetMs = Number.isFinite(rawOffset)
+      ? Math.max(-250, Math.min(250, Math.round(rawOffset)))
+      : DEFAULT_SETTINGS.audioVisualOffsetMs;
   }
 
   /**
@@ -111,7 +117,8 @@ export class Settings {
       showOtherAnnotations: this.showOtherAnnotations,
       showBassFunctions: this.showBassFunctions,
       metronomeSound: this.metronomeSound,
-      countInMeasures: this.countInMeasures
+      countInMeasures: this.countInMeasures,
+      audioVisualOffsetMs: this.audioVisualOffsetMs
     };
   }
 }

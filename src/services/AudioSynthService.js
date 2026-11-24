@@ -53,6 +53,8 @@ export class AudioSynthService {
     this.instrument = 'acoustic-guitar';
     /** Registro de escucha configurado en Ajustes ('real' | '+1oct'). */
     this.listeningRegister = 'real';
+    /** Desfase manual audio/visual en ms (-250 a +250; positivo retrasa el resaltado visual). */
+    this.audioVisualOffsetMs = 0;
     /** Volumen independiente de la melodía / voz principal (por defecto 100%). */
     this.melodyVolume = 1.0;
     /** Activar/desactivar acompañamiento armónico de acordes. */
@@ -95,6 +97,8 @@ export class AudioSynthService {
     this._countInTotalBeats = 0;
     /** Cursor de pausa para reanudar desde el mismo punto. */
     this._pausedAtBeat = 0;
+    /** Token incremental para invalidar inicios pendientes mientras AudioContext sale de 'suspended'. */
+    this._playToken = 0;
 
     /** Nodos de audio activos para silenciar inmediatamente al detener. */
     this._activeNodes = new Set();
@@ -150,15 +154,23 @@ export class AudioSynthService {
   configure(patch = {}) {
     const ctx = this._metronome?.ensureAudioContext();
     if (patch.bpm !== undefined && this._isPlaying && ctx) {
-      const currentBeat = this._audioTimeToBeat(ctx.currentTime);
-      this._anchorAudioTime = ctx.currentTime;
-      this._anchorBeat = currentBeat;
+      // Re-ancla en el horizonte ya agendado para que las notas futuras empalmen sin solapamientos ni saltos
+      const pivotBeat = Math.max(this._audioTimeToBeat(ctx.currentTime), this._scheduledUntilBeat);
+      this._anchorAudioTime = this._beatToAudioTime(pivotBeat);
+      this._anchorBeat = pivotBeat;
     }
 
     if (patch.bpm !== undefined) this.bpm = Math.max(40, Math.min(240, Math.round(Number(patch.bpm) || 90)));
     if (patch.instrument !== undefined) this.instrument = patch.instrument;
     if (patch.listeningRegister !== undefined) {
       this.listeningRegister = patch.listeningRegister === '+1oct' ? '+1oct' : 'real';
+    }
+    if (patch.audioVisualOffsetMs !== undefined) {
+      const ms = Number(patch.audioVisualOffsetMs);
+      this.audioVisualOffsetMs = Number.isFinite(ms) ? Math.max(-250, Math.min(250, Math.round(ms))) : 0;
+      if (typeof this._metronome?.configure === 'function') {
+        this._metronome.configure({ audioVisualOffsetMs: this.audioVisualOffsetMs });
+      }
     }
     if (patch.melodyVolume !== undefined) this.melodyVolume = sanitizeVolume(patch.melodyVolume, 1.0);
     if (patch.chordsEnabled !== undefined) this.chordsEnabled = Boolean(patch.chordsEnabled);
@@ -306,6 +318,8 @@ export class AudioSynthService {
 
   /**
    * Inicia o reanuda la reproducción de la práctica cargada.
+   * Si el AudioContext se encuentra suspendido, aguarda su activación antes de anclar el reloj
+   * para evitar desfases iniciales entre la primera nota sonora y el resaltado visual.
    */
   play() {
     if (!this._timeline || this._timeline.totalBeats <= 0) return;
@@ -327,14 +341,26 @@ export class AudioSynthService {
       ? this._rangeStartBeat - this._countInTotalBeats
       : Math.max(this._rangeStartBeat, Math.min(this._pausedAtBeat, this._rangeEndBeat - 0.1));
 
-    this._anchorAudioTime = ctx.currentTime + 0.06;
+    const token = ++this._playToken;
     this._anchorBeat = startBeat;
     this._scheduledUntilBeat = startBeat - 0.0001;
     this._isPlaying = true;
     this._isPaused = false;
 
-    this._schedulerLoop();
-    this._visualLoop();
+    const startScheduledPlayback = () => {
+      if (!this._isPlaying || token !== this._playToken) return;
+      this._anchorAudioTime = ctx.currentTime + 0.06;
+      this._schedulerLoop();
+      this._visualLoop();
+    };
+
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+      ctx.resume().then(startScheduledPlayback).catch(() => {
+        if (token === this._playToken) this._isPlaying = false;
+      });
+    } else {
+      startScheduledPlayback();
+    }
   }
 
   /**
@@ -342,9 +368,11 @@ export class AudioSynthService {
    */
   pause() {
     if (!this._isPlaying) return;
+    this._playToken += 1;
     const ctx = this._metronome?.ensureAudioContext();
     if (ctx) {
-      this._pausedAtBeat = Math.max(this._rangeStartBeat, this._audioTimeToBeat(ctx.currentTime));
+      const heardNow = this._getVisualClockTime(ctx);
+      this._pausedAtBeat = Math.max(this._rangeStartBeat, this._audioTimeToBeat(heardNow));
     }
     this._isPlaying = false;
     this._isPaused = true;
@@ -355,6 +383,7 @@ export class AudioSynthService {
    * Detiene completamente la reproducción y reinicia el cursor al principio.
    */
   stop() {
+    this._playToken += 1;
     this._isPlaying = false;
     this._isPaused = false;
     this._pausedAtBeat = 0;
@@ -604,15 +633,32 @@ export class AudioSynthService {
   }
 
   /**
-   * Bucle visual sincronizado con audioCtx.currentTime para resaltar simultáneamente
-   * todas las notas activas de todas las voces en el pulso correspondiente.
+   * Obtiene el tiempo de audio actualmente percibido en parlantes/auriculares para
+   * sincronizar el resaltado visual del pentagrama sin adelantarse por la latencia del DAC/Bluetooth.
+   * @param {AudioContext} ctx Contexto de audio activo.
+   * @returns {number} Instante audible en segundos.
+   */
+  _getVisualClockTime(ctx) {
+    if (typeof this._metronome?.getOutputAudioTime === 'function') {
+      return this._metronome.getOutputAudioTime();
+    }
+    const currentTime = Number(ctx?.currentTime) || 0;
+    const baseLat = Number.isFinite(ctx?.baseLatency) ? Math.max(0, ctx.baseLatency) : 0;
+    const outLat = Number.isFinite(ctx?.outputLatency) ? Math.max(0, ctx.outputLatency) : 0;
+    const latency = Math.min(0.5, baseLat + outLat);
+    return currentTime - latency - (Number(this.audioVisualOffsetMs) || 0) / 1000;
+  }
+
+  /**
+   * Bucle visual sincronizado con el tiempo real de salida de audio (compensando latencia de
+   * hardware y calibración manual) para resaltar simultáneamente las notas activas de todas las voces.
    */
   _visualLoop() {
     if (!this._isPlaying) return;
     const ctx = this._metronome.ensureAudioContext();
     if (!ctx) return;
 
-    const now = ctx.currentTime;
+    const now = this._getVisualClockTime(ctx);
     this._processVisualFrame(now);
 
     if (this._isPlaying && typeof requestAnimationFrame !== 'undefined') {
@@ -623,7 +669,7 @@ export class AudioSynthService {
   /**
    * Procesa un instante de tiempo de audio para actualizar el conjunto de voces/notas resaltadas
    * y despachar eventos de conteo previo, compás y paso armónico.
-   * @param {number} now Instante actual en audioCtx.currentTime.
+   * @param {number} now Instante actual en tiempo de audio de salida.
    */
   _processVisualFrame(now) {
     if (this._visualQueue.length > 1) {
@@ -633,7 +679,7 @@ export class AudioSynthService {
     let latestMeasure = 0;
     let hadNoteUpdate = false;
 
-    while (this._visualQueue.length > 0 && this._visualQueue[0].time <= now + 0.015) {
+    while (this._visualQueue.length > 0 && this._visualQueue[0].time <= now + 0.004) {
       const ev = this._visualQueue.shift();
       if (ev.isPassComplete) {
         this._activeVisualByVoice.clear();
@@ -671,7 +717,7 @@ export class AudioSynthService {
 
     // Expira notas de cualquier voz que ya terminaron de sonar antes de este instante
     for (const [vIdx, entry] of this._activeVisualByVoice.entries()) {
-      if (entry.endTime <= now + 0.005) {
+      if (entry.endTime <= now + 0.002) {
         this._activeVisualByVoice.delete(vIdx);
         hadNoteUpdate = true;
       } else if (entry.measureIndex) {
@@ -1325,6 +1371,8 @@ export class AudioSynthService {
       );
     }
 
+    const outputLatencySec = Math.max(0, ctx.currentTime - this._getVisualClockTime(ctx));
+
     midis.forEach((rawMidi, idx) => {
       const t = start0 + idx * stepSec;
       const finalMidi = applyListeningRegister(rawMidi, this.listeningRegister);
@@ -1333,12 +1381,12 @@ export class AudioSynthService {
       });
 
       if (typeof options.onStep === 'function') {
-        const delayMs = Math.max(0, Math.round((t - ctx.currentTime) * 1000));
+        const delayMs = Math.max(0, Math.round((t + outputLatencySec - ctx.currentTime) * 1000));
         this._scaleTimers.push(setTimeout(() => options.onStep(rawMidi, idx), delayMs));
       }
     });
 
-    const endMs = Math.max(50, Math.round((start0 + midis.length * stepSec + 0.25 - ctx.currentTime) * 1000));
+    const endMs = Math.max(50, Math.round((start0 + midis.length * stepSec + outputLatencySec + 0.25 - ctx.currentTime) * 1000));
     this._scaleTimers.push(
       setTimeout(() => {
         this._scaleTimers = [];

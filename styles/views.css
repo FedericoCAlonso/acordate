@@ -753,7 +753,6 @@
 .score-surface svg .acordate-note-active ellipse {
   fill: var(--md-sys-color-primary) !important;
   stroke: var(--md-sys-color-primary) !important;
-  filter: drop-shadow(0 0 4px var(--md-sys-color-primary));
 }
 
 /* Conteo previo grande y visible sobre la partitura (4 - 3 - 2 - 1) */

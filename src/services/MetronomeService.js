@@ -72,6 +72,10 @@ export class MetronomeService {
 
     /** Cola de eventos visuales agendados para disparar exactamente al llegar a currentTime. */
     this._visualQueue = [];
+    /** Token incremental para cancelar arranques pendientes si se detiene durante AudioContext.resume(). */
+    this._startToken = 0;
+    /** Desfase manual audio/visual en milisegundos (-250 a +250; positivo retrasa el resaltado visual para Bluetooth). */
+    this.audioVisualOffsetMs = 0;
     /** Callback notificado en cada pulso visual: ({ beat, totalBeats, subdivision, isAccent, isMuted, barIndex }). */
     this.onBeat = null;
     /** Callback notificado cuando el entrenador de velocidad actualiza el BPM. */
@@ -79,7 +83,8 @@ export class MetronomeService {
   }
 
   /**
-   * Devuelve o crea el AudioContext del navegador, reanudándolo si estaba suspendido.
+   * Devuelve o crea el AudioContext del navegador en modo de baja latencia ('interactive'),
+   * reanudándolo si estaba suspendido.
    * @returns {AudioContext|null} Contexto de audio activo.
    */
   ensureAudioContext() {
@@ -87,12 +92,74 @@ export class MetronomeService {
     if (!this._audioCtx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return null;
-      this._audioCtx = new AudioCtx();
+      try {
+        this._audioCtx = new AudioCtx({ latencyHint: 'interactive' });
+      } catch {
+        this._audioCtx = new AudioCtx();
+      }
     }
-    if (this._audioCtx.state === 'suspended') {
+    if (this._audioCtx.state === 'suspended' && typeof this._audioCtx.resume === 'function') {
       this._audioCtx.resume().catch(() => {});
     }
     return this._audioCtx;
+  }
+
+  /**
+   * Calcula el instante exacto de audio (en segundos del reloj del AudioContext) que está
+   * saliendo realmente por los parlantes/auriculares en este frame visual, compensando
+   * automáticamente la latencia del hardware (`getOutputTimestamp()` / `outputLatency + baseLatency`)
+   * y el ajuste manual de calibración del usuario (útil para auriculares Bluetooth).
+   * @param {number} [extraOffsetMs=0] Ajuste adicional opcional en milisegundos.
+   * @returns {number} Instante audible actual en segundos.
+   */
+  getOutputAudioTime(extraOffsetMs = 0) {
+    const ctx = this._audioCtx;
+    if (!ctx) return 0;
+
+    const currentTime = Number(ctx.currentTime) || 0;
+    let heardTime = currentTime;
+    let usedTimestamp = false;
+
+    if (typeof ctx.getOutputTimestamp === 'function' && typeof performance !== 'undefined') {
+      try {
+        const ts = ctx.getOutputTimestamp();
+        if (
+          ts &&
+          Number.isFinite(ts.contextTime) &&
+          ts.contextTime > 0 &&
+          Number.isFinite(ts.performanceTime) &&
+          ts.performanceTime > 0
+        ) {
+          const elapsedSec = Math.max(-0.15, Math.min(0.25, (performance.now() - ts.performanceTime) / 1000));
+          const estimated = ts.contextTime + elapsedSec;
+          heardTime = Math.max(currentTime - 0.6, Math.min(currentTime, estimated));
+          usedTimestamp = true;
+        }
+      } catch {
+        // Respaldo seguro con outputLatency + baseLatency si el navegador no soporta getOutputTimestamp
+      }
+    }
+
+    if (!usedTimestamp) {
+      const baseLat = Number.isFinite(ctx.baseLatency) ? Math.max(0, ctx.baseLatency) : 0;
+      const outLat = Number.isFinite(ctx.outputLatency) ? Math.max(0, ctx.outputLatency) : 0;
+      const totalLat = Math.min(0.5, baseLat + outLat);
+      heardTime = currentTime - totalLat;
+    }
+
+    const offsetSec = ((Number(this.audioVisualOffsetMs) || 0) + (Number(extraOffsetMs) || 0)) / 1000;
+    return heardTime - offsetSec;
+  }
+
+  /**
+   * Estima la latencia efectiva total (hardware + calibración manual) en segundos entre
+   * `ctx.currentTime` y el sonido efectivamente escuchado.
+   * @returns {number} Latencia estimada en segundos (>= 0).
+   */
+  getEstimatedOutputLatencySec() {
+    const ctx = this._audioCtx;
+    if (!ctx) return 0;
+    return Math.max(0, (Number(ctx.currentTime) || 0) - this.getOutputAudioTime());
   }
 
   /**
@@ -147,10 +214,16 @@ export class MetronomeService {
     if (patch.silentBarEnabled !== undefined) this.silentBarEnabled = Boolean(patch.silentBarEnabled);
     if (patch.silentPlayBars !== undefined) this.silentPlayBars = Math.max(1, Math.min(16, Number(patch.silentPlayBars)));
     if (patch.silentMuteBars !== undefined) this.silentMuteBars = Math.max(1, Math.min(8, Number(patch.silentMuteBars)));
+    if (patch.audioVisualOffsetMs !== undefined) {
+      const ms = Number(patch.audioVisualOffsetMs);
+      this.audioVisualOffsetMs = Number.isFinite(ms) ? Math.max(-250, Math.min(250, Math.round(ms))) : 0;
+    }
   }
 
   /**
    * Inicia el metrónomo con el scheduler de anticipación de Web Audio API.
+   * Si el AudioContext estaba suspendido, espera su activación antes de fijar el reloj ancla
+   * para evitar desfases iniciales entre audio y pulso visual.
    */
   start() {
     if (this._isRunning) return;
@@ -158,21 +231,34 @@ export class MetronomeService {
     if (!ctx) return;
 
     this._isRunning = true;
+    const token = ++this._startToken;
     this._currentBeat = 0;
     this._currentSub = 0;
     this._barCounter = 0;
     this._visualQueue = [];
-    this._anchorTime = ctx.currentTime + 0.05;
     this._segmentStep = 0;
 
-    this._scheduleLoop();
-    this._visualLoop();
+    const beginLoops = () => {
+      if (!this._isRunning || token !== this._startToken || !this._audioCtx) return;
+      this._anchorTime = this._audioCtx.currentTime + 0.06;
+      this._scheduleLoop();
+      this._visualLoop();
+    };
+
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+      ctx.resume().then(beginLoops).catch(() => {
+        if (token === this._startToken) this._isRunning = false;
+      });
+    } else {
+      beginLoops();
+    }
   }
 
   /**
    * Detiene el metrónomo y limpia temporizadores pendientes.
    */
   stop() {
+    this._startToken += 1;
     this._isRunning = false;
     if (this._schedulerTimer !== null) {
       clearTimeout(this._schedulerTimer);
@@ -279,13 +365,14 @@ export class MetronomeService {
   }
 
   /**
-   * Sincroniza la notificación visual de cada pulso con el reloj de audio usando requestAnimationFrame.
+   * Sincroniza la notificación visual de cada pulso con el tiempo de audio efectivamente
+   * escuchado (compensando latencia de salida) usando requestAnimationFrame.
    */
   _visualLoop() {
     if (!this._isRunning || !this._audioCtx) return;
-    const now = this._audioCtx.currentTime;
+    const now = this.getOutputAudioTime();
 
-    while (this._visualQueue.length > 0 && this._visualQueue[0].time <= now + 0.01) {
+    while (this._visualQueue.length > 0 && this._visualQueue[0].time <= now + 0.004) {
       const ev = this._visualQueue.shift();
       if (typeof this.onBeat === 'function') {
         this.onBeat(ev);

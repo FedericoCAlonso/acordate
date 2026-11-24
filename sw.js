@@ -2,7 +2,7 @@
  * Versión del caché estático de la PWA Acordate (v14: Estudio Táctil Moderno y blindaje móvil cero-desborde 320–390px en toda la app).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v18';
+const CACHE_NAME = 'acordate-static-v19';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline

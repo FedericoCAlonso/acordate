@@ -1,7 +1,7 @@
 import { INSTRUMENT_LABELS, METRONOME_SOUND_LABELS } from '../core/i18n.js';
 import { SEED_COLOR_PRESETS } from '../models/Settings.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
-import { createSwitchRow, el, icon } from './uiHelpers.js';
+import { createSliderGroup, createSwitchRow, el, icon } from './uiHelpers.js';
 
 /**
  * Vista de Ajustes (#/ajustes).
@@ -353,9 +353,26 @@ export class SettingsView {
     );
     countInSelect.value = String(s.countInMeasures);
 
+    const syncSlider = createSliderGroup({
+      id: 'set-av-offset',
+      label: 'Sincronización visual vs. audio',
+      min: -200,
+      max: 250,
+      step: 10,
+      value: s.audioVisualOffsetMs ?? 0,
+      formatValue: (v) => (v === 0 ? '0 ms (Auto)' : `${v > 0 ? '+' : ''}${v} ms`),
+      onInput: (v) => this._vm.setAudioVisualOffsetMs(v)
+    });
+
     const deviceCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:12px' }, [
       el('h2', { className: 'm3-title-md' }, ['Metrónomo y dispositivo']),
       wakeLockSwitch.row,
+      el('div', {}, [
+        syncSlider.wrap,
+        el('div', { className: 'm3-body-sm', style: 'color:var(--md-sys-color-on-surface-variant); margin-top:4px' }, [
+          'La latencia del navegador se compensa automáticamente. Subí el valor (+) si usás auriculares Bluetooth y el resaltado se adelanta al sonido.'
+        ])
+      ]),
       el('div', { className: 'controls-grid' }, [
         el('div', {}, [
           el('label', { className: 'm3-body-md', style: 'display:block; margin-bottom:6px' }, ['Timbre del metrónomo']),

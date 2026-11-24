@@ -238,7 +238,10 @@ export class PracticePlayerViewModel {
       this.showOtherAnnotations.set(s.showOtherAnnotations ?? true);
       this.showBassFunctions.set(s.showBassFunctions ?? true);
       this.countInMeasures.set(s.countInMeasures);
-      this._audio.configure({ listeningRegister: s.listeningRegister });
+      this._audio.configure({
+        listeningRegister: s.listeningRegister,
+        audioVisualOffsetMs: s.audioVisualOffsetMs ?? 0
+      });
     });
   }
 
@@ -331,6 +334,7 @@ export class PracticePlayerViewModel {
     this._audio.configure({
       bpm: this.bpm.value,
       listeningRegister: this._appVm.settings.value.listeningRegister || 'real',
+      audioVisualOffsetMs: this._appVm.settings.value.audioVisualOffsetMs ?? 0,
       ...this.transport.getAudioConfigPatch(),
       ...this.mixer.getAudioConfigPatch()
     });
@@ -359,6 +363,11 @@ export class PracticePlayerViewModel {
   setViewMode(m) { if (['pentagrama', 'cifrado', 'diagramas', 'mixto'].includes(m)) this.viewMode.set(m); }
   setZoom(z) { this.zoom.set(Math.max(0.75, Math.min(1.6, Math.round(Number(z) * 100) / 100))); }
   setListeningRegister(r) { this._appVm.updateSettings({ listeningRegister: r }); }
+  setAudioVisualOffsetMs(ms) {
+    const safe = Math.max(-250, Math.min(250, Math.round(Number(ms) || 0)));
+    this._appVm.updateSettings({ audioVisualOffsetMs: safe });
+    this._audio.configure({ audioVisualOffsetMs: safe });
+  }
   toggleFingerings() {
     const next = !this.showFingerings.value;
     this.showFingerings.set(next);

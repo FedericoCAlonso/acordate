@@ -170,6 +170,19 @@ export class SettingsViewModel {
   }
 
   /**
+   * Ajusta la calibración manual de sincronización visual respecto al audio (-250 a +250 ms).
+   * Útil especialmente para compensar latencia extra de auriculares Bluetooth.
+   * @param {number} ms Desfase en milisegundos (positivo retrasa el resaltado visual).
+   */
+  setAudioVisualOffsetMs(ms) {
+    const safe = Math.max(-250, Math.min(250, Math.round(Number(ms) || 0)));
+    this._appVm.updateSettings({ audioVisualOffsetMs: safe });
+    if (this._audio) {
+      this._audio.configure({ audioVisualOffsetMs: safe });
+    }
+  }
+
+  /**
    * Restaura todos los ajustes a sus valores de fábrica.
    */
   resetDefaults() {

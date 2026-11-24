@@ -71,6 +71,10 @@ export class PracticePlayerView {
     this._highlightedSvgNodes = [];
     /** Clave vertical del último sistema/fila encuadrado para evitar re-disparar scroll en cada nota. */
     this._lastScrolledSystemKey = null;
+    /** Último compás encuadrado durante la reproducción para evitar layout reflows nota por nota. */
+    this._lastScrolledMeasure = 0;
+    /** Referencia cacheada a la barra superior para cálculos de encuadre sin consultas DOM repetidas. */
+    this._cachedTopBarEl = null;
     /** Referencia al sheet modal abierto (si existe). */
     this._activeSheet = null;
     /** Estado del panel rápido de capas de anotaciones (plegado por defecto para despejar la partitura). */
@@ -1616,6 +1620,17 @@ export class PracticePlayerView {
           )
         );
 
+        const syncSlider = createSliderGroup({
+          id: 'sheet-av-offset-slider',
+          label: 'Calibración visual vs. audio',
+          min: -200,
+          max: 250,
+          step: 10,
+          value: this._appVm.settings.value.audioVisualOffsetMs ?? 0,
+          formatValue: (v) => (v === 0 ? '0 ms (Auto)' : `${v > 0 ? '+' : ''}${v} ms`),
+          onInput: (v) => this._vm.setAudioVisualOffsetMs(v)
+        });
+
         panelHost.append(
           el('div', {}, [
             el('div', { className: 'm3-body-md', style: 'margin-bottom:8px' }, ['Transposición (melodía + cifrado)']),
@@ -1633,6 +1648,12 @@ export class PracticePlayerView {
           el('div', {}, [
             el('div', { className: 'm3-body-md', style: 'margin-bottom:6px' }, ['Registro de escucha']),
             regSeg
+          ]),
+          el('div', {}, [
+            syncSlider.wrap,
+            el('div', { className: 'm3-body-sm', style: 'color:var(--md-sys-color-on-surface-variant); margin-top:4px' }, [
+              'Compensación automática activa. Ajustá (+) si el brillo se adelanta con Bluetooth.'
+            ])
           ])
         );
       } else {
@@ -1767,6 +1788,7 @@ export class PracticePlayerView {
 
     if (!Array.isArray(noteEvents) || noteEvents.length === 0) {
       this._lastScrolledSystemKey = null;
+      this._lastScrolledMeasure = 0;
       return;
     }
 
@@ -1785,7 +1807,11 @@ export class PracticePlayerView {
       }
     }
 
-    if (anchor) {
+    // Evita forzar layout reflow (getBoundingClientRect) en cada corchea/semicorchea:
+    // solo evalúa el seguimiento vertical al cambiar de compás o al iniciar la reproducción.
+    const primaryMeasure = noteEvents[0]?.measureIndex || 0;
+    if (anchor && (primaryMeasure === 0 || primaryMeasure !== this._lastScrolledMeasure)) {
+      this._lastScrolledMeasure = primaryMeasure;
       this._scrollToFollowReading(anchor, { systemQuantizePx: 44 });
     }
   }
@@ -1820,7 +1846,10 @@ export class PracticePlayerView {
     if (!targetEl || typeof targetEl.getBoundingClientRect !== 'function') return;
 
     const scrollParent = this._findVerticalScrollContainer(targetEl);
-    const topBar = document.querySelector('.m3-top-bar');
+    if (!this._cachedTopBarEl || !this._cachedTopBarEl.isConnected) {
+      this._cachedTopBarEl = document.querySelector('.m3-top-bar');
+    }
+    const topBar = this._cachedTopBarEl;
     const topBarRect = topBar ? topBar.getBoundingClientRect() : null;
     const dockRect = this._transportDock ? this._transportDock.getBoundingClientRect() : null;
 

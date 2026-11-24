@@ -93,6 +93,9 @@ export class MetronomeViewModel {
           if (s?.metronomeSound) {
             this.setSoundType(s.metronomeSound);
           }
+          if (s?.audioVisualOffsetMs !== undefined) {
+            this._metronome.configure({ audioVisualOffsetMs: s.audioVisualOffsetMs });
+          }
         })
       : null;
 
@@ -124,7 +127,8 @@ export class MetronomeViewModel {
       speedTrainerTargetBpm: this.speedTrainerTargetBpm.value,
       silentBarEnabled: this.silentBarEnabled.value,
       silentPlayBars: this.silentPlayBars.value,
-      silentMuteBars: this.silentMuteBars.value
+      silentMuteBars: this.silentMuteBars.value,
+      audioVisualOffsetMs: this._appVm?.settings?.value?.audioVisualOffsetMs ?? 0
     });
   }
 
