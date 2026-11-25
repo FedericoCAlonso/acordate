@@ -50,6 +50,53 @@ function hsl(h, s, l) {
  * @param {boolean} isDark True para esquema oscuro, false para esquema claro.
  * @returns {Record<string, string>} Mapa variable CSS -> valor de color.
  */
+/**
+ * Convierte un color HSL (h en 0..360, s/l en 0..100) a RGB linealizado para calcular luminancia WCAG.
+ * @param {number} h Tono 0..360.
+ * @param {number} s Saturación 0..100.
+ * @param {number} l Luminosidad 0..100.
+ * @returns {number} Luminancia relativa WCAG (0..1).
+ */
+function hslRelativeLuminance(h, s, l) {
+  const sn = Math.max(0, Math.min(1, s / 100));
+  const ln = Math.max(0, Math.min(1, l / 100));
+  const c = (1 - Math.abs(2 * ln - 1)) * sn;
+  const hp = (((h % 360) + 360) % 360) / 60;
+  const x = c * (1 - Math.abs((hp % 2) - 1));
+  let r1 = 0; let g1 = 0; let b1 = 0;
+  if (hp < 1) { r1 = c; g1 = x; }
+  else if (hp < 2) { r1 = x; g1 = c; }
+  else if (hp < 3) { g1 = c; b1 = x; }
+  else if (hp < 4) { g1 = x; b1 = c; }
+  else if (hp < 5) { r1 = x; b1 = c; }
+  else { r1 = c; b1 = x; }
+  const m = ln - c / 2;
+  const lin = (v) => {
+    const ch = Math.max(0, Math.min(1, v + m));
+    return ch <= 0.03928 ? ch / 12.92 : Math.pow((ch + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * lin(r1) + 0.7152 * lin(g1) + 0.0722 * lin(b1);
+}
+
+/**
+ * Ajusta la luminosidad HSL hacia abajo hasta garantizar un contraste WCAG >= minRatio sobre blanco (#FFFFFF).
+ * @param {number} h Tono 0..360.
+ * @param {number} s Saturación 0..100.
+ * @param {number} startL Luminosidad inicial deseada.
+ * @param {number} [minRatio=4.6] Contraste mínimo objetivo (AA = 4.5).
+ * @returns {string} Color CSS hsl(...) garantizado AA.
+ */
+function accessibleLightTone(h, s, startL, minRatio = 4.6) {
+  let curL = startL;
+  while (curL > 16) {
+    const lum = hslRelativeLuminance(h, s, curL);
+    const ratio = (1.0 + 0.05) / (lum + 0.05);
+    if (ratio >= minRatio) break;
+    curL -= 1;
+  }
+  return hsl(h, s, curL);
+}
+
 export function generateM3Palette(seedHex, isDark = false) {
   const { h, s } = hexToHsl(seedHex);
   const pSat = Math.max(38, Math.min(78, s));
@@ -61,17 +108,17 @@ export function generateM3Palette(seedHex, isDark = false) {
 
   if (!isDark) {
     return {
-      '--md-sys-color-primary': hsl(h, Math.min(76, pSat + 6), 40),
+      '--md-sys-color-primary': accessibleLightTone(h, Math.min(76, pSat + 6), 40, 4.65),
       '--md-sys-color-on-primary': '#FFFFFF',
       '--md-sys-color-primary-container': hsl(h, Math.min(84, pSat + 10), 92),
       '--md-sys-color-on-primary-container': hsl(h, pSat, 15),
 
-      '--md-sys-color-secondary': hsl(secHue, secSat, 38),
+      '--md-sys-color-secondary': accessibleLightTone(secHue, secSat, 38, 4.65),
       '--md-sys-color-on-secondary': '#FFFFFF',
       '--md-sys-color-secondary-container': hsl(secHue, secSat + 6, 92),
       '--md-sys-color-on-secondary-container': hsl(secHue, secSat, 15),
 
-      '--md-sys-color-tertiary': hsl(terHue, terSat, 38),
+      '--md-sys-color-tertiary': accessibleLightTone(terHue, terSat, 38, 4.65),
       '--md-sys-color-on-tertiary': '#FFFFFF',
       '--md-sys-color-tertiary-container': hsl(terHue, terSat + 10, 92),
       '--md-sys-color-on-tertiary-container': hsl(terHue, terSat, 15),

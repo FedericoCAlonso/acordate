@@ -801,11 +801,40 @@
 }
 
 /* Vista Cifrado */
+.chord-chart-section-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-primary);
+}
+
+.chord-chart-section-header:first-child {
+  margin-top: 0;
+}
+
+.chord-chart-section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+}
+
 .chord-chart-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   width: 100%;
+}
+
+@media (min-width: 600px) {
+  .chord-chart-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .chord-bar-cell {
@@ -821,6 +850,27 @@
   justify-content: center;
   align-items: center;
   gap: 4px;
+}
+
+.chord-bar-cell__chords {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.chord-bar-cell--split .chord-bar-cell__chords {
+  font-size: 0.92rem;
+  gap: 4px;
+}
+
+.chord-bar-cell__sep {
+  opacity: 0.45;
+  font-weight: 400;
 }
 
 .chord-bar-cell--active {
@@ -1973,7 +2023,7 @@
 }
 
 .scale-fretboard__wood {
-  fill: color-mix(in srgb, var(--md-sys-color-surface-container) 82%, var(--md-sys-color-surface-variant));
+  fill: color-mix(in srgb, var(--md-sys-color-surface-container) 78%, var(--md-sys-color-surface-container-high));
   stroke: var(--md-sys-color-outline-variant);
   stroke-width: 1;
 }
@@ -3304,3 +3354,88 @@
 
 
 
+
+/* Ajustes táctiles finos móvil y jerarquía snackbar vs. sheets */
+.m3-snackbar-host {
+  z-index: 650;
+}
+
+.scale-acc-btn,
+.scales-root-row .m3-chip--compact {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* Hoja de impresión / exportación a PDF limpia para profesores y alumnos */
+@media print {
+  body,
+  html,
+  #app {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .m3-top-bar,
+  .m3-nav,
+  .m3-nav-rail,
+  .transport-dock,
+  .player-view-bar,
+  .annotations-bar,
+  .session-banner,
+  .m3-snackbar-host,
+  .count-in-overlay,
+  .next-practice-card,
+  .comping-banner .m3-chip-row,
+  .fingering-design-collapsible,
+  .m3-btn,
+  .m3-icon-btn,
+  .skip-link {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-main,
+  .player-layout,
+  .score-surface {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #FFFFFF !important;
+  }
+
+  .score-surface svg path:not([fill="none"]) {
+    fill: #000000 !important;
+  }
+
+  .score-surface svg line,
+  .score-surface svg path[stroke]:not([stroke="none"]) {
+    stroke: #000000 !important;
+  }
+
+  .score-surface svg text {
+    fill: #000000 !important;
+    stroke: none !important;
+  }
+
+  .m3-card,
+  .harmony-step-card,
+  .chord-bar-cell {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    background: #FFFFFF !important;
+    border-color: #999999 !important;
+    box-shadow: none !important;
+  }
+
+  .harmony-strip {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    overflow: visible !important;
+  }
+}

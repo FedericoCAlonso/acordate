@@ -1,9 +1,10 @@
 {
+  "id": "./",
   "name": "Acordate — Práctica musical",
   "short_name": "Acordate",
-  "description": "App de práctica musical offline para guitarra clásica, guitarra y bajo: lectura de partitura, acordes, escalas y walking bass.",
+  "description": "App de práctica musical offline para guitarra clásica, guitarra, bajo y piano: lectura de partitura, gran pentagrama, acordes, escalas y walking bass.",
   "lang": "es-AR",
-  "start_url": "./index.html#/practicas",
+  "start_url": "./index.html#/inicio",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -15,13 +16,25 @@
       "src": "./assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "./assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./assets/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "./assets/icon.svg",

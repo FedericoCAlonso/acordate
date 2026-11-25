@@ -1,4 +1,5 @@
 import { Observable } from '../core/Observable.js';
+import { validateAbcInstrumentRange, validateAbcMeasures } from '../services/AbcService.js';
 import { Practice, generatePracticeId, validatePracticeSchema } from '../models/Practice.js';
 import {
   EDITOR_TEMPLATES,
@@ -335,7 +336,26 @@ export class EditorViewModel {
   stopPreview() { this.ioPreview.stopPreview(); }
 
   _validateAbcLive() {
-    this.abcWarnings.set(this._abc.validateAbcSyntax(this.form.value.abc).warnings, true);
+    const f = this.form.value;
+    const abc = String(f.abc || '').trim();
+    if (!abc || f.type === 'harmony') {
+      this.abcWarnings.set([], true);
+      return;
+    }
+    const syntaxWarnings = this._abc.validateAbcSyntax(abc).warnings || [];
+    const measureCheck = validateAbcMeasures(abc);
+    const primaryInst = f.instruments?.includes('piano')
+      ? 'piano'
+      : f.instruments?.includes('bajo') && f.instruments.length === 1
+        ? 'bajo'
+        : (f.instruments?.[0] || 'guitarra');
+    const rangeCheck = validateAbcInstrumentRange(abc, primaryInst);
+    const combined = [
+      ...syntaxWarnings,
+      ...(measureCheck.errors || []).slice(0, 3),
+      ...(rangeCheck.errors || []).slice(0, 2)
+    ];
+    this.abcWarnings.set(combined, true);
   }
 
   _cancelDraftSave() {

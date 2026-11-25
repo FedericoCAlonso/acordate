@@ -22,6 +22,7 @@ import {
   createChordSymbolElement
 } from './ChordDiagramView.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
+import { createPianoChordElement } from './PianoKeyboardView.js';
 import { createSliderGroup, createSwitchRow, el, icon, openModalDialog, openSheetModal } from './uiHelpers.js';
 
 /**
@@ -755,9 +756,10 @@ export class PracticePlayerView {
     const steps = this._vm.harmonySteps.value;
     const notation = this._appVm.settings.value.chordNotation;
     const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
-    const tuning = plan?.tuning || getTuningForVoicingInstrument(vInst);
-    const isBass = tuning.instrument === 'bass';
-    const supportsBass = pr?.instruments?.includes('bajo') || isBass;
+    const isPiano = vInst === 'piano';
+    const tuning = isPiano ? null : (plan?.tuning || getTuningForVoicingInstrument(vInst));
+    const isBass = !isPiano && tuning.instrument === 'bass';
+    const supportsBass = (!isPiano && pr?.instruments?.includes('bajo')) || isBass;
     const activeIdx = this._vm.activeChordStepIndex.value;
     const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
     const sections = this._vm.getFormSections();
@@ -972,14 +974,21 @@ export class PracticePlayerView {
               el('span', { className: 'm3-label' }, [`${step.bars} c.`])
             ]),
             step.voicing
-              ? createChordDiagramElement(step.voicing, {
-                  tuning,
-                  notation,
-                  size: 'sm',
-                  showTitle: false,
-                  labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-                  onPlay: () => this._vm.playStepVoicing(step)
-                })
+              ? (step.voicing.isPianoVoicing || isPiano
+                  ? createPianoChordElement(step.voicing, {
+                      notation,
+                      size: 'sm',
+                      labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+                      onPlay: () => this._vm.playStepVoicing(step)
+                    })
+                  : createChordDiagramElement(step.voicing, {
+                      tuning,
+                      notation,
+                      size: 'sm',
+                      showTitle: false,
+                      labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+                      onPlay: () => this._vm.playStepVoicing(step)
+                    }))
               : el('button', {
                   type: 'button',
                   className: 'm3-btn m3-btn--compact m3-btn--tonal',
@@ -1089,16 +1098,26 @@ export class PracticePlayerView {
       { className: 'voicing-group-grid', style: 'max-height:65dvh; overflow-y:auto' },
       step.candidates.map((v) => {
         const isCurrent = step.voicing && v.id === step.voicing.id;
+        const isPianoV = Boolean(v.isPianoVoicing);
         return el('div', { className: `m3-card ${isCurrent ? 'm3-card--elevated' : ''}`, style: 'display:flex; flex-direction:column; gap:6px; align-items:center' }, [
-          el('span', { className: 'm3-label' }, [`${v.getPositionLabel()} · ${v.getUsedStringsLabel(tuning)}`]),
-          createChordDiagramElement(v, {
-            tuning,
-            notation,
-            size: 'sm',
-            showTitle: false,
-            labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-            onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
-          }),
+          el('span', { className: 'm3-label' }, [
+            isPianoV ? v.getPositionLabel() : `${v.getPositionLabel()} · ${v.getUsedStringsLabel(tuning)}`
+          ]),
+          isPianoV
+            ? createPianoChordElement(v, {
+                notation,
+                size: 'sm',
+                labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+                onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
+              })
+            : createChordDiagramElement(v, {
+                tuning,
+                notation,
+                size: 'sm',
+                showTitle: false,
+                labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
+                onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
+              }),
           el(
             'button',
             {
@@ -1174,30 +1193,80 @@ export class PracticePlayerView {
     const steps = this._vm.harmonySteps.value;
     this._chartEl.innerHTML = '';
 
-    // En prácticas de armonía puras construye la grilla directamente desde harmonySteps
+    // En prácticas de armonía puras agrupa los harmonySteps por compás entero real
+    // (soporta 2+ acordes en un mismo compás cuando step.bars < 1 sin duplicar compases)
     if (pr?.type === 'harmony' && steps.length > 0) {
-      let barNum = 1;
-      const cells = [];
+      const barsMap = new Map();
+      let cursorBar = 0;
       steps.forEach((step, idx) => {
-        const count = Math.max(1, Math.round(step.bars));
-        for (let b = 0; b < count; b++) {
-          const curBar = barNum++;
-          cells.push(
-            el(
-              'div',
-              {
-                className: `chord-bar-cell ${curBar === activeM || idx === this._vm.activeChordStepIndex.value ? 'chord-bar-cell--active' : ''}`,
-                dataset: { measure: curBar }
-              },
-              [
-                el('span', { className: 'chord-bar-cell__num' }, [String(curBar)]),
-                el('div', { className: 'chord-bar-cell__chords' }, [el('span', {}, [formatChordSymbol(step.chord, notation)])])
-              ]
-            )
+        const durBars = Math.max(0.25, Number(step.bars) || 1);
+        const startBarIdx = Math.floor(cursorBar + 1e-6);
+        const endBarIdx = Math.max(startBarIdx + 1, Math.ceil(cursorBar + durBars - 1e-6));
+        for (let b = startBarIdx; b < endBarIdx; b++) {
+          const measureNum = b + 1;
+          if (!barsMap.has(measureNum)) {
+            barsMap.set(measureNum, {
+              measure: measureNum,
+              section: b === startBarIdx ? (step.section || null) : null,
+              entries: []
+            });
+          }
+          const slot = barsMap.get(measureNum);
+          if (b === startBarIdx && step.section && !slot.section) {
+            slot.section = step.section;
+          }
+          slot.entries.push({
+            chord: b === startBarIdx ? step.chord : '%',
+            stepIndex: idx
+          });
+        }
+        cursorBar += durBars;
+      });
+
+      const activeStepIdx = this._vm.activeChordStepIndex.value;
+      const gridChildren = [];
+      let lastSection = null;
+      const orderedBars = [...barsMap.values()].sort((a, b) => a.measure - b.measure);
+
+      for (const barObj of orderedBars) {
+        if (barObj.section && barObj.section !== lastSection) {
+          lastSection = barObj.section;
+          gridChildren.push(
+            el('div', { className: 'chord-chart-section-header', role: 'heading', 'aria-level': '3' }, [
+              `Sección ${barObj.section}`
+            ])
           );
         }
-      });
-      this._chartEl.appendChild(el('div', { className: 'chord-chart-grid' }, cells));
+        const isSplit = barObj.entries.length > 1;
+        const isActiveBar =
+          barObj.measure === activeM || barObj.entries.some((e) => e.stepIndex === activeStepIdx);
+        const chordNodes = [];
+        barObj.entries.forEach((entry, eIdx) => {
+          if (eIdx > 0) {
+            chordNodes.push(el('span', { className: 'chord-bar-cell__sep', 'aria-hidden': 'true' }, ['|']));
+          }
+          chordNodes.push(
+            entry.chord === '%'
+              ? el('span', {}, ['%'])
+              : createChordSymbolElement(entry.chord, notation)
+          );
+        });
+        gridChildren.push(
+          el(
+            'div',
+            {
+              className: `chord-bar-cell ${isSplit ? 'chord-bar-cell--split' : ''} ${isActiveBar ? 'chord-bar-cell--active' : ''}`.trim(),
+              dataset: { measure: barObj.measure }
+            },
+            [
+              el('span', { className: 'chord-bar-cell__num' }, [String(barObj.measure)]),
+              el('div', { className: 'chord-bar-cell__chords' }, chordNodes)
+            ]
+          )
+        );
+      }
+
+      this._chartEl.appendChild(el('div', { className: 'chord-chart-grid' }, gridChildren));
       return;
     }
 
@@ -1441,9 +1510,11 @@ export class PracticePlayerView {
 
       panelHost.innerHTML = '';
       if (tabId === 'mezcla') {
+        const prActive = this._vm.practice.value;
+        const isPianoPractice = Boolean(prActive?.instruments?.includes('piano') && (prActive.instruments.length === 1 || prActive.instruments[0] === 'piano'));
         const chordsToggle = createSwitchRow({
           id: 'sheet-chords-toggle',
-          label: 'Acompañamiento de acordes (guitarra)',
+          label: isPianoPractice ? 'Acompañamiento de acordes' : 'Acompañamiento de acordes (guitarra)',
           checked: this._vm.chordsEnabled.value,
           onChange: (v) => this._vm.setChordsEnabled(v)
         });
@@ -1550,7 +1621,7 @@ export class PracticePlayerView {
                   renderTab('bucle');
                 }
               },
-              [n === 0 ? 'Sin conteo' : `${n} compás${n === 1 ? '' : 'es'}`]
+              [n === 0 ? 'Sin conteo' : `${n} ${n === 1 ? 'compás' : 'compases'}`]
             )
           )
         );

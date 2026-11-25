@@ -229,18 +229,28 @@ export class FingeringDesignerViewModel {
   playStepVoicing(step) {
     if (!step?.voicing) return;
     const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
-    const tuning = getTuningForVoicingInstrument(vInst);
-    const isBass = tuning.instrument === 'bass';
-    const comping = this._mixer.compingPattern.value || this._practice.value?.comping || 'negras-abajo';
+    const isPiano = vInst === 'piano' || Boolean(step.voicing.isPianoVoicing);
+    const tuning = isPiano ? null : getTuningForVoicingInstrument(vInst);
+    const isBass = !isPiano && tuning.instrument === 'bass';
+    const rawComping = this._mixer.compingPattern.value || this._practice.value?.comping || 'negras-abajo';
+    const comping = typeof rawComping === 'object' && rawComping !== null ? (rawComping.pattern || 'negras-abajo') : String(rawComping);
     const isArpComping = comping.startsWith('arpegio');
-    const mode = isBass
+    const mode = isPiano
       ? (isArpComping ? 'arpeggio-asc' : 'block')
-      : (comping === 'arpegio-pima' ? 'arpeggio-pima' : 'strum-down');
+      : isBass
+        ? (isArpComping ? 'arpeggio-asc' : 'block')
+        : (comping === 'arpegio-pima' ? 'arpeggio-pima' : 'strum-down');
 
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playVoicing(step.voicing, {
       mode,
-      instrument: isBass ? 'electric-bass' : vInst === 'guitarra-clasica' ? 'nylon-guitar' : this._mixer.synthInstrument.value,
+      instrument: isPiano
+        ? 'acoustic-piano'
+        : isBass
+          ? 'electric-bass'
+          : vInst === 'guitarra-clasica'
+            ? 'nylon-guitar'
+            : this._mixer.synthInstrument.value,
       tuning,
       duration: 1.5
     });

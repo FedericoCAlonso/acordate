@@ -16,6 +16,7 @@ export const VALID_PRACTICE_TYPES = ['melody', 'harmony', 'mixed'];
  */
 export const VALID_CATEGORIES = [
   'escala',
+  'tecnica',
   'acordes',
   'lectura',
   'ritmo',
@@ -261,7 +262,7 @@ export class Practice {
       },
       abc: rawAbc,
       progression: hasProgression ? data.progression.map((s) => new ProgressionStep(s).toJSON()) : [],
-      comping: data.comping || 'negras-abajo',
+      comping: (typeof data.comping === 'object' && data.comping !== null ? data.comping.pattern : data.comping) || 'negras-abajo',
       customVoicings: Array.isArray(data.customVoicings)
         ? data.customVoicings.map((v) => new Voicing(v).toJSON())
         : [],
@@ -278,6 +279,7 @@ export class Practice {
       focus: data.focus && typeof data.focus === 'object' && !Array.isArray(data.focus) ? { ...data.focus } : null,
       style: VALID_STYLES.includes(data.style) ? data.style : null,
       feeling: typeof data.feeling === 'string' && data.feeling.trim() ? data.feeling.trim() : null,
+      tuning: typeof data.tuning === 'string' && data.tuning.trim() ? data.tuning.trim() : null,
       harmonicAnalysis: Array.isArray(data.harmonicAnalysis) ? [...data.harmonicAnalysis] : []
     };
 
@@ -340,6 +342,8 @@ export class Practice {
     this.style = normalized.style;
     /** Feeling rítmico sugerido para play-along ('swing', 'bossa', 'shuffle', 'ballad', 'tango', 'straight'). */
     this.feeling = normalized.feeling;
+    /** Afinación específica opcional (ej. 'bass-5' para bajo de 5 cuerdas con Si grave B0). */
+    this.tuning = normalized.tuning;
     /** Capa opcional de análisis armónico por compás (grados romanos y cadencias para guitarra clásica). */
     this.harmonicAnalysis = normalized.harmonicAnalysis;
   }
@@ -442,6 +446,7 @@ export class Practice {
     if (this.focus) base.focus = { ...this.focus };
     if (this.style) base.style = this.style;
     if (this.feeling) base.feeling = this.feeling;
+    if (this.tuning) base.tuning = this.tuning;
     if (this.harmonicAnalysis.length > 0) base.harmonicAnalysis = [...this.harmonicAnalysis];
     return base;
   }

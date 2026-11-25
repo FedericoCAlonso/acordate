@@ -182,7 +182,10 @@ export class AudioSynthService {
     }
     if (patch.metronomeEnabled !== undefined) this.metronomeEnabled = Boolean(patch.metronomeEnabled);
     if (patch.metronomeVolume !== undefined) this.metronomeVolume = sanitizeVolume(patch.metronomeVolume, 0.65);
-    if (patch.comping !== undefined) this.comping = patch.comping || 'negras-abajo';
+    if (patch.comping !== undefined) {
+      const rawComping = typeof patch.comping === 'object' && patch.comping !== null ? patch.comping.pattern : patch.comping;
+      this.comping = rawComping || 'negras-abajo';
+    }
     if (patch.countInMeasures !== undefined) this.countInMeasures = Math.max(0, Math.min(2, Number(patch.countInMeasures) || 0));
     if (patch.loopEnabled !== undefined) this.loopEnabled = Boolean(patch.loopEnabled);
     if (patch.loopStartMeasure !== undefined) this.loopStartMeasure = Math.max(1, Number(patch.loopStartMeasure) || 1);
@@ -194,16 +197,33 @@ export class AudioSynthService {
   }
 
   /**
+   * Ejecuta una acción de audio asegurando primero que el AudioContext haya salido de
+   * `'suspended'` o `'interrupted'` (crítico en iOS Safari tras bloqueo o llamadas).
+   * @param {AudioContext} ctx Contexto Web Audio.
+   * @param {Function} fn Callback a ejecutar cuando el contexto está activo.
+   */
+  _runWhenAudioReady(ctx, fn) {
+    if (!ctx) return;
+    if (ctx.state && ctx.state !== 'running' && typeof ctx.resume === 'function') {
+      ctx.resume().then(() => fn()).catch(() => {});
+    } else {
+      fn();
+    }
+  }
+
+  /**
    * Reproduce una nota sostenida de referencia de afinación (cuerdas al aire de guitarra o bajo)
    * aplicando el registro de escucha actual mediante PitchPolicy.
    * @param {number} soundingMidi Altura MIDI real de la cuerda al aire (ej. 40 = E2 guitarra, 28 = E1 bajo).
-   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} [instrument='acoustic-guitar'] Timbre.
+   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'|'acoustic-piano'} [instrument='acoustic-guitar'] Timbre.
    */
   playReferenceTone(soundingMidi, instrument = 'acoustic-guitar') {
     const ctx = this._metronome.ensureAudioContext();
     if (!ctx) return;
-    const finalMidi = applyListeningRegister(soundingMidi, this.listeningRegister);
-    this._playPluckedNote(ctx, finalMidi, ctx.currentTime + 0.02, 2.2, instrument, 0.95);
+    this._runWhenAudioReady(ctx, () => {
+      const finalMidi = applyListeningRegister(soundingMidi, this.listeningRegister);
+      this._playPluckedNote(ctx, finalMidi, ctx.currentTime + 0.02, 2.2, instrument, 0.95);
+    });
   }
 
   /**
@@ -213,7 +233,7 @@ export class AudioSynthService {
    * @param {number[]|{ getMidiNotes: Function }} voicingOrMidis Voicing o arreglo de números MIDI reales.
    * @param {object} [options={}] Configuración de ejecución.
    * @param {'block'|'strum-down'|'strum-up'|'arpeggio-asc'|'arpeggio-desc'|'arpeggio-pima'} [options.mode='strum-down'] Modo de ejecución.
-   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'} [options.instrument] Timbre.
+   * @param {'nylon-guitar'|'acoustic-guitar'|'electric-bass'|'acoustic-bass'|'acoustic-piano'} [options.instrument] Timbre.
    * @param {import('../models/Tuning.js').Tuning} [options.tuning] Afinación si se pasó un Voicing.
    * @param {number} [options.strumMs=22] Desfase entre cuerdas en milisegundos (10-30 ms para rasgueo).
    * @param {number} [options.duration=1.6] Duración en segundos.
@@ -233,8 +253,10 @@ export class AudioSynthService {
     const inst = options.instrument || this.instrument || 'acoustic-guitar';
     const duration = Number(options.duration) || 1.6;
     const vol = sanitizeVolume(options.volume, 0.88);
-    const startBase = options.startTime ?? ctx.currentTime + 0.02;
-    this._scheduleVoicingAt(ctx, rawMidis, startBase, duration, mode, inst, vol, options.strumMs ?? 22);
+    this._runWhenAudioReady(ctx, () => {
+      const startBase = options.startTime ?? ctx.currentTime + 0.02;
+      this._scheduleVoicingAt(ctx, rawMidis, startBase, duration, mode, inst, vol, options.strumMs ?? 22);
+    });
   }
 
   /**
@@ -246,18 +268,20 @@ export class AudioSynthService {
     const ctx = this._metronome.ensureAudioContext();
     if (!ctx || !Array.isArray(chordsMidis)) return;
     const stepSec = (Number(options.stepMs) || 850) / 1000;
-    const start0 = ctx.currentTime + 0.04;
-    chordsMidis.forEach((midis, idx) => {
-      this._scheduleVoicingAt(
-        ctx,
-        midis,
-        start0 + idx * stepSec,
-        Math.max(0.5, stepSec * 0.92),
-        options.mode || 'strum-down',
-        options.instrument || 'nylon-guitar',
-        0.85,
-        18
-      );
+    this._runWhenAudioReady(ctx, () => {
+      const start0 = ctx.currentTime + 0.04;
+      chordsMidis.forEach((midis, idx) => {
+        this._scheduleVoicingAt(
+          ctx,
+          midis,
+          start0 + idx * stepSec,
+          Math.max(0.5, stepSec * 0.92),
+          options.mode || 'strum-down',
+          options.instrument || 'nylon-guitar',
+          0.85,
+          18
+        );
+      });
     });
   }
 
@@ -354,7 +378,7 @@ export class AudioSynthService {
       this._visualLoop();
     };
 
-    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+    if (ctx.state && ctx.state !== 'running' && typeof ctx.resume === 'function') {
       ctx.resume().then(startScheduledPlayback).catch(() => {
         if (token === this._playToken) this._isPlaying = false;
       });

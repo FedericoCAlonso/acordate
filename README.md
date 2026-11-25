@@ -1,9 +1,9 @@
 # Acordate — App PWA de práctica musical
 
-Aplicación web progresiva (**PWA**) offline para practicar **guitarra clásica, guitarra y bajo** con foco en lectura de partitura, secuencias de acordes, escalas y *walking bass*.
+Aplicación web progresiva (**PWA**) offline para practicar **guitarra clásica, guitarra, bajo y piano** con foco en lectura de partitura, gran pentagrama, secuencias de acordes, escalas y *walking bass*.
 
 - **Interfaz en español (Argentina)** y cifrado americano por defecto (`C`, `Dm7`, `G7`) con opción de ver cifrado latino (`Do`, `Rem7`, `Sol7`).
-- **Sin tablatura en ninguna pantalla**: únicamente pentagrama (`treble-8` para guitarra clásica y guitarra, `bass` para bajo), grilla de cifrado, vista mixta (*lead sheet*) y digitaciones / funciones armónicas anotadas.
+- **Sin tablatura en ninguna pantalla**: únicamente pentagrama (`treble-8` para guitarra clásica y guitarra, `bass` para bajo, gran pentagrama `treble + bass` para piano), grilla de cifrado, vista mixta (*lead sheet*) y digitaciones / funciones armónicas anotadas.
 - **100% estática y offline**: sin backend ni paso de compilación obligatorio. Usa módulos ES nativos (`type="module"`), `abcjs@6.4.4` empaquetado localmente, síntesis de audio y metrónomo Web Audio API sin soundfonts remotos, IndexedDB y Service Worker con precaché completo.
 
 ---

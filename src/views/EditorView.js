@@ -7,6 +7,7 @@ import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
 import { Tuning } from '../models/Tuning.js';
 import { Voicing } from '../models/Voicing.js';
 import { ABC_IMPORT_RIGHTS_NOTICE } from '../services/ImportExportService.js';
+import { generatePianoVoicings } from '../services/PianoVoicingService.js';
 import { SCALE_RHYTHMS } from '../services/ScaleGenerator.js';
 import { EDITOR_TEMPLATES, QUICK_CHORDS } from '../viewmodels/EditorViewModel.js';
 import {
@@ -15,6 +16,7 @@ import {
   createChordSymbolElement,
   createInteractiveVoicingPicker
 } from './ChordDiagramView.js';
+import { createPianoChordElement } from './PianoKeyboardView.js';
 import { createFloatingField, el, icon, openConfirmDialog, openModalDialog } from './uiHelpers.js';
 
 /**
@@ -115,6 +117,7 @@ export class EditorView {
       accept: '.json,.abc,application/json,text/plain',
       className: 'sr-only',
       id: 'editor-import-file',
+      'aria-label': 'Importar práctica JSON o partitura ABC',
       onChange: async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -525,15 +528,24 @@ export class EditorView {
    */
   _renderLivePreview(f) {
     if (!this._previewScoreEl) return;
+    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
     if (f.type === 'harmony') {
-      const fam = f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
-      const tuning = Tuning.defaultForInstrument(fam);
+      const fam = !isPiano && f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
+      const tuning = isPiano ? null : Tuning.defaultForInstrument(fam);
       const notation = this._appVm.settings.value.chordNotation;
       this._previewScoreEl.innerHTML = '';
       const strip = el(
         'div',
         { className: 'harmony-strip' },
         (f.progression || []).map((st) => {
+          if (isPiano) {
+            const cands = generatePianoVoicings(st.chord || 'C');
+            const pv = (st.voicingId ? cands.find((c) => c.id === st.voicingId) : null) || cands[0];
+            return el('div', { className: 'harmony-step-card' }, [
+              el('strong', {}, [createChordSymbolElement(st.chord || 'C', notation), ` (${st.bars}c)`]),
+              pv ? createPianoChordElement(pv, { notation, size: 'sm', labelMode: 'fingers' }) : null
+            ]);
+          }
           const v = findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
             getCuratedVoicingsForChord(st.chord, fam, tuning)[0];
           return el('div', { className: 'harmony-step-card' }, [
@@ -546,8 +558,6 @@ export class EditorView {
       this._lastVisualObj = null;
       return;
     }
-
-    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
     const prepared = this._abc.prepareAbcForRender(f.abc, {
       viewMode: 'mixto',
       chordNotation: this._appVm.settings.value.chordNotation,
@@ -576,17 +586,20 @@ export class EditorView {
    */
   _renderHarmonyStepsEditor(f) {
     if (!this._harmonyStepsHost) return;
-    const fam = f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
-    const tuning = Tuning.defaultForInstrument(fam);
+    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
+    const fam = !isPiano && f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
+    const tuning = isPiano ? null : Tuning.defaultForInstrument(fam);
     const notation = this._appVm.settings.value.chordNotation;
-    const mySavedChords = (this._appVm.progress.value.customChords || []).filter((v) => v.instrument === fam);
+    const mySavedChords = isPiano ? [] : (this._appVm.progress.value.customChords || []).filter((v) => v.instrument === fam);
     const allCustom = [...(f.customVoicings || []), ...mySavedChords];
     this._harmonyStepsHost.innerHTML = '';
 
     (f.progression || []).forEach((step, idx) => {
-      const resolvedVoicing =
-        findVoicingById(step.voicingId, allCustom, step.chord || 'C', fam, tuning) ||
-        getCuratedVoicingsForChord(step.chord || 'C', fam, tuning)[0];
+      const pianoCandidates = isPiano ? generatePianoVoicings(step.chord || 'C') : [];
+      const resolvedVoicing = isPiano
+        ? ((step.voicingId ? pianoCandidates.find((c) => c.id === step.voicingId) : null) || pianoCandidates[0] || null)
+        : (findVoicingById(step.voicingId, allCustom, step.chord || 'C', fam, tuning) ||
+          getCuratedVoicingsForChord(step.chord || 'C', fam, tuning)[0]);
 
       const barsSelect = el(
         'select',
@@ -618,7 +631,9 @@ export class EditorView {
           el('strong', { style: 'font-size:1.05rem' }, [createChordSymbolElement(step.chord || 'C', notation)]),
           resolvedVoicing
             ? el('span', { className: 'm3-body-md', style: 'font-size:0.78rem' }, [
-                `${resolvedVoicing.getPositionLabel()} (${resolvedVoicing.getUsedStringsLabel(tuning)})`
+                isPiano
+                  ? resolvedVoicing.getPositionLabel()
+                  : `${resolvedVoicing.getPositionLabel()} (${resolvedVoicing.getUsedStringsLabel(tuning)})`
               ])
             : null
         ]),
@@ -631,7 +646,7 @@ export class EditorView {
               type: 'button',
               className: 'm3-btn m3-btn--compact m3-btn--tonal',
               ripple: true,
-              onClick: () => this._openStepChordVoicingDialog(idx, step, tuning, allCustom)
+              onClick: () => this._openStepChordVoicingDialog(idx, step, tuning, allCustom, isPiano)
             },
             ['Elegir acorde / voicing']
           ),
@@ -646,16 +661,18 @@ export class EditorView {
             },
             ['÷ 2']
           ),
-          el(
-            'button',
-            {
-              type: 'button',
-              className: 'm3-btn m3-btn--compact m3-btn--outlined',
-              ripple: true,
-              onClick: () => this._openCustomVoicingDialog(idx, step, tuning)
-            },
-            ['6×5']
-          ),
+          !isPiano
+            ? el(
+                'button',
+                {
+                  type: 'button',
+                  className: 'm3-btn m3-btn--compact m3-btn--outlined',
+                  ripple: true,
+                  onClick: () => this._openCustomVoicingDialog(idx, step, tuning)
+                },
+                ['6×5']
+              )
+            : null,
           resolvedVoicing
             ? el(
                 'button',
@@ -694,7 +711,7 @@ export class EditorView {
    * @param {Tuning} tuning Afinación activa.
    * @param {Array<object>} customPool Voicings personalizados (de la práctica y "Mis acordes").
    */
-  _openStepChordVoicingDialog(stepIdx, step, tuning, customPool) {
+  _openStepChordVoicingDialog(stepIdx, step, tuning, customPool, isPiano = false) {
     const notation = this._appVm.settings.value.chordNotation;
     let parsed;
     try {
@@ -713,15 +730,24 @@ export class EditorView {
 
     const refreshVoicings = () => {
       const sym = buildSymbol();
-      const curated = getCuratedVoicingsForChord(sym, tuning.instrument, tuning);
-      const saved = customPool
-        .filter((raw) => raw.chord === sym && raw.instrument === tuning.instrument)
-        .map((raw) => (raw instanceof Voicing ? raw : new Voicing(raw)));
-      const all = [...saved, ...curated];
+      const all = isPiano
+        ? generatePianoVoicings(sym)
+        : [
+            ...customPool
+              .filter((raw) => raw.chord === sym && raw.instrument === tuning.instrument)
+              .map((raw) => (raw instanceof Voicing ? raw : new Voicing(raw))),
+            ...getCuratedVoicingsForChord(sym, tuning.instrument, tuning)
+          ];
       gridHost.innerHTML = '';
 
       if (all.length === 0) {
-        gridHost.appendChild(el('p', { className: 'm3-body-md' }, ['Sin digitaciones curadas para este acorde; podés crearla con la grilla 6×5.']));
+        gridHost.appendChild(
+          el('p', { className: 'm3-body-md' }, [
+            isPiano
+              ? 'No se pudieron generar voicings para este acorde.'
+              : 'Sin digitaciones curadas para este acorde; podés crearla con la grilla 6×5.'
+          ])
+        );
         return;
       }
 
@@ -729,20 +755,31 @@ export class EditorView {
         const isSel = selectedVoicingId === v.id;
         gridHost.appendChild(
           el('div', { className: `voicing-grid-card ${isSel ? 'voicing-grid-card--active' : ''}` }, [
-            createChordDiagramElement(v, {
-              tuning,
-              notation,
-              size: 'sm',
-              showTitle: false,
-              onPlay: (vo) => {
-                selectedVoicingId = vo.id;
-                this._vm.playVoicingPreview(vo, tuning);
-                refreshVoicings();
-              }
-            }),
+            isPiano
+              ? createPianoChordElement(v, {
+                  notation,
+                  size: 'sm',
+                  labelMode: 'fingers',
+                  onPlay: (vo) => {
+                    selectedVoicingId = vo.id;
+                    this._vm.playVoicingPreview(vo, tuning);
+                    refreshVoicings();
+                  }
+                })
+              : createChordDiagramElement(v, {
+                  tuning,
+                  notation,
+                  size: 'sm',
+                  showTitle: false,
+                  onPlay: (vo) => {
+                    selectedVoicingId = vo.id;
+                    this._vm.playVoicingPreview(vo, tuning);
+                    refreshVoicings();
+                  }
+                }),
             el('div', { className: 'voicing-grid-card__meta' }, [
               el('strong', { className: 'm3-label' }, [v.getPositionLabel()]),
-              el('span', { className: 'm3-body-md' }, [v.getUsedStringsLabel(tuning)])
+              !isPiano ? el('span', { className: 'm3-body-md' }, [v.getUsedStringsLabel(tuning)]) : null
             ]),
             el('div', { className: 'm3-chip-row', style: 'justify-content:center' }, [
               el('button', {
@@ -819,21 +856,27 @@ export class EditorView {
       content: body,
       actions: [
         { label: 'Cancelar', variant: 'text' },
-        {
-          label: 'Crear propia (6×5)',
-          variant: 'outlined',
-          onClick: () => {
-            const sym = buildSymbol();
-            this._vm.updateProgressionStep(stepIdx, { chord: sym, voicingId: null });
-            setTimeout(() => this._openCustomVoicingDialog(stepIdx, { ...step, chord: sym }, tuning), 40);
-          }
-        },
+        ...(!isPiano
+          ? [
+              {
+                label: 'Crear propia (6×5)',
+                variant: 'outlined',
+                onClick: (close) => {
+                  const sym = buildSymbol();
+                  this._vm.updateProgressionStep(stepIdx, { chord: sym, voicingId: null });
+                  close();
+                  setTimeout(() => this._openCustomVoicingDialog(stepIdx, { ...step, chord: sym }, tuning), 40);
+                }
+              }
+            ]
+          : []),
         {
           label: 'Aplicar acorde',
           variant: 'filled',
-          onClick: () => {
+          onClick: (close) => {
             const sym = buildSymbol();
             this._vm.updateProgressionStep(stepIdx, { chord: sym, voicingId: selectedVoicingId || null });
+            close();
           }
         }
       ]

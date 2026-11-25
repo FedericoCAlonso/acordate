@@ -126,9 +126,9 @@ export function validateAbcMeasures(abcText) {
  * @param {'guitarra'|'guitarra-clasica'|'bajo'} instrument Instrumento destino.
  * @returns {{ valid: boolean, errors: string[], minMidi: number|null, maxMidi: number|null }} Resultado de rango.
  */
-export function validateAbcInstrumentRange(abcText, instrument = 'guitarra') {
+export function validateAbcInstrumentRange(abcText, instrument = 'guitarra', options = {}) {
   const text = String(abcText || '').trim();
-  const policy = getPitchPolicy(instrument);
+  const policy = getPitchPolicy(instrument, options?.tuning || null);
   const keyMatch = text.match(/^K:\s*([A-G][#b]?m?)/m);
   const keyMap = getKeySignatureMap(keyMatch ? keyMatch[1] : 'C');
   const clefMatch = text.match(/clef\s*=\s*([a-z0-9+-]+)/i);

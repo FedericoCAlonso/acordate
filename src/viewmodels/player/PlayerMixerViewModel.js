@@ -59,7 +59,10 @@ export class PlayerMixerViewModel {
         ? 'acoustic-piano'
         : practice.getDefaultSynthInstrument();
     this.synthInstrument.set(defaultSynth);
-    this.compingPattern.set(practice.comping || 'negras-abajo');
+    const rawComping = practice.comping;
+    const resolvedComping =
+      typeof rawComping === 'object' && rawComping !== null ? rawComping.pattern : rawComping;
+    this.compingPattern.set(resolvedComping || 'negras-abajo');
 
     const mix = this._appVm.getPracticeMix(practice);
     this.melodyVolume.set(mix.melody);
@@ -91,10 +94,12 @@ export class PlayerMixerViewModel {
 
   /**
    * Ajusta el timbre de síntesis de forma coherente con el instrumento de digitación elegido.
-   * @param {'guitarra'|'guitarra-clasica'|'bajo'|'bajo-5'} voicingInst Instrumento normalizado.
+   * @param {'guitarra'|'guitarra-clasica'|'bajo'|'bajo-5'|'piano'} voicingInst Instrumento normalizado.
    */
   applyTimbreForVoicingInstrument(voicingInst) {
-    if (voicingInst === 'bajo' || voicingInst === 'bajo-5') {
+    if (voicingInst === 'piano') {
+      this.synthInstrument.set('acoustic-piano');
+    } else if (voicingInst === 'bajo' || voicingInst === 'bajo-5') {
       this.synthInstrument.set('electric-bass');
     } else if (voicingInst === 'guitarra-clasica') {
       this.synthInstrument.set('nylon-guitar');

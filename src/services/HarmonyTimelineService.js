@@ -1,6 +1,7 @@
 import { parseTimeSignature } from '../core/MusicTheory.js';
 import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
 import { normalizeVoicingInstrument } from './FingeringDesignService.js';
+import { generatePianoVoicings } from './PianoVoicingService.js';
 
 /**
  * Construye una línea de tiempo reproducible de armonía pura a partir de pasos resueltos
@@ -19,6 +20,7 @@ export function buildHarmonyTimeline({
   const { beats, beatUnit } = parseTimeSignature(timeSignature || '4/4');
   const beatsPerMeasure = beats * (4 / beatUnit);
   const vInst = normalizeVoicingInstrument(voicingInstrument);
+  const isPianoPiece = vInst === 'piano';
   const isBassPiece = vInst === 'bajo' || vInst === 'bajo-5';
 
   let cursorBeat = 0;
@@ -47,26 +49,47 @@ export function buildHarmonyTimeline({
     beatUnit,
     measureCount: Math.max(1, Math.ceil(totalBeats / beatsPerMeasure)),
     isBassPiece,
+    isPianoPiece,
     isHarmonyOnly: true
   };
 }
 
 /**
  * Construye la línea de tiempo armónica de vista previa para un borrador del Editor
- * resolviendo el Voicing de cada paso contra voicings personalizados y curados.
+ * resolviendo el Voicing de cada paso contra voicings personalizados y curados (o PianoVoicingService).
  * @param {object} params Parámetros del formulario.
  * @param {string} [params.timeSignature='4/4'] Compás del formulario.
  * @param {Array<object>} [params.progression=[]] Pasos de progresión del borrador.
  * @param {Array<object>} [params.customVoicings=[]] Voicings personalizados del borrador.
  * @param {import('../models/Tuning.js').Tuning} params.tuning Afinación activa.
+ * @param {boolean} [params.isPiano=false] True si el borrador es de Piano.
  * @returns {object} Timeline armónica para vista previa.
  */
 export function buildEditorHarmonyTimeline({
   timeSignature = '4/4',
   progression = [],
   customVoicings = [],
-  tuning
+  tuning,
+  isPiano = false
 }) {
+  if (isPiano) {
+    const resolvedSteps = (progression || []).map((st) => {
+      const cands = generatePianoVoicings(st.chord || 'C');
+      const v = (st.voicingId ? cands.find((c) => c.id === st.voicingId) : null) || cands[0];
+      return {
+        bars: Number(st.bars) || 1,
+        chord: st.chord,
+        midis: v ? v.getMidiNotes() : [],
+        rhythm: st.rhythm || null
+      };
+    });
+    return buildHarmonyTimeline({
+      timeSignature,
+      harmonySteps: resolvedSteps,
+      voicingInstrument: 'piano'
+    });
+  }
+
   const isBass = tuning.instrument === 'bass';
   const fam = isBass ? 'bass' : 'guitar';
   const resolvedSteps = (progression || []).map((st) => {

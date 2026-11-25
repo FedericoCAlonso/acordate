@@ -832,6 +832,7 @@ export class ScalesHubView {
             el('div', { className: 'm3-label-md', style: 'margin-bottom:4px' }, [`Tempo: ${this._vm.bpm.value} BPM`]),
             el('input', {
               type: 'range',
+              className: 'm3-slider',
               min: '50',
               max: '170',
               step: '2',

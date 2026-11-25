@@ -106,8 +106,7 @@
     "type": "mixed",
     "title": "When the Saints Go Marching In (C mayor)",
     "instruments": [
-      "guitarra",
-      "bajo"
+      "guitarra"
     ],
     "category": "repertorio",
     "level": 2,
@@ -132,8 +131,7 @@
     "verified": false,
     "sourceRef": "Espiritual tradicional norteamericano (siglo XIX, dominio público). Transcripción propia en Do mayor.",
     "focus": {
-      "guitarra": "Mantené las notas largas ligadas entre compases sin perder el pulso firme en 4/4.",
-      "bajo": "Usá la progresión I–V7–IV–I para practicar un walking alegre en dos o en cuatro tiempos."
+      "guitarra": "Mantené las notas largas ligadas entre compases sin perder el pulso firme en 4/4."
     },
     "comping": {
       "pattern": "swing-negras",
@@ -1488,5 +1486,182 @@
     ],
     "origin": "builtin",
     "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-saints-bajo",
+    "version": 3,
+    "type": "mixed",
+    "title": "When the Saints Go Marching In (línea de bajo en clave de Fa)",
+    "instruments": [
+      "bajo"
+    ],
+    "category": "repertorio",
+    "level": 2,
+    "tags": [
+      "repertorio",
+      "bajo",
+      "tradicional",
+      "dixieland",
+      "clave-de-fa",
+      "dominio-publico",
+      "ola-1"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 88,
+      "target": 136,
+      "step": 6
+    },
+    "form": "16 compases (AB)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "swing",
+    "verified": false,
+    "sourceRef": "Espiritual tradicional norteamericano (siglo XIX, dominio público). Línea de bajo two-feel / walking en clave de Fa para 4 cuerdas.",
+    "focus": {
+      "bajo": "Alterná blancas firmes (two-feel) con pasos caminantes en negras hacia cada cambio de acorde (I–V7–IV–I)."
+    },
+    "comping": {
+      "pattern": "swing-negras",
+      "beatsPerBar": 4,
+      "feeling": "swing"
+    },
+    "progression": [
+      { "chord": "C", "bars": 4, "section": "A" },
+      { "chord": "C", "bars": 2, "section": "A" },
+      { "chord": "G7", "bars": 2, "section": "A" },
+      { "chord": "C", "bars": 1, "section": "B" },
+      { "chord": "C7", "bars": 1, "section": "B" },
+      { "chord": "F", "bars": 2, "section": "B" },
+      { "chord": "C", "bars": 1, "section": "B" },
+      { "chord": "G7", "bars": 1, "section": "B" },
+      { "chord": "C", "bars": 2, "section": "B" }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=bass\n\"C\"C,2 G,,2 | \"C\"C,2 E,2 | \"C\"C,2 G,,2 | \"C\"C, D, E, G, |\n\"C\"C,2 E,2 | \"C\"G,2 E,2 | \"G7\"G,,2 B,,2 | \"G7\"D,2 G,,2 |\n\"C\"C,2 E,2 | \"C7\"C, G,, _B,, G,, | \"F\"F,,2 A,,2 | \"F\"C,2 A,,2 |\n\"C\"C,2 E,2 | \"G7\"G,,2 B,, D, | \"C\"C,2 G,,2 | \"C\"C,4 |]",
+    "notes": "Versión dedicada para bajo eléctrico en clave de Fa (rango F,, = MIDI 29 hasta G, = MIDI 43). Ideal como primera obra de repertorio en swing para N2.",
+    "goals": [
+      "Leer la línea completa en clave de Fa manteniendo el pulso estable en 4/4.",
+      "Escuchar cómo la aproximación en negras (cc. 4, 10 y 14) prepara cada cambio armónico."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-aura-lee-g",
+    "version": 3,
+    "type": "mixed",
+    "title": "Aura Lee (melodía y acordes abiertos en Do)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 1,
+    "tags": [
+      "repertorio",
+      "guitarra",
+      "tradicional",
+      "primera-posicion",
+      "acordes-abiertos",
+      "dominio-publico",
+      "ola-1"
+    ],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 64,
+      "target": 92,
+      "step": 4
+    },
+    "form": "8 compases (frase principal A)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "George R. Poulton & W. W. Fosdick, Aura Lee (1861, dominio público). Arreglo melódico en 1.ª posición con acordes abiertos.",
+    "focus": {
+      "guitarra": "Combiná lectura melódica cantada en 1.ª posición (cuerdas 3, 2 y 1) con el acompañamiento de acordes abiertos (C, D7, G7)."
+    },
+    "comping": {
+      "pattern": "balada-arpegio",
+      "beatsPerBar": 4,
+      "feeling": "straight"
+    },
+    "progression": [
+      { "chord": "C", "bars": 1, "section": "A" },
+      { "chord": "D7", "bars": 1, "section": "A" },
+      { "chord": "G7", "bars": 1, "section": "A" },
+      { "chord": "C", "bars": 1, "section": "A" },
+      { "chord": "C", "bars": 1, "section": "A" },
+      { "chord": "D7", "bars": 1, "section": "A" },
+      { "chord": "G7", "bars": 1, "section": "A" },
+      { "chord": "C", "bars": 1, "section": "A" }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/4\nK:C clef=treble-8\n\"C\"G c B c | \"D7\"d A d2 | \"G7\"c B A B | \"C\"c4 |\n\"C\"G c B c | \"D7\"d A d2 | \"G7\"c B A B | \"C\"c4 |]",
+    "notes": "Repertorio inicial de Nivel 1: melodía famosa (base de Love Me Tender) en negras y blancas dentro de la 1.ª posición. Practicá primero la melodía y luego el acompañamiento en Cifrado.",
+    "goals": [
+      "Tocar la melodía de memoria y leyendo en 1.ª posición con sonido legato.",
+      "Acompañar la progresión C – D7 – G7 – C con cambios limpios antes del tiempo 1."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "rep-trad-oh-susanna-g",
+    "version": 3,
+    "type": "mixed",
+    "title": "Oh! Susanna (melodía y acordes abiertos en Sol)",
+    "instruments": [
+      "guitarra"
+    ],
+    "category": "repertorio",
+    "level": 1,
+    "tags": [
+      "repertorio",
+      "guitarra",
+      "tradicional",
+      "folk",
+      "acordes-abiertos",
+      "dominio-publico",
+      "ola-1"
+    ],
+    "key": "G",
+    "timeSignature": "4/4",
+    "tempo": {
+      "start": 72,
+      "target": 112,
+      "step": 5
+    },
+    "form": "8 compases (tema principal)",
+    "rights": "public_domain",
+    "style": "tradicional",
+    "feeling": "straight",
+    "verified": false,
+    "sourceRef": "Stephen Foster, Oh! Susanna (1848, dominio público). Arreglo en Sol mayor para guitarra en 1.ª posición.",
+    "focus": {
+      "guitarra": "Practicá púa alterna relajada en las corcheas iniciales y cambios ágiles entre los acordes abiertos G y D."
+    },
+    "comping": {
+      "pattern": "negras-abajo",
+      "beatsPerBar": 4,
+      "feeling": "straight"
+    },
+    "progression": [
+      { "chord": "G", "bars": 2, "section": "A" },
+      { "chord": "G", "bars": 1, "section": "A" },
+      { "chord": "D", "bars": 1, "section": "A" },
+      { "chord": "G", "bars": 2, "section": "A" },
+      { "chord": "G", "bars": 0.5, "section": "A" },
+      { "chord": "D", "bars": 0.5, "section": "A" },
+      { "chord": "G", "bars": 1, "section": "A" }
+    ],
+    "abc": "X:1\nM:4/4\nL:1/8\nK:G clef=treble-8\nG A | \"G\"B2 d2 d3 e | \"G\"d2 B2 G3 A | \"G\"B2 B2 A2 G2 | \"D\"A6 G A |\n\"G\"B2 d2 d3 e | \"G\"d2 B2 G3 A | \"G\"B2 B2 \"D\"A2 A2 | \"G\"G6 |]",
+    "notes": "Canción folk clásica ideal para el primer mes de guitarra: usa solo notas de la escala pentatónica de Sol en cuerdas 3, 2 y 1 y los dos acordes abiertos esenciales (G y D).",
+    "goals": [
+      "Respetar las negras con puntillo y corchea sin apurar el pulso.",
+      "Alternar entre tocar la melodía en 1.ª posición y rasguear el acompañamiento en Sol mayor."
+    ],
+    "origin": "builtin",
+    "createdAt": "2026-11-25T00:00:00.000Z"
   }
 ]

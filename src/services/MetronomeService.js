@@ -84,11 +84,18 @@ export class MetronomeService {
 
   /**
    * Devuelve o crea el AudioContext del navegador en modo de baja latencia ('interactive'),
-   * reanudándolo si estaba suspendido.
+   * configurando `audioSession = 'playback'` en iOS Safari y reanudándolo si estaba suspendido o interrumpido.
    * @returns {AudioContext|null} Contexto de audio activo.
    */
   ensureAudioContext() {
     if (typeof window === 'undefined') return null;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.audioSession && navigator.audioSession.type !== 'playback') {
+        navigator.audioSession.type = 'playback';
+      }
+    } catch {
+      // Navegadores sin AudioSession API
+    }
     if (!this._audioCtx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return null;
@@ -98,7 +105,7 @@ export class MetronomeService {
         this._audioCtx = new AudioCtx();
       }
     }
-    if (this._audioCtx.state === 'suspended' && typeof this._audioCtx.resume === 'function') {
+    if (this._audioCtx.state && this._audioCtx.state !== 'running' && typeof this._audioCtx.resume === 'function') {
       this._audioCtx.resume().catch(() => {});
     }
     return this._audioCtx;
@@ -245,7 +252,7 @@ export class MetronomeService {
       this._visualLoop();
     };
 
-    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+    if (ctx.state && ctx.state !== 'running' && typeof ctx.resume === 'function') {
       ctx.resume().then(beginLoops).catch(() => {
         if (token === this._startToken) this._isRunning = false;
       });

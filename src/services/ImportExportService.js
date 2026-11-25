@@ -105,7 +105,11 @@ export class ImportExportService {
 
     const titleMatch = cleaned.match(/^T:\s*(.+)$/m);
     const keyMatch = cleaned.match(/^K:\s*([A-G][#b]?m?)/m);
-    const isBass = /clef\s*=\s*bass/i.test(cleaned);
+    const hasBassClef = /clef\s*=\s*bass/i.test(cleaned);
+    const hasTrebleClef = /clef\s*=\s*treble\b(?!-8)/i.test(cleaned);
+    const hasStavesDirective = /^%%staves\b/m.test(cleaned);
+    const isPianoGrandStaff = hasStavesDirective || (hasTrebleClef && hasBassClef);
+    const isBass = !isPianoGrandStaff && hasBassClef;
     const hasVoices = /^V:\s*\S+/m.test(cleaned);
     const chordMatches = [...cleaned.matchAll(/"([A-G][#b]?[^"]*)"/g)]
       .map((m) => m[1].trim())
@@ -122,21 +126,23 @@ export class ImportExportService {
       ? chordMatches.slice(0, 64).map((chord) => ({ bars: 1, chord }))
       : [];
 
+    const detectedInstrument = isPianoGrandStaff ? 'piano' : isBass ? 'bajo' : hasVoices ? 'guitarra-clasica' : 'guitarra';
+
     const candidate = {
       id: generatePracticeId(title),
       version: 3,
       type: hasChords ? 'mixed' : 'melody',
       title,
-      instruments: [isBass ? 'bajo' : hasVoices ? 'guitarra-clasica' : 'guitarra'],
+      instruments: [detectedInstrument],
       category: 'repertorio',
       level: hasVoices ? 3 : 2,
-      tags: ['importada', 'abc', ...(hasVoices ? ['polifonía'] : [])],
+      tags: ['importada', 'abc', ...(isPianoGrandStaff ? ['piano', 'gran-pentagrama'] : hasVoices ? ['polifonía'] : [])],
       key,
       timeSignature,
       tempo: { start: 70, target: 110, step: 5 },
       abc: normalizedAbc,
       progression,
-      comping: hasVoices ? 'arpegio-pima' : 'negras-abajo',
+      comping: !isPianoGrandStaff && hasVoices ? 'arpegio-pima' : 'negras-abajo',
       rights: 'user_import',
       sourceRef: `Archivo local: ${filename}`,
       verified: false,

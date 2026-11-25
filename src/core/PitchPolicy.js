@@ -63,6 +63,8 @@ export const INSTRUMENT_PITCH_POLICY = {
     writtenToSoundingSemitones: 0,
     /** La0 (tecla más grave de un piano de 88 teclas) = A0 (MIDI 21). */
     minSoundingMidi: 21,
+    /** Do central (C4 = MIDI 60) como inicio cómodo por defecto para escalas en clave de Sol. */
+    defaultScaleStartMidi: 60,
     /** Do8 (tecla más aguda de un piano de 88 teclas) = C8 (MIDI 108). */
     maxSoundingMidi: 108,
     /** Sin cuerdas al aire; usa notas de referencia de teclado (Do central C4 y La 440 Hz A4). */
@@ -91,7 +93,17 @@ export const LISTENING_REGISTER_OFFSETS = {
  * @param {string} instrumentOrClef Nombre de instrumento ('guitarra-clasica' | 'guitarra' | 'bajo') o clave ABC.
  * @returns {typeof INSTRUMENT_PITCH_POLICY.guitarra} Política de registro aplicable.
  */
-export function getPitchPolicy(instrumentOrClef = 'guitarra') {
+export function getPitchPolicy(instrumentOrClef = 'guitarra', tuning = null) {
+  if (instrumentOrClef === 'bajo' && (tuning === 'bass-5' || tuning === 'bajo-5')) {
+    return {
+      ...INSTRUMENT_PITCH_POLICY.bajo,
+      minSoundingMidi: 23,
+      openStrings: [
+        { stringNumber: 5, label: 'B', latinLabel: 'Si', note: 'B0', midi: 23 },
+        ...INSTRUMENT_PITCH_POLICY.bajo.openStrings
+      ]
+    };
+  }
   if (INSTRUMENT_PITCH_POLICY[instrumentOrClef]) {
     return INSTRUMENT_PITCH_POLICY[instrumentOrClef];
   }

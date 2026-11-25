@@ -29,8 +29,14 @@ const SESSIONS_LS_KEY = 'acordate_study_sessions_v1';
 const DRAFT_LS_KEY = 'acordate_editor_draft_v1';
 
 /**
+ * Claves de respaldo en localStorage para prácticas de usuario y progreso cuando IndexedDB no está disponible.
+ */
+const PRACTICES_LS_KEY = 'acordate_user_practices_v1';
+const PROGRESS_LS_KEY = 'acordate_progress_v1';
+
+/**
  * Servicio de persistencia local basado en IndexedDB (prácticas de usuario, progreso,
- * ajustes, mezclas por práctica, sesiones y borradores), con fallback a localStorage.
+ * ajustes, mezclas por práctica, sesiones y borradores), con respaldo seguro en localStorage.
  */
 export class StorageService {
   /**
@@ -43,6 +49,7 @@ export class StorageService {
 
   /**
    * Abre o crea la base de datos IndexedDB con los object stores requeridos.
+   * Nunca cachea una conexión fallida (`null`) y maneja `onblocked` / `onversionchange`.
    * @returns {Promise<IDBDatabase|null>} Instancia de IDBDatabase o null si no está disponible.
    */
   async _openDb() {
@@ -53,7 +60,7 @@ export class StorageService {
       return this._dbPromise;
     }
 
-    this._dbPromise = new Promise((resolve) => {
+    const promise = new Promise((resolve) => {
       try {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -73,18 +80,38 @@ export class StorageService {
           }
         };
 
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => resolve(null);
+        request.onblocked = () => {
+          this._dbPromise = null;
+          resolve(null);
+        };
+
+        request.onsuccess = () => {
+          const db = request.result;
+          db.onversionchange = () => {
+            try { db.close(); } catch { /* ignore */ }
+            this._dbPromise = null;
+          };
+          resolve(db);
+        };
+        request.onerror = () => {
+          this._dbPromise = null;
+          resolve(null);
+        };
       } catch {
+        this._dbPromise = null;
         resolve(null);
       }
     });
 
-    return this._dbPromise;
+    this._dbPromise = promise;
+    const db = await promise;
+    if (!db) this._dbPromise = null;
+    return db;
   }
 
   /**
-   * Ejecuta una transacción simple sobre un object store de IndexedDB.
+   * Ejecuta una transacción segura sobre un object store de IndexedDB,
+   * esperando `tx.oncomplete` en escrituras para garantizar durabilidad real.
    * @param {string} storeName Nombre del object store.
    * @param {'readonly'|'readwrite'} mode Modo de transacción.
    * @param {Function} operation Función que recibe el store y devuelve un IDBRequest.
@@ -95,67 +122,139 @@ export class StorageService {
     if (!db) return null;
 
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, mode);
-      const store = tx.objectStore(storeName);
-      const req = operation(store);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, mode);
+        const store = tx.objectStore(storeName);
+        const req = operation(store);
+        let reqResult;
+        req.onsuccess = () => {
+          reqResult = req.result;
+          if (mode === 'readonly') resolve(reqResult);
+        };
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => {
+          if (mode !== 'readonly') resolve(reqResult);
+        };
+        tx.onabort = () => reject(tx.error || new Error('Transacción IndexedDB abortada'));
+        tx.onerror = () => reject(tx.error || new Error('Error en transacción IndexedDB'));
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
+  /** Lee prácticas de usuario desde el respaldo localStorage. */
+  _readPracticesFallback() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(PRACTICES_LS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch {
+      // Storage inaccesible
+    }
+    return [];
+  }
+
+  /** Escribe prácticas de usuario en el respaldo localStorage sin lanzar ante cuota llena. */
+  _writePracticesFallback(list) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(PRACTICES_LS_KEY, JSON.stringify(list));
+      }
+    } catch {
+      // Ignora cuota llena
+    }
+  }
+
   /**
-   * Obtiene todas las prácticas creadas por el usuario desde IndexedDB.
+   * Obtiene todas las prácticas creadas por el usuario desde IndexedDB (o respaldo localStorage).
    * @returns {Promise<object[]>} Lista de objetos JSON de prácticas de usuario.
    */
   async getUserPractices() {
     try {
       const rows = await this._withStore('practices', 'readonly', (store) => store.getAll());
-      return Array.isArray(rows) ? rows : [];
+      if (Array.isArray(rows)) return rows;
     } catch {
-      return [];
+      // Fallback
     }
+    return this._readPracticesFallback();
   }
 
   /**
-   * Guarda o actualiza una práctica de usuario en IndexedDB.
+   * Guarda o actualiza una práctica de usuario en IndexedDB con respaldo localStorage.
    * @param {object} practiceJson Práctica serializada en JSON.
    * @returns {Promise<void>}
    */
   async saveUserPractice(practiceJson) {
-    await this._withStore('practices', 'readwrite', (store) => store.put(practiceJson));
+    const fallback = this._readPracticesFallback().filter((p) => p?.id !== practiceJson?.id);
+    fallback.push(practiceJson);
+    this._writePracticesFallback(fallback);
+    try {
+      await this._withStore('practices', 'readwrite', (store) => store.put(practiceJson));
+    } catch {
+      // Respaldado en localStorage
+    }
   }
 
   /**
-   * Elimina una práctica de usuario por su identificador.
+   * Elimina una práctica de usuario por su identificador en IndexedDB y respaldo localStorage.
    * @param {string} practiceId ID de la práctica a borrar.
    * @returns {Promise<void>}
    */
   async deleteUserPractice(practiceId) {
-    await this._withStore('practices', 'readwrite', (store) => store.delete(practiceId));
+    const fallback = this._readPracticesFallback().filter((p) => p?.id !== practiceId);
+    this._writePracticesFallback(fallback);
+    try {
+      await this._withStore('practices', 'readwrite', (store) => store.delete(practiceId));
+    } catch {
+      // Respaldado en localStorage
+    }
   }
 
   /**
-   * Carga el progreso del usuario guardado localmente.
+   * Carga el progreso del usuario guardado localmente (IndexedDB con respaldo localStorage).
    * @returns {Promise<object|null>} Objeto de progreso o null si aún no existe.
    */
   async loadProgress() {
     try {
       const row = await this._withStore('progress', 'readonly', (store) => store.get('main'));
-      return row?.data || null;
+      if (row?.data) return row.data;
+    } catch {
+      // Fallback
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(PROGRESS_LS_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }
     } catch {
       return null;
     }
+    return null;
   }
 
   /**
-   * Guarda el progreso del usuario en IndexedDB.
+   * Guarda el progreso del usuario en IndexedDB con respaldo seguro en localStorage.
    * @param {object} progressJson Progreso serializado.
    * @returns {Promise<void>}
    */
   async saveProgress(progressJson) {
-    await this._withStore('progress', 'readwrite', (store) =>
-      store.put({ key: 'main', data: progressJson })
-    );
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(PROGRESS_LS_KEY, JSON.stringify(progressJson));
+      }
+    } catch {
+      // Ignora cuota llena
+    }
+    try {
+      await this._withStore('progress', 'readwrite', (store) =>
+        store.put({ key: 'main', data: progressJson })
+      );
+    } catch {
+      // Respaldado en localStorage
+    }
   }
 
   /**
@@ -299,11 +398,16 @@ export class StorageService {
   async saveDraft(draftKey, draftData) {
     const payload = { key: draftKey, data: draftData, updatedAt: Date.now() };
     try {
-      await this._withStore('drafts', 'readwrite', (store) => store.put(payload));
-    } catch {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(`${DRAFT_LS_KEY}_${draftKey}`, JSON.stringify(payload));
       }
+    } catch {
+      // Ignora cuota llena o modo privado estricto
+    }
+    try {
+      await this._withStore('drafts', 'readwrite', (store) => store.put(payload));
+    } catch {
+      // Respaldado en localStorage
     }
   }
 

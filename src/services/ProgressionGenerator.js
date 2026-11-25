@@ -88,7 +88,8 @@ export class ProgressionGenerator {
     const key = options.key || 'C';
     const instrument = options.instrument || 'guitarra';
     const pattern = options.pattern || 'blancas';
-    const isBass = instrument === 'bajo';
+    const isPiano = instrument === 'piano';
+    const isBass = !isPiano && instrument === 'bajo';
     const template = PROGRESSION_TEMPLATES[options.templateId] || PROGRESSION_TEMPLATES['ii-V-I'];
 
     let chords;
@@ -112,12 +113,12 @@ export class ProgressionGenerator {
 
     const useFlats = prefersFlats(key);
     const keyMap = getKeySignatureMap(key);
-    const clef = isBass ? 'bass' : 'treble-8';
+    const clef = isPiano ? 'treble' : isBass ? 'bass' : 'treble-8';
 
-    // Rango de conducción de notas guía (en treble-8 escrito C5=72 suena C4=60; en bass escrito C3=48 suena C2=36)
-    const minMidi = isBass ? 40 : 62;
-    const maxMidi = isBass ? 57 : 79;
-    let prevGuideMidi = isBass ? 48 : 69;
+    // Rango de conducción de notas guía (en piano altura real C4..G5; en treble-8 escrito C5=72 suena C4=60; en bass C3=48 suena C2=36)
+    const minMidi = isBass ? 40 : isPiano ? 60 : 62;
+    const maxMidi = isBass ? 57 : isPiano ? 76 : 79;
+    let prevGuideMidi = isBass ? 48 : isPiano ? 64 : 69;
 
     const bars = chords.map((chordSymbol) => {
       const parsed = parseChord(chordSymbol) || parseChord(key) || { rootPc: 0, intervals: [0, 4, 7] };

@@ -330,6 +330,21 @@ export class ScaleFretboardView {
 
     this._svg = svg;
     container.appendChild(svg);
+
+    // En móvil/pantallas angostas, centra automáticamente el scroll horizontal sobre la posición/caja activa
+    if (system.id !== 'completo' && activePosition && typeof requestAnimationFrame !== 'undefined') {
+      const boxMin = Math.max(0, activePosition.minFret ?? 0);
+      const boxMax = Math.min(fretCount, activePosition.maxFret ?? boxMin + 4);
+      const targetCenterRatio = ((fretCenterX(boxMin) + fretCenterX(boxMax)) / 2) / viewW;
+      requestAnimationFrame(() => {
+        const scroller = container.closest?.('.scale-fretboard-wrap') || container;
+        if (scroller && scroller.scrollWidth > scroller.clientWidth + 8) {
+          const targetScroll = Math.max(0, Math.round(targetCenterRatio * scroller.scrollWidth - scroller.clientWidth / 2));
+          scroller.scrollLeft = targetScroll;
+        }
+      });
+    }
+
     return svg;
   }
 

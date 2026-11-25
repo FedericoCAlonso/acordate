@@ -253,7 +253,7 @@ export class SettingsView {
     const leftHandSwitch = createSwitchRow({
       id: 'set-left-hand',
       label: 'Referencias de mano izquierda',
-      description: 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII) sobre la partitura',
+      description: 'Dedos 0–4, cuerdas (①–⑥), posiciones romanas y dedos 1–5 en clave de Fa (piano)',
       checked: s.showLeftHand,
       onChange: (v) => this._vm.setShowLeftHand(v)
     });
@@ -261,7 +261,7 @@ export class SettingsView {
     const rightHandSwitch = createSwitchRow({
       id: 'set-right-hand',
       label: 'Referencias de mano derecha',
-      description: 'Dedos de pulsación (p, i, m, a) y direcciones de rasgueo (↓ ↑)',
+      description: 'Dedos p, i, m, a, rasgueos (↓ ↑) y dedos 1–5 en clave de Sol (piano)',
       checked: s.showRightHand,
       onChange: (v) => this._vm.setShowRightHand(v)
     });
@@ -397,8 +397,22 @@ export class SettingsView {
       ])
     ]);
 
+    // 5) Acerca de, privacidad y licencias
+    const aboutCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:8px' }, [
+      el('div', { className: 'player-toolbar' }, [
+        el('h2', { className: 'm3-title-md' }, ['Acerca de Acordate']),
+        el('span', { className: 'm3-badge m3-badge--primary' }, ['v1.0.0 · Offline PWA'])
+      ]),
+      el('p', { className: 'm3-body-md' }, [
+        'Privacidad: Acordate funciona 100 % en tu dispositivo (IndexedDB + caché offline), sin cuentas, sin servidores externos y sin telemetría ni rastreo.'
+      ]),
+      el('p', { className: 'm3-body-sm', style: 'color:var(--md-sys-color-on-surface-variant)' }, [
+        'Repertorio: incluye obras de dominio público y secuencias armónicas de estudio (solo cifrado, sin melodías protegidas). Renderizado musical con abcjs 6.4.4 (Licencia MIT · Paul Rosen & Gregory Dyke). Código de Acordate bajo Licencia MIT.'
+      ])
+    ]);
+
     this._container.appendChild(
-      el('div', { className: 'settings-layout' }, [tuningCard, appearanceCard, notationCard, deviceCard])
+      el('div', { className: 'settings-layout' }, [tuningCard, appearanceCard, notationCard, deviceCard, aboutCard])
     );
   }
 }

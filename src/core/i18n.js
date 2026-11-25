@@ -48,6 +48,7 @@ export const PRACTICE_TYPE_LABELS = {
  */
 export const CATEGORY_LABELS = {
   escala: 'Escalas',
+  tecnica: 'Técnica',
   acordes: 'Acordes',
   lectura: 'Lectura',
   ritmo: 'Ritmo / Groove',

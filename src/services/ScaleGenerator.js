@@ -48,7 +48,8 @@ export class ScaleGenerator {
     const rootPc = NOTE_TO_PC[scale.key] ?? 0;
 
     // Determina la tónica real más cómoda dentro del rango físico del instrumento
-    let startSoundingMidi = policy.minSoundingMidi;
+    // (en piano inicia desde Do central C4=60 en vez de A0=21 para evitar 144 líneas adicionales)
+    let startSoundingMidi = policy.defaultScaleStartMidi ?? policy.minSoundingMidi;
     while (startSoundingMidi % 12 !== rootPc) {
       startSoundingMidi += 1;
     }

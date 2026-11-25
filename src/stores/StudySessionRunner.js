@@ -129,6 +129,7 @@ export class StudySessionRunner {
       currentIndex: 0,
       plannedSeconds: durationSec,
       remainingSeconds: durationSec,
+      isPaused: false,
       stepStartedAtMs: now,
       stepEndsAtMs: now + durationSec * 1000,
       startedAtMs: now,
@@ -137,6 +138,60 @@ export class StudySessionRunner {
 
     this._startTicker();
     this._onSelectPractice(first.practiceId);
+  }
+
+  /**
+   * Pausa o reanuda el temporizador de la sesión guiada activa (útil durante explicaciones en clase).
+   */
+  togglePauseStudySession() {
+    const state = this.activeStudySession.value;
+    if (!state || this._isAdvancing) return;
+    const now = this._now();
+
+    if (state.isPaused) {
+      const rem = Math.max(1, state.remainingSeconds || 60);
+      this.activeStudySession.set({
+        ...state,
+        isPaused: false,
+        stepEndsAtMs: now + rem * 1000
+      }, true);
+      this._startTicker();
+    } else {
+      const rem = Math.max(1, Math.ceil((state.stepEndsAtMs - now) / 1000));
+      this._pauseTicker();
+      this.activeStudySession.set({
+        ...state,
+        isPaused: true,
+        remainingSeconds: rem
+      }, true);
+    }
+  }
+
+  /**
+   * Retrocede al bloque anterior de la sesión guiada activa sin perder la rutina.
+   */
+  prevStudySessionStep() {
+    const state = this.activeStudySession.value;
+    if (!state || this._isAdvancing || state.currentIndex <= 0) return;
+
+    this._pauseTicker();
+    const prevIdx = state.currentIndex - 1;
+    const prevItem = state.items[prevIdx];
+    const now = this._now();
+    const prevDurSec = Math.max(60, Math.round(prevItem.minutes * 60));
+
+    this.activeStudySession.set({
+      ...state,
+      currentIndex: prevIdx,
+      plannedSeconds: prevDurSec,
+      remainingSeconds: prevDurSec,
+      isPaused: false,
+      stepStartedAtMs: now,
+      stepEndsAtMs: now + prevDurSec * 1000
+    }, true);
+
+    this._onSelectPractice(prevItem.practiceId);
+    this._startTicker();
   }
 
   /**
@@ -192,6 +247,7 @@ export class StudySessionRunner {
         currentIndex: nextIdx,
         plannedSeconds: nextDurationSec,
         remainingSeconds: nextDurationSec,
+        isPaused: false,
         stepStartedAtMs: stepNow,
         stepEndsAtMs: stepNow + nextDurationSec * 1000,
         completedItems: state.completedItems + 1
@@ -229,6 +285,7 @@ export class StudySessionRunner {
       this._pauseTicker();
       return;
     }
+    if (state.isPaused) return;
     const remaining = Math.max(0, Math.ceil((state.stepEndsAtMs - this._now()) / 1000));
     if (remaining <= 0) {
       this.nextStudySessionStep();

@@ -267,12 +267,16 @@ export class MetronomeView {
       );
     }
 
+    const compactSubLabels = { 1: 'Negra (1)', 2: 'Corch. (2)', 3: 'Tres. (3)', 4: 'Semic. (4)' };
     this._subSeg.innerHTML = '';
-    for (const [val, label] of Object.entries(SUBDIVISION_LABELS)) {
+    for (const [val, fullLabel] of Object.entries(SUBDIVISION_LABELS)) {
+      const label = compactSubLabels[Number(val)] || fullLabel;
       this._subSeg.appendChild(
         el(
           'button',
           {
+            title: fullLabel,
+            'aria-label': fullLabel,
             type: 'button',
             className: 'm3-segmented__btn',
             ripple: true,

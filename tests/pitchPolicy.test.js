@@ -6,6 +6,7 @@ import {
   INSTRUMENT_PITCH_POLICY,
   applyListeningRegister,
   expectedMidi,
+  getPitchPolicy,
   getTuningStrings
 } from '../src/core/PitchPolicy.js';
 import { getKeySignatureMap } from '../src/core/MusicTheory.js';
@@ -86,7 +87,7 @@ test('Todas las prácticas con partitura ABC del catálogo producen la primera n
 
   for (const practice of abcPractices) {
     const instrument = practice.instruments[0];
-    const policy = INSTRUMENT_PITCH_POLICY[instrument];
+    const policy = getPitchPolicy(instrument, practice.tuning);
     const tunes = ABCJS.parseOnly(practice.abc);
     const timeline = abcSvc.extractTimeline(tunes[0], practice.abc, {
       instrument,

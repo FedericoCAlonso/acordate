@@ -1,8 +1,10 @@
 import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, RIGHTS_LABELS, STYLE_LABELS, formatKeyName } from '../core/i18n.js';
+import { ABC_IMPORT_RIGHTS_NOTICE } from '../services/ImportExportService.js';
 import {
   createFloatingField,
   el,
   icon,
+  openConfirmDialog,
   openModalDialog,
   openSheetModal
 } from './uiHelpers.js';
@@ -225,22 +227,55 @@ export class PracticeListView {
     this._filterBtn.appendChild(el('span', {}, [count > 0 ? `Filtros (${count})` : 'Filtros']));
   }
 
+  /** Renderiza una tira rápida de áreas principales (Técnica, Lectura, Ritmo, Escalas, Acordes, Arpegios). */
+  _buildQuickAreaChips() {
+    const activeCat = this._vm.categoryFilter.value;
+    const quickAreas = [
+      { value: 'todos', label: 'Todas' },
+      { value: 'tecnica', label: 'Técnica' },
+      { value: 'lectura', label: 'Lectura' },
+      { value: 'ritmo', label: 'Ritmo' },
+      { value: 'escala', label: 'Escalas' },
+      { value: 'acordes', label: 'Acordes' },
+      { value: 'arpegio', label: 'Arpegios' }
+    ];
+    return el(
+      'div',
+      { className: 'm3-chip-row', role: 'group', 'aria-label': 'Filtro rápido por área', style: 'margin-bottom:10px' },
+      quickAreas.map((area) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip m3-chip--compact',
+            ripple: true,
+            'aria-pressed': String(activeCat === area.value),
+            onClick: () => this._vm.setCategory(area.value)
+          },
+          [area.label]
+        )
+      )
+    );
+  }
+
   /** Renderiza el cuerpo según si hay búsqueda/filtros globales activos o la pestaña seleccionada. */
   _renderBody() {
     if (!this._bodyHost) return;
     this._bodyHost.innerHTML = '';
 
+    const tab = this._vm.activeSection.value;
     if (this._vm.isFiltering.value) {
+      if (tab === 'ruta') this._bodyHost.appendChild(this._buildQuickAreaChips());
       this._renderSearchResults();
       return;
     }
 
-    const tab = this._vm.activeSection.value;
     if (tab === 'repertorio') {
       this._bodyHost.appendChild(this._buildRepertoireSection());
     } else if (tab === 'mias') {
       this._bodyHost.appendChild(this._buildMyPracticesSection());
     } else {
+      this._bodyHost.appendChild(this._buildQuickAreaChips());
       this._bodyHost.appendChild(this._buildLevelsRouteSection());
     }
   }
@@ -451,11 +486,21 @@ export class PracticeListView {
       type: 'file',
       accept: '.json,.abc,application/json,text/plain',
       className: 'sr-only',
+      'aria-label': 'Importar archivo de prácticas JSON o ABC',
       onChange: async (e) => {
         const f = e.target.files?.[0];
         if (!f || !this._io) return;
         const text = await f.text();
         if (f.name.toLowerCase().endsWith('.abc')) {
+          const ok = await openConfirmDialog({
+            title: 'Importar partitura .abc',
+            message: ABC_IMPORT_RIGHTS_NOTICE,
+            confirmLabel: 'Confirmar e importar'
+          });
+          if (!ok) {
+            e.target.value = '';
+            return;
+          }
           const { practice, errors } = this._io.importPracticeFromAbc(text, f.name);
           if (practice) {
             await this._appVm.upsertUserPractice(practice);
@@ -475,6 +520,37 @@ export class PracticeListView {
         e.target.value = '';
       }
     });
+
+    const exportPackageBtn =
+      userItems.length > 0 && this._io
+        ? el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--outlined',
+              ripple: true,
+              title: 'Exportar o compartir las prácticas propias de este instrumento',
+              onClick: async () => {
+                const json = this._io.exportPracticesCollection(userItems);
+                const filename = `acordate-paquete-${this._vm.instrumentFilter.value}.json`;
+                if (typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof File !== 'undefined') {
+                  try {
+                    const file = new File([json], filename, { type: 'application/json' });
+                    if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+                      await navigator.share({ title: 'Paquete de prácticas Acordate', files: [file] });
+                      return;
+                    }
+                  } catch {
+                    // Si el usuario cancela o no soporta archivos, cae a descarga directa
+                  }
+                }
+                this._io.downloadTextFile(json, filename, 'application/json');
+                this._appVm.showSnackbar(`Paquete exportado (${userItems.length} práctica${userItems.length === 1 ? '' : 's'}).`);
+              }
+            },
+            [icon('download', 16), 'Exportar paquete']
+          )
+        : null;
 
     const actionsCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       el('div', { className: 'player-toolbar' }, [
@@ -504,6 +580,7 @@ export class PracticeListView {
             },
             [icon('upload', 16), 'Importar']
           ),
+          exportPackageBtn,
           el(
             'button',
             {
@@ -523,16 +600,41 @@ export class PracticeListView {
               'div',
               { className: 'm3-chip-row' },
               savedSessions.map((ses) =>
-                el(
-                  'button',
-                  {
-                    type: 'button',
-                    className: 'm3-chip',
-                    ripple: true,
-                    onClick: () => this._appVm.startStudySession(ses)
-                  },
-                  [icon('play', 15), `${ses.title} (${ses.items.reduce((a, b) => a + b.minutes, 0)} min)`]
-                )
+                el('div', { className: 'stepper-inline', style: 'gap:4px' }, [
+                  el(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'm3-chip',
+                      ripple: true,
+                      onClick: () => this._appVm.startStudySession(ses)
+                    },
+                    [icon('play', 15), `${ses.title} (${ses.items.reduce((a, b) => a + b.minutes, 0)} min)`]
+                  ),
+                  el(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'm3-icon-btn',
+                      style: 'width:32px; height:32px; min-width:32px; min-height:32px',
+                      'aria-label': `Eliminar sesión ${ses.title}`,
+                      title: 'Eliminar sesión guardada',
+                      onClick: async () => {
+                        const ok = await openConfirmDialog({
+                          title: 'Eliminar sesión guardada',
+                          message: `¿Querés eliminar "${ses.title}"? Las prácticas no se borran.`,
+                          confirmLabel: 'Eliminar',
+                          danger: true
+                        });
+                        if (ok) {
+                          await this._appVm.deleteStudySession(ses.id);
+                          this._appVm.showSnackbar(`Sesión "${ses.title}" eliminada.`);
+                        }
+                      }
+                    },
+                    [icon('trash', 15)]
+                  )
+                ])
               )
             )
           ])

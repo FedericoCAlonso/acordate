@@ -348,6 +348,48 @@ export function createSliderGroup({ id, label, min, max, step = 1, value, format
  * @param {Function} [opts.onClose] Callback ejecutado al cerrar.
  * @returns {{ close: Function, bodyHost: HTMLElement }} Controlador del sheet.
  */
+/**
+ * Aplica o revierte bloqueo de fondo (`inert` + `aria-hidden`) sobre `#app` para accesibilidad WCAG en modales/sheets.
+ * @param {boolean} active True al abrir un overlay modal.
+ */
+function setBackgroundInert(active) {
+  const appRoot = document.getElementById('app');
+  if (!appRoot) return;
+  if (active) {
+    appRoot.setAttribute('aria-hidden', 'true');
+    if ('inert' in appRoot) appRoot.inert = true;
+  } else {
+    appRoot.removeAttribute('aria-hidden');
+    if ('inert' in appRoot) appRoot.inert = false;
+  }
+}
+
+/**
+ * Mantiene el foco atrapado con Tab / Shift+Tab dentro de un contenedor modal accesible.
+ * @param {KeyboardEvent} e Evento de teclado.
+ * @param {HTMLElement} container Contenedor del diálogo o sheet.
+ */
+function trapFocusInContainer(e, container) {
+  if (e.key !== 'Tab' || !container) return;
+  const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const focusables = [...container.querySelectorAll(selector)].filter(
+    (node) => node.offsetParent !== null || node.getClientRects().length > 0
+  );
+  if (focusables.length === 0) {
+    e.preventDefault();
+    return;
+  }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !container.contains(document.activeElement))) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && (document.activeElement === last || !container.contains(document.activeElement))) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 export function openSheetModal({ title, body, sideOnWide = true, onClose }) {
   // Evita modales superpuestos en móvil cerrando cualquier overlay o menú previo
   closeAllOverlays();
@@ -361,17 +403,23 @@ export function openSheetModal({ title, body, sideOnWide = true, onClose }) {
     backdrop.remove();
     if (activeOverlayCloser === close) activeOverlayCloser = null;
     document.body.style.overflow = '';
+    setBackgroundInert(false);
     onClose?.();
     if (previousFocus && typeof previousFocus.focus === 'function') {
       previousFocus.focus();
     }
   };
   const onKey = (e) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') {
+      close();
+      return;
+    }
+    trapFocusInContainer(e, sheet);
   };
 
   activeOverlayCloser = close;
   document.body.style.overflow = 'hidden';
+  setBackgroundInert(true);
 
   const bodyHost = el('div', { className: 'm3-sheet__body' }, [body]);
   const sheet = el(
@@ -420,12 +468,12 @@ export function openSheetModal({ title, body, sideOnWide = true, onClose }) {
 }
 
 /**
- * Abre un diálogo modal Material 3 accesible con soporte de tecla Escape y cierre por fondo.
+ * Abre un diálogo modal Material 3 accesible con soporte de tecla Escape, focus trap y cierre por fondo.
  * Cierra automáticamente cualquier modal o sheet previo para evitar superposiciones en móvil.
  * @param {object} opts Contenido del diálogo.
  * @returns {{ close: Function }} Controlador para cerrar el diálogo.
  */
-export function openModalDialog({ title, body, content, actions = [] }) {
+export function openModalDialog({ title, body, content, actions = [], onClose = null }) {
   closeAllOverlays();
 
   const previousFocus = document.activeElement;
@@ -437,16 +485,23 @@ export function openModalDialog({ title, body, content, actions = [] }) {
     backdrop.remove();
     if (activeOverlayCloser === close) activeOverlayCloser = null;
     document.body.style.overflow = '';
+    setBackgroundInert(false);
+    onClose?.();
     if (previousFocus && typeof previousFocus.focus === 'function') {
       previousFocus.focus();
     }
   };
   const onKeyDown = (e) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') {
+      close();
+      return;
+    }
+    trapFocusInContainer(e, dialog);
   };
 
   activeOverlayCloser = close;
   document.body.style.overflow = 'hidden';
+  setBackgroundInert(true);
 
   const modalBody = body !== undefined ? body : content;
   const actionBtns = actions.map((act) => {
@@ -498,29 +553,37 @@ export function openModalDialog({ title, body, content, actions = [] }) {
 
 /**
  * Diálogo rápido de confirmación antes de acciones destructivas (ej. eliminar práctica).
+ * Garantiza resolver `false` también al cerrar con `Escape` o clic fuera del diálogo.
  * @param {object} opts Parámetros del cuadro de confirmación.
  * @returns {Promise<boolean>} Promesa que resuelve true si el usuario confirmó.
  */
 export function openConfirmDialog({ title, message, confirmLabel = 'Confirmar', danger = false }) {
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      resolve(val);
+    };
     openModalDialog({
       title,
       body: message,
+      onClose: () => finish(false),
       actions: [
         {
           label: 'Cancelar',
           variant: 'm3-btn--text',
           onClick: (close) => {
+            finish(false);
             close();
-            resolve(false);
           }
         },
         {
           label: confirmLabel,
           variant: danger ? 'm3-btn--danger' : 'm3-btn--filled',
           onClick: (close) => {
+            finish(true);
             close();
-            resolve(true);
           }
         }
       ]

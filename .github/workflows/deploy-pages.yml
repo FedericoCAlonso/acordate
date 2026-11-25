@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -32,21 +35,25 @@ jobs:
         run: npm test
 
       - name: Empaquetar carpeta estática para Pages
+        if: github.event_name != 'pull_request'
         run: |
           mkdir -p _site
-          cp index.html manifest.json sw.js .nojekyll _site/
+          cp index.html manifest.json sw.js .nojekyll LICENSE _site/
           cp -r assets styles vendor src _site/
 
       - name: Configurar GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
 
       - name: Subir artefacto de Pages
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
   deploy:
     name: Desplegar en GitHub Pages
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

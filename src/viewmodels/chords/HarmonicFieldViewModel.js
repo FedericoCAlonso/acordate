@@ -1,6 +1,7 @@
 import { ComputedObservable, Observable } from '../../core/Observable.js';
 import { getCuratedVoicingsForChord } from '../../data/voicings.js';
 import { Chord } from '../../models/Chord.js';
+import { generatePianoVoicings } from '../../services/PianoVoicingService.js';
 import { createProgressionPractice } from '../../services/PracticeFactoryService.js';
 
 /**
@@ -36,18 +37,24 @@ export class HarmonicFieldViewModel {
     /** Progresión que el usuario arma tocando/reordenando grados. */
     this.builderChords = new Observable(['C', 'Am', 'F', 'G']);
 
-    /** Campo armónico de 7 grados calculado reactivamente. */
+    /** Campo armónico de 7 grados calculado reactivamente (incluyendo voicings nativos de Piano). */
     this.diatonicField = new ComputedObservable(
       [this.fieldKey, this.fieldMode, this.fieldUseSevenths, this._instrument, this._activeTuning],
       () => {
+        const isPiano = this._instrument.value === 'piano';
         const tuning = this._activeTuning.value;
-        return this._harmony.getDiatonicField(
+        const field = this._harmony.getDiatonicField(
           this.fieldKey.value,
           this.fieldMode.value,
           this.fieldUseSevenths.value,
           tuning.instrument,
           tuning
         );
+        if (!isPiano) return field;
+        return field.map((deg) => ({
+          ...deg,
+          voicing: generatePianoVoicings(deg.symbol)[0] || null
+        }));
       }
     );
   }

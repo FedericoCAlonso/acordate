@@ -334,6 +334,15 @@ export function createScalePractice({
 }) {
   const displayRoot = formatChordSymbol(root, notation);
   const practiceInst = voicingInstrument === 'bajo-5' ? 'bajo' : voicingInstrument;
+  const safeStartBpm = Math.max(40, Math.min(240, Math.round(Number(bpm) || 80)));
+  const safeTargetBpm = Math.min(220, Math.max(safeStartBpm + 10, safeStartBpm + 24));
+  const goals = [
+    `Fórmula: ${scale.degreeLabels.join(' – ')}.`,
+    `Digitación sugerida: ${layout?.system?.label || layout?.activePosition?.label || 'estándar'}${layout?.system?.label && layout?.activePosition?.label ? ` — ${layout.activePosition.label}` : ''}.`,
+    scale.techniqueTip,
+    scale.avoidNoteExplanation ? `Nota a cuidar: ${scale.avoidNoteExplanation}` : ''
+  ].filter(Boolean);
+
   return new Practice({
     id: generatePracticeId(`escala-${scale.id}`),
     version: 3,
@@ -343,19 +352,13 @@ export function createScalePractice({
     instruments: [practiceInst],
     level: scale.level || 2,
     category: 'escala',
+    tags: ['escala', scale.id, practiceInst],
     key: root,
     timeSignature: studyPattern === 'grupos-3' ? '3/4' : '4/4',
-    defaultBpm: bpm,
-    targetBpm: Math.min(180, bpm + 24),
-    description: `Estudio de ${displayRoot} ${scale.name} (${layout?.system?.label || ''}) en ${octaves} octava(s). ${scale.uses}`,
-    guide: [
-      `Fórmula: ${scale.degreeLabels.join(' – ')}.`,
-      `Digitación sugerida: ${layout?.system?.label || ''} — ${layout?.activePosition?.label || ''}.`,
-      scale.techniqueTip,
-      scale.avoidNoteExplanation ? `Nota a cuidar: ${scale.avoidNoteExplanation}` : ''
-    ].filter(Boolean),
+    tempo: { start: safeStartBpm, target: safeTargetBpm, step: 5 },
+    notes: `Estudio de ${displayRoot} ${scale.name} (${layout?.system?.label || layout?.activePosition?.label || ''}) en ${octaves} octava(s). ${scale.uses || ''}`.trim(),
+    goals,
     abc,
-    rights: 'user_import',
     verified: true
   });
 }

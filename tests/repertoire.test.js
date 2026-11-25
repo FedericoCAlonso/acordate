@@ -94,7 +94,7 @@ test('B4.1 y B4.2: todas las partituras ABC del repertorio y catálogo cumplen s
       assert.equal(mRes.valid, true, `${practice.id} compases inválidos: ${mRes.errors.join(' | ')}`);
 
       for (const inst of practice.instruments) {
-        const rRes = validateAbcInstrumentRange(practice.abc, inst);
+        const rRes = validateAbcInstrumentRange(practice.abc, inst, { tuning: practice.tuning });
         assert.equal(rRes.valid, true, `${practice.id} (${inst}) fuera de rango: ${rRes.errors.join(' | ')}`);
       }
     }
@@ -120,7 +120,7 @@ test('B1 y B3: repertorio cumple derechos de autor (18 standards harmony_only, D
   const bassBach = repertoire.filter((p) => p.id.startsWith('rep-bass-'));
 
   assert.equal(jazz.length, 18, 'Deben existir exactamente los 18 standards de jazz/blues/bossa (B3.1)');
-  assert.equal(traditional.length, 8, 'Deben existir los 8 tradicionales de dominio público (B3.2)');
+  assert.ok(traditional.length >= 11, 'Deben existir al menos 11 tradicionales de dominio público (B3.2 + Ola 1)');
   assert.ok(classical.length >= 20, 'Debe incluir al menos 20 obras/estudios de guitarra clásica (B3.4)');
   assert.ok(bassBach.length >= 2, 'Debe incluir estudios de Bach en bajo (B3.5)');
 

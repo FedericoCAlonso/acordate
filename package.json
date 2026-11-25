@@ -1,7 +1,7 @@
 {
   "name": "acordate",
   "version": "1.0.0",
-  "description": "PWA de práctica musical para guitarra clásica, guitarra y bajo (lectura, acordes, escalas y walking bass)",
+  "description": "PWA de práctica musical offline para guitarra clásica, guitarra, bajo y piano (lectura, gran pentagrama, acordes, escalas y walking bass)",
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
@@ -12,6 +12,7 @@
     "musica",
     "guitarra",
     "bajo",
+    "piano",
     "partitura",
     "abcjs",
     "metronomo",

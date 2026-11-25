@@ -764,5 +764,35 @@
     "notes": "Registro Urtext exacto (arranca en Do4–Mi4 en mano izquierda). Dejá los dedos de la mano izquierda apoyados sobre las dos primeras notas de cada mitad de compás para sostener la armonía.",
     "origin": "builtin",
     "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "p-ola1-n5-bach-invencion-1",
+    "version": 3,
+    "type": "melody",
+    "title": "J. S. Bach — Invención a 2 voces n.º 1 en Do mayor BWV 772 (Exposición)",
+    "instruments": ["piano"],
+    "category": "repertorio",
+    "level": 5,
+    "tags": ["repertorio", "piano", "barroco", "bach", "invencion", "contrapunto", "ola-1"],
+    "key": "C",
+    "timeSignature": "4/4",
+    "tempo": { "start": 56, "target": 84, "step": 4 },
+    "form": "Exposición completa (Do mayor → Sol mayor, cc. 1–7)",
+    "rights": "public_domain",
+    "sourceRef": "J. S. Bach, Inventio 1 en Do mayor BWV 772 (Köthen, 1723) — Bach-Gesellschaft / IMSLP Urtext, Dominio público",
+    "verified": false,
+    "style": "barroco",
+    "feeling": "straight",
+    "focus": {
+      "piano": "Independencia contrapuntística real a dos voces: imitación del motivo principal en semicorcheas, inversión en mano derecha y aumentación en corcheas en mano izquierda."
+    },
+    "abc": "X:1\nT:Invención n.º 1 en Do mayor BWV 772 (cc. 1–7)\nM:4/4\nL:1/16\nK:C\n%%staves {1 2}\nV:1 clef=treble\nz \"^1\"C\"^2\"D\"^3\"E \"^4\"F\"^2\"D\"^3\"E\"^1\"C \"^2\"G2 \"^5\"c2 \"^4\"B2 \"^5\"c2 | \"^5\"d\"^1\"G\"^2\"A\"^3\"B \"^4\"c\"^2\"A\"^3\"B\"^1\"G \"^2\"d2 \"^5\"g2 \"^4\"f2 \"^5\"g2 |\n\"^3\"e\"^5\"a\"^4\"g\"^3\"f \"^2\"e\"^4\"g\"^3\"f\"^5\"a \"^4\"g\"^3\"f\"^2\"e\"^1\"d \"^2\"c\"^4\"e\"^3\"d\"^5\"f | \"^4\"e\"^3\"d\"^2\"c\"^1\"B \"^2\"A\"^4\"c\"^3\"B\"^5\"d \"^4\"c\"^3\"B\"^2\"A\"^1\"G \"^2\"^F\"^4\"A\"^3\"G\"^5\"B |\n\"^4\"A2 \"^5\"d2 \"^3\"B\"^4\"c\"^5\"d\"^3\"B \"^2\"A\"^3\"B\"^4\"c\"^2\"A \"^1\"^F\"^2\"G\"^3\"A\"^1\"F | \"^2\"G\"^1\"^F\"^2\"G\"^3\"A \"^5\"e\"^4\"d\"^3\"c\"^2\"B \"^3\"A\"^2\"G\"^3\"A\"^4\"B \"^3\"A\"^2\"G\"^1\"^F\"^2\"A | \"^1\"G8 z8 |]\nV:2 clef=bass\nz8 z \"_5\"C,\"_4\"D,\"_3\"E, \"_2\"F,\"_4\"D,\"_3\"E,\"_5\"C, | \"_1\"G,2 \"_5\"G,,2 z4 z \"_5\"G,\"_4\"A,\"_3\"B, \"_2\"C\"_4\"A,\"_3\"B,\"_5\"G, |\n\"_1\"C2 \"_2\"B,2 \"_1\"C2 \"_2\"D2 \"_1\"E2 \"_5\"G,2 \"_4\"A,2 \"_3\"B,2 | \"_2\"C2 \"_5\"E,2 \"_4\"F,2 \"_3\"G,2 \"_2\"A,2 \"_5\"C,2 \"_4\"D,2 \"_3\"E,2 |\n\"_2\"^F,2 \"_4\"D,2 \"_1\"G,2 \"_3\"B,,2 \"_2\"C,2 \"_4\"A,,2 \"_1\"D,2 \"_5\"D,,2 | \"_3\"G,,2 \"_2\"B,,2 \"_3\"C,2 \"_1\"E,2 \"_2\"D,2 \"_4\"C,2 \"_2\"D,2 \"_5\"D,,2 | \"_2\"G,8 z8 |]",
+    "goals": [
+      "Practicar primero cada mano por separado con la capa MD/MI del reproductor cuidando la articulación barroca (semicorcheas ligadas, corcheas ligeramente separadas).",
+      "Destacar cada entrada del motivo principal tanto en la mano derecha (c. 1 y c. 2) como en la izquierda (c. 1, c. 2 y c. 5) y la inversión en cc. 3–4."
+    ],
+    "notes": "Cierra el repertorio de Nivel 5 con una piedra angular del contrapunto pianístico. Estudiá la aumentación del bajo en cc. 3–4 escuchando cómo sostiene la secuencia descendente de la mano derecha hasta cadenciar en Sol mayor (c. 7). Confirmar ornamentos (mordentes) con tu edición Urtext.",
+    "origin": "builtin",
+    "createdAt": "2026-11-25T00:00:00.000Z"
   }
 ]

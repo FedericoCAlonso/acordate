@@ -5,6 +5,7 @@ import { LEVELS } from '../models/Level.js';
  */
 export const AREA_ORDER = [
   'escala',
+  'tecnica',
   'acordes',
   'formas',
   'cambios',

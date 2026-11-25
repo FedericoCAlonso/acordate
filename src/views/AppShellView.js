@@ -349,6 +349,11 @@ export class AppShellView {
             ? [{ label: 'Exportar .abc', iconName: 'download', onClick: () => this._playerVm.exportCurrent('abc') }]
             : []),
           {
+            label: 'Imprimir / Guardar PDF',
+            iconName: 'book',
+            onClick: () => window.print()
+          },
+          {
             label: 'Modo atril (pantalla completa)',
             iconName: 'fullscreen',
             onClick: () => this._playerVm.toggleAtrilFullscreen()
@@ -446,12 +451,36 @@ export class AppShellView {
     if (!session) return;
     const mins = Math.floor(session.remainingSeconds / 60);
     const secs = String(session.remainingSeconds % 60).padStart(2, '0');
-    const stepText = `${session.title} · Bloque ${session.currentIndex + 1}/${session.items.length} · ${mins}:${secs}`;
+    const pausedTag = session.isPaused ? ' (En pausa)' : '';
+    const stepText = `${session.title} · Bloque ${session.currentIndex + 1}/${session.items.length} · ${mins}:${secs}${pausedTag}`;
 
     this._sessionBannerHost.appendChild(
       el('div', { className: 'session-banner' }, [
         el('strong', {}, [stepText]),
         el('div', { className: 'stepper-inline' }, [
+          session.currentIndex > 0
+            ? el(
+                'button',
+                {
+                  type: 'button',
+                  className: 'm3-btn m3-btn--compact m3-btn--outlined',
+                  ripple: true,
+                  'aria-label': 'Bloque anterior',
+                  onClick: () => this._appVm.prevStudySessionStep()
+                },
+                ['Anterior']
+              )
+            : null,
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              onClick: () => this._appVm.togglePauseStudySession()
+            },
+            [session.isPaused ? 'Reanudar' : 'Pausa']
+          ),
           el(
             'button',
             {

@@ -2,6 +2,7 @@ import { getCuratedVoicingsForChord } from '../data/voicings.js';
 import { Chord } from '../models/Chord.js';
 import { PRESET_TUNINGS, Tuning } from '../models/Tuning.js';
 import { Voicing } from '../models/Voicing.js';
+import { computePianoVoiceLeading, generatePianoVoicings } from './PianoVoicingService.js';
 import { VoicingGenerator } from './VoicingGenerator.js';
 
 /**
@@ -11,7 +12,8 @@ export const VOICING_INSTRUMENT_OPTIONS = [
   { id: 'guitarra', label: 'Guitarra (6c)', tuningId: 'guitar-standard', baseInstrument: 'guitar' },
   { id: 'guitarra-clasica', label: 'Guitarra clásica', tuningId: 'guitar-standard', baseInstrument: 'guitar' },
   { id: 'bajo', label: 'Bajo (4c)', tuningId: 'bass-4-standard', baseInstrument: 'bass' },
-  { id: 'bajo-5', label: 'Bajo (5c)', tuningId: 'bass-5-standard', baseInstrument: 'bass' }
+  { id: 'bajo-5', label: 'Bajo (5c)', tuningId: 'bass-5-standard', baseInstrument: 'bass' },
+  { id: 'piano', label: 'Piano', tuningId: null, baseInstrument: 'piano' }
 ];
 
 /**
@@ -74,15 +76,43 @@ export const FINGERING_DESIGN_CRITERIA = {
     instruments: ['bajo', 'bajo-5'],
     description: 'Voicings idiomáticos para bajo eléctrico (décimas, shells en cuerdas A–D–G y tríadas desde traste 5+) respetando el Low Interval Limit.',
     pedagogicalTip: 'Evitá intervalos cerrados debajo del traste 5 en cuerdas graves para mantener claridad armónica.'
+  },
+  'piano-enlazado': {
+    id: 'piano-enlazado',
+    label: 'Piano: conducción suave (inversiones)',
+    shortLabel: 'Enlazado',
+    instruments: ['piano'],
+    pianoStyle: 'cerrado',
+    description: 'Enlaza tríadas y cuatríadas con inversiones cerradas en mano derecha y bajo claro en mano izquierda, manteniendo notas comunes.',
+    pedagogicalTip: 'Dejá apoyadas las notas comunes entre acordes y mové solo los dedos necesarios.'
+  },
+  'piano-shell': {
+    id: 'piano-shell',
+    label: 'Piano: Shell / Drop 2 (dos manos)',
+    shortLabel: 'Shell / Drop 2',
+    instruments: ['piano'],
+    pianoStyle: 'shell',
+    description: 'Combina esqueletos R–7 / R–5 en mano izquierda con 3.ª, color y tensiones limpias en mano derecha respetando el Low Interval Limit.',
+    pedagogicalTip: 'Escuchá el enlace por semitono entre la 7.ª de un acorde y la 3.ª del siguiente.'
+  },
+  'piano-rootless': {
+    id: 'piano-rootless',
+    label: 'Piano: Rootless Jazz (Bill Evans MI)',
+    shortLabel: 'Rootless MI',
+    instruments: ['piano'],
+    pianoStyle: 'rootless',
+    description: 'Voicings Tipo A y B en mano izquierda sin fundamental, dejando la mano derecha libre para melodía o improvisación.',
+    pedagogicalTip: 'Alterná entre Tipo A (3–5–7–9) y Tipo B (7–9–3–5) sobre los ii–V–I.'
   }
 };
 
 /**
- * Normaliza un identificador de instrumento hacia uno de los 4 instrumentos de digitación soportados.
+ * Normaliza un identificador de instrumento hacia uno de los 5 instrumentos de digitación soportados.
  * @param {string} instrument Identificador de instrumento.
- * @returns {'guitarra'|'guitarra-clasica'|'bajo'|'bajo-5'} Instrumento normalizado.
+ * @returns {'guitarra'|'guitarra-clasica'|'bajo'|'bajo-5'|'piano'} Instrumento normalizado.
  */
 export function normalizeVoicingInstrument(instrument) {
+  if (instrument === 'piano') return 'piano';
   if (instrument === 'bajo-5' || instrument === 'bass-5') return 'bajo-5';
   if (instrument === 'bajo' || instrument === 'bass') return 'bajo';
   if (instrument === 'guitarra-clasica' || instrument === 'classical') return 'guitarra-clasica';
@@ -90,8 +120,8 @@ export function normalizeVoicingInstrument(instrument) {
 }
 
 /**
- * Devuelve la afinación Tuning correspondiente al instrumento de digitación elegido.
- * @param {string} voicingInstrument Instrumento ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5').
+ * Devuelve la afinación Tuning correspondiente al instrumento de digitación elegido (en piano usa respaldo neutro).
+ * @param {string} voicingInstrument Instrumento ('guitarra' | 'guitarra-clasica' | 'bajo' | 'bajo-5' | 'piano').
  * @returns {Tuning} Afinación estándar del instrumento.
  */
 export function getTuningForVoicingInstrument(voicingInstrument) {
@@ -132,6 +162,10 @@ export class FingeringDesignService {
    */
   getRecommendedCriterion(voicingInstrument, practice = null) {
     const norm = normalizeVoicingInstrument(voicingInstrument);
+    if (norm === 'piano') {
+      if (practice?.style === 'jazz' || practice?.style === 'bossa') return 'piano-shell';
+      return 'piano-enlazado';
+    }
     if (norm === 'bajo' || norm === 'bajo-5') {
       return 'bajo-acordes-altos';
     }
@@ -157,6 +191,13 @@ export class FingeringDesignService {
    */
   getCandidateVoicingsForChord(chordSymbol, voicingInstrument, customChords = []) {
     const norm = normalizeVoicingInstrument(voicingInstrument);
+    if (norm === 'piano') {
+      try {
+        return generatePianoVoicings(chordSymbol);
+      } catch {
+        return [];
+      }
+    }
     const tuning = getTuningForVoicingInstrument(norm);
     const isBass = tuning.instrument === 'bass';
     const baseInst = isBass ? 'bass' : 'guitar';
@@ -256,6 +297,58 @@ export class FingeringDesignService {
           commonTonesTotal: 0,
           bassMotionSemitones: 0,
           summaryLabel: 'Sin acordes'
+        }
+      };
+    }
+
+    // Ruta nativa de Piano: conducción de voces Viterbi sobre voicings pianísticos (MI + MD)
+    if (normInst === 'piano') {
+      const pianoStyle = criterion.pianoStyle || 'todos';
+      const led = computePianoVoiceLeading(
+        steps.map((s) => s.chord),
+        { style: pianoStyle }
+      );
+      let cursorBar = 1;
+      let totalVl = 0;
+      let commonTotal = 0;
+      const enrichedSteps = steps.map((step, idx) => {
+        const candidates = this.getCandidateVoicingsForChord(step.chord, 'piano');
+        const override = overrides[idx];
+        const manualVoicing = override
+          ? (override?.isPianoVoicing ? override : candidates.find((c) => c.id === override) || null)
+          : null;
+        const autoEntry = led[idx] || null;
+        const voicing = manualVoicing || autoEntry?.voicing || candidates[0] || null;
+        const startMeasure = cursorBar;
+        cursorBar += Number(step.bars) || 1;
+        if (idx > 0 && autoEntry) {
+          totalVl += autoEntry.voiceLeadingCost || 0;
+          commonTotal += autoEntry.commonTones || 0;
+        }
+        return {
+          ...step,
+          startMeasure: Math.floor(startMeasure),
+          voicing,
+          midis: voicing ? voicing.getMidiNotes() : [],
+          candidates,
+          isManualOverride: Boolean(manualVoicing),
+          rationale: voicing ? voicing.label : ''
+        };
+      });
+      const avgVl = steps.length > 1 ? Math.round((totalVl / (steps.length - 1)) * 10) / 10 : 0;
+      return {
+        criterion,
+        voicingInstrument: 'piano',
+        tuning: null,
+        steps: enrichedSteps,
+        metrics: {
+          averageFret: 0,
+          maxShiftFrets: 0,
+          totalVoiceLeadingSemitones: totalVl,
+          avgVoiceLeadingSemitones: avgVl,
+          commonTonesTotal: commonTotal,
+          bassMotionSemitones: 0,
+          summaryLabel: `Piano · enlace ~${avgVl} st · ${commonTotal} notas comunes`
         }
       };
     }

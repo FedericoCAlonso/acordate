@@ -27,7 +27,7 @@ export function openNotationGuideModal() {
   const body = el('div', { className: 'ref-guide' }, [
     el('p', { className: 'm3-body-md' }, [
       'Todas las referencias sobre la partitura se pueden prender o apagar por separado desde el botón ',
-      el('strong', {}, ['Anotaciones']),
+      el('strong', {}, ['Capas']),
       ' del reproductor o en ',
       el('strong', {}, ['Ajustes']),
       '.'

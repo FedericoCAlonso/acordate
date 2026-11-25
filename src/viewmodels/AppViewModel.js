@@ -159,6 +159,10 @@ export class AppViewModel {
   deleteStudySession(sessionId) { return this.sessionRunner.deleteStudySession(sessionId); }
   /** Inicia una sesión guiada encadenada. */
   startStudySession(session) { return this.sessionRunner.startStudySession(session); }
+  /** Pausa o reanuda el temporizador de la sesión guiada activa. */
+  togglePauseStudySession() { return this.sessionRunner.togglePauseStudySession(); }
+  /** Retrocede al bloque anterior de la sesión guiada activa. */
+  prevStudySessionStep() { return this.sessionRunner.prevStudySessionStep(); }
   /** Avanza al siguiente bloque de la sesión guiada activa. */
   nextStudySessionStep() { return this.sessionRunner.nextStudySessionStep(); }
   /** Detiene la sesión guiada activa. */

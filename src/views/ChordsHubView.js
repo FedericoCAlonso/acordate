@@ -39,8 +39,8 @@ function formatRootDisplay(root, notation) {
  */
 const CHORDS_TABS = [
   { id: 'biblioteca', label: 'Biblioteca' },
-  { id: 'campo', label: 'Campo armónico' },
-  { id: 'cambios', label: 'Cambios y voces' },
+  { id: 'campo', label: 'Campo' },
+  { id: 'cambios', label: 'Cambios' },
   { id: 'oido', label: 'Oído' }
 ];
 
@@ -857,14 +857,21 @@ export class ChordsHubView {
             el('span', { className: `m3-badge ${fnBadgeClass}` }, [deg.harmonicFunction])
           ]),
           deg.voicing
-            ? createChordDiagramElement(deg.voicing, {
-                tuning,
-                notation,
-                size: 'sm',
-                labelMode: this._vm.labelMode.value,
-                leftHanded: this._vm.leftHanded.value,
-                onPlay: (v) => this._vm.playVoicing(v)
-              })
+            ? (deg.voicing.isPianoVoicing
+                ? createPianoChordElement(deg.voicing, {
+                    notation,
+                    size: 'sm',
+                    labelMode: this._vm.labelMode.value,
+                    onPlay: (v) => this._vm.playVoicing(v)
+                  })
+                : createChordDiagramElement(deg.voicing, {
+                    tuning,
+                    notation,
+                    size: 'sm',
+                    labelMode: this._vm.labelMode.value,
+                    leftHanded: this._vm.leftHanded.value,
+                    onPlay: (v) => this._vm.playVoicing(v)
+                  }))
             : el('button', {
                 type: 'button',
                 className: 'm3-btn m3-btn--tonal',

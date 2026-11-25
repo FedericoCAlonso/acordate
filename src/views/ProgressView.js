@@ -60,6 +60,7 @@ export class ProgressView {
       type: 'file',
       accept: '.json,application/json',
       className: 'sr-only',
+      'aria-label': 'Importar archivo de progreso JSON',
       onChange: async (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
@@ -73,7 +74,7 @@ export class ProgressView {
     const summaryCards = el('div', { className: 'stats-cards-grid' }, [
       this._statCard('Racha actual', `${streak} día${streak === 1 ? '' : 's'}`, 'Días seguidos practicando'),
       this._statCard('Tiempo de estudio', formatStudyDuration(totals.totalStudySeconds), 'Total acumulado'),
-      this._statCard('Repeticiones', String(totals.totalRepetitions), `${totals.practicesStudied} prácticas tocadas`),
+      this._statCard('Repeticiones', String(totals.totalRepetitions), `${totals.practicesStudied} ${totals.practicesStudied === 1 ? 'práctica tocada' : 'prácticas tocadas'}`),
       this._statCard('Objetivos logrados', String(totals.targetsReached), 'Prácticas al BPM objetivo')
     ]);
 

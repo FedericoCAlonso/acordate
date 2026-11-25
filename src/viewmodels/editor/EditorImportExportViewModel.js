@@ -126,7 +126,8 @@ export class EditorImportExportViewModel {
           timeSignature: f.timeSignature,
           progression: f.progression,
           customVoicings: f.customVoicings,
-          tuning
+          tuning,
+          isPiano
         })
       : this._abc.extractTimeline(visualObj, f.abc, {
           instrument: isPiano ? 'piano' : (f.instruments[0] || 'guitarra'),

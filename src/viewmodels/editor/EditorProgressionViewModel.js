@@ -61,11 +61,12 @@ export class EditorProgressionViewModel {
     if (chords.length === 0) return;
 
     const f = this._form.value;
-    const isBass = f.instruments.includes('bajo') && f.instruments.length === 1;
+    const isPiano = f.instruments.includes('piano') && (f.instruments.length === 1 || f.instruments[0] === 'piano');
+    const isBass = !isPiano && f.instruments.includes('bajo') && f.instruments.length === 1;
     const generated = this._progressionGen.generate({
       customChords: chords,
       key: f.key || 'C',
-      instrument: isBass ? 'bajo' : 'guitarra',
+      instrument: isPiano ? 'piano' : isBass ? 'bajo' : 'guitarra',
       pattern: 'blancas',
       title: f.title || 'Progresión personalizada'
     });

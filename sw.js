@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v14: Estudio Táctil Moderno y blindaje móvil cero-desborde 320–390px en toda la app).
+ * Versión del caché estático de la PWA Acordate (v23: Network-first en localhost + Ola 1 +42 ejercicios y categoría Técnica).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v20';
+const CACHE_NAME = 'acordate-static-v23';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -15,6 +15,9 @@ const PRECACHE_ASSETS = [
   './assets/icon.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/icon-maskable.svg',
+  './assets/icon-192-maskable.png',
+  './assets/icon-512-maskable.png',
   './vendor/abcjs/abcjs-basic-min.js',
   './vendor/abcjs/abcjs-audio.css',
   './styles/tokens.css',
@@ -69,6 +72,7 @@ const PRECACHE_ASSETS = [
   './src/data/catalog.json',
   './src/data/harmonyCatalog.json',
   './src/data/pianoCatalog.json',
+  './src/data/techniqueCatalog.json',
   './src/data/repertoireJazz.json',
   './src/data/repertoireTraditional.json',
   './src/data/repertoireClassical.json',
@@ -114,13 +118,22 @@ const PRECACHE_ASSETS = [
 ];
 
 /**
- * Evento install: precachea todos los recursos de la aplicación y activa de inmediato.
+ * Evento install: precachea todos los recursos de la aplicación.
+ * La activación de nuevas versiones queda coordinada con la UI (mensaje SKIP_WAITING) para evitar mezclar módulos.
  */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
   );
-  self.skipWaiting();
+});
+
+/**
+ * Permite que la app solicite la activación inmediata cuando el usuario confirma "Actualizar".
+ */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 /**
@@ -128,19 +141,20 @@ self.addEventListener('install', (event) => {
  */
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((oldKey) => caches.delete(oldKey))
+    caches.keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((oldKey) => caches.delete(oldKey))
+        )
       )
-    )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 /**
- * Evento fetch: estrategia cache-first con actualización de respaldo para recursos del mismo origen,
+ * Evento fetch: estrategia cache-first con respaldo de red e ignoreSearch para parámetros UTM/query,
  * devolviendo index.html en navegaciones offline.
  */
 self.addEventListener('fetch', (event) => {
@@ -150,8 +164,30 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  const isLocalDev = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  if (isLocalDev) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() =>
+          caches.match(request, { ignoreSearch: true }).then((cached) => {
+            if (cached) return cached;
+            if (request.mode === 'navigate') return caches.match('./index.html');
+            return new Response('Sin conexión', { status: 503, statusText: 'Offline' });
+          })
+        )
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
