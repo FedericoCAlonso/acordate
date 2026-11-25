@@ -4,6 +4,7 @@ import {
   analyzeBassFunction,
   extractTimeSignatureFromAbc,
   getKeySignatureMap,
+  isAbcChordSymbol,
   parseTimeSignature
 } from '../core/MusicTheory.js';
 import { getPitchPolicy, writtenMidiToSoundingMidi } from '../core/PitchPolicy.js';
@@ -217,12 +218,7 @@ export function classifyAbcAnnotation(rawText, { isRenderedSvg = false } = {}) {
 
   // 4) Cifrado de acordes (solo sin prefijo ^_<>@, o en SVG ya renderizado)
   if (!posPrefix || isRenderedSvg) {
-    // Americano: C, Am7, F#m7b5, Bbmaj7/D, G7alt, Eb9sus4...
-    if (/^[A-G][#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|\d|\([^)]*\))*(?:\/[A-G][#b♯♭]?)?$/.test(body)) {
-      return 'chord';
-    }
-    // Latino renderizado: Do, Rem7, Sol7, Sib, Fa#m7/Do#...
-    if (/^(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|\d|\([^)]*\))*(?:\/(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?)?$/.test(body)) {
+    if (isAbcChordSymbol(body, { allowLatin: true })) {
       return 'chord';
     }
   }
@@ -1042,7 +1038,7 @@ export class AbcService {
     let cm;
     while ((cm = chordRegex.exec(rawAbc || '')) !== null) {
       const txt = cm[1].trim();
-      if (!/^[\^_<>@]/.test(txt) && /^[A-G][#b]?/.test(txt)) {
+      if (isAbcChordSymbol(txt)) {
         rawChordQueue.push(txt);
       }
     }
@@ -1137,8 +1133,7 @@ export class AbcService {
                 if (
                   chObj.position === 'default' &&
                   chObj.name &&
-                  !/^[\^_<>@]/.test(chObj.name) &&
-                  /^[A-G][#b]?/.test(chObj.name.trim())
+                  isAbcChordSymbol(chObj.name.trim(), { allowLatin: true })
                 ) {
                   const americanSymbol = rawChordQueue[chordCursor] || chObj.name;
                   chordCursor += 1;
@@ -1380,7 +1375,7 @@ export class AbcService {
     while ((match = tokenRegex.exec(musicBody)) !== null) {
       if (match[1]) {
         const txt = match[1].trim();
-        if (!/^[\^_<>@]/.test(txt) && /^[A-G][#b]?/.test(txt)) {
+        if (isAbcChordSymbol(txt)) {
           chords.push({ beat: currentBeat, durationBeats: beatsPerMeasure, symbol: txt, measureIndex });
         }
       } else if (match[2]) {

@@ -1,7 +1,7 @@
 import { formatChordSymbol } from '../core/i18n.js';
 import { mod12, pcToNoteName, prefersFlats } from '../core/MusicTheory.js';
 import { getCuratedVoicingsForChord } from '../data/voicings.js';
-import { Chord } from '../models/Chord.js';
+import { Chord, prefersFlatsForChord } from '../models/Chord.js';
 import { Tuning } from '../models/Tuning.js';
 import { Voicing } from '../models/Voicing.js';
 
@@ -343,7 +343,7 @@ export class VoicingGenerator {
   getBassFretboardMap(chordSymbol, tuning = Tuning.defaultForInstrument('bass'), fretStart = 0, fretEnd = 12, notation = 'americano') {
     const chord = Chord.parse(chordSymbol);
     const pcs = new Set(chord.getPitchClasses());
-    const useFlats = prefersFlats(chord.root) || chordSymbol.includes('b');
+    const useFlats = prefersFlatsForChord(chord);
     const points = [];
 
     for (let s = 0; s < tuning.stringCount; s++) {

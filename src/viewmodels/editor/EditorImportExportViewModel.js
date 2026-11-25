@@ -136,6 +136,7 @@ export class EditorImportExportViewModel {
           timeSignature: f.timeSignature
         });
 
+    this._audio.setChorusPlan?.(null);
     this._audio.loadTimeline(timeline);
     this._audio.configure({
       bpm: Number(f.tempoStart) || 85,
@@ -147,6 +148,7 @@ export class EditorImportExportViewModel {
             ? 'nylon-guitar'
             : 'acoustic-guitar',
       comping: f.comping || 'negras-abajo',
+      compingFeel: 'fijo',
       countInMeasures: 0,
       loopEnabled: false,
       metronomeEnabled: true,

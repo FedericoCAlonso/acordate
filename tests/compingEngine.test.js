@@ -120,7 +120,7 @@ test('CompingEngineService: etiquetas en vivo (describeLiveCompingChord), estilo
   assert.equal(describeLiveCompingChord('A7', 'D7', 'color9', false).displaySymbol, 'A9');
   assert.equal(describeLiveCompingChord('A7', 'D7', 'color13', false).displaySymbol, 'A13');
   assert.equal(describeLiveCompingChord('A7', 'D7', 'bluesNeighbor', false).displaySymbol, 'D/A');
-  assert.equal(describeLiveCompingChord('A7', 'D7', 'sideSlipDown', false).displaySymbol, 'Ab9');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'sideSlipDown', false).displaySymbol, 'Ab7');
   assert.equal(describeLiveCompingChord('A7', 'D7', 'base', true).displaySymbol, 'D7');
   assert.equal(describeLiveCompingChord('A7', 'D7', 'base', true).techniqueLabel, 'Anticipación');
   assert.equal(describeLiveCompingChord('Cmaj7', 'G7', 'color13', false).displaySymbol, 'C6/9');

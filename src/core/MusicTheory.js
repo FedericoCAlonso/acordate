@@ -74,6 +74,7 @@ export const CHORD_QUALITIES = {
   '5': [0, 7],
   '6': [0, 4, 7, 9],
   m6: [0, 3, 7, 9],
+  '6/9': [0, 4, 7, 9, 14],
   '7': [0, 4, 7, 10],
   dom7: [0, 4, 7, 10],
   maj7: [0, 4, 7, 11],
@@ -92,12 +93,37 @@ export const CHORD_QUALITIES = {
   maj9: [0, 4, 7, 11, 14],
   m9: [0, 3, 7, 10, 14],
   add9: [0, 4, 7, 14],
+  madd9: [0, 3, 7, 14],
+  '11': [0, 7, 10, 14, 17],
+  m11: [0, 3, 7, 10, 17],
   '7b9': [0, 4, 7, 10, 13],
   '7#9': [0, 4, 7, 10, 15],
   '7#11': [0, 4, 7, 10, 18],
   '7alt': [0, 4, 8, 10, 13],
-  '13': [0, 4, 7, 10, 21]
+  '13': [0, 4, 7, 10, 21],
+  maj13: [0, 4, 7, 11, 14, 21],
+  m13: [0, 3, 7, 10, 14, 21]
 };
+
+/**
+ * Predicado único de dominio para distinguir si un texto entre comillas en ABC corresponde
+ * realmente a un cifrado de acorde (americano o latino, incluyendo `6/9` y slash chords),
+ * rechazando indicaciones textuales como `"Fine"`, `"D.C."`, `"Al Coda"`, `"Bridge"` o digitaciones `"^1"`.
+ * @param {string} rawText Texto sin comillas.
+ * @param {{ allowLatin?: boolean }} [opts={}] Si true, acepta también cifrado latino (`Do`, `Rem7`, `Sol7/Si`).
+ * @returns {boolean} True si es un símbolo de acorde válido.
+ */
+export function isAbcChordSymbol(rawText, { allowLatin = false } = {}) {
+  const txt = String(rawText || '').trim();
+  if (!txt || /^[\^_<>@]/.test(txt)) return false;
+  const americanRe = /^[A-G][#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|6\/9|\d|[#b♯♭](?=\d)|\([^)]*\))*(?:\/[A-G][#b♯♭]?)?$/;
+  if (americanRe.test(txt)) return true;
+  if (allowLatin) {
+    const latinRe = /^(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?(?:m|maj|min|dim|aug|sus|add|alt|M|\+|-|°|ø|6\/9|\d|[#b♯♭](?=\d)|\([^)]*\))*(?:\/(?:Do|Re|Mi|Fa|Sol|La|Si)[#b♯♭]?)?$/;
+    if (latinRe.test(txt)) return true;
+  }
+  return false;
+}
 
 /**
  * Normaliza un entero módulo 12 siempre en el rango [0, 11].
@@ -200,24 +226,32 @@ export function getKeySignatureMap(keyStr = 'C') {
 
 /**
  * Convierte un número MIDI a sintaxis de altura ABC (C4 = "C", C5 = "c", C3 = "C,").
- * Considera la armadura de clave para no redundar alteraciones innecesarias.
+ * Considera la armadura de clave y las alteraciones accidentales vigentes por letra+octava dentro del compás.
  * @param {number} midi Número MIDI a convertir.
  * @param {boolean} [useFlats=false] Si true, prefiere bemoles para notas cromáticas.
  * @param {Record<string, number>|null} [keyMap=null] Armadura de clave activa para emitir =, ^ o _ correctamente.
+ * @param {Record<string, number>|null} [barAccidentals=null] Mapa mutable `${letra}${octava} -> acc` del compás actual.
  * @returns {string} Token de altura en notación ABC.
  */
-export function midiToAbcPitch(midi, useFlats = false, keyMap = null) {
+export function midiToAbcPitch(midi, useFlats = false, keyMap = null, barAccidentals = null) {
   const pc = mod12(midi);
   const octave = Math.floor(midi / 12) - 1;
   const noteName = pcToNoteName(pc, useFlats);
   const letter = noteName[0];
   const desiredAcc = noteName[1] === '#' ? 1 : noteName[1] === 'b' ? -1 : 0;
+  const pitchKey = `${letter}${octave}`;
 
   let accPrefix = '';
-  if (keyMap) {
-    const keyAcc = keyMap[letter] || 0;
-    if (desiredAcc !== keyAcc) {
+  if (keyMap || barAccidentals) {
+    const activeAcc =
+      barAccidentals && barAccidentals[pitchKey] !== undefined
+        ? barAccidentals[pitchKey]
+        : (keyMap ? (keyMap[letter] || 0) : 0);
+    if (desiredAcc !== activeAcc) {
       accPrefix = desiredAcc === 1 ? '^' : desiredAcc === -1 ? '_' : '=';
+    }
+    if (barAccidentals) {
+      barAccidentals[pitchKey] = desiredAcc;
     }
   } else if (desiredAcc === 1) {
     accPrefix = '^';
@@ -284,7 +318,10 @@ export function abcPitchToMidi(abcNoteToken, keyMap = null, barAccidentals = nul
 export function parseChord(symbol) {
   if (!symbol || typeof symbol !== 'string') return null;
   const trimmed = symbol.trim();
-  const [mainPart, bassPart] = trimmed.split('/');
+  // Solo separa bajo alternativo cuando lo que sigue a '/' es una nota válida (preservando '6/9')
+  const slashMatch = trimmed.match(/^(.*)\/([A-G][#b]?)$/);
+  const mainPart = slashMatch ? slashMatch[1] : trimmed;
+  const bassPart = slashMatch ? slashMatch[2] : null;
   const match = mainPart.match(/^([A-G])([#b]?)(.*)$/);
   if (!match) return null;
 
@@ -490,9 +527,7 @@ function transposeMusicLine(line, semitones, srcKeyMap, dstKeyMap, useFlats) {
       const end = line.indexOf('"', i + 1);
       if (end !== -1) {
         const content = line.slice(i + 1, end);
-        if (/^[\^_<>@]/.test(content)) {
-          result += `"${content}"`;
-        } else if (/^[A-G][#b]?/.test(content)) {
+        if (isAbcChordSymbol(content)) {
           result += `"${transposeChordSymbol(content, semitones, useFlats)}"`;
         } else {
           result += `"${content}"`;
@@ -625,7 +660,7 @@ export function extractMeasuresFromAbc(abcText) {
     let match;
     while ((match = regex.exec(raw)) !== null) {
       const text = match[1].trim();
-      if (!/^[\^_<>@]/.test(text) && /^[A-G][#b]?/.test(text)) {
+      if (isAbcChordSymbol(text)) {
         chords.push(text);
       }
     }

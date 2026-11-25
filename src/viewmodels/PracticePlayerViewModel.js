@@ -2,6 +2,7 @@ import { NOTE_TO_PC, pcToNoteName, prefersFlats, transposeAbc, transposeChordSym
 import { ComputedObservable, Observable } from '../core/Observable.js';
 import { Exercise } from '../models/Exercise.js';
 import {
+  bindChorusVisualNodes,
   buildChorusAbcScore,
   planChorusComping
 } from '../services/CompingEngineService.js';
@@ -68,11 +69,17 @@ export class PracticePlayerViewModel {
     this.showHarmonicAnalysis = new Observable(false);
     /** Walking bass sugerido generado sobre la progresión activa. */
     this.generatedWalkingAbc = new Observable('');
-    /** Plan pre-generado del coro completo para Orgánico/Vivo (sincroniza audio, cifrado, diagramas y partitura). */
+    /** Estilo del generador de walking bass ('clasico' | 'movimiento' | 'tresillos'). */
+    this.walkingVariant = new Observable('clasico');
+    /** Tipo de aproximación del walking bass ('cromatica' | 'diatonica'). */
+    this.walkingApproach = new Observable('cromatica');
+    /** Capa de partitura activa en el atril ('original' | 'chorus' | 'walking'). */
+    this.activeScoreLayer = new Observable('original');
+    /** Plan pre-generado del coro completo (sincroniza audio, cifrado, diagramas y partitura). */
     this.chorusPlan = new Observable(null);
     /** Partitura ABC correspondiente al coro pre-generado actualmente. */
     this.chorusScoreAbc = new Observable('');
-    /** Indica si el usuario desplegó el panel de partitura del coro generado. */
+    /** Compatibilidad: indica si la capa activa actual es la partitura del coro generado. */
     this.showChorusScore = new Observable(false);
     /** Si está fijado, mantiene la misma variación al repetir en bucle en lugar de regenerar cada vuelta. */
     this.lockChorusVariation = new Observable(false);
@@ -143,7 +150,12 @@ export class PracticePlayerViewModel {
       getPractice: () => this.practice.value,
       onSyncConfig: () => this._syncAudioConfig(),
       onPassCompleteHook: () => {
-        if (this.transport.loopEnabled.value && !this.lockChorusVariation.value && this.compingFeel.value !== 'fijo') {
+        if (
+          this.transport.loopEnabled.value &&
+          !this.lockChorusVariation.value &&
+          this.compingFeel.value !== 'fijo' &&
+          this.activeScoreLayer.value !== 'chorus'
+        ) {
           this.regenerateChorusPlan();
         }
       }
@@ -207,11 +219,31 @@ export class PracticePlayerViewModel {
       return pr ? new Exercise({ practiceId: pr.id, abc: this.transposedAbc.value, key: this.transposedKey.value, timeSignature: pr.timeSignature }) : null;
     });
 
+    /** Fuente ABC activa unificada según `activeScoreLayer` ('original' | 'chorus' | 'walking'). */
+    this.activeAbcSource = new ComputedObservable(
+      [
+        this.practice,
+        this.transposedAbc,
+        this.chorusScoreAbc,
+        this.generatedWalkingAbc,
+        this.activeScoreLayer
+      ],
+      () => {
+        const layer = this.activeScoreLayer.value;
+        if (layer === 'walking' && this.generatedWalkingAbc.value) return this.generatedWalkingAbc.value;
+        if (layer === 'chorus' && this.chorusScoreAbc.value) return this.chorusScoreAbc.value;
+        if (this.transposedAbc.value) return this.transposedAbc.value;
+        return this.chorusScoreAbc.value || '';
+      }
+    );
+
     /** ABC preparado finalmente para renderizar con abcjs con capas de anotación independientes. */
     this.renderableAbc = new ComputedObservable(
       [
         this.practice,
-        this.transposedAbc,
+        this.activeAbcSource,
+        this.activeScoreLayer,
+        this.voicingInstrument,
         this.viewMode,
         this.showFingerings,
         this.showLeftHand,
@@ -224,22 +256,37 @@ export class PracticePlayerViewModel {
       ],
       () => {
         const pr = this.practice.value;
-        if (!pr) return '';
+        const sourceAbc = this.activeAbcSource.value;
+        if (!pr || !sourceAbc) return '';
         const mode = this.viewMode.value;
-        const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
-        return this._abc.prepareAbcForRender(this.transposedAbc.value, {
+        const layer = this.activeScoreLayer.value;
+        const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+        const isWalking = layer === 'walking';
+        const isChorus = layer === 'chorus' || (pr.type === 'harmony' && layer === 'original');
+        const isPiano = isWalking
+          ? false
+          : isChorus
+            ? vInst === 'piano'
+            : (pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
+        const isBass = isWalking
+          ? true
+          : isChorus
+            ? (vInst === 'bajo' || vInst === 'bajo-5')
+            : (!isPiano && pr.instruments.includes('bajo'));
+
+        return this._abc.prepareAbcForRender(sourceAbc, {
           viewMode: mode,
           chordNotation: this._appVm.settings.value.chordNotation,
-          showFingerings: this.showFingerings.value,
-          showLeftHand: this.showLeftHand.value,
-          showRightHand: this.showRightHand.value,
-          showChords: mode === 'pentagrama' ? false : this.showChordsOnScore.value,
+          showFingerings: isChorus ? false : this.showFingerings.value,
+          showLeftHand: isChorus ? false : this.showLeftHand.value,
+          showRightHand: isChorus ? false : this.showRightHand.value,
+          showChords: mode === 'pentagrama' ? false : (isChorus || isWalking ? true : this.showChordsOnScore.value),
           showOtherAnnotations: this.showOtherAnnotations.value,
-          fingerings: pr.fingerings,
-          showBassFunctions: this.showBassFunctions.value,
-          showHarmonicAnalysis: this.showHarmonicAnalysis.value,
-          harmonicAnalysis: pr.harmonicAnalysis || [],
-          isBass: !isPiano && pr.instruments.includes('bajo'),
+          fingerings: isChorus || isWalking ? {} : pr.fingerings,
+          showBassFunctions: isBass ? this.showBassFunctions.value : false,
+          showHarmonicAnalysis: isChorus || isWalking ? false : this.showHarmonicAnalysis.value,
+          harmonicAnalysis: isChorus || isWalking ? [] : (pr.harmonicAnalysis || []),
+          isBass,
           isPiano,
           stripTitle: true
         });
@@ -275,6 +322,7 @@ export class PracticePlayerViewModel {
     this.practice.set(practice || null);
     this.transposeSemitones.set(0);
     this.generatedWalkingAbc.set('');
+    this.activeScoreLayer.set('original');
     this.showChorusScore.set(false);
     this.lockChorusVariation.set(false);
     this.hasMultipleVoices.set(Boolean(practice?.abc && /^V:\s*2/m.test(practice.abc)));
@@ -345,15 +393,51 @@ export class PracticePlayerViewModel {
       const harmonyTl = this.buildHarmonyTimeline();
       this.measureCount.set(harmonyTl.measureCount);
       this._audio.loadTimeline(harmonyTl);
+    } else if (this._audio?._timeline) {
+      enrichTimelineWithHarmonyVoicings(this._audio._timeline, {
+        timeSignature: pr.timeSignature || '4/4',
+        harmonySteps: this.harmonySteps.value,
+        voicingInstrument: this.voicingInstrument.value
+      });
     }
     this.regenerateChorusPlan();
   }
 
-  /** Registra la timeline visual extraída tras renderizar con abcjs. */
+  /** Registra la timeline visual extraída tras renderizar con abcjs en `_scoreEl`. */
   registerVisualTimeline(timeline) {
     if (!timeline) return;
+    const pr = this.practice.value;
+    const layer = this.activeScoreLayer.value;
+
+    // Capa Coro generado (o partitura de práctica harmony): enlaza los SVG con `chorusPlan` sin perder el groove
+    if (layer === 'chorus' || (pr?.type === 'harmony' && layer === 'original')) {
+      if (this.chorusPlan.value) {
+        bindChorusVisualNodes(this.chorusPlan.value, timeline);
+        this._audio.setChorusPlan?.(this.chorusPlan.value);
+      }
+      if (timeline.hasMultipleVoices !== undefined) this.hasMultipleVoices.set(Boolean(timeline.hasMultipleVoices));
+      return;
+    }
+
+    // Capa Walking Bass generado: carga la línea real del walking en AudioSynthService + acordes de acompañamiento
+    if (layer === 'walking') {
+      timeline.isBassPiece = true;
+      timeline.isHarmonyOnly = false;
+      enrichTimelineWithHarmonyVoicings(timeline, {
+        timeSignature: pr?.timeSignature || '4/4',
+        harmonySteps: this.harmonySteps.value,
+        voicingInstrument: this.voicingInstrument.value
+      });
+      this.measureCount.set(timeline.measureCount);
+      this.hasMultipleVoices.set(false);
+      if (this.loopEndMeasure.value > timeline.measureCount) this.loopEndMeasure.set(timeline.measureCount);
+      this._audio.setChorusPlan?.(null);
+      this._audio.loadTimeline(timeline);
+      return;
+    }
+
     enrichTimelineWithHarmonyVoicings(timeline, {
-      timeSignature: this.practice.value?.timeSignature || '4/4',
+      timeSignature: pr?.timeSignature || '4/4',
       harmonySteps: this.harmonySteps.value,
       voicingInstrument: this.voicingInstrument.value
     });
@@ -361,6 +445,85 @@ export class PracticePlayerViewModel {
     if (timeline.hasMultipleVoices !== undefined) this.hasMultipleVoices.set(Boolean(timeline.hasMultipleVoices));
     if (this.loopEndMeasure.value > timeline.measureCount) this.loopEndMeasure.set(timeline.measureCount);
     this._audio.loadTimeline(timeline);
+  }
+
+  /** Carga la timeline reproducible del walking bass generado (incluso antes del render SVG). */
+  _loadWalkingTimeline() {
+    const pr = this.practice.value;
+    const abc = this.generatedWalkingAbc.value;
+    if (!pr || !abc) return;
+    const timeline = this._abc.extractTimeline(null, abc, {
+      instrument: 'bajo',
+      isBass: true,
+      isPiano: false,
+      timeSignature: pr.timeSignature || '4/4'
+    });
+    timeline.isBassPiece = true;
+    timeline.isHarmonyOnly = false;
+    enrichTimelineWithHarmonyVoicings(timeline, {
+      timeSignature: pr.timeSignature || '4/4',
+      harmonySteps: this.harmonySteps.value,
+      voicingInstrument: this.voicingInstrument.value
+    });
+    this.measureCount.set(timeline.measureCount);
+    if (this.loopEndMeasure.value > timeline.measureCount) this.loopEndMeasure.set(timeline.measureCount);
+    this._audio.setChorusPlan?.(null);
+    this._audio.loadTimeline(timeline);
+  }
+
+  /**
+   * Cambia la capa activa de partitura en el atril ('original' | 'chorus' | 'walking')
+   * manteniendo un único pipeline de audio, vista y cursor sincronizado.
+   * @param {'original'|'chorus'|'walking'} layer Capa destino.
+   */
+  setScoreLayer(layer) {
+    const pr = this.practice.value;
+    if (!pr || !['original', 'chorus', 'walking'].includes(layer)) return;
+    if (layer === 'walking') {
+      if (!this.generatedWalkingAbc.value) {
+        this.generateWalkingForCurrent({ activate: true });
+        return;
+      }
+      this.activeScoreLayer.set('walking');
+      this.showChorusScore.set(false);
+      if (this.viewMode.value === 'diagramas' || this.viewMode.value === 'cifrado') {
+        this.viewMode.set('mixto');
+      }
+      this._loadWalkingTimeline();
+      return;
+    }
+
+    if (layer === 'chorus') {
+      if (!this.chorusScoreAbc.value) {
+        this.regenerateChorusPlan({ includeFixed: true });
+      }
+      this.activeScoreLayer.set('chorus');
+      this.showChorusScore.set(true);
+      if (pr.type === 'harmony') {
+        const harmonyTl = this.buildHarmonyTimeline();
+        this.measureCount.set(harmonyTl.measureCount);
+        this._audio.loadTimeline(harmonyTl);
+      } else {
+        this._loadMelodicTimeline(pr);
+      }
+      this._audio.setChorusPlan?.(this.chorusPlan.value);
+      if (this.viewMode.value === 'diagramas' || this.viewMode.value === 'cifrado') {
+        this.viewMode.set('pentagrama');
+      }
+      return;
+    }
+
+    // Capa 'original'
+    this.activeScoreLayer.set('original');
+    this.showChorusScore.set(false);
+    if (pr.type === 'harmony') {
+      const harmonyTl = this.buildHarmonyTimeline();
+      this.measureCount.set(harmonyTl.measureCount);
+      this._audio.loadTimeline(harmonyTl);
+    } else {
+      this._loadMelodicTimeline(pr);
+    }
+    this._audio.setChorusPlan?.(this.compingFeel.value !== 'fijo' ? this.chorusPlan.value : null);
   }
 
   /** Empuja toda la configuración del reproductor hacia `AudioSynthService`. */
@@ -389,8 +552,25 @@ export class PracticePlayerViewModel {
     this.transposeSemitones.set(Math.max(-11, Math.min(11, Math.round(Number(semitones) || 0))));
     const pr = this.practice.value;
     if (!pr) return;
-    if (pr.type === 'harmony') this._audio.loadTimeline(this.buildHarmonyTimeline());
-    else this._loadMelodicTimeline(pr);
+    if (this.generatedWalkingAbc.value) {
+      const abc = generateWalkingAbcForPractice({
+        walkingBassGenerator: this._walkingGen,
+        practice: pr,
+        harmonySteps: this.harmonySteps.value,
+        transposedKey: this.transposedKey.value,
+        variant: this.walkingVariant.value,
+        approach: this.walkingApproach.value,
+        voicingInstrument: this.voicingInstrument.value
+      });
+      this.generatedWalkingAbc.set(abc);
+    }
+    if (this.activeScoreLayer.value === 'walking' && this.generatedWalkingAbc.value) {
+      this._loadWalkingTimeline();
+    } else if (pr.type === 'harmony') {
+      this._audio.loadTimeline(this.buildHarmonyTimeline());
+    } else {
+      this._loadMelodicTimeline(pr);
+    }
     this.regenerateChorusPlan();
   }
   resetTranspose() { this.transpose(0); }
@@ -462,28 +642,51 @@ export class PracticePlayerViewModel {
     this._appVm.showSnackbar(`Bucle en sección ${sec.label} (compases ${sec.startMeasure}–${sec.endMeasure}).`);
   }
 
-  /** Genera walking bass sobre la progresión actual delegando en el helper de fábrica. */
-  generateWalkingForCurrent() {
+  /**
+   * Genera walking bass sobre la progresión actual (con soporte para compases partidos, 3/4 y 5c)
+   * y lo activa directamente en el pipeline de audio y partitura con cursor sincronizado.
+   * @param {{ variant?: string, approach?: string, activate?: boolean }} [opts={}] Opciones de estilo.
+   * @returns {string} Partitura ABC generada.
+   */
+  generateWalkingForCurrent(opts = {}) {
+    if (opts.variant) this.walkingVariant.set(opts.variant);
+    if (opts.approach) this.walkingApproach.set(opts.approach);
     const abc = generateWalkingAbcForPractice({
       walkingBassGenerator: this._walkingGen,
       practice: this.practice.value,
       harmonySteps: this.harmonySteps.value,
-      transposedKey: this.transposedKey.value
+      transposedKey: this.transposedKey.value,
+      variant: this.walkingVariant.value,
+      approach: this.walkingApproach.value,
+      voicingInstrument: this.voicingInstrument.value
     });
     if (!abc) return '';
     this.generatedWalkingAbc.set(abc);
-    this._appVm.showSnackbar('Walking bass generado sobre la progresión. Podés guardarlo como práctica editable.');
+    if (opts.activate !== false) {
+      this.activeScoreLayer.set('walking');
+      this.showChorusScore.set(false);
+      if (this.viewMode.value === 'diagramas' || this.viewMode.value === 'cifrado') {
+        this.viewMode.set('mixto');
+      }
+      this._loadWalkingTimeline();
+    }
+    this._appVm.showSnackbar('Walking bass listo: dale Play para escucharlo con cursor y acordes.');
     return abc;
   }
 
-  /** Guarda el walking bass generado como práctica editable del usuario. */
+  /** Guarda el walking bass generado en "Mis prácticas" sin expulsar al usuario del Reproductor. */
   async saveGeneratedWalkingAsPractice() {
     const abc = this.generatedWalkingAbc.value;
     const pr = this.practice.value;
-    if (!abc || !pr) return;
+    if (!abc || !pr) return null;
     const nextPr = createWalkingBassPractice({ practice: pr, abc, transposedKey: this.transposedKey.value });
     await this._appVm.upsertUserPractice(nextPr);
-    this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`);
+    this._appVm.showSnackbar('Walking bass guardado en «Mis prácticas».', {
+      actionLabel: 'Abrir en Editor',
+      durationMs: 6500,
+      onAction: () => this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`)
+    });
+    return nextPr;
   }
 
   /** Alterna verificación local delegando en `ProgressStore`. */
@@ -530,7 +733,7 @@ export class PracticePlayerViewModel {
   regenerateChorusPlan(options = {}) {
     const pr = this.practice.value;
     const feel = this.compingFeel.value;
-    if (!pr || feel === 'fijo') {
+    if (!pr) {
       this.chorusPlan.set(null);
       this.chorusScoreAbc.set('');
       this._audio.setChorusPlan?.(null);
@@ -561,31 +764,60 @@ export class PracticePlayerViewModel {
       rng: options.rng
     });
 
+    const feelLabel = feel === 'vivo' ? 'Vivo' : feel === 'organico' ? 'Orgánico' : 'Fijo';
     const abc = buildChorusAbcScore(plan, {
-      title: `${pr.title} (${feel === 'vivo' ? 'Vivo' : 'Orgánico'})`,
+      title: `${pr.title} (${feelLabel})`,
       key: this.transposedKey.value || pr.key || 'C',
       timeSignature: pr.timeSignature || '4/4',
       voicingInstrument: vInst
     });
 
-    this._audio.setChorusPlan?.(plan);
+    if (this.activeScoreLayer.value !== 'walking') {
+      const bindToAudio = feel !== 'fijo' || this.activeScoreLayer.value === 'chorus' || (pr.type === 'harmony' && this.viewMode.value === 'pentagrama');
+      this._audio.setChorusPlan?.(bindToAudio ? plan : null);
+    }
     this.chorusPlan.set(plan, true);
     this.chorusScoreAbc.set(abc);
     return plan;
   }
 
-  /** Muestra u oculta la partitura ABC generada del coro activo. */
+  /** Muestra u oculta la partitura ABC generada del coro activo usando la superficie principal del atril. */
   toggleShowChorusScore() {
-    const next = !this.showChorusScore.value;
-    if (next && !this.chorusPlan.value && this.compingFeel.value !== 'fijo') {
-      this.regenerateChorusPlan();
+    const next = this.activeScoreLayer.value !== 'chorus';
+    if (next) {
+      this.setScoreLayer('chorus');
+    } else {
+      this.setScoreLayer('original');
+      if (this.practice.value?.type === 'harmony' && this.viewMode.value === 'pentagrama') {
+        this.viewMode.set('diagramas');
+      }
     }
-    this.showChorusScore.set(next);
   }
 
   /** Fija o libera la variación actual para conservarla entre repeticiones del bucle. */
   toggleLockChorusVariation() {
     this.lockChorusVariation.set(!this.lockChorusVariation.value);
+  }
+
+  /**
+   * Resuelve un voicing tocable (Voicing o PianoVoicing) para cualquier variación mostrada en vivo
+   * (ej. `A13`, `D/A`, `Ab7`, `C6/9`) permitiendo previsualizar su diagrama real al tocar su chip.
+   * @param {string} chordSymbol Símbolo americano de la variación.
+   * @returns {object|null} Voicing ejecutable o null si no se pudo resolver.
+   */
+  resolveVariationVoicing(chordSymbol) {
+    if (!chordSymbol) return null;
+    const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const customChords = [
+      ...(this.practice.value?.customVoicings || []),
+      ...(this._appVm.progress.value?.customChords || [])
+    ];
+    try {
+      const cands = this.fingeringDesigner._designer.getCandidateVoicingsForChord(chordSymbol, vInst, customChords);
+      return cands[0] || null;
+    } catch {
+      return null;
+    }
   }
 
   /** Reproduce un conjunto exacto de alturas MIDI de una variación al tocar su chip en Diagramas. */
@@ -605,11 +837,11 @@ export class PracticePlayerViewModel {
     });
   }
 
-  /** Guarda la partitura generada del coro activo como práctica editable en el Editor. */
+  /** Guarda la partitura generada del coro activo en "Mis prácticas" sin expulsar al usuario del Atril. */
   async saveChorusAsPractice() {
     const pr = this.practice.value;
     if (!pr) return null;
-    if (!this.chorusScoreAbc.value) this.regenerateChorusPlan();
+    if (!this.chorusScoreAbc.value) this.regenerateChorusPlan({ includeFixed: true });
     const abc = this.chorusScoreAbc.value;
     if (!abc) return null;
     const nextPr = createChorusVariationPractice({
@@ -621,8 +853,11 @@ export class PracticePlayerViewModel {
       voicingInstrument: this.voicingInstrument.value
     });
     await this._appVm.upsertUserPractice(nextPr);
-    this._appVm.showSnackbar('Variación guardada como práctica editable.');
-    this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`);
+    this._appVm.showSnackbar('Variación guardada en «Mis prácticas».', {
+      actionLabel: 'Abrir en Editor',
+      durationMs: 6500,
+      onAction: () => this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`)
+    });
     return nextPr;
   }
 
@@ -670,6 +905,7 @@ export class PracticePlayerViewModel {
     }
     this.practiceStats.dispose();
     this.renderableAbc.dispose();
+    this.activeAbcSource.dispose();
     this.exercise.dispose();
     this.fingeringDesigner.dispose();
     this.transposedKey.dispose();

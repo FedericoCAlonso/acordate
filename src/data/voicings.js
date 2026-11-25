@@ -180,7 +180,7 @@ export const MOVABLE_BASS_TEMPLATES = [
   { key: 'bass-inv3-min-slash', quality: 'm', rootString: 3, offsets: [1, 1, null, 0], fingers: [2, 3, null, 1], minRootMidi: 48, tags: ['triada', 'inversion'], allowSlashSeven: true },
 
   // Disminuidas, aumentadas y suspendidas
-  { key: 'bass-dim-triad', quality: 'dim', rootString: 0, offsets: [0, 1, null, 0], fingers: [1, 2, null, 1], minRootMidi: 35, tags: ['triada', 'decima'] },
+  { key: 'bass-dim-triad', quality: 'dim', rootString: 0, offsets: [0, 1, null, 0], fingers: [1, 2, null, 1], minRootMidi: 36, tags: ['triada', 'decima'] },
   { key: 'bass-aug-triad', quality: 'aug', rootString: 0, offsets: [0, 3, null, 1], fingers: [1, 4, null, 2], minRootMidi: 33, tags: ['triada', 'decima'] },
   { key: 'bass-sus4-e', quality: 'sus4', rootString: 0, offsets: [0, 2, null, 2], fingers: [1, 3, null, 4], minRootMidi: 33, tags: ['triada'] },
   { key: 'bass-sus2-a', quality: 'sus2', rootString: 1, offsets: [null, 0, 2, 4], fingers: [null, 1, 2, 4], minRootMidi: 38, tags: ['triada'] },
@@ -207,9 +207,12 @@ export const MOVABLE_BASS_TEMPLATES = [
   { key: 'bass-6-e', quality: '6', rootString: 0, offsets: [0, null, -1, 1], fingers: [2, null, 1, 3], minRootMidi: 33, tags: ['extension', 'shell'] },
   { key: 'bass-m6-e', quality: 'm6', rootString: 0, offsets: [0, null, -1, 0], fingers: [2, null, 1, 3], minRootMidi: 33, tags: ['extension', 'shell'] },
   { key: 'bass-add9-a', quality: 'add9', rootString: 1, offsets: [null, 0, 2, 4], fingers: [null, 1, 2, 4], minRootMidi: 38, tags: ['extension'] },
-  { key: 'bass-9-full-e', quality: '9', rootString: 0, offsets: [0, -1, 0, -1], fingers: [2, 1, 4, 3], minRootMidi: 36, tags: ['extension'] },
-  { key: 'bass-m9-full-e', quality: 'm9', rootString: 0, offsets: [0, -2, 0, -1], fingers: [3, 1, 4, 2], minRootMidi: 36, tags: ['extension'] },
-  { key: 'bass-maj9-full-e', quality: 'maj9', rootString: 0, offsets: [0, -1, 1, -1], fingers: [3, 1, 4, 2], minRootMidi: 36, tags: ['extension'] },
+  { key: 'bass-9-shell-e', quality: '9', rootString: 0, offsets: [0, null, 0, -1], fingers: [2, null, 3, 1], minRootMidi: 33, tags: ['extension', 'shell'] },
+  { key: 'bass-m9-shell-e', quality: 'm9', rootString: 0, offsets: [0, null, 0, -1], fingers: [2, null, 3, 1], minRootMidi: 33, tags: ['extension', 'shell'] },
+  { key: 'bass-maj9-shell-e', quality: 'maj9', rootString: 0, offsets: [0, null, 1, -1], fingers: [2, null, 3, 1], minRootMidi: 33, tags: ['extension', 'shell'] },
+  { key: 'bass-9-full-e', quality: '9', rootString: 0, offsets: [0, -1, 0, -1], fingers: [2, 1, 4, 3], minRootMidi: 41, tags: ['extension'] },
+  { key: 'bass-m9-full-e', quality: 'm9', rootString: 0, offsets: [0, -2, 0, -1], fingers: [3, 1, 4, 2], minRootMidi: 41, tags: ['extension'] },
+  { key: 'bass-maj9-full-e', quality: 'maj9', rootString: 0, offsets: [0, -1, 1, -1], fingers: [3, 1, 4, 2], minRootMidi: 41, tags: ['extension'] },
   { key: 'bass-13-rootless-a', quality: '13', rootString: 1, offsets: [null, -2, -1, -1], fingers: [null, 1, 2, 3], minRootMidi: 40, tags: ['extension', 'guias'] }
 ];
 

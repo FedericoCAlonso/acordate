@@ -16,14 +16,14 @@ import {
   getTuningForVoicingInstrument,
   normalizeVoicingInstrument
 } from '../services/FingeringDesignService.js';
+import { buildHarmonicChartBars } from '../services/HarmonicChartService.js';
 import {
   createBassFretboardMapElement,
   createChordColorLegendElement,
-  createChordDiagramElement,
   createChordSymbolElement
 } from './ChordDiagramView.js';
+import { renderVoicingDiagram } from './components/VoicingDiagramRenderer.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
-import { createPianoChordElement } from './PianoKeyboardView.js';
 import { createSliderGroup, createSwitchRow, el, icon, openModalDialog, openSheetModal } from './uiHelpers.js';
 
 /**
@@ -81,6 +81,10 @@ export class PracticePlayerView {
     this._activeSheet = null;
     /** Estado del panel rápido de capas de anotaciones (plegado por defecto para despejar la partitura). */
     this._annotationsOpen = false;
+    /** Estado del panel consolidado de Estudio (Patrón, Feel, Digitación y Walking) plegado por defecto. */
+    this._studyDrawerOpen = false;
+    /** Mapa stepIndex -> variación actualmente previsualizada con diagrama dentro de la tarjeta. */
+    this._previewedStepVar = new Map();
 
     /** Listener de teclado: barra espaciadora alterna reproducir/pausar. */
     this._onKeyDown = (e) => {
@@ -111,8 +115,8 @@ export class PracticePlayerView {
     if (this._vm.practice.value) {
       this._renderHeaderAndGuide();
       this._renderViewBar();
+      this._renderStudyDrawer();
       this._renderLiveCompingBanner();
-      this._renderChorusScorePanel();
       this._renderNotationSurface();
       this._syncTransportDom();
     }
@@ -125,13 +129,14 @@ export class PracticePlayerView {
   showPractice(practice) {
     if (!practice) return;
     if (this._vm.practice.value?.id !== practice.id) {
+      this._previewedStepVar.clear();
       this._vm.loadPractice(practice);
     }
     if (this._container) {
       this._renderHeaderAndGuide();
       this._renderViewBar();
+      this._renderStudyDrawer();
       this._renderLiveCompingBanner();
-      this._renderChorusScorePanel();
       this._renderNotationSurface();
       this._syncTransportDom();
     }
@@ -184,16 +189,16 @@ export class PracticePlayerView {
 
     this._metaStrip = el('div', { className: 'meta-strip', 'aria-label': 'Datos de la práctica' });
     this._viewBar = el('div', { className: 'player-view-bar' });
-    this._annotationsBar = el('div', { className: 'annotations-bar', 'aria-label': 'Capas de referencias en partitura' });
+    this._studyDrawer = el('div', { className: 'study-drawer', style: 'display:none', 'aria-label': 'Ajustes de estudio, acompañamiento, digitación y walking' });
+    this._annotationsBar = el('div', { className: 'annotations-bar', 'aria-label': 'Capas de referencias en partitura y diagramas' });
     this._liveCompingEl = el('div', {
       className: 'live-comping-bar',
       style: 'display:none',
       role: 'status',
       'aria-live': 'polite',
-      'aria-label': 'Acorde que suena en vivo'
+      'aria-label': 'Play-along y acompañamiento en vivo'
     });
     this._countInEl = el('div', { className: 'count-in-overlay', style: 'display:none', 'aria-live': 'assertive' });
-    this._chorusScoreHost = el('div', { className: 'chorus-score-host', style: 'display:none', 'aria-label': 'Partitura generada del coro activo' });
     this._scoreEl = el('div', { className: 'score-surface', 'aria-label': 'Partitura en pentagrama' });
     this._harmonyEl = el('div', { className: 'score-surface score-surface--panel', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
     this._chartEl = el('div', { className: 'score-surface score-surface--panel', style: 'display:none', 'aria-label': 'Grilla de cifrado de acordes' });
@@ -202,7 +207,6 @@ export class PracticePlayerView {
 
     const scoreWrap = el('div', { className: 'score-wrap' }, [
       this._countInEl,
-      this._chorusScoreHost,
       this._scoreEl,
       this._harmonyEl,
       this._chartEl
@@ -211,6 +215,7 @@ export class PracticePlayerView {
     const mainCol = el('div', { className: 'atril-workspace__main' }, [
       this._metaStrip,
       this._viewBar,
+      this._studyDrawer,
       this._annotationsBar,
       this._liveCompingEl,
       scoreWrap
@@ -269,9 +274,6 @@ export class PracticePlayerView {
       if (!this._container) return;
       const scrollY = window.scrollY;
       this._renderNotationSurface();
-      if (this._vm.showChorusScore.value) {
-        this._renderChorusScorePanel();
-      }
       if (Math.abs(window.scrollY - scrollY) > 4) {
         window.scrollTo({ top: scrollY, behavior: 'auto' });
       }
@@ -310,40 +312,72 @@ export class PracticePlayerView {
       this._vm.activeNoteEvents.subscribe((events) => this._highlightActiveNotes(events)),
       this._vm.activeMeasure.subscribe((m) => this._highlightActiveChartBar(m)),
       this._vm.activeChordStepIndex.subscribe((idx) => this._highlightActiveHarmonyStep(idx)),
-      this._vm.harmonySteps.subscribe(() => this._renderNotationSurface()),
-      this._vm.voicingInstrument.subscribe(() => this._renderNotationSurface()),
-      this._vm.fingeringDesignId.subscribe(() => this._renderNotationSurface()),
+      this._vm.harmonySteps.subscribe(() => {
+        this._renderViewBar();
+        this._renderStudyDrawer();
+        this._renderLiveCompingBanner();
+        this._renderNotationSurface();
+      }),
+      this._vm.voicingInstrument.subscribe(() => {
+        this._previewedStepVar.clear();
+        this._renderViewBar();
+        this._renderStudyDrawer();
+        this._renderLiveCompingBanner();
+        this._renderNotationSurface();
+      }),
+      this._vm.fingeringDesignId.subscribe(() => {
+        this._renderStudyDrawer();
+        this._renderNotationSurface();
+      }),
       this._vm.compingPattern.subscribe(() => {
         this._renderViewBar();
+        this._renderStudyDrawer();
+        this._renderLiveCompingBanner();
         this._renderNotationSurface();
       }),
       this._vm.compingFeel.subscribe(() => {
+        this._previewedStepVar.clear();
         this._renderViewBar();
-        this._renderNotationSurface();
+        this._renderStudyDrawer();
         this._renderLiveCompingBanner();
-        this._renderChorusScorePanel();
+        this._renderNotationSurface();
       }),
       this._vm.chorusPlan.subscribe(() => {
+        this._previewedStepVar.clear();
         this._renderLiveCompingBanner();
-        this._renderChorusScorePanel();
         this._renderNotationSurface();
       }),
-      this._vm.showChorusScore.subscribe(() => {
+      this._vm.activeScoreLayer.subscribe(() => {
+        this._renderViewBar();
+        this._renderStudyDrawer();
         this._renderLiveCompingBanner();
-        this._renderChorusScorePanel();
+        this._renderAnnotationsBar();
+        this._renderNotationSurface();
       }),
       this._vm.lockChorusVariation.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.liveCompingEvent.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.isPlaying.subscribe(() => this._renderLiveCompingBanner()),
-      this._vm.chordsEnabled.subscribe(() => this._renderNotationSurface()),
-      this._vm.bassEnabled.subscribe(() => this._renderNotationSurface()),
+      this._vm.chordsEnabled.subscribe(() => {
+        this._renderLiveCompingBanner();
+        this._renderNotationSurface();
+      }),
+      this._vm.bassEnabled.subscribe(() => {
+        this._renderLiveCompingBanner();
+        this._renderNotationSurface();
+      }),
+      this._vm.loopStartMeasure.subscribe(() => this._renderLiveCompingBanner()),
+      this._vm.loopEndMeasure.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.voiceMode.subscribe(() => this._renderViewBar()),
       this._vm.hasMultipleVoices.subscribe(() => this._renderViewBar()),
       this._vm.showHarmonicAnalysis.subscribe(() => {
         this._renderViewBar();
         this._renderAnnotationsBar();
       }),
-      this._vm.generatedWalkingAbc.subscribe(() => this._renderNotationSurface()),
+      this._vm.generatedWalkingAbc.subscribe(() => {
+        this._renderViewBar();
+        this._renderStudyDrawer();
+        this._renderLiveCompingBanner();
+      }),
       this._vm.practiceStats.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.sessionRepetitions.subscribe(() => this._renderHeaderAndGuide()),
       this._vm.isAtrilFullscreen.subscribe((full) => {
@@ -483,15 +517,24 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza el cajón compacto de capas de anotación sobre la partitura cuando el usuario toca "Referencias".
+   * Renderiza el cajón compacto de capas de anotación (pentagrama + etiquetas de diagramas).
    */
   _renderAnnotationsBar() {
     if (!this._annotationsBar) return;
     const pr = this._vm.practice.value;
     const mode = this._vm.viewMode.value;
-    const isStaffVisible = Boolean(pr && pr.type !== 'harmony' && mode !== 'cifrado' && mode !== 'diagramas');
+    const hasSteps = (this._vm.harmonySteps.value || []).length > 0;
+    const isStaffVisible = Boolean(
+      pr &&
+      (pr.type !== 'harmony' ? mode !== 'cifrado' && mode !== 'diagramas' : mode === 'pentagrama' || mode === 'mixto') &&
+      this._vm.renderableAbc.value
+    );
+    const isDiagramsVisible = Boolean(
+      pr &&
+      ((pr.type === 'harmony' && mode !== 'cifrado' && mode !== 'pentagrama') || mode === 'diagramas' || (hasSteps && mode === 'mixto'))
+    );
 
-    if (!isStaffVisible || !this._annotationsOpen) {
+    if ((!isStaffVisible && !isDiagramsVisible) || !this._annotationsOpen) {
       this._annotationsBar.style.display = 'none';
       this._annotationsBar.innerHTML = '';
       return;
@@ -501,63 +544,136 @@ export class PracticePlayerView {
     this._annotationsBar.innerHTML = '';
 
     const isChordsDisabledByMode = mode === 'pentagrama';
-    const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
-    const isBass = !isPiano && pr.instruments.includes('bajo');
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const layer = this._vm.activeScoreLayer.value;
+    const isPiano = layer === 'walking'
+      ? false
+      : (pr.type === 'harmony' || layer === 'chorus')
+        ? vInst === 'piano'
+        : (pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
+    const isBass = layer === 'walking'
+      ? true
+      : (pr.type === 'harmony' || layer === 'chorus')
+        ? (vInst === 'bajo' || vInst === 'bajo-5')
+        : (!isPiano && pr.instruments.includes('bajo'));
 
-    const chips = [
-      {
-        label: 'Mano izq.',
-        title: isPiano
-          ? 'Digitación 1–5 de mano izquierda (pentagrama inferior / clave de fa)'
-          : 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
-        active: this._vm.showLeftHand.value,
-        onClick: () => { this._vm.toggleLeftHand(); this._renderViewBar(); }
-      },
-      {
-        label: 'Mano der.',
-        title: isPiano
-          ? 'Digitación 1–5 de mano derecha (pentagrama superior / clave de sol)'
-          : 'Dedos de pulsación (p, i, m, a) y rasgueos (↓ ↑)',
-        active: this._vm.showRightHand.value,
-        onClick: () => { this._vm.toggleRightHand(); this._renderViewBar(); }
-      },
-      {
-        label: 'Acordes',
-        title: isChordsDisabledByMode ? 'Cambiá a Mixto para mostrar acordes sobre el pentagrama' : 'Cifrado de acordes sobre la partitura',
-        active: !isChordsDisabledByMode && this._vm.showChordsOnScore.value,
-        onClick: () => {
-          if (isChordsDisabledByMode) {
-            this._vm.setViewMode('mixto');
-            this._vm.showChordsOnScore.set(true);
-          } else {
-            this._vm.toggleChordsOnScore();
+    const nodes = [];
+    if (isStaffVisible) {
+      const chips = [
+        {
+          label: 'Mano izq.',
+          title: isPiano
+            ? 'Digitación 1–5 de mano izquierda (clave de fa)'
+            : 'Dedos 0–4, cuerdas (①–⑥) y posiciones romanas (I–XII)',
+          active: this._vm.showLeftHand.value,
+          onClick: () => { this._vm.toggleLeftHand(); this._renderViewBar(); }
+        },
+        {
+          label: 'Mano der.',
+          title: isPiano
+            ? 'Digitación 1–5 de mano derecha (clave de sol)'
+            : 'Dedos de pulsación (p, i, m, a) y rasgueos (↓ ↑)',
+          active: this._vm.showRightHand.value,
+          onClick: () => { this._vm.toggleRightHand(); this._renderViewBar(); }
+        },
+        {
+          label: 'Acordes',
+          title: isChordsDisabledByMode ? 'Cambiá a Mixto para mostrar acordes sobre el pentagrama' : 'Cifrado de acordes sobre la partitura',
+          active: !isChordsDisabledByMode && this._vm.showChordsOnScore.value,
+          onClick: () => {
+            if (isChordsDisabledByMode) {
+              this._vm.setViewMode('mixto');
+              this._vm.showChordsOnScore.set(true);
+            } else {
+              this._vm.toggleChordsOnScore();
+            }
+            this._renderViewBar();
           }
-          this._renderViewBar();
+        },
+        {
+          label: isBass ? 'Funciones' : 'Análisis',
+          title: isBass ? 'Funciones armónicas de bajo (R, 3, 5, 7, Crom)' : 'Anotaciones de análisis en partitura',
+          active: this._vm.showOtherAnnotations.value,
+          onClick: () => { this._vm.toggleOtherAnnotations(); this._renderViewBar(); }
         }
-      },
-      {
-        label: isBass ? 'Funciones' : 'Análisis',
-        title: isBass ? 'Funciones armónicas de bajo (R, 3, 5, 7, Crom) y marcas de texto' : 'Grados romanos y anotaciones de análisis',
-        active: this._vm.showOtherAnnotations.value,
-        onClick: () => { this._vm.toggleOtherAnnotations(); this._renderViewBar(); }
+      ];
+      if (pr?.harmonicAnalysis?.length > 0 && layer === 'original') {
+        chips.push({
+          label: 'Grados',
+          title: 'Mostrar u ocultar análisis armónico (grados romanos y cadencias)',
+          active: this._vm.showHarmonicAnalysis.value,
+          onClick: () => {
+            this._vm.showHarmonicAnalysis.set(!this._vm.showHarmonicAnalysis.value);
+            this._renderViewBar();
+          }
+        });
       }
-    ];
-
-    this._annotationsBar.append(
-      ...chips.map((c) =>
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip m3-chip--compact',
-            ripple: true,
-            title: c.title,
-            'aria-pressed': String(Boolean(c.active)),
-            onClick: c.onClick
-          },
-          [c.label]
+      nodes.push(
+        ...chips.map((c) =>
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-chip m3-chip--compact',
+              ripple: true,
+              title: c.title,
+              'aria-pressed': String(Boolean(c.active)),
+              onClick: c.onClick
+            },
+            [c.label]
+          )
         )
-      ),
+      );
+    }
+
+    if (isDiagramsVisible) {
+      const curLbl = this._appVm.settings.value.diagramLabelMode || 'fingers';
+      const labelOpts = [
+        { id: 'fingers', label: 'Dedos' },
+        { id: 'functions', label: 'Funciones' },
+        { id: 'notes', label: 'Notas' }
+      ];
+      nodes.push(
+        el('div', { className: 'm3-segmented', role: 'group', 'aria-label': 'Etiquetas en diagramas' },
+          labelOpts.map((opt) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-segmented__btn',
+                'aria-pressed': String(curLbl === opt.id),
+                onClick: () => {
+                  this._appVm.updateSettings({ diagramLabelMode: opt.id });
+                  this._renderAnnotationsBar();
+                }
+              },
+              [opt.label]
+            )
+          )
+        )
+      );
+      if (!isPiano) {
+        const lh = Boolean(this._appVm.settings.value.leftHanded);
+        nodes.push(
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-chip m3-chip--compact',
+              'aria-pressed': String(lh),
+              title: 'Invertir horizontalmente las cuerdas para zurdos',
+              onClick: () => {
+                this._appVm.updateSettings({ leftHanded: !lh });
+                this._renderAnnotationsBar();
+              }
+            },
+            ['Zurdo']
+          )
+        );
+      }
+    }
+
+    nodes.push(
       el(
         'button',
         {
@@ -570,10 +686,13 @@ export class PracticePlayerView {
         [icon('help', 15), 'Guía']
       )
     );
+
+    this._annotationsBar.append(...nodes);
   }
 
   /**
-   * Renderiza el selector segmentado de vista (Pentagrama / Cifrado / Mixto) y el botón Modo Atril.
+   * Barra superior única de contexto en Modo Atril:
+   * Selector de Vista unificado + selector de Capa (cuando hay coro/walking) + botón Estudio + Capas + Pantalla completa.
    */
   _renderViewBar() {
     if (!this._viewBar) return;
@@ -582,17 +701,22 @@ export class PracticePlayerView {
     const isFull = this._vm.isAtrilFullscreen.value;
     const isHarmony = pr?.type === 'harmony';
     const hasHarmonySteps = (this._vm.harmonySteps.value || []).length > 0;
+    const hasHarmony = isHarmony || hasHarmonySteps;
+    const layer = this._vm.activeScoreLayer.value;
 
     this._viewBar.innerHTML = '';
     const modeChoices = isHarmony
       ? [
           { id: 'diagramas', label: 'Diagramas' },
-          { id: 'cifrado', label: 'Cifrado' }
+          { id: 'cifrado', label: 'Cifrado' },
+          { id: 'pentagrama', label: 'Partitura' },
+          { id: 'mixto', label: 'Mixto' }
         ]
       : hasHarmonySteps
         ? [
             { id: 'pentagrama', label: 'Pentagrama' },
             { id: 'diagramas', label: 'Diagramas' },
+            { id: 'cifrado', label: 'Cifrado' },
             { id: 'mixto', label: 'Mixto' }
           ]
         : [
@@ -612,60 +736,60 @@ export class PracticePlayerView {
             className: 'm3-segmented__btn',
             ripple: true,
             'aria-pressed': String(mode === m.id),
-            onClick: () => this._vm.setViewMode(m.id)
+            onClick: () => {
+              if (isHarmony && (m.id === 'pentagrama' || m.id === 'mixto') && layer === 'original') {
+                this._vm.setScoreLayer('chorus');
+              }
+              this._vm.setViewMode(m.id);
+            }
           },
           [m.label]
         )
       )
     );
 
-    const compingSelect =
-      isHarmony || hasHarmonySteps
-        ? el(
-            'select',
-            {
-              className: 'm3-field__select',
-              style: 'padding:6px 10px; min-height:44px; width:auto; max-width:200px; font-size:0.84rem',
-              'aria-label': 'Patrón de ritmo',
-              onChange: (e) => this._vm.setCompingPattern(e.target.value)
-            },
-            Object.values(COMPING_PATTERNS).map((pat) =>
-              el('option', { value: pat.id, selected: pat.id === this._vm.compingPattern.value }, [pat.label])
-            )
-          )
-        : null;
-    if (compingSelect) compingSelect.value = this._vm.compingPattern.value;
-
-    const activeFeel = this._vm.compingFeel.value;
-    const compingFeelControl =
-      isHarmony || hasHarmonySteps
+    // Selector compacto de capa de partitura cuando existe Walking Bass o Coro generado en prácticas con pentagrama
+    const hasWalking = Boolean(this._vm.generatedWalkingAbc.value);
+    const showLayerControl = hasHarmony && (hasWalking || (!isHarmony && layer !== 'original') || (isHarmony && (mode === 'pentagrama' || mode === 'mixto')));
+    const layerChoices = isHarmony
+      ? [
+          { id: 'chorus', label: 'Coro' },
+          ...(hasWalking ? [{ id: 'walking', label: 'Walking' }] : [])
+        ]
+      : [
+          { id: 'original', label: 'Original' },
+          { id: 'chorus', label: 'Coro' },
+          ...(hasWalking ? [{ id: 'walking', label: 'Walking' }] : [])
+        ];
+    const layerControl =
+      showLayerControl && layerChoices.length > 1
         ? el(
             'div',
-            {
-              className: 'm3-segmented player-comping-feel-seg',
-              role: 'group',
-              'aria-label': 'Interpretación del acompañamiento'
-            },
-            COMPING_FEEL_MODES.map((fm) =>
+            { className: 'm3-segmented player-layer-seg', role: 'group', 'aria-label': 'Capa de partitura activa' },
+            layerChoices.map((lc) =>
               el(
                 'button',
                 {
                   type: 'button',
                   className: 'm3-segmented__btn',
                   ripple: true,
-                  title: fm.description,
-                  'aria-pressed': String(activeFeel === fm.id),
-                  onClick: () => this._vm.setCompingFeel(fm.id)
+                  'aria-pressed': String((isHarmony && layer === 'original' ? 'chorus' : layer) === lc.id),
+                  onClick: () => this._vm.setScoreLayer(lc.id)
                 },
-                [fm.label]
+                [lc.label]
               )
             )
           )
         : null;
 
-    // Modo voces para piezas polifónicas (en piano: Ambas / Mano der. / Mano izq.; en guitarra: Ambas / Melodía / Bajo)
-    const isPianoPiece = Boolean(pr?.instruments?.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
-    const voiceControl = this._vm.hasMultipleVoices.value
+    // Modo voces para piezas polifónicas
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const isPianoPiece = Boolean(
+      (isHarmony || layer === 'chorus')
+        ? vInst === 'piano'
+        : (pr?.instruments?.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'))
+    );
+    const voiceControl = this._vm.hasMultipleVoices.value && layer !== 'walking'
       ? el(
           'div',
           { className: 'm3-segmented player-voice-seg', role: 'group', 'aria-label': isPianoPiece ? 'Selección de manos' : 'Modo de voces' },
@@ -696,30 +820,49 @@ export class PracticePlayerView {
         )
       : null;
 
-    // Capa opcional de análisis armónico (grados romanos / cadencias para guitarra clásica)
-    const harmonicLayerBtn = pr?.harmonicAnalysis?.length > 0
+    // Botón consolidado "Estudio" (abre cajón único con Patrón, Feel, Digitación y Walking)
+    const activeFeelMeta = COMPING_FEEL_MODES.find((f) => f.id === this._vm.compingFeel.value) || COMPING_FEEL_MODES[1];
+    const activeInstShort = VOICING_INSTRUMENT_OPTIONS.find((o) => o.id === vInst)?.label?.split(' ')[0] || 'Guitarra';
+    const studyToggleBtn = hasHarmony
       ? el(
           'button',
           {
             type: 'button',
-            className: 'm3-chip',
+            className: 'm3-chip m3-chip--compact',
             ripple: true,
-            'aria-pressed': String(this._vm.showHarmonicAnalysis.value),
-            title: 'Mostrar u ocultar análisis armónico (grados y cadencias)',
-            onClick: () => this._vm.showHarmonicAnalysis.set(!this._vm.showHarmonicAnalysis.value)
+            'aria-pressed': String(this._studyDrawerOpen),
+            'aria-expanded': String(this._studyDrawerOpen),
+            title: 'Configurar patrón rítmico, interpretación (Fijo/Orgánico/Vivo), digitación y walking bass',
+            onClick: () => {
+              this._studyDrawerOpen = !this._studyDrawerOpen;
+              if (this._studyDrawerOpen) this._annotationsOpen = false;
+              this._renderViewBar();
+              this._renderStudyDrawer();
+              this._renderAnnotationsBar();
+            }
           },
-          ['Grados']
+          [icon('tune', 15), `Estudio · ${activeFeelMeta.label} · ${activeInstShort}`]
         )
       : null;
 
-    const isStaffVisible = Boolean(pr && !isHarmony && mode !== 'cifrado' && mode !== 'diagramas');
+    const isStaffVisible = Boolean(
+      pr &&
+      (isHarmony ? mode === 'pentagrama' || mode === 'mixto' : mode !== 'cifrado' && mode !== 'diagramas') &&
+      this._vm.renderableAbc.value
+    );
+    const isDiagramsVisible = Boolean(
+      pr && ((isHarmony && mode !== 'cifrado' && mode !== 'pentagrama') || mode === 'diagramas' || (hasHarmonySteps && mode === 'mixto'))
+    );
     const activeLayersCount =
-      (this._vm.showLeftHand.value ? 1 : 0) +
-      (this._vm.showRightHand.value ? 1 : 0) +
-      (mode !== 'pentagrama' && this._vm.showChordsOnScore.value ? 1 : 0) +
-      (this._vm.showOtherAnnotations.value ? 1 : 0);
+      (isStaffVisible
+        ? (this._vm.showLeftHand.value ? 1 : 0) +
+          (this._vm.showRightHand.value ? 1 : 0) +
+          (mode !== 'pentagrama' && this._vm.showChordsOnScore.value ? 1 : 0) +
+          (this._vm.showOtherAnnotations.value ? 1 : 0) +
+          (pr?.harmonicAnalysis?.length > 0 && this._vm.showHarmonicAnalysis.value ? 1 : 0)
+        : 0) + (isDiagramsVisible ? 1 : 0);
 
-    const layersToggleBtn = isStaffVisible
+    const layersToggleBtn = isStaffVisible || isDiagramsVisible
       ? el(
           'button',
           {
@@ -728,10 +871,12 @@ export class PracticePlayerView {
             ripple: true,
             'aria-pressed': String(this._annotationsOpen),
             'aria-expanded': String(this._annotationsOpen),
-            title: 'Activar o desactivar mano izquierda, mano derecha, acordes y análisis',
+            title: 'Activar o desactivar referencias en partitura y etiquetas en diagramas',
             onClick: () => {
               this._annotationsOpen = !this._annotationsOpen;
+              if (this._annotationsOpen) this._studyDrawerOpen = false;
               this._renderViewBar();
+              this._renderStudyDrawer();
               this._renderAnnotationsBar();
             }
           },
@@ -740,8 +885,8 @@ export class PracticePlayerView {
       : null;
 
     const quickRight = el('div', { className: 'stepper-inline' }, [
+      studyToggleBtn,
       layersToggleBtn,
-      harmonicLayerBtn,
       el(
         'button',
         {
@@ -758,26 +903,193 @@ export class PracticePlayerView {
 
     this._viewBar.appendChild(seg);
     this._viewBar.appendChild(quickRight);
+    if (layerControl) this._viewBar.appendChild(layerControl);
     if (voiceControl) this._viewBar.appendChild(voiceControl);
-    if (compingSelect) this._viewBar.appendChild(compingSelect);
-    if (compingFeelControl) this._viewBar.appendChild(compingFeelControl);
-    this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(voiceControl || compingSelect || compingFeelControl));
+    this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(layerControl || voiceControl));
+    this._renderStudyDrawer();
     this._renderLiveCompingBanner();
   }
 
   /**
-   * Renderiza la barra de acompañamiento en vivo (`Orgánico` / `Vivo`):
-   * - Muestra el acorde y técnica que suena en tiempo real (`Base → Tocando`).
-   * - Permite generar una nueva variación de coro, fijarla entre repeticiones del bucle
-   *   y desplegar la partitura ABC completa del coro generado.
+   * Cajón único y consolidado de "Estudio" (plegado por defecto para despejar el atril):
+   * reúne Patrón rítmico + flechas, Interpretación (Fijo/Orgánico/Vivo), Instrumento/Criterio de digitación
+   * y Generador de Walking Bass con opciones de estilo y aproximación.
+   */
+  _renderStudyDrawer() {
+    if (!this._studyDrawer) return;
+    const pr = this._vm.practice.value;
+    const hasHarmony = Boolean(pr && (pr.type === 'harmony' || this._vm.harmonySteps.value.length > 0));
+    if (!hasHarmony || !this._studyDrawerOpen) {
+      this._studyDrawer.style.display = 'none';
+      this._studyDrawer.innerHTML = '';
+      return;
+    }
+
+    this._studyDrawer.style.display = 'flex';
+    this._studyDrawer.innerHTML = '';
+
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const plan = this._vm.fingeringDesignPlan.value;
+    const criteria = this._vm.getAvailableFingeringCriteria();
+    const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
+    const activeFeel = this._vm.compingFeel.value;
+
+    // 1) Acompañamiento (Patrón + Feel)
+    const patSelect = el(
+      'select',
+      {
+        className: 'm3-field__select',
+        style: 'padding:6px 10px; min-height:40px; font-size:0.84rem',
+        'aria-label': 'Patrón de ritmo',
+        onChange: (e) => this._vm.setCompingPattern(e.target.value)
+      },
+      Object.values(COMPING_PATTERNS).map((pat) =>
+        el('option', { value: pat.id, selected: pat.id === this._vm.compingPattern.value }, [pat.label])
+      )
+    );
+    patSelect.value = this._vm.compingPattern.value;
+
+    const feelSeg = el(
+      'div',
+      { className: 'm3-segmented', role: 'group', 'aria-label': 'Interpretación del acompañamiento' },
+      COMPING_FEEL_MODES.map((fm) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-segmented__btn',
+            ripple: true,
+            title: fm.description,
+            'aria-pressed': String(activeFeel === fm.id),
+            onClick: () => this._vm.setCompingFeel(fm.id)
+          },
+          [fm.label]
+        )
+      )
+    );
+
+    const compingSection = el('div', { className: 'study-drawer__section' }, [
+      el('div', { className: 'study-drawer__heading' }, [
+        el('strong', {}, ['Acompañamiento']),
+        el('span', { className: 'comping-banner__arrows' }, [compingSpec.patternDisplay])
+      ]),
+      el('div', { className: 'study-drawer__row' }, [patSelect, feelSeg])
+    ]);
+
+    // 2) Digitación (Instrumento + Criterio + Comparar + Guardar diseño)
+    const criterionSelect = el(
+      'select',
+      {
+        className: 'm3-field__select fingering-design-select',
+        'aria-label': 'Criterio de diseño de digitación',
+        onChange: (e) => this._vm.setFingeringDesign(e.target.value)
+      },
+      criteria.map((c) => el('option', { value: c.id }, [c.label]))
+    );
+    criterionSelect.value = this._vm.fingeringDesignId.value;
+
+    const fingeringSection = el('div', { className: 'study-drawer__section' }, [
+      el('div', { className: 'study-drawer__heading' }, [
+        el('strong', {}, ['Digitación de acordes']),
+        plan ? el('span', { className: 'm3-body-sm' }, [plan.metrics.summaryLabel]) : null
+      ]),
+      el('div', { className: 'm3-chip-row', role: 'group', 'aria-label': 'Instrumento de digitación' },
+        VOICING_INSTRUMENT_OPTIONS.map((opt) =>
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-chip m3-chip--compact',
+              ripple: true,
+              'aria-pressed': String(vInst === opt.id),
+              onClick: () => this._vm.setVoicingInstrument(opt.id)
+            },
+            [opt.label]
+          )
+        )
+      ),
+      el('div', { className: 'study-drawer__row' }, [
+        criterionSelect,
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--tonal', ripple: true, onClick: () => this._openCompareDesignsModal() }, ['Comparar']),
+        el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--outlined', ripple: true, onClick: () => this._vm.saveFingeringDesignAsPractice() }, ['Guardar diseño'])
+      ])
+    ]);
+
+    // 3) Walking Bass integrado y reproducible
+    const walkVarSelect = el(
+      'select',
+      {
+        className: 'm3-field__select',
+        style: 'padding:6px 10px; min-height:40px; font-size:0.84rem',
+        'aria-label': 'Estilo de walking bass',
+        onChange: (e) => this._vm.walkingVariant.set(e.target.value)
+      },
+      [
+        { id: 'clasico', label: 'Clásico (negras)' },
+        { id: 'movimiento', label: 'Más movimiento' },
+        { id: 'tresillos', label: 'Con tresillos swing' }
+      ].map((o) => el('option', { value: o.id, selected: o.id === this._vm.walkingVariant.value }, [o.label]))
+    );
+    walkVarSelect.value = this._vm.walkingVariant.value;
+
+    const walkAppSelect = el(
+      'select',
+      {
+        className: 'm3-field__select',
+        style: 'padding:6px 10px; min-height:40px; font-size:0.84rem',
+        'aria-label': 'Aproximación de walking bass',
+        onChange: (e) => this._vm.walkingApproach.set(e.target.value)
+      },
+      [
+        { id: 'cromatica', label: 'Aprox. cromática' },
+        { id: 'diatonica', label: 'Aprox. diatónica' }
+      ].map((o) => el('option', { value: o.id, selected: o.id === this._vm.walkingApproach.value }, [o.label]))
+    );
+    walkAppSelect.value = this._vm.walkingApproach.value;
+
+    const walkingSection = el('div', { className: 'study-drawer__section' }, [
+      el('div', { className: 'study-drawer__heading' }, [
+        el('strong', {}, ['Walking Bass reproducible']),
+        el('span', { className: 'm3-body-sm' }, ['Suena sincronizado con cursor y acordes de piano'])
+      ]),
+      el('div', { className: 'study-drawer__row' }, [
+        walkVarSelect,
+        walkAppSelect,
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--filled',
+            ripple: true,
+            onClick: () => {
+              this._vm.generateWalkingForCurrent({
+                variant: walkVarSelect.value,
+                approach: walkAppSelect.value,
+                activate: true
+              });
+              this._studyDrawerOpen = false;
+              this._renderViewBar();
+              this._renderStudyDrawer();
+            }
+          },
+          [icon('wand', 15), this._vm.generatedWalkingAbc.value ? 'Regenerar walking' : 'Generar walking']
+        )
+      ])
+    ]);
+
+    this._studyDrawer.append(compingSection, fingeringSection, walkingSection);
+  }
+
+  /**
+   * Barra 2 unificada (Play-along y Acompañamiento en vivo), visible en TODAS las vistas (incluido Cifrado):
+   * muestra estado en vivo / patrón, toggles rápidos Acordes/Bajo/Secciones y acciones sin duplicación.
    */
   _renderLiveCompingBanner() {
     if (!this._liveCompingEl) return;
     const pr = this._vm.practice.value;
     const hasHarmony = Boolean(pr && (pr.type === 'harmony' || this._vm.harmonySteps.value.length > 0));
-    const feel = this._vm.compingFeel.value;
 
-    if (!hasHarmony || feel === 'fijo') {
+    if (!hasHarmony) {
       this._liveCompingEl.style.display = 'none';
       this._liveCompingEl.innerHTML = '';
       return;
@@ -786,26 +1098,28 @@ export class PracticePlayerView {
     const liveEv = this._vm.liveCompingEvent.value;
     const isPlaying = this._vm.isPlaying.value;
     const notation = this._appVm.settings.value.chordNotation;
+    const feel = this._vm.compingFeel.value;
+    const layer = this._vm.activeScoreLayer.value;
+    const isWalking = layer === 'walking';
     const isLocked = this._vm.lockChorusVariation.value;
-    const scoreVisible = this._vm.showChorusScore.value;
+    const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
+    const sections = this._vm.getFormSections();
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const isBassContext = vInst === 'bajo' || vInst === 'bajo-5' || Boolean(pr?.instruments?.includes('bajo'));
 
     this._liveCompingEl.style.display = 'flex';
     this._liveCompingEl.innerHTML = '';
 
     const statusNodes = [];
-    if (!liveEv) {
-      this._liveCompingEl.classList.remove('live-comping-bar--variation');
+    if (isWalking) {
+      this._liveCompingEl.classList.add('live-comping-bar--variation');
       statusNodes.push(
-        el('span', { className: 'm3-badge' }, [feel === 'vivo' ? 'Modo Vivo' : 'Modo Orgánico']),
+        el('span', { className: 'm3-badge m3-badge--primary' }, ['Walking Bass']),
         el('span', { className: 'm3-body-sm' }, [
-          isPlaying
-            ? 'Escuchando coro precalculado en tiempo real…'
-            : feel === 'vivo'
-              ? 'Coro armado con coloraciones (9/13), adornos IV/I y anticipaciones visibles en Cifrado y Diagramas.'
-              : 'Coro orgánico precalculado con síncopas y anticipaciones visibles antes de tocar.'
+          isPlaying ? 'Siguiendo la línea de walking con cursor y acordes…' : 'Listo para reproducir en tiempo real con acordes.'
         ])
       );
-    } else {
+    } else if (liveEv && feel !== 'fijo') {
       const isVar = Boolean(liveEv.isVariation);
       this._liveCompingEl.classList.toggle('live-comping-bar--variation', isVar);
       statusNodes.push(
@@ -815,26 +1129,35 @@ export class PracticePlayerView {
         ]),
         el('span', { className: 'live-comping-bar__arrow', 'aria-hidden': 'true' }, ['→']),
         el('span', { className: 'live-comping-bar__chord' }, [
-          'Tocando: ',
           createChordSymbolElement(liveEv.displaySymbol || liveEv.baseSymbol || 'C', notation)
         ]),
         el('span', { className: `m3-badge ${isVar ? 'm3-badge--primary' : ''}` }, [
           liveEv.techniqueLabel || 'Base'
         ])
       );
+    } else {
+      this._liveCompingEl.classList.remove('live-comping-bar--variation');
+      statusNodes.push(
+        el('span', { className: 'm3-badge' }, [compingSpec.label]),
+        el('strong', { className: 'comping-banner__arrows', 'aria-label': `Patrón ${compingSpec.patternDisplay}` }, [
+          compingSpec.patternDisplay
+        ])
+      );
     }
 
-    const actions = el('div', { className: 'live-comping-bar__actions' }, [
+    // Controles rápidos de play-along + secciones (disponibles también en Cifrado y Partitura)
+    const playAlongChips = [
       el(
         'button',
         {
           type: 'button',
-          className: 'm3-btn m3-btn--compact m3-btn--tonal',
+          className: 'm3-chip m3-chip--compact',
           ripple: true,
-          title: 'Generar una nueva variación aleatoria del coro completo',
-          onClick: () => this._vm.regenerateChorusPlan()
+          'aria-pressed': String(this._vm.chordsEnabled.value),
+          title: 'Activar o silenciar los acordes de acompañamiento',
+          onClick: () => this._vm.setChordsEnabled(!this._vm.chordsEnabled.value)
         },
-        [icon('wand', 15), 'Nueva variación']
+        [this._vm.chordsEnabled.value ? 'Acordes' : 'Acordes off']
       ),
       el(
         'button',
@@ -842,81 +1165,92 @@ export class PracticePlayerView {
           type: 'button',
           className: 'm3-chip m3-chip--compact',
           ripple: true,
-          'aria-pressed': String(isLocked),
-          title: isLocked
-            ? 'Variación fijada: se repetirá igual en cada vuelta del bucle'
-            : 'Fijar esta variación para estudiarla igual en todas las vueltas',
-          onClick: () => this._vm.toggleLockChorusVariation()
+          'aria-pressed': String(this._vm.bassEnabled.value),
+          title: isWalking
+            ? 'Silenciá el walking para tocarlo vos sobre los acordes de acompañamiento'
+            : 'Activar o silenciar el bajo base',
+          onClick: () => this._vm.setBassEnabled(!this._vm.bassEnabled.value)
         },
-        [icon('lock', 14), isLocked ? 'Fijada' : 'Fijar']
+        [isWalking ? (this._vm.bassEnabled.value ? 'Walking ON' : 'Walking silenciado') : (this._vm.bassEnabled.value ? 'Bajo' : 'Bajo off')]
       ),
-      el(
-        'button',
-        {
-          type: 'button',
-          className: `m3-btn m3-btn--compact ${scoreVisible ? 'm3-btn--filled' : 'm3-btn--outlined'}`,
-          ripple: true,
-          'aria-pressed': String(scoreVisible),
-          title: 'Mostrar u ocultar la partitura en pentagrama de esta variación',
-          onClick: () => this._vm.toggleShowChorusScore()
-        },
-        [icon('music', 15), scoreVisible ? 'Ocultar partitura' : 'Ver partitura']
+      ...sections.map((sec) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-chip m3-chip--compact',
+            ripple: true,
+            'aria-pressed': String(
+              this._vm.loopEnabled.value &&
+              this._vm.loopStartMeasure.value === sec.startMeasure &&
+              this._vm.loopEndMeasure.value === sec.endMeasure
+            ),
+            title: `Repetir sección ${sec.label} (c. ${sec.startMeasure}–${sec.endMeasure})`,
+            onClick: () => this._vm.loopSection(sec)
+          },
+          [`Sec. ${sec.label}`]
+        )
       )
-    ]);
+    ];
 
-    this._liveCompingEl.append(
-      el('div', { className: 'live-comping-bar__status' }, statusNodes),
-      actions
-    );
-  }
-
-  /**
-   * Renderiza bajo demanda el panel con la partitura ABC generada para el coro activo
-   * (gran pentagrama en piano, clave de sol octavada en guitarra, clave de fa en bajo)
-   * junto con acciones para regenerar o guardarla en el Editor.
-   */
-  _renderChorusScorePanel() {
-    if (!this._chorusScoreHost) return;
-    const feel = this._vm.compingFeel.value;
-    const abc = this._vm.chorusScoreAbc.value;
-    const visible = this._vm.showChorusScore.value && feel !== 'fijo' && Boolean(abc);
-
-    if (!visible) {
-      this._chorusScoreHost.style.display = 'none';
-      this._chorusScoreHost.innerHTML = '';
-      return;
-    }
-
-    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
-    const isPiano = vInst === 'piano';
-    const isBass = vInst === 'bajo' || vInst === 'bajo-5';
-    const notation = this._appVm.settings.value.chordNotation;
-    const feelLabel = feel === 'vivo' ? 'Vivo' : 'Orgánico';
-    const instLabel = VOICING_INSTRUMENT_OPTIONS.find((o) => o.id === vInst)?.label || 'Piano';
-
-    this._chorusScoreHost.style.display = 'block';
-    this._chorusScoreHost.innerHTML = '';
-
-    const surface = el('div', {
-      className: 'score-surface chorus-score-card__surface',
-      'aria-label': `Partitura generada del coro en modo ${feelLabel}`
-    });
-
-    const card = el('div', { className: 'm3-card chorus-score-card' }, [
-      el('div', { className: 'chorus-score-card__header' }, [
-        el('div', { className: 'chorus-score-card__title' }, [
-          el('strong', {}, [`Partitura de esta variación (${feelLabel} · ${instLabel})`]),
-          el('span', { className: 'm3-body-sm' }, [
-            'Muestra exactamente los acordes, coloraciones, anticipaciones y bajo que sonarán en esta vuelta.'
-          ])
-        ]),
-        el('div', { className: 'm3-chip-row' }, [
+    const actionButtons = [];
+    if (isWalking) {
+      actionButtons.push(
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--tonal',
+            ripple: true,
+            onClick: () => this._vm.generateWalkingForCurrent({ activate: true })
+          },
+          [icon('wand', 15), 'Nueva línea']
+        ),
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--outlined',
+            ripple: true,
+            onClick: () => this._vm.saveGeneratedWalkingAsPractice()
+          },
+          ['Guardar']
+        ),
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--text',
+            onClick: () => this._vm.setScoreLayer(pr.type === 'harmony' ? 'chorus' : 'original')
+          },
+          ['Salir walking']
+        )
+      );
+    } else {
+      if (isBassContext) {
+        actionButtons.push(
           el(
             'button',
             {
               type: 'button',
               className: 'm3-btn m3-btn--compact m3-btn--tonal',
               ripple: true,
+              title: 'Generar y reproducir un walking bass sobre esta progresión',
+              onClick: () => this._vm.generateWalkingForCurrent({ activate: true })
+            },
+            [icon('wand', 15), 'Walking']
+          )
+        );
+      }
+      if (feel !== 'fijo') {
+        actionButtons.push(
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              title: 'Generar una nueva variación aleatoria del coro',
               onClick: () => this._vm.regenerateChorusPlan()
             },
             [icon('wand', 15), 'Nueva']
@@ -925,47 +1259,40 @@ export class PracticePlayerView {
             'button',
             {
               type: 'button',
-              className: 'm3-btn m3-btn--compact m3-btn--filled',
+              className: 'm3-chip m3-chip--compact',
               ripple: true,
-              onClick: () => this._vm.saveChorusAsPractice()
+              'aria-pressed': String(isLocked),
+              title: isLocked
+                ? 'Variación fijada en todas las vueltas'
+                : 'Fijar esta variación para repetirla igual en bucle',
+              onClick: () => this._vm.toggleLockChorusVariation()
             },
-            [icon('edit', 15), 'Guardar en Editor']
+            [icon('lock', 14), isLocked ? 'Fijada' : 'Fijar']
           ),
           el(
             'button',
             {
               type: 'button',
-              className: 'm3-btn m3-btn--compact m3-btn--text',
-              onClick: () => this._vm.toggleShowChorusScore()
+              className: 'm3-btn m3-btn--compact m3-btn--outlined',
+              ripple: true,
+              title: 'Guardar esta variación en Mis prácticas',
+              onClick: () => this._vm.saveChorusAsPractice()
             },
-            ['Ocultar']
+            ['Guardar']
           )
-        ])
-      ]),
-      surface
-    ]);
+        );
+      }
+    }
 
-    this._chorusScoreHost.appendChild(card);
-
-    const width = surface.clientWidth || this._chorusScoreHost.clientWidth || this._container?.clientWidth || 520;
-    const prepared = this._abc.prepareAbcForRender(abc, {
-      viewMode: 'mixto',
-      chordNotation: notation,
-      showChords: true,
-      showFingerings: false,
-      isPiano,
-      isBass,
-      stripTitle: true
-    });
-    this._abc.renderScore(surface, prepared, {
-      width,
-      zoom: Math.min(1.15, this._vm.zoom.value),
-      isPiano
-    });
+    this._liveCompingEl.append(
+      el('div', { className: 'live-comping-bar__status' }, statusNodes),
+      el('div', { className: 'live-comping-bar__actions' }, [...playAlongChips, ...actionButtons])
+    );
   }
 
   /**
-   * Renderiza la partitura adaptable con abcjs, la fila de diagramas de armonía o la grilla de cifrado.
+   * Renderiza la superficie activa de notación (`_scoreEl`, `_harmonyEl`, `_chartEl`)
+   * usando el pipeline unificado `activeScoreLayer` ('original' | 'chorus' | 'walking').
    */
   _renderNotationSurface() {
     if (!this._scoreEl || !this._chartEl || !this._harmonyEl) return;
@@ -975,9 +1302,16 @@ export class PracticePlayerView {
     const mode = this._vm.viewMode.value;
     const isHarmonyOnly = pr.type === 'harmony';
     const hasSteps = this._vm.harmonySteps.value.length > 0;
+    const layer = this._vm.activeScoreLayer.value;
+    const hasRenderableScore = Boolean(this._vm.renderableAbc.value);
 
-    const showStaff = !isHarmonyOnly && mode !== 'cifrado' && mode !== 'diagramas';
-    const showDiagrams = (isHarmonyOnly && mode !== 'cifrado') || mode === 'diagramas' || (hasSteps && mode === 'mixto');
+    const showStaff =
+      hasRenderableScore &&
+      (isHarmonyOnly ? (mode === 'pentagrama' || mode === 'mixto') : (mode !== 'cifrado' && mode !== 'diagramas'));
+    const showDiagrams =
+      (isHarmonyOnly && mode !== 'cifrado' && mode !== 'pentagrama') ||
+      mode === 'diagramas' ||
+      (hasSteps && mode === 'mixto');
     const showChart = mode === 'cifrado';
 
     this._scoreEl.style.display = showStaff ? 'block' : 'none';
@@ -987,15 +1321,28 @@ export class PracticePlayerView {
     if (showStaff) {
       const width = this._scoreEl.clientWidth || this._container?.clientWidth || 340;
       this._lastScoreWidth = width;
-      const isPiano = pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano');
+      const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+      const isWalking = layer === 'walking';
+      const isChorus = layer === 'chorus' || (isHarmonyOnly && layer === 'original');
+      const isPiano = isWalking
+        ? false
+        : isChorus
+          ? vInst === 'piano'
+          : (pr.instruments.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
+      const isBass = isWalking
+        ? true
+        : isChorus
+          ? (vInst === 'bajo' || vInst === 'bajo-5')
+          : (!isPiano && pr.instruments.includes('bajo'));
+
       const { visualObj } = this._abc.renderScore(this._scoreEl, this._vm.renderableAbc.value, {
         width,
         zoom: this._vm.zoom.value,
         isPiano
       });
-      const timeline = this._abc.extractTimeline(visualObj, this._vm.transposedAbc.value, {
-        instrument: isPiano ? 'piano' : (pr.instruments[0] || 'guitarra'),
-        isBass: !isPiano && pr.instruments.includes('bajo'),
+      const timeline = this._abc.extractTimeline(visualObj, this._vm.activeAbcSource.value, {
+        instrument: isWalking ? 'bajo' : isPiano ? 'piano' : (isChorus ? (isBass ? 'bajo' : 'guitarra') : (pr.instruments[0] || 'guitarra')),
+        isBass,
         isPiano,
         timeSignature: pr.timeSignature
       });
@@ -1012,24 +1359,21 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la tira de diagramas de acordes (horizontal en móvil, grilla completa en escritorio),
-   * el patrón visual de ritmo (flechas ↓↑ / p-i-m-a), los controles de play-along por instrumento,
-   * los marcadores de sección (A, B, C) y el generador de walking bass para bajo.
+   * Renderiza la tira de diagramas de acordes (horizontal en móvil, grilla completa en escritorio)
+   * con rangos exactos de compases (`c. 1–4`), mapa de diapasón para bajo y previsualización real
+   * de diagramas al tocar cualquier chip de variación (`A13`, `D/A`, `Ab7`…).
    */
   _renderHarmonyDiagrams() {
-    const pr = this._vm.practice.value;
     const plan = this._vm.fingeringDesignPlan.value;
     const steps = this._vm.harmonySteps.value;
     const notation = this._appVm.settings.value.chordNotation;
+    const labelMode = this._appVm.settings.value.diagramLabelMode || (this._vm.showFingerings.value ? 'fingers' : 'functions');
+    const leftHanded = Boolean(this._appVm.settings.value.leftHanded);
     const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
     const isPiano = vInst === 'piano';
     const tuning = isPiano ? null : (plan?.tuning || getTuningForVoicingInstrument(vInst));
     const isBass = !isPiano && tuning.instrument === 'bass';
-    const supportsBass = (!isPiano && pr?.instruments?.includes('bajo')) || isBass;
     const activeIdx = this._vm.activeChordStepIndex.value;
-    const compingSpec = COMPING_PATTERNS[this._vm.compingPattern.value] || COMPING_PATTERNS['negras-abajo'];
-    const sections = this._vm.getFormSections();
-    const criteria = this._vm.getAvailableFingeringCriteria();
 
     this._harmonyEl.innerHTML = '';
     if (steps.length === 0) {
@@ -1037,190 +1381,22 @@ export class PracticePlayerView {
       return;
     }
 
-    // 1) Barra visible del patrón de ritmo (flechas ↓↑ / p-i-m-a) + Play-along + Secciones
-    const rhythmBar = el('div', { className: 'comping-banner' }, [
-      el('div', { className: 'comping-banner__info' }, [
-        el('span', { className: 'm3-label' }, [`Patrón: ${compingSpec.label}`]),
-        el('strong', { className: 'comping-banner__arrows', 'aria-label': `Patrón rítmico ${compingSpec.patternDisplay}` }, [
-          compingSpec.patternDisplay
-        ])
-      ]),
-      el('div', { className: 'm3-chip-row' }, [
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip',
-            ripple: true,
-            'aria-pressed': String(this._vm.chordsEnabled.value),
-            title: 'Activar o silenciar los acordes de acompañamiento (útil para guitarristas en play-along)',
-            onClick: () => this._vm.setChordsEnabled(!this._vm.chordsEnabled.value)
-          },
-          [this._vm.chordsEnabled.value ? 'Acordes: ON' : 'Acordes: silenciados']
-        ),
-        el(
-          'button',
-          {
-            type: 'button',
-            className: 'm3-chip',
-            ripple: true,
-            'aria-pressed': String(this._vm.bassEnabled.value),
-            title: 'Activar o silenciar la pista de bajo (útil para bajistas en play-along)',
-            onClick: () => this._vm.setBassEnabled(!this._vm.bassEnabled.value)
-          },
-          [this._vm.bassEnabled.value ? 'Bajo base: ON' : 'Bajo base: silenciado']
-        ),
-        ...sections.map((sec) =>
-          el(
-            'button',
-            {
-              type: 'button',
-              className: 'm3-chip',
-              ripple: true,
-              'aria-pressed': String(this._vm.loopEnabled.value && this._vm.loopStartMeasure.value === sec.startMeasure && this._vm.loopEndMeasure.value === sec.endMeasure),
-              title: `Repetir en bucle la sección ${sec.label} (compases ${sec.startMeasure}–${sec.endMeasure})`,
-              onClick: () => this._vm.loopSection(sec)
-            },
-            [`Sección ${sec.label}`]
-          )
-        ),
-        supportsBass
-          ? el(
-              'button',
-              {
-                type: 'button',
-                className: 'm3-btn m3-btn--compact m3-btn--tonal',
-                ripple: true,
-                onClick: () => this._vm.generateWalkingForCurrent()
-              },
-              [icon('wand', 15), 'Generar walking bass']
-            )
-          : null
-      ])
-    ]);
-    this._harmonyEl.appendChild(rhythmBar);
-
-    // 1b) Selector de instrumento de digitación + Diseño de digitación por criterios musicales
-    const criterionSelect = el(
-      'select',
-      {
-        className: 'm3-field__select fingering-design-select',
-        'aria-label': 'Criterio de diseño de digitación',
-        title: 'Elegí el criterio musical y técnico para digitar esta progresión',
-        onChange: (e) => this._vm.setFingeringDesign(e.target.value)
-      },
-      criteria.map((c) => el('option', { value: c.id }, [c.label]))
-    );
-    criterionSelect.value = this._vm.fingeringDesignId.value;
-
-    const activeInstLabel = VOICING_INSTRUMENT_OPTIONS.find((o) => o.id === vInst)?.label || 'Guitarra';
-    const activeCriterionLabel = plan?.criterion?.label || 'Estándar';
-
-    const designBar = el('details', { className: 'm3-collapsible m3-collapsible--subtle fingering-design-collapsible' }, [
-      el('summary', {}, [
-        el('span', { style: 'display:flex; align-items:center; gap:8px; flex-wrap:wrap' }, [
-          el('strong', {}, [`Digitación: ${activeInstLabel}`]),
-          el('span', { className: 'm3-badge m3-badge--primary' }, [activeCriterionLabel]),
-          plan ? el('span', { className: 'm3-body-md' }, [plan.metrics.summaryLabel]) : null
-        ]),
-        icon('chevronDown', 18)
-      ]),
-      el('div', { className: 'm3-collapsible__content fingering-design-bar' }, [
-        el('div', { className: 'fingering-design-bar__row' }, [
-          el('div', { className: 'm3-chip-row', role: 'group', 'aria-label': 'Instrumento para digitación de acordes' }, [
-            el('span', { className: 'm3-label', style: 'align-self:center' }, ['Instrumento:']),
-            ...VOICING_INSTRUMENT_OPTIONS.map((opt) =>
-              el(
-                'button',
-                {
-                  type: 'button',
-                  className: 'm3-chip m3-chip--compact',
-                  ripple: true,
-                  'aria-pressed': String(vInst === opt.id),
-                  title: `Ver y diseñar digitaciones de acordes para ${opt.label}`,
-                  onClick: () => this._vm.setVoicingInstrument(opt.id)
-                },
-                [opt.label]
-              )
-            )
-          ]),
-          el('div', { className: 'fingering-design-bar__controls' }, [
-            criterionSelect,
-            el(
-              'button',
-              {
-                type: 'button',
-                className: 'm3-btn m3-btn--compact m3-btn--tonal',
-                ripple: true,
-                title: 'Comparar varios criterios musicales de digitación sobre este mismo tema',
-                onClick: () => this._openCompareDesignsModal()
-              },
-              ['Comparar']
-            ),
-            el(
-              'button',
-              {
-                type: 'button',
-                className: 'm3-btn m3-btn--compact m3-btn--outlined',
-                ripple: true,
-                title: 'Guardar esta digitación personalizada como práctica propia',
-                onClick: () => this._vm.saveFingeringDesignAsPractice()
-              },
-              ['Guardar diseño']
-            )
-          ])
-        ]),
-        plan
-          ? el('div', { className: 'fingering-design-bar__meta' }, [
-              el('span', { className: 'm3-body-md' }, [
-                `${plan.criterion.description} ${plan.criterion.pedagogicalTip || ''}`.trim()
-              ])
-            ])
-          : null,
-        createChordColorLegendElement()
-      ])
-    ]);
-    this._harmonyEl.appendChild(designBar);
-
-    // 2) Si el bajista generó un walking bass sugerido sobre esta progresión, mostrar pentagrama + botón guardar
-    if (this._vm.generatedWalkingAbc.value) {
-      const walkScore = el('div', { className: 'score-surface', style: 'margin:10px 0' });
-      const walkBox = el('div', { className: 'm3-card', style: 'margin:10px 0; display:flex; flex-direction:column; gap:8px' }, [
-        el('div', { className: 'player-toolbar' }, [
-          el('strong', {}, ['Walking bass sugerido (notas del acorde y guías 3.ª / 7.ª)']),
-          el('div', { className: 'm3-chip-row' }, [
-            el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--filled', ripple: true, onClick: () => this._vm.saveGeneratedWalkingAsPractice() }, ['Guardar y editar walking']),
-            el('button', { type: 'button', className: 'm3-btn m3-btn--compact m3-btn--text', onClick: () => this._vm.generatedWalkingAbc.set('') }, ['Ocultar'])
-          ])
-        ]),
-        walkScore
-      ]);
-      this._harmonyEl.appendChild(walkBox);
-      setTimeout(() => {
-        const prepared = this._abc.prepareAbcForRender(this._vm.generatedWalkingAbc.value, {
-          viewMode: 'mixto',
-          chordNotation: notation,
-          showBassFunctions: true,
-          isBass: true,
-          stripTitle: true
-        });
-        this._abc.renderScore(walkScore, prepared, { width: walkScore.clientWidth || 520, zoom: 0.95 });
-      }, 0);
-    }
-
-    // 3) Cuando se eligió Bajo (4c o 5c), muestra además el mapa del diapasón para el acorde activo
+    // 1) Leyenda de colores compacta + mapa del diapasón en Bajo (actualizado in-place durante Play)
     if (isBass) {
       const focusStep = steps[activeIdx >= 0 ? activeIdx : 0] || steps[0];
-      this._harmonyEl.appendChild(
+      const bassMapHost = el('div', { className: 'bass-fretboard-map-host' }, [
         createBassFretboardMapElement(focusStep.chord, {
           tuning,
           notation,
-          labelMode: 'functions'
+          labelMode: labelMode === 'notes' ? 'notes' : 'functions'
         })
-      );
+      ]);
+      this._harmonyEl.appendChild(bassMapHost);
+    } else {
+      this._harmonyEl.appendChild(createChordColorLegendElement());
     }
 
-    // 4) Tira de diagramas (scroll horizontal en móvil; grilla completa en escritorio)
+    // 2) Tira de diagramas con rango exacto de compases y previsualización real de variaciones
     const chorusPlan = this._vm.compingFeel.value !== 'fijo' ? this._vm.chorusPlan.value : null;
     const strip = el(
       'div',
@@ -1231,6 +1407,19 @@ export class PracticePlayerView {
       },
       steps.map((step, idx) => {
         const stepVars = chorusPlan?.stepVariations?.[idx] || [];
+        const startM = Number(step.startMeasure) || 1;
+        const barsNum = Number(step.bars) || 1;
+        const endM = barsNum >= 1 ? startM + Math.ceil(barsNum) - 1 : startM;
+        const barRangeLabel = barsNum < 1
+          ? `c. ${startM} (½)`
+          : endM > startM
+            ? `c. ${startM}–${endM}`
+            : `c. ${startM}`;
+
+        const activePreviewVar = this._previewedStepVar.get(idx) || null;
+        const displayVoicing = activePreviewVar?.voicing || step.voicing;
+        const displayChord = activePreviewVar?.displaySymbol || step.chord;
+
         return el(
           'div',
           {
@@ -1241,26 +1430,40 @@ export class PracticePlayerView {
             el('div', { className: 'player-toolbar', style: 'margin-bottom:4px; width:100%' }, [
               el('div', { style: 'display:flex; align-items:center; gap:4px' }, [
                 step.section ? el('span', { className: 'm3-badge m3-badge--primary', style: 'padding:1px 6px' }, [step.section]) : null,
-                el('strong', {}, [createChordSymbolElement(step.chord, notation)])
+                el('strong', {}, [createChordSymbolElement(displayChord, notation)]),
+                activePreviewVar
+                  ? el(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'm3-btn m3-btn--compact m3-btn--text',
+                        style: 'min-height:22px; padding:0 4px; font-size:0.7rem',
+                        title: 'Volver al diagrama base',
+                        onClick: () => {
+                          this._previewedStepVar.delete(idx);
+                          this._renderHarmonyDiagrams();
+                        }
+                      },
+                      ['Base']
+                    )
+                  : null
               ]),
-              el('span', { className: 'm3-label' }, [`${step.bars} c.`])
+              el('span', { className: 'm3-label', title: `${barsNum} compás(es)` }, [barRangeLabel])
             ]),
-            step.voicing
-              ? (step.voicing.isPianoVoicing || isPiano
-                  ? createPianoChordElement(step.voicing, {
-                      notation,
-                      size: 'sm',
-                      labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-                      onPlay: () => this._vm.playStepVoicing(step)
-                    })
-                  : createChordDiagramElement(step.voicing, {
-                      tuning,
-                      notation,
-                      size: 'sm',
-                      showTitle: false,
-                      labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-                      onPlay: () => this._vm.playStepVoicing(step)
-                    }))
+            displayVoicing
+              ? renderVoicingDiagram(displayVoicing, {
+                  tuning,
+                  notation,
+                  size: 'sm',
+                  labelMode,
+                  leftHanded,
+                  isPiano,
+                  showTitle: false,
+                  onPlay: () => {
+                    if (activePreviewVar?.midis?.length) this._vm.playPreviewMidis(activePreviewVar.midis);
+                    else this._vm.playStepVoicing(step);
+                  }
+                })
               : el('button', {
                   type: 'button',
                   className: 'm3-btn m3-btn--compact m3-btn--tonal',
@@ -1273,24 +1476,35 @@ export class PracticePlayerView {
                     className: 'harmony-step-card__vars',
                     'aria-label': 'Variaciones activas en este paso'
                   },
-                  stepVars.map((v) =>
-                    el(
+                  stepVars.map((v) => {
+                    const isPreviewed = activePreviewVar?.displaySymbol === v.displaySymbol;
+                    const measureTag = v.measure ? `c.${v.measure} ` : '';
+                    return el(
                       'button',
                       {
                         type: 'button',
-                        className: `harmony-var-chip ${v.isAnticipation ? 'harmony-var-chip--ant' : ''}`.trim(),
-                        title: `${v.techniqueLabel} — Tocá para escuchar`,
+                        className: `harmony-var-chip ${v.isAnticipation ? 'harmony-var-chip--ant' : ''} ${isPreviewed ? 'harmony-var-chip--active' : ''}`.trim(),
+                        'aria-pressed': String(isPreviewed),
+                        title: `${v.techniqueLabel}${v.measure ? ` (compás ${v.measure})` : ''} — Tocá para escuchar y ver su diagrama`,
                         onClick: (e) => {
                           e.stopPropagation();
                           this._vm.playPreviewMidis(v.midis);
+                          if (isPreviewed) {
+                            this._previewedStepVar.delete(idx);
+                          } else {
+                            const resolved = this._vm.resolveVariationVoicing(v.displaySymbol);
+                            this._previewedStepVar.set(idx, { ...v, voicing: resolved });
+                          }
+                          this._renderHarmonyDiagrams();
                         }
                       },
                       [
+                        measureTag ? el('span', { className: 'harmony-var-chip__bar' }, [measureTag]) : null,
                         v.isAnticipation ? '→ ' : '',
                         createChordSymbolElement(v.displaySymbol, notation)
                       ]
-                    )
-                  )
+                    );
+                  })
                 )
               : null,
             step.rationale
@@ -1402,21 +1616,16 @@ export class PracticePlayerView {
           el('span', { className: 'm3-label' }, [
             isPianoV ? v.getPositionLabel() : `${v.getPositionLabel()} · ${v.getUsedStringsLabel(tuning)}`
           ]),
-          isPianoV
-            ? createPianoChordElement(v, {
-                notation,
-                size: 'sm',
-                labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-                onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
-              })
-            : createChordDiagramElement(v, {
-                tuning,
-                notation,
-                size: 'sm',
-                showTitle: false,
-                labelMode: this._vm.showFingerings.value ? 'fingers' : 'functions',
-                onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
-              }),
+          renderVoicingDiagram(v, {
+            tuning,
+            notation,
+            size: 'sm',
+            labelMode: this._appVm.settings.value.diagramLabelMode || (this._vm.showFingerings.value ? 'fingers' : 'functions'),
+            leftHanded: Boolean(this._appVm.settings.value.leftHanded),
+            isPiano: isPianoV,
+            showTitle: false,
+            onPlay: () => this._vm.playStepVoicing({ ...step, voicing: v })
+          }),
           el(
             'button',
             {
@@ -1454,8 +1663,19 @@ export class PracticePlayerView {
     }
     const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
     if ((vInst === 'bajo' || vInst === 'bajo-5') && stepIndex >= 0) {
-      // En bajo actualiza el mapa del diapasón para mostrar las notas del acorde que suena
-      this._renderHarmonyDiagrams();
+      // Actualiza únicamente el mapa del diapasón sin destruir ni re-renderizar todo _harmonyEl
+      const host = this._harmonyEl.querySelector('.bass-fretboard-map-host');
+      const steps = this._vm.harmonySteps.value || [];
+      const focusStep = steps[stepIndex];
+      if (host && focusStep) {
+        host.replaceChildren(
+          createBassFretboardMapElement(focusStep.chord, {
+            tuning: getTuningForVoicingInstrument(vInst),
+            notation: this._appVm.settings.value.chordNotation,
+            labelMode: 'functions'
+          })
+        );
+      }
     }
     const strip = this._harmonyEl.querySelector('.harmony-strip');
     const cards = this._harmonyEl.querySelectorAll('.harmony-step-card');
@@ -1475,8 +1695,11 @@ export class PracticePlayerView {
           const targetLeft = Math.max(0, card.offsetLeft - 12);
           strip.scrollTo({ left: targetLeft, behavior });
         }
-        // En vertical (grilla de escritorio o móvil), deja espacio debajo para ver las filas siguientes
-        this._scrollToFollowReading(card, { systemQuantizePx: 60 });
+        // En vertical (cuando NO hay pentagrama compitiendo en Mixto), deja espacio debajo para ver las filas siguientes
+        const isMixedWithStaff = this._scoreEl && this._scoreEl.style.display !== 'none';
+        if (!isMixedWithStaff) {
+          this._scrollToFollowReading(card, { systemQuantizePx: 60 });
+        }
       }
     });
   }
@@ -1519,101 +1742,32 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la grilla de compases de acordes en modo Cifrado.
+   * Renderiza la grilla de compases de acordes en modo Cifrado de forma 100 % unificada
+   * para prácticas `harmony`, `mixed` y `melody` usando `HarmonicChartService`.
+   * Tocar cualquier compás reproduce el acorde y muestra su diagrama en un modal rápido.
    */
   _renderChordChart() {
-    const pr = this._vm.practice.value;
     const ex = this._vm.exercise.value;
     const notation = this._appVm.settings.value.chordNotation;
     const activeM = this._vm.activeMeasure.value;
-    const steps = this._vm.harmonySteps.value;
+    const activeStepIdx = this._vm.activeChordStepIndex.value;
+    const steps = this._vm.harmonySteps.value || [];
     this._chartEl.innerHTML = '';
 
-    // En prácticas de armonía puras agrupa los harmonySteps por compás entero real
-    // (soporta 2+ acordes en un mismo compás cuando step.bars < 1 sin duplicar compases)
-    if (pr?.type === 'harmony' && steps.length > 0) {
-      const barsMap = new Map();
-      let cursorBar = 0;
-      steps.forEach((step, idx) => {
-        const durBars = Math.max(0.25, Number(step.bars) || 1);
-        const startBarIdx = Math.floor(cursorBar + 1e-6);
-        const endBarIdx = Math.max(startBarIdx + 1, Math.ceil(cursorBar + durBars - 1e-6));
-        for (let b = startBarIdx; b < endBarIdx; b++) {
-          const measureNum = b + 1;
-          if (!barsMap.has(measureNum)) {
-            barsMap.set(measureNum, {
-              measure: measureNum,
-              section: b === startBarIdx ? (step.section || null) : null,
-              entries: []
-            });
-          }
-          const slot = barsMap.get(measureNum);
-          if (b === startBarIdx && step.section && !slot.section) {
-            slot.section = step.section;
-          }
-          slot.entries.push({
-            chord: b === startBarIdx ? step.chord : '%',
-            stepIndex: idx
-          });
-        }
-        cursorBar += durBars;
-      });
+    const bars = buildHarmonicChartBars({
+      harmonySteps: steps,
+      exerciseMeasures: ex?.measures || [],
+      chorusPlan: this._vm.chorusPlan.value,
+      compingFeel: this._vm.compingFeel.value
+    });
 
-      const activeStepIdx = this._vm.activeChordStepIndex.value;
-      const gridChildren = [];
-      let lastSection = null;
-      const orderedBars = [...barsMap.values()].sort((a, b) => a.measure - b.measure);
-
-      for (const barObj of orderedBars) {
-        if (barObj.section && barObj.section !== lastSection) {
-          lastSection = barObj.section;
-          gridChildren.push(
-            el('div', { className: 'chord-chart-section-header', role: 'heading', 'aria-level': '3' }, [
-              `Sección ${barObj.section}`
-            ])
-          );
-        }
-        const isSplit = barObj.entries.length > 1;
-        const isActiveBar =
-          barObj.measure === activeM || barObj.entries.some((e) => e.stepIndex === activeStepIdx);
-        const chordNodes = [];
-        barObj.entries.forEach((entry, eIdx) => {
-          if (eIdx > 0) {
-            chordNodes.push(el('span', { className: 'chord-bar-cell__sep', 'aria-hidden': 'true' }, ['|']));
-          }
-          chordNodes.push(
-            entry.chord === '%'
-              ? el('span', {}, ['%'])
-              : createChordSymbolElement(entry.chord, notation)
-          );
-        });
-        const liveSeqEl = this._createBarLiveSequenceEl(barObj.measure, notation);
-        gridChildren.push(
-          el(
-            'div',
-            {
-              className: `chord-bar-cell ${isSplit ? 'chord-bar-cell--split' : ''} ${liveSeqEl ? 'chord-bar-cell--enriched' : ''} ${isActiveBar ? 'chord-bar-cell--active' : ''}`.trim(),
-              dataset: { measure: barObj.measure }
-            },
-            [
-              el('span', { className: 'chord-bar-cell__num' }, [String(barObj.measure)]),
-              el('div', { className: 'chord-bar-cell__chords' }, chordNodes),
-              liveSeqEl
-            ]
-          )
-        );
-      }
-
-      this._chartEl.appendChild(el('div', { className: 'chord-chart-grid' }, gridChildren));
-      return;
-    }
-
-    if (!ex || ex.measures.length === 0) {
+    if (bars.length === 0) {
       this._chartEl.appendChild(el('p', { className: 'm3-body-md' }, ['Esta práctica no tiene compases detectables.']));
       return;
     }
 
-    if (!ex.hasChords) {
+    const hasAnyChord = bars.some((b) => b.slots.length > 0);
+    if (!hasAnyChord) {
       this._chartEl.appendChild(
         el('p', { className: 'm3-body-md', style: 'margin-bottom:10px' }, [
           'Práctica de lectura pura sin cifrado explícito.'
@@ -1621,27 +1775,135 @@ export class PracticePlayerView {
       );
     }
 
-    const grid = el(
-      'div',
-      { className: 'chord-chart-grid' },
-      ex.measures.map((m) => {
-        const chords = m.chords.length > 0 ? m.chords.map((c) => formatChordSymbol(c, notation)) : ['%'];
-        const liveSeqEl = this._createBarLiveSequenceEl(m.index, notation);
-        return el(
+    const gridChildren = [];
+    let lastSection = null;
+    let prevPrimaryChord = '';
+
+    for (const barObj of bars) {
+      if (barObj.section && barObj.section !== lastSection) {
+        lastSection = barObj.section;
+        gridChildren.push(
+          el('div', { className: 'chord-chart-section-header', role: 'heading', 'aria-level': '3' }, [
+            `Sección ${barObj.section}`
+          ])
+        );
+      }
+
+      const isSplit = barObj.slots.length > 1;
+      const isActiveBar =
+        barObj.measureNumber === activeM ||
+        (activeStepIdx >= 0 && barObj.slots.some((s) => s.stepIndex === activeStepIdx));
+
+      const chordNodes = [];
+      if (barObj.slots.length === 0) {
+        chordNodes.push(el('span', {}, ['%']));
+      } else {
+        barObj.slots.forEach((slot, sIdx) => {
+          if (sIdx > 0) {
+            chordNodes.push(el('span', { className: 'chord-bar-cell__sep', 'aria-hidden': 'true' }, ['|']));
+          }
+          const isRepeatSameStep =
+            !isSplit &&
+            slot.stepIndex >= 0 &&
+            prevPrimaryChord === `${slot.stepIndex}:${slot.chord}` &&
+            barObj.measureNumber > 1;
+          chordNodes.push(
+            isRepeatSameStep
+              ? el('span', {}, ['%'])
+              : createChordSymbolElement(slot.chord, notation)
+          );
+        });
+      }
+      prevPrimaryChord =
+        !isSplit && barObj.slots[0] && barObj.slots[0].stepIndex >= 0
+          ? `${barObj.slots[0].stepIndex}:${barObj.slots[0].chord}`
+          : '';
+
+      const liveSeqEl = this._createBarLiveSequenceEl(barObj.measureNumber, notation);
+      const firstChord = barObj.slots[0]?.chord || null;
+      const firstStepIdx = barObj.slots[0]?.stepIndex ?? -1;
+
+      gridChildren.push(
+        el(
           'div',
           {
-            className: `chord-bar-cell ${liveSeqEl ? 'chord-bar-cell--enriched' : ''} ${m.index === activeM ? 'chord-bar-cell--active' : ''}`.trim(),
-            dataset: { measure: m.index }
+            className: `chord-bar-cell ${firstChord ? 'chord-bar-cell--clickable' : ''} ${isSplit ? 'chord-bar-cell--split' : ''} ${liveSeqEl ? 'chord-bar-cell--enriched' : ''} ${isActiveBar ? 'chord-bar-cell--active' : ''}`.trim(),
+            dataset: { measure: barObj.measureNumber },
+            role: firstChord ? 'button' : undefined,
+            tabindex: firstChord ? '0' : undefined,
+            title: firstChord ? `Tocá para escuchar y ver el diagrama de ${formatChordSymbol(firstChord, notation)}` : undefined,
+            onClick: firstChord ? () => this._openChartBarPreviewModal(barObj, firstStepIdx, notation) : undefined,
+            onKeydown: firstChord
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this._openChartBarPreviewModal(barObj, firstStepIdx, notation);
+                  }
+                }
+              : undefined
           },
           [
-            el('span', { className: 'chord-bar-cell__num' }, [String(m.index)]),
-            el('div', { className: 'chord-bar-cell__chords' }, chords.map((c) => el('span', {}, [c]))),
+            el('span', { className: 'chord-bar-cell__num' }, [String(barObj.measureNumber)]),
+            el('div', { className: 'chord-bar-cell__chords' }, chordNodes),
             liveSeqEl
           ]
-        );
-      })
-    );
-    this._chartEl.appendChild(grid);
+        )
+      );
+    }
+
+    this._chartEl.appendChild(el('div', { className: 'chord-chart-grid' }, gridChildren));
+  }
+
+  /**
+   * Abre una previsualización rápida con sonido y diagrama del acorde tocado en la vista Cifrado.
+   */
+  _openChartBarPreviewModal(barObj, stepIdx, notation) {
+    const steps = this._vm.harmonySteps.value || [];
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const isPiano = vInst === 'piano';
+    const tuning = isPiano ? null : getTuningForVoicingInstrument(vInst);
+    const labelMode = this._appVm.settings.value.diagramLabelMode || 'fingers';
+    const leftHanded = Boolean(this._appVm.settings.value.leftHanded);
+
+    const uniqueChords = [...new Map((barObj.slots || []).map((s) => [s.chord, s])).values()];
+    if (uniqueChords.length === 0) return;
+
+    const firstStep = stepIdx >= 0 ? steps[stepIdx] : null;
+    if (firstStep?.voicing) {
+      this._vm.playStepVoicing(firstStep);
+    } else {
+      const v0 = this._vm.resolveVariationVoicing(uniqueChords[0].chord);
+      if (v0) this._vm.playPreviewMidis(v0.getMidiNotes(tuning));
+    }
+
+    const cards = uniqueChords.map((slot) => {
+      const stepObj = slot.stepIndex >= 0 ? steps[slot.stepIndex] : null;
+      const voicing = stepObj?.voicing || this._vm.resolveVariationVoicing(slot.chord);
+      return el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; align-items:center; gap:8px' }, [
+        el('strong', {}, [createChordSymbolElement(slot.chord, notation)]),
+        voicing
+          ? renderVoicingDiagram(voicing, {
+              tuning,
+              notation,
+              size: 'md',
+              labelMode,
+              leftHanded,
+              isPiano,
+              showTitle: false,
+              onPlay: () => {
+                if (stepObj?.voicing) this._vm.playStepVoicing(stepObj);
+                else this._vm.playPreviewMidis(voicing.getMidiNotes(tuning));
+              }
+            })
+          : el('span', { className: 'm3-body-sm' }, ['Sin diagrama disponible para este símbolo.'])
+      ]);
+    });
+
+    openModalDialog({
+      title: `Compás ${barObj.measureNumber} — ${uniqueChords.map((u) => formatChordSymbol(u.chord, notation)).join(' | ')}`,
+      body: el('div', { style: 'display:flex; flex-direction:column; gap:10px' }, [createChordColorLegendElement(), ...cards]),
+      actions: [{ label: 'Cerrar', variant: 'text' }]
+    });
   }
 
   /**

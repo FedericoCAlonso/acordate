@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v28 · App v1.4.0: coro precalculado con lookahead en Cifrado/Diagramas, partitura generada y fix vista escritorio).
+ * Versión del caché estático de la PWA Acordate (v29 · App v1.5.0: integración unificada de cifrados/diagramas, Walking Bass reproducible con cursor, ScoreLayer y UX consolidada).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v28';
+const CACHE_NAME = 'acordate-static-v29';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -66,6 +66,7 @@ const PRECACHE_ASSETS = [
   './src/services/ChordLibraryService.js',
   './src/services/FingeringDesignService.js',
   './src/services/HarmonyService.js',
+  './src/services/HarmonicChartService.js',
   './src/services/HarmonyTimelineService.js',
   './src/services/PracticeFactoryService.js',
   './src/services/StudyRoutineService.js',
@@ -105,6 +106,7 @@ const PRECACHE_ASSETS = [
   './src/views/uiHelpers.js',
   './src/views/NotationGuideModal.js',
   './src/views/ChordDiagramView.js',
+  './src/views/components/VoicingDiagramRenderer.js',
   './src/views/PianoKeyboardView.js',
   './src/views/ScaleFretboardView.js',
   './src/views/AppShellView.js',

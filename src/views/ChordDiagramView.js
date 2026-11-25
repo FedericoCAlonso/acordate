@@ -13,7 +13,7 @@ import { el } from './uiHelpers.js';
  * @param {boolean} isRoot True si la nota es la raíz.
  * @returns {{ fill: string, textFill: string }} Tokens CSS de color.
  */
-function getFunctionDotColors(fnLabel, isRoot) {
+export function getFunctionDotColors(fnLabel, isRoot) {
   if (isRoot || fnLabel === 'R') {
     return { fill: 'var(--md-sys-color-primary)', textFill: 'var(--md-sys-color-on-primary)' };
   }
@@ -90,8 +90,10 @@ export function createChordDiagramElement(voicing, options = {}) {
 
   const chordObj = Chord.parse(v.chord);
   const stringCount = Math.min(v.frets.length, tuning.stringCount);
-  const fretRows = 5;
   const baseFret = Math.max(1, v.baseFret || 1);
+  const frettedPositions = v.frets.slice(0, stringCount).filter((f) => f !== null && f > 0);
+  const maxRelFret = frettedPositions.length > 0 ? Math.max(...frettedPositions) - baseFret + 1 : 5;
+  const fretRows = Math.max(5, Math.min(7, maxRelFret));
   const detailsByString = new Map(v.getDetailedNotes(tuning, notation).map((d) => [d.stringIndex, d]));
 
   // Geometría SVG normalizada (escala limpiamente a cualquier ancho)
@@ -261,21 +263,12 @@ export function createBassFretboardMapElement(chordSymbol, options = {}) {
     parts.push(`<line x1="${padL}" y1="${y}" x2="${padL + fretCount * fretW}" y2="${y}" stroke="var(--md-sys-color-on-surface-variant)" stroke-width="${1.2 + (tuning.stringCount - 1 - s) * 0.25}"/>`);
   }
 
-  // Puntos coloreados por función (Raíz = primary, Guías 3/7 = tertiary, 5ª/otras = secondary)
+  // Puntos coloreados con la misma paleta semántica que el diagrama de acordes (R, 3ª, 5ª, 7ª/tensión)
   for (const pt of points) {
     const visualRow = tuning.stringCount - 1 - pt.stringIndex;
     const cx = padL + (pt.fret - fretStart + 0.5) * fretW;
     const cy = padT + visualRow * strH;
-    const fill = pt.isRoot
-      ? 'var(--md-sys-color-primary)'
-      : pt.isGuide
-        ? 'var(--md-sys-color-tertiary)'
-        : 'var(--md-sys-color-secondary)';
-    const textFill = pt.isRoot
-      ? 'var(--md-sys-color-on-primary)'
-      : pt.isGuide
-        ? 'var(--md-sys-color-on-tertiary)'
-        : 'var(--md-sys-color-on-secondary)';
+    const { fill, textFill } = getFunctionDotColors(pt.fnLabel, pt.isRoot);
     const text = labelMode === 'notes' ? pt.noteName : pt.fnLabel;
 
     parts.push(`<circle cx="${cx}" cy="${cy}" r="10.5" fill="${fill}"/>`);
@@ -293,12 +286,8 @@ export function createBassFretboardMapElement(chordSymbol, options = {}) {
 
   return el('div', { className: 'bass-fretboard-card' }, [
     el('div', { className: 'player-toolbar', style: 'margin-bottom:8px' }, [
-      el('strong', {}, [`Diapasón de bajo — ${chordObj.getSymbol(notation)}`]),
-      el('div', { className: 'm3-chip-row' }, [
-        el('span', { className: 'm3-badge m3-badge--primary' }, ['R = Raíz']),
-        el('span', { className: 'm3-badge m3-badge--tertiary' }, ['3 / 7 = Notas guía']),
-        el('span', { className: 'm3-badge' }, ['5 = Quinta'])
-      ])
+      el('strong', {}, ['Diapasón de bajo — ', createChordSymbolElement(chordObj.americanSymbol, notation)]),
+      createChordColorLegendElement()
     ]),
     el('div', { style: 'overflow-x:auto' }, [svg])
   ]);

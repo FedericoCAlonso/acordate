@@ -3,6 +3,28 @@ import { NOTE_TO_PC, mod12, pcToNoteName, prefersFlats } from '../core/MusicTheo
 import { ChordQuality } from './ChordQuality.js';
 
 /**
+ * Fuente única de verdad para decidir ortografía con bemoles o sostenidos de un acorde dado
+ * (ej. Cm → Eb, C7 → Bb, Cdim7 → Eb/Gb, mientras A7 → C#, E7 → G#).
+ * Compartida entre Piano, Guitarra, Guitarra clásica y Bajo.
+ * @param {Chord} chord Instancia de acorde.
+ * @returns {boolean} True si conviene ortografía con bemoles.
+ */
+export function prefersFlatsForChord(chord) {
+  if (!chord) return false;
+  if (chord.root.includes('b')) return true;
+  if (chord.root.includes('#')) return false;
+  const qid = chord.quality?.id || '';
+  if (qid.includes('b') || qid.includes('dim') || qid === 'm7b5') return true;
+  if (qid.startsWith('m') && !qid.startsWith('maj')) {
+    return prefersFlats(`${chord.root}m`);
+  }
+  if (/^(7|9|11|13|7sus4)$/.test(qid) && ['C', 'F', 'G'].includes(chord.root)) {
+    return true;
+  }
+  return prefersFlats(chord.root);
+}
+
+/**
  * Modelo de dominio puro que representa un acorde con raíz, calidad, bajo opcional (slash chord)
  * y utilidades para cifrado americano/latino, notas constituyentes e intervalos.
  */
@@ -84,7 +106,7 @@ export class Chord {
    * @returns {Array<{ pc: number, name: string, label: string, interval: number }>} Notas del acorde.
    */
   getNotesInfo(notation = 'americano') {
-    const useFlats = prefersFlats(this.root) || this.quality.id.includes('b') || this.quality.id.includes('dim');
+    const useFlats = prefersFlatsForChord(this);
     return this.quality.intervals.map((iv, idx) => {
       const pc = mod12(this.rootPc + iv);
       const amName = pcToNoteName(pc, useFlats);
@@ -142,7 +164,9 @@ export class Chord {
    */
   static parse(symbol) {
     const clean = String(symbol || '').trim();
-    const [mainPart, bassPart] = clean.split('/');
+    const slashMatch = clean.match(/^(.*)\/([A-G][#b]?)$/);
+    const mainPart = slashMatch ? slashMatch[1] : clean;
+    const bassPart = slashMatch ? slashMatch[2] : null;
     const match = mainPart.match(/^([A-G])([#b]?)(.*)$/);
     if (!match) {
       throw new Error(`No se pudo parsear el acorde "${symbol}".`);

@@ -34,6 +34,12 @@ export function buildHarmonyTimeline({
       measureIndex,
       stepIndex: idx,
       voicingMidis: step.midis || [],
+      ...(step.voicing?.isPianoVoicing
+        ? {
+            lhMidis: [...(step.voicing.lhMidis || [])],
+            rhMidis: [...(step.voicing.rhMidis || [])]
+          }
+        : {}),
       rhythm: step.rhythm || null
     };
     cursorBeat += durBeats;

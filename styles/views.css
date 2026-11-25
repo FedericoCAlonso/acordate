@@ -3511,6 +3511,68 @@
   color: var(--md-sys-color-on-tertiary-container);
 }
 
+.harmony-var-chip--active {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.harmony-var-chip__bar {
+  font-size: 0.68rem;
+  opacity: 0.78;
+  font-weight: 600;
+}
+
+/* Cajón consolidado de Estudio (Acompañamiento + Digitación + Walking) */
+.study-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.study-drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.study-drawer__section + .study-drawer__section {
+  padding-top: 10px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.study-drawer__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.86rem;
+}
+
+.study-drawer__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chord-bar-cell--clickable {
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 120ms ease;
+}
+
+.chord-bar-cell--clickable:hover,
+.chord-bar-cell--clickable:focus-visible {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-high);
+  outline: none;
+}
+
 /* Panel desplegable de partitura generada del coro */
 .chorus-score-host {
   margin-bottom: 12px;
@@ -3557,6 +3619,7 @@
   .m3-nav-rail,
   .transport-dock,
   .player-view-bar,
+  .study-drawer,
   .annotations-bar,
   .live-comping-bar,
   .session-banner,

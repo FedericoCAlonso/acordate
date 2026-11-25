@@ -123,6 +123,14 @@ export const CHORD_QUALITY_CATALOG = {
     intervals: [0, 3, 7, 9],
     labels: ['R', 'b3', '5', '6']
   },
+  '6/9': {
+    id: '6/9',
+    name: 'Mayor 6/9',
+    shortName: '6/9',
+    group: 'extension',
+    intervals: [0, 4, 7, 9, 14],
+    labels: ['R', '3', '5', '6', '9']
+  },
   add9: {
     id: 'add9',
     name: 'Mayor con novena añadida',
@@ -130,6 +138,22 @@ export const CHORD_QUALITY_CATALOG = {
     group: 'extension',
     intervals: [0, 4, 7, 14],
     labels: ['R', '3', '5', '9']
+  },
+  madd9: {
+    id: 'madd9',
+    name: 'Menor con novena añadida',
+    shortName: 'madd9',
+    group: 'extension',
+    intervals: [0, 3, 7, 14],
+    labels: ['R', 'b3', '5', '9']
+  },
+  '7sus4': {
+    id: '7sus4',
+    name: 'Dominante 7 sus4',
+    shortName: '7sus4',
+    group: 'septima',
+    intervals: [0, 5, 7, 10],
+    labels: ['R', '4', '5', 'b7']
   },
   '9': {
     id: '9',
@@ -178,6 +202,22 @@ export const CHORD_QUALITY_CATALOG = {
     group: 'extension',
     intervals: [0, 4, 10, 14, 21],
     labels: ['R', '3', 'b7', '9', '13']
+  },
+  maj13: {
+    id: 'maj13',
+    name: 'Mayor 13',
+    shortName: 'maj13',
+    group: 'extension',
+    intervals: [0, 4, 11, 14, 21],
+    labels: ['R', '3', '7', '9', '13']
+  },
+  m13: {
+    id: 'm13',
+    name: 'Menor 13',
+    shortName: 'm13',
+    group: 'extension',
+    intervals: [0, 3, 10, 14, 21],
+    labels: ['R', 'b3', 'b7', '9', '13']
   },
   '7b9': {
     id: '7b9',
@@ -232,8 +272,65 @@ const QUALITY_ALIASES = {
   'ø7': 'm7b5',
   '°7': 'dim7',
   o7: 'dim7',
+  '69': '6/9',
   sus: 'sus4'
 };
+
+/**
+ * Infiere una definición de ChordQuality coherente cuando llega un sufijo poco frecuente
+ * no listado literalmente en `CHORD_QUALITY_CATALOG`, evitando degradarlo a tríada Mayor.
+ * @param {string} suffix Sufijo crudo.
+ * @returns {object} Definición compatible con ChordQuality.
+ */
+function inferQualityDefinition(suffix) {
+  const q = String(suffix || '').trim();
+  const isMinor = q.startsWith('m') && !q.startsWith('maj');
+  const isDim = q.includes('dim') || q.includes('o') || q.includes('°');
+  const isAug = q.includes('aug') || q.includes('+');
+  const isSus4 = q.includes('sus4') || (q.includes('sus') && !q.includes('sus2'));
+  const isSus2 = q.includes('sus2');
+
+  const intervals = [0];
+  const labels = ['R'];
+
+  if (isSus4) { intervals.push(5); labels.push('4'); }
+  else if (isSus2) { intervals.push(2); labels.push('2'); }
+  else if (isMinor || isDim) { intervals.push(3); labels.push('b3'); }
+  else { intervals.push(4); labels.push('3'); }
+
+  if (isDim || q.includes('b5')) { intervals.push(6); labels.push('b5'); }
+  else if (isAug || q.includes('#5')) { intervals.push(8); labels.push('#5'); }
+  else { intervals.push(7); labels.push('5'); }
+
+  if (q.includes('maj7') || q.includes('M7') || q.includes('maj9') || q.includes('maj13')) {
+    intervals.push(11); labels.push('7');
+  } else if (q.includes('dim7') || q.includes('o7') || q.includes('°7')) {
+    intervals.push(9); labels.push('bb7');
+  } else if (q.includes('6')) {
+    intervals.push(9); labels.push('6');
+  } else if (!q.includes('add') && (q.includes('7') || q.includes('9') || q.includes('11') || q.includes('13'))) {
+    intervals.push(10); labels.push('b7');
+  }
+
+  if (q.includes('b9')) { intervals.push(13); labels.push('b9'); }
+  else if (q.includes('#9')) { intervals.push(15); labels.push('#9'); }
+  else if (q.includes('9')) { intervals.push(14); labels.push('9'); }
+
+  if (q.includes('#11')) { intervals.push(18); labels.push('#11'); }
+  else if (q.includes('11')) { intervals.push(17); labels.push('11'); }
+
+  if (q.includes('b13')) { intervals.push(20); labels.push('b13'); }
+  else if (q.includes('13')) { intervals.push(21); labels.push('13'); }
+
+  return {
+    id: q,
+    name: q || 'Mayor',
+    shortName: q || 'Mayor',
+    group: intervals.length > 4 ? 'extension' : intervals.length === 4 ? 'septima' : 'triada',
+    intervals,
+    labels
+  };
+}
 
 /**
  * Modelo de dominio puro que describe la calidad armónica de un acorde a partir de sus intervalos.
@@ -260,13 +357,14 @@ export class ChordQuality {
 
   /**
    * Resuelve un sufijo de acorde (o alias como "ø7", "M7", "-") a su ChordQuality canónica.
+   * Si no existe literalmente en el catálogo, infiere intervalos seguros en lugar de caer a tríada Mayor.
    * @param {string} [rawSuffix=''] Sufijo en cifrado americano.
    * @returns {ChordQuality} Instancia de ChordQuality.
    */
   static fromSymbol(rawSuffix = '') {
     const clean = String(rawSuffix || '').trim();
     const canonical = QUALITY_ALIASES[clean] !== undefined ? QUALITY_ALIASES[clean] : clean;
-    const def = CHORD_QUALITY_CATALOG[canonical] || CHORD_QUALITY_CATALOG[''];
+    const def = CHORD_QUALITY_CATALOG[canonical] || (canonical ? inferQualityDefinition(canonical) : CHORD_QUALITY_CATALOG['']);
     return new ChordQuality(def);
   }
 

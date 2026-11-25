@@ -54,10 +54,20 @@ export class ChordLibraryViewModel {
     this.fretRangeFilter = new Observable('todos');
     /** Modo de vista del acorde ('diagrama' | 'pentagrama' | 'ambos'). */
     this.diagramViewMode = new Observable('diagrama');
-    /** Etiquetas dentro de los puntos ('fingers' | 'functions' | 'notes'). */
-    this.labelMode = new Observable('fingers');
-    /** Orientación para zurdos. */
-    this.leftHanded = new Observable(false);
+    /** Etiquetas dentro de los puntos ('fingers' | 'functions' | 'notes'), sincronizadas con Settings. */
+    this.labelMode = new Observable(appVm.settings?.value?.diagramLabelMode || 'fingers');
+    /** Orientación para zurdos, sincronizada con Settings. */
+    this.leftHanded = new Observable(Boolean(appVm.settings?.value?.leftHanded));
+    this._unsubLabelPersist = this.labelMode.subscribe((m) => {
+      if (appVm.settings?.value?.diagramLabelMode !== m && typeof appVm.updateSettings === 'function') {
+        appVm.updateSettings({ diagramLabelMode: m });
+      }
+    });
+    this._unsubLeftPersist = this.leftHanded.subscribe((lh) => {
+      if (Boolean(appVm.settings?.value?.leftHanded) !== Boolean(lh) && typeof appVm.updateSettings === 'function') {
+        appVm.updateSettings({ leftHanded: Boolean(lh) });
+      }
+    });
     /** Modo de reproducción al tocar el diagrama. */
     this.playMode = new Observable(instrument.value === 'bajo' ? 'block' : 'strum-down');
     /** Voicings adicionales generados por VoicingGenerator para el acorde actual. */
@@ -316,6 +326,8 @@ export class ChordLibraryViewModel {
    * Libera los `ComputedObservable` de la Biblioteca.
    */
   dispose() {
+    this._unsubLabelPersist?.();
+    this._unsubLeftPersist?.();
     this.voicingsList.dispose();
     this.activeChord.dispose();
   }

@@ -1,4 +1,4 @@
-import { getChordVoicingMidi, midiToFrequency } from '../core/MusicTheory.js';
+import { getChordVoicingMidi, midiToFrequency, mod12, parseChord } from '../core/MusicTheory.js';
 import { applyListeningRegister } from '../core/PitchPolicy.js';
 import {
   analyzeChordContext,
@@ -654,7 +654,7 @@ export class AudioSynthService {
             const t = this._beatToAudioTime(chordEv.beat);
             const durSec = Math.max(0.25, chordEv.durationBeats * secPerBeat);
             this._playChordEvent(ctx, chordEv, t, durSec, secPerBeat, tl, cIdx);
-            if (tl.isHarmonyOnly) {
+            if (chordEv.stepIndex !== undefined) {
               this._visualQueue.push({
                 time: t,
                 isCountIn: false,
@@ -1047,9 +1047,10 @@ export class AudioSynthService {
     const context = analyzeChordContext(tl.chords || [], chordIndex, beatsPerMeasure, this._chorusIndex);
 
     const planMatches =
-      feel !== 'fijo' &&
       this._chorusPlan &&
       this._chorusPlan.feel === feel &&
+      (!this._chorusPlan.pattern || this._chorusPlan.pattern === pattern) &&
+      (this._chorusPlan.chords?.length || 0) === (tl.chords?.length || 0) &&
       Array.isArray(this._chorusPlan.eventsByIndex?.[chordIndex]);
     const preplannedHits = planMatches ? this._chorusPlan.eventsByIndex[chordIndex] : null;
     const preplannedBass = planMatches ? this._chorusPlan.bassByIndex?.[chordIndex] : null;
@@ -1066,7 +1067,7 @@ export class AudioSynthService {
             : tl.isBassPiece && !this.instrument.includes('guitar')
               ? 'electric-bass'
               : (this.instrument.includes('guitar') ? this.instrument : 'nylon-guitar');
-          if (feel === 'fijo') {
+          if (feel === 'fijo' && !preplannedHits) {
             this._scheduleCompingPattern(
               ctx,
               chordMidis,
@@ -1098,7 +1099,7 @@ export class AudioSynthService {
       }
 
       if (this.bassEnabled && this.bassVolume > 0.01) {
-        if (feel === 'fijo') {
+        if (feel === 'fijo' && !preplannedBass) {
           this._schedulePlayAlongBass(ctx, chordEv.symbol, startTime, chordEv.durationBeats, secPerBeat, pattern);
         } else {
           this._scheduleOrganicBass(ctx, {
@@ -1118,17 +1119,25 @@ export class AudioSynthService {
     }
 
     if (hasVoicing && this.chordsEnabled && this.chordsVolume > 0.01) {
-      const inst = this.instrument.includes('piano')
-        ? this.instrument
-        : tl.isBassPiece
-          ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
-          : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
-      if (feel === 'fijo' || tl.isBassPiece) {
-        this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, tl.isBassPiece);
+      // En prácticas mixtas de bajo (ej. walking bass), la partitura ABC ya es el bajo:
+      // acompañar con acordes de piano/guitarra evitando duplicar otro bajo en negras encima.
+      const accompanyBassWithChords = Boolean(tl.isBassPiece && !tl.isHarmonyOnly);
+      const chordMidis = accompanyBassWithChords
+        ? (getChordVoicingMidi(chordEv.symbol, 52)?.chordMidis || chordEv.voicingMidis)
+        : chordEv.voicingMidis;
+      const inst = accompanyBassWithChords
+        ? 'acoustic-piano'
+        : this.instrument.includes('piano')
+          ? this.instrument
+          : tl.isBassPiece
+            ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
+            : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
+      if (feel === 'fijo') {
+        this._scheduleCompingPattern(ctx, chordMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, false);
       } else {
         this._scheduleOrganicComping(ctx, {
           chordSymbol: chordEv.symbol,
-          voicingMidis: chordEv.voicingMidis,
+          voicingMidis: chordMidis,
           startTime,
           durationBeats: chordEv.durationBeats,
           beatsPerMeasure,
@@ -1194,6 +1203,15 @@ export class AudioSynthService {
           midis: hit.midis
         }
       });
+      if (hit.visualNoteEvent) {
+        this._visualQueue.push({
+          time: t,
+          endTime: t + durSec,
+          isCountIn: false,
+          noteEvent: hit.visualNoteEvent,
+          measureIndex: hit.visualNoteEvent.measureIndex
+        });
+      }
     }
   }
 
@@ -1225,6 +1243,15 @@ export class AudioSynthService {
         n.bassInst,
         Math.min(1.15, baseVol * n.volumeScale)
       );
+      if (n.visualNoteEvent) {
+        this._visualQueue.push({
+          time: t,
+          endTime: t + durSec,
+          isCountIn: false,
+          noteEvent: n.visualNoteEvent,
+          measureIndex: n.visualNoteEvent.measureIndex
+        });
+      }
     }
   }
 
@@ -1239,14 +1266,24 @@ export class AudioSynthService {
    * @param {string} pattern Clave en COMPING_PATTERNS.
    */
   _schedulePlayAlongBass(ctx, chordSymbol, startTime, durationBeats, secPerBeat, pattern) {
-    const voicing = getChordVoicingMidi(chordSymbol, 40);
-    if (!voicing) return;
-    // Baja al registro real de contrabajo / bajo eléctrico (E1..D#2 = MIDI 28..39)
-    let root = voicing.bassMidi;
-    while (root >= 40) root -= 12;
-    while (root < 28) root += 12;
-    const fifth = root + 7;
-    const third = voicing.chordMidis.length > 1 ? root + ((voicing.chordMidis[1] - voicing.chordMidis[0] + 12) % 12) : root + 4;
+    const parsed = parseChord(chordSymbol);
+    if (!parsed) return;
+    const toBassReg = (pc) => {
+      let m = 24 + mod12(pc);
+      while (m < 28) m += 12;
+      while (m >= 40) m -= 12;
+      return m;
+    };
+    const rootMidi = toBassReg(parsed.rootPc);
+    const bassMidi = parsed.bassPc !== null ? toBassReg(parsed.bassPc) : rootMidi;
+    const ivs = (parsed.intervals || [0, 4, 7]).map((iv) => mod12(iv));
+    const thirdIv = ivs.find((iv) => iv === 3 || iv === 4) ?? ivs.find((iv) => iv === 5 || iv === 2) ?? 4;
+    const fifthIv = ivs.find((iv) => iv === 6 || iv === 7 || iv === 8) ?? 7;
+    const sixthIv = ivs.includes(11) ? 7 : ivs.includes(6) ? 10 : 9;
+    const root = bassMidi;
+    const third = rootMidi + thirdIv;
+    const fifth = rootMidi + fifthIv;
+    const sixth = rootMidi + sixthIv;
     const bassInst = pattern === 'swing-negras' || pattern === 'balada-lenta' ? 'acoustic-bass' : 'electric-bass';
     const vol = this.bassVolume * 0.65;
     const beats = Math.max(1, Math.round(durationBeats));
@@ -1268,7 +1305,7 @@ export class AudioSynthService {
     }
 
     if (pattern === 'shuffle') {
-      const seq = [root, third, fifth, root + 9];
+      const seq = [root, third, fifth, sixth];
       for (let b = 0; b < beats; b++) {
         const m = seq[b % seq.length];
         this._playPluckedNote(ctx, applyListeningRegister(m, this.listeningRegister), startTime + b * secPerBeat, secPerBeat * 0.85, bassInst, vol);

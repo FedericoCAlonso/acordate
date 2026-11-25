@@ -26,6 +26,8 @@ export const DEFAULT_SETTINGS = {
   showChordsOnScore: true,
   showOtherAnnotations: true,
   showBassFunctions: true,
+  diagramLabelMode: 'fingers',
+  leftHanded: false,
   metronomeSound: 'woodblock',
   countInMeasures: 1,
   audioVisualOffsetMs: 0
@@ -74,6 +76,12 @@ export class Settings {
     this.showOtherAnnotations = data.showOtherAnnotations !== undefined ? Boolean(data.showOtherAnnotations) : DEFAULT_SETTINGS.showOtherAnnotations;
     /** Mostrar funciones armónicas (R, 3, 5, 7, Crom) en prácticas de bajo. */
     this.showBassFunctions = data.showBassFunctions !== undefined ? Boolean(data.showBassFunctions) : DEFAULT_SETTINGS.showBassFunctions;
+    /** Etiqueta visible dentro de diagramas de acordes y teclado ('fingers' | 'functions' | 'notes'). */
+    this.diagramLabelMode = ['fingers', 'functions', 'notes'].includes(data.diagramLabelMode)
+      ? data.diagramLabelMode
+      : DEFAULT_SETTINGS.diagramLabelMode;
+    /** Modo zurdo para diagramas de guitarra y bajo. */
+    this.leftHanded = data.leftHanded !== undefined ? Boolean(data.leftHanded) : DEFAULT_SETTINGS.leftHanded;
     /** Sonido predeterminado del metrónomo. */
     this.metronomeSound = ['woodblock', 'click', 'rimshot', 'beep'].includes(data.metronomeSound)
       ? data.metronomeSound
@@ -116,6 +124,8 @@ export class Settings {
       showChordsOnScore: this.showChordsOnScore,
       showOtherAnnotations: this.showOtherAnnotations,
       showBassFunctions: this.showBassFunctions,
+      diagramLabelMode: this.diagramLabelMode,
+      leftHanded: this.leftHanded,
       metronomeSound: this.metronomeSound,
       countInMeasures: this.countInMeasures,
       audioVisualOffsetMs: this.audioVisualOffsetMs

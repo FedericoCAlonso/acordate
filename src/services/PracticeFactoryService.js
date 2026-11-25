@@ -111,21 +111,25 @@ export function createFingeringDesignPractice({ practice, plan, voicingInstrumen
   const vInst = normalizeVoicingInstrument(voicingInstrument);
   const instKey = vInst === 'bajo-5' ? 'bajo' : vInst;
   const instLabel =
-    vInst === 'bajo-5'
-      ? 'Bajo 5c'
-      : vInst === 'bajo'
-        ? 'Bajo 4c'
-        : vInst === 'guitarra-clasica'
-          ? 'Clásica'
-          : 'Guitarra';
+    vInst === 'piano'
+      ? 'Piano'
+      : vInst === 'bajo-5'
+        ? 'Bajo 5c'
+        : vInst === 'bajo'
+          ? 'Bajo 4c'
+          : vInst === 'guitarra-clasica'
+            ? 'Clásica'
+            : 'Guitarra';
   const title = `${practice.title} — ${plan.criterion.shortLabel} (${instLabel})`;
 
   const customVoicings = [];
   const seen = new Set();
   const progression = plan.steps.map((st) => {
-    if (st.voicing && !seen.has(st.voicing.id)) {
+    if (st.voicing && !st.voicing.isPianoVoicing && !seen.has(st.voicing.id)) {
       seen.add(st.voicing.id);
-      customVoicings.push(st.voicing.toJSON());
+      if (typeof st.voicing.toJSON === 'function') {
+        customVoicings.push(st.voicing.toJSON());
+      }
     }
     return {
       chord: st.chord,
@@ -229,16 +233,31 @@ export function createChorusVariationPractice({
  * @param {object} params Datos de la práctica y generador.
  * @returns {string} Partitura ABC de walking bass (o cadena vacía si no hay pasos).
  */
-export function generateWalkingAbcForPractice({ walkingBassGenerator, practice, harmonySteps, transposedKey }) {
+export function generateWalkingAbcForPractice({
+  walkingBassGenerator,
+  practice,
+  harmonySteps,
+  transposedKey,
+  variant = 'clasico',
+  approach = 'cromatica',
+  voicingInstrument = 'bajo'
+}) {
   if (!practice || !Array.isArray(harmonySteps) || harmonySteps.length === 0) return '';
-  const chordsPerBar = [];
+  const steps = [];
+  let accBars = 0;
   for (const s of harmonySteps) {
-    const count = Math.max(1, Math.round(Number(s.bars) || 1));
-    for (let i = 0; i < count; i++) chordsPerBar.push(s.chord);
+    const bars = Math.max(0.5, Number(s.bars) || 1);
+    if (accBars + bars > 32 && steps.length > 0) break;
+    steps.push({ chord: s.chord, bars });
+    accBars += bars;
   }
   const generated = walkingBassGenerator.generate({
-    chords: chordsPerBar.slice(0, 32),
+    steps,
+    timeSignature: practice.timeSignature || '4/4',
     key: transposedKey || practice.key || 'C',
+    variant,
+    approach,
+    bassStrings: voicingInstrument === 'bajo-5' ? 5 : 4,
     title: `Walking sobre ${practice.title}`
   });
   return generated.abc;

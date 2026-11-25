@@ -10,6 +10,7 @@ import {
   createChordSymbolElement,
   createVoiceLeadingConnector
 } from './ChordDiagramView.js';
+import { renderVoicingDiagram } from './components/VoicingDiagramRenderer.js';
 import { createPianoChordElement } from './PianoKeyboardView.js';
 import { el, icon, openModalDialog } from './uiHelpers.js';
 
@@ -393,7 +394,7 @@ export class ChordsHubView {
         onChange: (e) => this._vm.selectChord({ bass: e.target.value })
       },
       [
-        el('option', { value: '', selected: this._vm.selectedBass.value === '' }, ['Inversión: fundamental']),
+        el('option', { value: '', selected: this._vm.selectedBass.value === '' }, ['Bajo: fundamental']),
         ...rootChoices.map((k) =>
           el('option', { value: k, selected: this._vm.selectedBass.value === k }, [`Bajo en ${formatRootDisplay(k, notation)} (/${formatRootDisplay(k, notation)})`])
         )
@@ -546,7 +547,7 @@ export class ChordsHubView {
       [
         { id: 'diagrama', label: 'Diagrama' },
         { id: 'pentagrama', label: 'Pentagrama' },
-        { id: 'ambos', label: 'Ambos' }
+        { id: 'ambos', label: 'Mixto' }
       ].map((m) =>
         el(
           'button',
@@ -952,6 +953,7 @@ export class ChordsHubView {
     const curVariantsCount = this._vm.getTrainerSlotVoicings(curChord).length;
     const nextVariantsCount = this._vm.getTrainerSlotVoicings(nextChord).length;
     const seqKey = chords.join(' – ');
+    const seqDisplay = chords.map((c) => formatChordSymbol(c, notation)).join(' – ');
     const bestCpm = this._appVm.progress.value.changeTrainerCpm[seqKey] || 0;
     const running = this._vm.trainerRunning.value;
     const beat = this._vm.trainerCurrentBeat.value;
@@ -980,7 +982,7 @@ export class ChordsHubView {
         el('div', {}, [
           el('h2', { className: 'm3-title-md' }, ['Entrenador de cambios (CPM)']),
           el('span', { className: 'm3-body-md' }, [
-            bestCpm > 0 ? `Mejor marca en ${seqKey}: ${bestCpm} CPM` : 'Armá cualquier secuencia o generá una aleatoria para practicar cambios limpios'
+            bestCpm > 0 ? `Mejor marca en ${seqDisplay}: ${bestCpm} CPM` : 'Armá cualquier secuencia o generá una aleatoria para practicar cambios limpios'
           ])
         ]),
         el(
@@ -1024,7 +1026,7 @@ export class ChordsHubView {
                 this._vm.trainerStepIndex.set(0);
               }
             },
-            [pr.label]
+            [pr.chords.map((c) => formatChordSymbol(c, notation)).join(' – ')]
           )
         )
       ]),
@@ -1071,9 +1073,15 @@ export class ChordsHubView {
               : null
           ]),
           curVoicing
-            ? (isPiano
-                ? createPianoChordElement(curVoicing, { notation, labelMode: 'functions', size: 'md', onPlay: (v) => this._vm.playVoicing(v) })
-                : createChordDiagramElement(curVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) }))
+            ? renderVoicingDiagram(curVoicing, {
+                tuning,
+                notation,
+                labelMode: this._vm.labelMode.value || this._appVm.settings.value.diagramLabelMode || 'fingers',
+                size: 'md',
+                leftHanded: this._vm.leftHanded.value,
+                isPiano,
+                onPlay: (v) => this._vm.playVoicing(v)
+              })
             : el('strong', { className: 'm3-headline' }, [formatChordSymbol(curChord, notation)])
         ]),
         el('div', { className: 'trainer-slot' }, [
@@ -1084,9 +1092,15 @@ export class ChordsHubView {
               : null
           ]),
           nextVoicing
-            ? (isPiano
-                ? createPianoChordElement(nextVoicing, { notation, labelMode: 'functions', size: 'md', onPlay: (v) => this._vm.playVoicing(v) })
-                : createChordDiagramElement(nextVoicing, { tuning, notation, size: 'md', leftHanded: this._vm.leftHanded.value, onPlay: (v) => this._vm.playVoicing(v) }))
+            ? renderVoicingDiagram(nextVoicing, {
+                tuning,
+                notation,
+                labelMode: this._vm.labelMode.value || this._appVm.settings.value.diagramLabelMode || 'fingers',
+                size: 'md',
+                leftHanded: this._vm.leftHanded.value,
+                isPiano,
+                onPlay: (v) => this._vm.playVoicing(v)
+              })
             : el('strong', { className: 'm3-headline' }, [formatChordSymbol(nextChord, notation)])
         ])
       ])

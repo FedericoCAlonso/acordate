@@ -1,3 +1,5 @@
+import { isAbcChordSymbol } from './MusicTheory.js';
+
 /**
  * Mapa de nombres de notas americanas a su equivalente en cifrado latino.
  */
@@ -120,19 +122,36 @@ export function formatVoicingTag(tag) {
 }
 
 /**
+ * Normaliza alteraciones ASCII (`#`/`b`) en símbolos musicales a glifos tipográficos (`♯`/`♭`)
+ * sin tocar letras de nombres latinos (`Si`, `Sol`, `La`, etc.).
+ * @param {string} noteOrChord Raíz o bajo ya formateado.
+ * @returns {string} Cadena con ♯ y ♭ limpios.
+ */
+function formatAccidentalsUnicode(noteOrChord) {
+  return String(noteOrChord || '')
+    .replace(/#/g, '♯')
+    .replace(/^((?:Do|Re|Mi|Fa|Sol|La|Si|[A-G]))b/, '$1♭');
+}
+
+/**
  * Divide un símbolo de acorde ya formateado en parte base (raíz + 'm' normal, nunca superíndice)
- * y extensión/tensión opcional (7, maj7, 9, 13, b5, etc.) más bajo alternativo (/E).
+ * y extensión/tensión opcional (7, maj7, 6/9, 13, ♭5, etc.) más bajo alternativo (/E).
  * @param {string} chordSymbol Símbolo de acorde americano.
  * @param {'americano'|'latino'} [notation='americano'] Sistema de cifrado.
  * @returns {{ base: string, ext: string, bass: string }} Partes listas para tipografía limpia.
  */
 export function splitChordTypography(chordSymbol, notation = 'americano') {
   const formatted = formatChordSymbol(chordSymbol, notation);
-  const [main, bass = ''] = formatted.split('/');
+  // Solo separa bajo cuando lo que sigue a '/' es una nota válida (preserva '6/9' dentro de ext)
+  const slashMatch = formatted.match(/^(.*)\/((?:Do|Re|Mi|Fa|Sol|La|Si|[A-G])[#b♯♭]?)$/);
+  const main = slashMatch ? slashMatch[1] : formatted;
+  const rawBass = slashMatch ? slashMatch[2] : '';
+  const bass = rawBass ? formatAccidentalsUnicode(rawBass) : '';
   // Mantiene raíz + 'm' menor (ej. "Em", "Am", "Mim") en línea normal, sin capturar la 'm' de "maj7"
   const match = main.match(/^((?:Do|Re|Mi|Fa|Sol|La|Si|[A-G])[#b♯♭]?(?:m(?!aj))?)(.*)$/);
-  if (!match) return { base: main, ext: '', bass };
-  const [, base, rawExt] = match;
+  if (!match) return { base: formatAccidentalsUnicode(main), ext: '', bass };
+  const [, rawBase, rawExt] = match;
+  const base = formatAccidentalsUnicode(rawBase);
   const ext = rawExt.replace(/b/g, '♭').replace(/#/g, '♯');
   return { base, ext, bass };
 }
@@ -189,16 +208,20 @@ export function formatChordSymbol(chordSymbol, notation = 'americano') {
   const trimmed = chordSymbol.trim();
   if (notation !== 'latino') return trimmed;
 
-  // Divide acorde con bajo invertido (ej. "G7/B" -> ["G7", "B"])
-  const parts = trimmed.split('/');
-  const converted = parts.map((part) => {
+  const convertPart = (part) => {
     const match = part.match(/^([A-G])([#b♯♭]?)(.*)$/);
     if (!match) return part;
     const [, root, accidental, suffix] = match;
     const latinRoot = AMERICAN_TO_LATIN_NOTE[root] || root;
     return `${latinRoot}${accidental}${suffix}`;
-  });
-  return converted.join('/');
+  };
+
+  // Solo divide por bajo alternativo cuando lo que sigue a '/' es nota válida (preserva '6/9')
+  const slashMatch = trimmed.match(/^(.*)\/([A-G][#b♯♭]?)$/);
+  if (slashMatch) {
+    return `${convertPart(slashMatch[1])}/${convertPart(slashMatch[2])}`;
+  }
+  return convertPart(trimmed);
 }
 
 /**
@@ -221,11 +244,7 @@ export function formatKeyName(keyName, notation = 'americano') {
 export function formatAbcChordsForDisplay(abcText, notation = 'americano') {
   if (!abcText || notation !== 'latino') return abcText || '';
   return abcText.replace(/"([^"]+)"/g, (full, inner) => {
-    // Las anotaciones ABC que empiezan con ^ _ < > @ no son acordes
-    if (/^[\^_<>@]/.test(inner)) {
-      return full;
-    }
-    if (/^[A-G][#b]?/.test(inner)) {
+    if (isAbcChordSymbol(inner)) {
       return `"${formatChordSymbol(inner, 'latino')}"`;
     }
     return full;

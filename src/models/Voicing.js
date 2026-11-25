@@ -1,7 +1,7 @@
 import { formatChordSymbol } from '../core/i18n.js';
-import { midiToAbcPitch, mod12, pcToNoteName, prefersFlats } from '../core/MusicTheory.js';
+import { midiToAbcPitch, mod12, pcToNoteName } from '../core/MusicTheory.js';
 import { soundingMidiToWrittenMidi } from '../core/PitchPolicy.js';
-import { Chord } from './Chord.js';
+import { Chord, prefersFlatsForChord } from './Chord.js';
 import { Tuning } from './Tuning.js';
 
 /**
@@ -96,7 +96,7 @@ export class Voicing {
    */
   getDetailedNotes(tuning = Tuning.defaultForInstrument(this.instrument), notation = 'americano') {
     const chordObj = Chord.parse(this.chord);
-    const useFlats = prefersFlats(chordObj.root) || this.chord.includes('b');
+    const useFlats = prefersFlatsForChord(chordObj);
     const out = [];
 
     for (let i = 0; i < this.frets.length && i < tuning.stringCount; i++) {
@@ -142,7 +142,7 @@ export class Voicing {
     if (midis.length === 0) return '';
     const lowest = Math.min(...midis);
     const chordObj = Chord.parse(this.chord);
-    const am = pcToNoteName(mod12(lowest), prefersFlats(chordObj.root) || this.chord.includes('b'));
+    const am = pcToNoteName(mod12(lowest), prefersFlatsForChord(chordObj));
     return formatChordSymbol(am, notation);
   }
 
@@ -177,7 +177,7 @@ export class Voicing {
   toAbcStaff(tuning = Tuning.defaultForInstrument(this.instrument), notation = 'americano') {
     const details = this.getDetailedNotes(tuning, notation);
     const chordObj = Chord.parse(this.chord);
-    const useFlats = prefersFlats(chordObj.root) || this.chord.includes('b');
+    const useFlats = prefersFlatsForChord(chordObj);
     const isBass = this.instrument === 'bass';
     const policyInst = isBass ? 'bajo' : 'guitarra-clasica';
     const clef = isBass ? 'bass' : 'treble-8';

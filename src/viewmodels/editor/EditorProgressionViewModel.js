@@ -84,12 +84,19 @@ export class EditorProgressionViewModel {
     }
   }
 
+  /** Sincroniza `chordGridBars` desde los pasos actuales de `progression`. */
+  _syncGridFromProgression(steps) {
+    const chords = (steps || []).map((s) => s.chord).filter(Boolean);
+    if (chords.length > 0) this.chordGridBars.set(chords, true);
+  }
+
   /** Actualiza un paso de la progresión armónica del formulario. */
   updateProgressionStep(idx, patch) {
     const steps = [...(this._form.value.progression || [])];
     if (!steps[idx]) return;
     steps[idx] = { ...steps[idx], ...patch };
     this._onUpdateField('progression', steps);
+    this._syncGridFromProgression(steps);
   }
 
   /** Agrega (+1) o quita (-1) un paso al final de la progresión armónica. */
@@ -102,6 +109,7 @@ export class EditorProgressionViewModel {
       steps.pop();
     }
     this._onUpdateField('progression', steps);
+    this._syncGridFromProgression(steps);
   }
 
   /** Divide un paso de la progresión en dos acordes dentro del mismo compás (ej. ii–V). */
@@ -144,16 +152,19 @@ export class EditorProgressionViewModel {
   /** Reproduce un voicing de vista previa desde el selector de acordes del editor. */
   playVoicingPreview(voicing, tuning) {
     if (!voicing) return;
-    const isBass = tuning.instrument === 'bass';
+    const isPiano = Boolean(voicing.isPianoVoicing) || !tuning;
+    const isBass = !isPiano && tuning.instrument === 'bass';
     this._audio.configure({ listeningRegister: this._appVm.settings.value.listeningRegister || 'real' });
     this._audio.playVoicing(voicing, {
-      mode: isBass ? 'block' : 'strum-down',
-      instrument: isBass
-        ? 'electric-bass'
-        : this._form.value.instruments.includes('guitarra-clasica')
-          ? 'nylon-guitar'
-          : 'acoustic-guitar',
-      tuning,
+      mode: isPiano || isBass ? 'block' : 'strum-down',
+      instrument: isPiano
+        ? 'acoustic-piano'
+        : isBass
+          ? 'electric-bass'
+          : this._form.value.instruments.includes('guitarra-clasica')
+            ? 'nylon-guitar'
+            : 'acoustic-guitar',
+      tuning: isPiano ? null : tuning,
       duration: 1.4
     });
   }

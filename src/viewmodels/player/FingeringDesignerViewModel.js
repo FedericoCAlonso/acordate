@@ -6,6 +6,7 @@ import {
   getTuningForVoicingInstrument,
   normalizeVoicingInstrument
 } from '../../services/FingeringDesignService.js';
+import { generatePianoVoicings } from '../../services/PianoVoicingService.js';
 import { createFingeringDesignPractice } from '../../services/PracticeFactoryService.js';
 
 /**
@@ -155,11 +156,14 @@ export class FingeringDesignerViewModel {
     const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
     const list = this._designer.getAvailableCriteria(vInst);
     const hasExplicit = Boolean(pr?.progression?.some((s) => Boolean(s.voicingId)));
+    const isPiano = vInst === 'piano';
     const isBass = vInst === 'bajo' || vInst === 'bajo-5';
     const matchesOriginal =
       hasExplicit &&
       this._transposeSemitones.value === 0 &&
-      ((isBass && pr.instruments.includes('bajo')) || (!isBass && !pr.instruments.every((i) => i === 'bajo')));
+      ((isPiano && pr.instruments.includes('piano')) ||
+        (isBass && pr.instruments.includes('bajo')) ||
+        (!isPiano && !isBass && !pr.instruments.every((i) => i === 'bajo' || i === 'piano')));
 
     if (matchesOriginal) {
       return [
@@ -218,7 +222,11 @@ export class FingeringDesignerViewModel {
     });
 
     await this._appVm.upsertUserPractice(nextPr);
-    this._appVm.showSnackbar(`Diseño guardado en «Mis prácticas»: ${plan.criterion.shortLabel}.`);
+    this._appVm.showSnackbar(`Diseño guardado en «Mis prácticas»: ${plan.criterion.shortLabel}.`, {
+      actionLabel: 'Abrir en Editor',
+      durationMs: 6500,
+      onAction: () => this._appVm.navigate(`#/editor/${encodeURIComponent(nextPr.id)}`)
+    });
     return nextPr;
   }
 
@@ -266,8 +274,9 @@ export class FingeringDesignerViewModel {
 
     const semi = this._transposeSemitones.value;
     const vInst = normalizeVoicingInstrument(this.voicingInstrument.value);
+    const isPiano = vInst === 'piano';
     const tuning = getTuningForVoicingInstrument(vInst);
-    const isBass = tuning.instrument === 'bass';
+    const isBass = !isPiano && tuning.instrument === 'bass';
     const fam = isBass ? 'bass' : 'guitar';
     const useFlats = prefersFlats(this._transposedKey.value || pr.key);
     const customChords = [
@@ -297,15 +306,22 @@ export class FingeringDesignerViewModel {
       designId === 'original' &&
       !semi &&
       baseSteps.some((s) => Boolean(s.voicingId)) &&
-      ((isBass && pr.instruments.includes('bajo')) || (!isBass && !pr.instruments.every((i) => i === 'bajo')));
+      ((isPiano && pr.instruments.includes('piano')) ||
+        (isBass && pr.instruments.includes('bajo')) ||
+        (!isPiano && !isBass && !pr.instruments.every((i) => i === 'bajo' || i === 'piano')));
 
     if (hasExplicitForInst) {
       const explicitOverrides = { ...overrides };
       baseSteps.forEach((s, idx) => {
         if (!explicitOverrides[idx] && s.voicingId) {
-          const found = findVoicingById(s.voicingId, customChords, s.chord, fam);
-          if (found && found.frets.length === tuning.stringCount) {
-            explicitOverrides[idx] = found;
+          if (isPiano) {
+            const pFound = generatePianoVoicings(s.chord).find((v) => v.id === s.voicingId);
+            if (pFound) explicitOverrides[idx] = pFound;
+          } else {
+            const found = findVoicingById(s.voicingId, customChords, s.chord, fam);
+            if (found && found.frets.length === tuning.stringCount) {
+              explicitOverrides[idx] = found;
+            }
           }
         }
       });

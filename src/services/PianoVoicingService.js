@@ -6,7 +6,8 @@ import {
   pcToNoteName,
   prefersFlats
 } from '../core/MusicTheory.js';
-import { Chord } from '../models/Chord.js';
+import { Chord, prefersFlatsForChord } from '../models/Chord.js';
+export { prefersFlatsForChord };
 
 /**
  * Etiquetas legibles para las familias de voicings pianísticos.
@@ -133,27 +134,6 @@ export function isBlackKeyMidi(midi) {
 }
 
 /**
- * Determina si conviene ortografía con bemoles para un acorde dado (ej. Cm, Gm, Dm, C7, Cdim7, C7b9),
- * evitando forzar bemoles en dominantes de tonalidades con sostenidos (E7, A7, D7, B7, F#7).
- * @param {Chord} chord Instancia de acorde.
- * @returns {boolean} True si prefiere bemoles.
- */
-export function prefersFlatsForChord(chord) {
-  if (!chord) return false;
-  if (chord.root.includes('b')) return true;
-  if (chord.root.includes('#')) return false;
-  const qid = chord.quality.id || '';
-  if (qid.includes('b') || qid.includes('dim') || qid === 'm7b5') return true;
-  if (qid.startsWith('m') && !qid.startsWith('maj')) {
-    return prefersFlats(`${chord.root}m`);
-  }
-  if (/^(7|9|11|13|7sus4)$/.test(qid) && ['C', 'F', 'G'].includes(chord.root)) {
-    return true;
-  }
-  return prefersFlats(chord.root);
-}
-
-/**
  * Asegura el cumplimiento del Low Interval Limit (LIL) en un conjunto de notas de mano izquierda:
  * evita intervalos cerrados fangosos en el registro grave desplazando la(s) nota(s) superior(es) o
  * el bloque completo hacia un registro acústicamente claro.
@@ -172,13 +152,9 @@ export function enforceLeftHandLIL(midis = []) {
       const gap = sorted[i + 1] - low;
       const minAllowed = LIL_MIN_LOW_MIDI[gap];
       if (minAllowed !== undefined && low < minAllowed) {
-        if (sorted.length === 2 && gap <= 4 && low >= 36) {
-          // Convierte tercera grave cerrada en décima o sube todo el bloque si excede 16 st
+        if (sorted.length === 2 && gap <= 3 && low >= 38 && (sorted[1] + 12 - sorted[0]) <= 15) {
+          // Convierte tercera menor cómoda en décima menor (<= 15 st); si excede alcance ergonómico eleva ambas notas
           sorted[1] += 12;
-          if (sorted[1] - sorted[0] > 16) {
-            sorted[0] += 12;
-            sorted[1] -= 0;
-          }
         } else {
           for (let k = 0; k < sorted.length; k++) sorted[k] += 12;
         }
@@ -342,6 +318,23 @@ function createPianoVoicingObject({
     /** Devuelve los MIDI reales ordenados para reproducción directa en AudioSynthService. */
     getMidiNotes() {
       return [...allMidis];
+    },
+
+    /** Serializa el voicing de piano a un objeto JSON plano seguro. */
+    toJSON() {
+      return {
+        id,
+        isPianoVoicing: true,
+        instrument: 'piano',
+        chord: chord.americanSymbol,
+        family,
+        label,
+        description,
+        inversion,
+        lhMidis: [...cleanLh],
+        rhMidis: [...cleanRh],
+        tags: [family, ...tags]
+      };
     },
 
     /** Devuelve metadatos detallados por nota (midi, nombre, función armónica, dedo y mano). */
@@ -557,8 +550,8 @@ export function generatePianoVoicings(chordInput) {
     } else if (realSeventhIv !== undefined && isSlash) {
       rhShellIvs.push(realSeventhIv);
     } else if (realSeventhIv !== undefined && rhShellIvs.length < 3) {
-      // Si MI ya toca R–7, añade la 9.ª natural en MD en acordes de séptima para sonoridad limpia sin duplicar la sensible
-      rhShellIvs.push(isDominant || thirdIv === 4 || thirdIv === 3 ? 14 : 12);
+      // Si MI ya toca R–7, añade 11.ª natural en m7b5 (locrio) y 9.ª natural en el resto de acordes de séptima
+      rhShellIvs.push(qid === 'm7b5' ? 17 : (isDominant || thirdIv === 4 || thirdIv === 3 ? 14 : 12));
     } else if (rhShellIvs.length < 3) {
       rhShellIvs.push(12);
     }

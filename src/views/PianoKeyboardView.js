@@ -1,6 +1,7 @@
 import { formatChordSymbol } from '../core/i18n.js';
 import { mod12, pcToNoteName } from '../core/MusicTheory.js';
 import { isBlackKeyMidi } from '../services/PianoVoicingService.js';
+import { getFunctionDotColors } from './ChordDiagramView.js';
 import { el } from './uiHelpers.js';
 
 /** Espacio de nombres XML estándar para crear nodos SVG. */
@@ -32,26 +33,6 @@ function fmtAcc(txt) {
     .replace(/^bb(?=\d)/, '𝄫')
     .replace(/^b(?=[235679]|1[13])/, '♭')
     .replace(/([A-G]|Do|Re|Mi|Fa|Sol|La|Si)b(?=$|\/)/g, '$1♭');
-}
-
-/**
- * Devuelve el par de colores Material 3 (relleno y texto) según la función armónica de un acorde.
- * Coincide exactamente con la leyenda de ChordDiagramView.js.
- * @param {string} fnLabel Etiqueta de función ('R', '3', 'b3', '5', '7', etc.).
- * @param {boolean} isRoot True si es raíz.
- * @returns {{ fill: string, textFill: string }} Tokens CSS.
- */
-function getChordDotColors(fnLabel, isRoot) {
-  if (isRoot || fnLabel === 'R') {
-    return { fill: 'var(--md-sys-color-primary)', textFill: 'var(--md-sys-color-on-primary)' };
-  }
-  if (['3', 'b3', '2', '4'].includes(fnLabel)) {
-    return { fill: 'var(--md-sys-color-tertiary)', textFill: 'var(--md-sys-color-on-tertiary)' };
-  }
-  if (['5', 'b5', '#5'].includes(fnLabel)) {
-    return { fill: 'var(--md-sys-color-secondary)', textFill: 'var(--md-sys-color-on-secondary)' };
-  }
-  return { fill: 'var(--md-sys-color-on-surface)', textFill: 'var(--md-sys-color-surface)' };
 }
 
 /**
@@ -121,9 +102,9 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
   const whiteH = size === 'sm' ? 76 : size === 'md' ? 104 : 118;
   const blackH = Math.round(whiteH * 0.62);
   const padX = 4;
-  const showHandBands = size !== 'sm' && ((pianoVoicing.lhMidis?.length > 0) || (pianoVoicing.rhMidis?.length > 0));
-  const padTop = showHandBands ? 22 : 6;
-  const padBottom = size === 'sm' ? 8 : 16;
+  const showHandBands = (pianoVoicing.lhMidis?.length > 0) || (pianoVoicing.rhMidis?.length > 0);
+  const padTop = showHandBands ? (size === 'sm' ? 18 : 22) : 6;
+  const padBottom = size === 'sm' ? 14 : 16;
 
   const { whites, blacks, totalWidth } = buildKeyboardGeometry(startMidi, endMidi, whiteW);
   const svgW = totalWidth + padX * 2;
@@ -207,13 +188,14 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
     });
     g.appendChild(rect);
 
-    // Marca sutil de Do central (C4 = 60) y otros Do (C) en el pie de las teclas blancas
-    if (!isBlack && mod12(k.midi) === 0 && size !== 'sm') {
+    // Marca de Do central (C4 = 60) siempre visible y otros Do (C) en tamaños md/lg
+    if (!isBlack && mod12(k.midi) === 0 && (size !== 'sm' || k.midi === 60 || k.midi === startMidi)) {
       const oct = Math.floor(k.midi / 12) - 1;
       const cLbl = svgEl('text', {
         x: x + k.w / 2,
         y: y + h + 11,
         'text-anchor': 'middle',
+        'font-size': size === 'sm' ? 8 : 9,
         class: `piano-key__oct-label ${k.midi === 60 ? 'piano-key__oct-label--middle' : ''}`
       });
       cLbl.textContent = notation === 'latino' ? `Do${oct}` : `C${oct}`;
@@ -221,7 +203,7 @@ export function createPianoChordElement(pianoVoicing, options = {}) {
     }
 
     if (det) {
-      const { fill, textFill } = getChordDotColors(det.label, det.isRoot);
+      const { fill, textFill } = getFunctionDotColors(det.label, det.isRoot);
       // Tinte sutil de la tecla presionada
       g.appendChild(
         svgEl('rect', {

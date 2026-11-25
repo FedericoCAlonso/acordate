@@ -1,5 +1,5 @@
-import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, formatChordSymbol } from '../core/i18n.js';
-import { ALL_KEYS, SHARP_NOTES } from '../core/MusicTheory.js';
+import { CATEGORY_LABELS, INSTRUMENT_LABELS, PRACTICE_TYPE_LABELS, formatChordSymbol, formatKeyName } from '../core/i18n.js';
+import { ALL_KEYS } from '../core/MusicTheory.js';
 import { findVoicingById, getCuratedVoicingsForChord } from '../data/voicings.js';
 import { Chord } from '../models/Chord.js';
 import { ChordQuality } from '../models/ChordQuality.js';
@@ -16,7 +16,7 @@ import {
   createChordSymbolElement,
   createInteractiveVoicingPicker
 } from './ChordDiagramView.js';
-import { createPianoChordElement } from './PianoKeyboardView.js';
+import { renderVoicingDiagram } from './components/VoicingDiagramRenderer.js';
 import { createFloatingField, el, icon, openConfirmDialog, openModalDialog } from './uiHelpers.js';
 
 /**
@@ -266,6 +266,7 @@ export class EditorView {
 
     // Grilla visual de cifrado por compás + botones de acordes comunes
     this._chordGridHost = el('div', { className: 'chord-editor-grid', style: 'margin:10px 0' });
+    const initialNotation = this._appVm.settings.value.chordNotation;
     const quickChordButtons = el(
       'div',
       { className: 'm3-chip-row', style: 'margin-top:8px' },
@@ -278,12 +279,12 @@ export class EditorView {
             ripple: true,
             onClick: () => this._insertChordAtCursor(ch)
           },
-          [ch]
+          [createChordSymbolElement(ch, initialNotation)]
         )
       )
     );
 
-    const chordGridCard = el('div', { className: 'm3-card', style: 'margin-top:14px' }, [
+    this._chordGridCard = el('div', { className: 'm3-card', style: 'margin-top:14px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('h3', { className: 'm3-title-md' }, ['Grilla de cifrado por compás']),
         el('div', { className: 'stepper-inline' }, [
@@ -330,7 +331,7 @@ export class EditorView {
       this._previewScoreEl
     ]);
 
-    const leftCol = el('div', { className: 'editor-col-form' }, [metaCard, this._harmonyCard, chordGridCard]);
+    const leftCol = el('div', { className: 'editor-col-form' }, [metaCard, this._harmonyCard, this._chordGridCard]);
     const rightCol = el('div', { className: 'editor-col-preview' }, [abcCard]);
     const layout = el('div', { className: 'editor-layout editor-layout--mobile-form' }, [leftCol, rightCol]);
 
@@ -484,6 +485,9 @@ export class EditorView {
 
     const showHarmony = curType === 'harmony' || curType === 'mixed';
     this._harmonyCard.style.display = showHarmony ? 'block' : 'none';
+    if (this._chordGridCard) {
+      this._chordGridCard.style.display = f.type === 'harmony' ? 'none' : 'block';
+    }
     this._fields.comping.wrap.style.display = showHarmony ? 'flex' : 'none';
     if (this._compingPreviewEl) {
       this._compingPreviewEl.style.display = showHarmony ? 'block' : 'none';
@@ -533,24 +537,25 @@ export class EditorView {
       const fam = !isPiano && f.instruments.includes('bajo') && f.instruments.length === 1 ? 'bass' : 'guitar';
       const tuning = isPiano ? null : Tuning.defaultForInstrument(fam);
       const notation = this._appVm.settings.value.chordNotation;
+      const labelMode = this._appVm.settings.value.diagramLabelMode || 'fingers';
+      const leftHanded = Boolean(this._appVm.settings.value.leftHanded);
       this._previewScoreEl.innerHTML = '';
       const strip = el(
         'div',
         { className: 'harmony-strip' },
         (f.progression || []).map((st) => {
-          if (isPiano) {
-            const cands = generatePianoVoicings(st.chord || 'C');
-            const pv = (st.voicingId ? cands.find((c) => c.id === st.voicingId) : null) || cands[0];
-            return el('div', { className: 'harmony-step-card' }, [
-              el('strong', {}, [createChordSymbolElement(st.chord || 'C', notation), ` (${st.bars}c)`]),
-              pv ? createPianoChordElement(pv, { notation, size: 'sm', labelMode: 'fingers' }) : null
-            ]);
-          }
-          const v = findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
-            getCuratedVoicingsForChord(st.chord, fam, tuning)[0];
+          const voicing = isPiano
+            ? (() => {
+                const cands = generatePianoVoicings(st.chord || 'C');
+                return (st.voicingId ? cands.find((c) => c.id === st.voicingId) : null) || cands[0];
+              })()
+            : (findVoicingById(st.voicingId, f.customVoicings || [], st.chord, fam) ||
+                getCuratedVoicingsForChord(st.chord, fam, tuning)[0]);
           return el('div', { className: 'harmony-step-card' }, [
-            el('strong', {}, [`${st.chord} (${st.bars}c)`]),
-            v ? createChordDiagramElement(v, { tuning, notation, size: 'sm', showTitle: false }) : null
+            el('strong', {}, [createChordSymbolElement(st.chord || 'C', notation), ` (${st.bars}c)`]),
+            voicing
+              ? renderVoicingDiagram(voicing, { tuning, notation, size: 'sm', labelMode, leftHanded, isPiano, showTitle: false })
+              : null
           ]);
         })
       );
@@ -755,28 +760,20 @@ export class EditorView {
         const isSel = selectedVoicingId === v.id;
         gridHost.appendChild(
           el('div', { className: `voicing-grid-card ${isSel ? 'voicing-grid-card--active' : ''}` }, [
-            isPiano
-              ? createPianoChordElement(v, {
-                  notation,
-                  size: 'sm',
-                  labelMode: 'fingers',
-                  onPlay: (vo) => {
-                    selectedVoicingId = vo.id;
-                    this._vm.playVoicingPreview(vo, tuning);
-                    refreshVoicings();
-                  }
-                })
-              : createChordDiagramElement(v, {
-                  tuning,
-                  notation,
-                  size: 'sm',
-                  showTitle: false,
-                  onPlay: (vo) => {
-                    selectedVoicingId = vo.id;
-                    this._vm.playVoicingPreview(vo, tuning);
-                    refreshVoicings();
-                  }
-                }),
+            renderVoicingDiagram(v, {
+              tuning,
+              notation,
+              size: 'sm',
+              labelMode: this._appVm.settings.value.diagramLabelMode || 'fingers',
+              leftHanded: Boolean(this._appVm.settings.value.leftHanded),
+              isPiano,
+              showTitle: false,
+              onPlay: (vo) => {
+                selectedVoicingId = vo.id;
+                this._vm.playVoicingPreview(vo, tuning);
+                refreshVoicings();
+              }
+            }),
             el('div', { className: 'voicing-grid-card__meta' }, [
               el('strong', { className: 'm3-label' }, [v.getPositionLabel()]),
               !isPiano ? el('span', { className: 'm3-body-md' }, [v.getUsedStringsLabel(tuning)]) : null
@@ -802,6 +799,8 @@ export class EditorView {
       }
     };
 
+    const rootOptions = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
+    const fmtNoteOpt = (r) => formatChordSymbol(r, notation).replace('#', '♯').replace(/^((?:Do|Re|Mi|Fa|Sol|La|Si|[A-G]))b/, '$1♭');
     const rootSel = el(
       'select',
       {
@@ -810,7 +809,7 @@ export class EditorView {
         'aria-label': 'Raíz del acorde',
         onChange: (e) => { draftRoot = e.target.value; selectedVoicingId = ''; refreshVoicings(); }
       },
-      SHARP_NOTES.map((r) => el('option', { value: r, selected: r === draftRoot }, [formatChordSymbol(r, notation).replace('#', '♯')]))
+      rootOptions.map((r) => el('option', { value: r, selected: r === draftRoot }, [fmtNoteOpt(r)]))
     );
     rootSel.value = draftRoot;
 
@@ -833,12 +832,12 @@ export class EditorView {
       {
         className: 'm3-field__select',
         style: 'padding:8px 10px; min-height:44px',
-        'aria-label': 'Inversión o bajo alternativo',
+        'aria-label': 'Bajo alternativo (slash chord)',
         onChange: (e) => { draftBass = e.target.value; selectedVoicingId = ''; refreshVoicings(); }
       },
       [
-        el('option', { value: '' }, ['Inversión: fundamental']),
-        ...ALL_KEYS.map((k) => el('option', { value: k, selected: k === draftBass }, [`Bajo en ${formatChordSymbol(k, notation)}`]))
+        el('option', { value: '' }, ['Bajo: fundamental']),
+        ...rootOptions.map((k) => el('option', { value: k, selected: k === draftBass }, [`Bajo en ${fmtNoteOpt(k)}`]))
       ]
     );
     bassSel.value = draftBass;
@@ -924,8 +923,9 @@ export class EditorView {
     });
     renderPreview();
 
+    const notation = this._appVm.settings.value.chordNotation;
     openModalDialog({
-      title: `Crear digitación propia — ${step.chord}`,
+      title: `Crear digitación propia — ${formatChordSymbol(step.chord, notation)}`,
       body: el('div', { style: 'display:flex; flex-direction:column; gap:12px' }, [previewHost, picker]),
       actions: [
         { label: 'Cancelar', variant: 'm3-btn--text', onClick: (close) => close() },
@@ -985,9 +985,10 @@ export class EditorView {
    * Abre el diálogo modal del generador de escalas y arpegios.
    */
   _openScaleGeneratorDialog() {
+    const notation = this._appVm.settings.value.chordNotation;
     const keyField = createFloatingField({
       id: 'gen-scale-key', label: 'Tonalidad', kind: 'select', value: this._vm.form.value.key || 'C',
-      options: ALL_KEYS.map((k) => ({ value: k, label: k }))
+      options: ALL_KEYS.map((k) => ({ value: k, label: formatKeyName(k, notation) }))
     });
     const typeField = createFloatingField({
       id: 'gen-scale-type', label: 'Escala o arpegio', kind: 'select', value: 'mayor',
@@ -1047,6 +1048,7 @@ export class EditorView {
    * Abre el diálogo modal del generador de progresiones armónicas con notas guía.
    */
   _openProgressionGeneratorDialog() {
+    const notation = this._appVm.settings.value.chordNotation;
     const templates = this._vm.progressionGenerator.getAvailableTemplates();
     const tplField = createFloatingField({
       id: 'gen-prog-tpl', label: 'Esquema de grados', kind: 'select', value: 'ii-V-I',
@@ -1054,7 +1056,7 @@ export class EditorView {
     });
     const keyField = createFloatingField({
       id: 'gen-prog-key', label: 'Tonalidad', kind: 'select', value: this._vm.form.value.key || 'C',
-      options: ALL_KEYS.map((k) => ({ value: k, label: k }))
+      options: ALL_KEYS.map((k) => ({ value: k, label: formatKeyName(k, notation) }))
     });
     const patField = createFloatingField({
       id: 'gen-prog-pat', label: 'Melodía base', kind: 'select', value: 'blancas',
@@ -1100,6 +1102,7 @@ export class EditorView {
    * Abre el diálogo modal del generador de líneas de walking bass.
    */
   _openWalkingGeneratorDialog() {
+    const notation = this._appVm.settings.value.chordNotation;
     const chordsField = createFloatingField({
       id: 'gen-walk-chords',
       label: 'Cifrado por compás (separado por | o espacio)',
@@ -1108,7 +1111,7 @@ export class EditorView {
     });
     const keyField = createFloatingField({
       id: 'gen-walk-key', label: 'Tonalidad', kind: 'select', value: 'F',
-      options: ALL_KEYS.map((k) => ({ value: k, label: k }))
+      options: ALL_KEYS.map((k) => ({ value: k, label: formatKeyName(k, notation) }))
     });
     const variantField = createFloatingField({
       id: 'gen-walk-var', label: 'Variante', kind: 'select', value: 'clasico',
