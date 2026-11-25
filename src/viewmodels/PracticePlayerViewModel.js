@@ -159,6 +159,7 @@ export class PracticePlayerViewModel {
 
     this.synthInstrument = this.mixer.synthInstrument;
     this.compingPattern = this.mixer.compingPattern;
+    this.compingFeel = this.mixer.compingFeel;
     this.melodyVolume = this.mixer.melodyVolume;
     this.chordsEnabled = this.mixer.chordsEnabled;
     this.chordsVolume = this.mixer.chordsVolume;
@@ -495,6 +496,7 @@ export class PracticePlayerViewModel {
   setCountIn(m) { this.transport.setCountIn(m); }
 
   setCompingPattern(p) { this.mixer.setCompingPattern(p); }
+  setCompingFeel(feel) { this.mixer.setCompingFeel(feel); }
   setSynthInstrument(i) { this.mixer.setSynthInstrument(i); }
   setVolumes(v) { this.mixer.setVolumes(v); }
   setChordsEnabled(e) { this.mixer.setChordsEnabled(e); }

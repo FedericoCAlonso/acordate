@@ -10,6 +10,7 @@ import {
   formatKeyName
 } from '../core/i18n.js';
 import { COMPING_PATTERNS } from '../models/ProgressionStep.js';
+import { COMPING_FEEL_MODES } from '../services/CompingEngineService.js';
 import {
   VOICING_INSTRUMENT_OPTIONS,
   getTuningForVoicingInstrument,
@@ -294,6 +295,10 @@ export class PracticePlayerView {
       this._vm.voicingInstrument.subscribe(() => this._renderNotationSurface()),
       this._vm.fingeringDesignId.subscribe(() => this._renderNotationSurface()),
       this._vm.compingPattern.subscribe(() => {
+        this._renderViewBar();
+        this._renderNotationSurface();
+      }),
+      this._vm.compingFeel.subscribe(() => {
         this._renderViewBar();
         this._renderNotationSurface();
       }),
@@ -598,6 +603,33 @@ export class PracticePlayerView {
         : null;
     if (compingSelect) compingSelect.value = this._vm.compingPattern.value;
 
+    const activeFeel = this._vm.compingFeel.value;
+    const compingFeelControl =
+      isHarmony || hasHarmonySteps
+        ? el(
+            'div',
+            {
+              className: 'm3-segmented player-comping-feel-seg',
+              role: 'group',
+              'aria-label': 'Interpretación del acompañamiento'
+            },
+            COMPING_FEEL_MODES.map((fm) =>
+              el(
+                'button',
+                {
+                  type: 'button',
+                  className: 'm3-segmented__btn',
+                  ripple: true,
+                  title: fm.description,
+                  'aria-pressed': String(activeFeel === fm.id),
+                  onClick: () => this._vm.setCompingFeel(fm.id)
+                },
+                [fm.label]
+              )
+            )
+          )
+        : null;
+
     // Modo voces para piezas polifónicas (en piano: Ambas / Mano der. / Mano izq.; en guitarra: Ambas / Melodía / Bajo)
     const isPianoPiece = Boolean(pr?.instruments?.includes('piano') && (pr.instruments.length === 1 || pr.instruments[0] === 'piano'));
     const voiceControl = this._vm.hasMultipleVoices.value
@@ -695,7 +727,8 @@ export class PracticePlayerView {
     this._viewBar.appendChild(quickRight);
     if (voiceControl) this._viewBar.appendChild(voiceControl);
     if (compingSelect) this._viewBar.appendChild(compingSelect);
-    this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(voiceControl || compingSelect));
+    if (compingFeelControl) this._viewBar.appendChild(compingFeelControl);
+    this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(voiceControl || compingSelect || compingFeelControl));
   }
 
   /**
@@ -1575,10 +1608,39 @@ export class PracticePlayerView {
           },
           ['Restablecer mezcla (100 % voz principal)']
         );
+        const currentFeel = this._vm.compingFeel.value;
+        const feelSeg = el(
+          'div',
+          { className: 'm3-segmented m3-segmented--full', role: 'group', 'aria-label': 'Interpretación del acompañamiento' },
+          COMPING_FEEL_MODES.map((fm) =>
+            el(
+              'button',
+              {
+                type: 'button',
+                className: 'm3-segmented__btn',
+                ripple: true,
+                title: fm.description,
+                'aria-pressed': String(currentFeel === fm.id),
+                onClick: () => {
+                  this._vm.setCompingFeel(fm.id);
+                  renderTab('mezcla');
+                }
+              },
+              [fm.label]
+            )
+          )
+        );
+        const feelDesc = COMPING_FEEL_MODES.find((fm) => fm.id === currentFeel)?.description || '';
+
         panelHost.append(
           melodySlider.wrap,
           chordsToggle.row,
           chordsSlider.wrap,
+          el('div', {}, [
+            el('div', { className: 'm3-body-md', style: 'margin-bottom:6px' }, ['Interpretación del acompañamiento']),
+            feelSeg,
+            el('p', { className: 'm3-body-sm', style: 'margin:6px 0 0; color:var(--md-sys-color-on-surface-variant)' }, [feelDesc])
+          ]),
           bassToggle.row,
           bassSlider.wrap,
           metroToggle.row,

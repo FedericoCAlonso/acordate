@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v25 · App v1.1.1: botón Buscar actualizaciones en Ajustes).
+ * Versión del caché estático de la PWA Acordate (v26 · App v1.2.0: Motor de acompañamiento orgánico Fijo/Orgánico/Vivo).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v25';
+const CACHE_NAME = 'acordate-static-v26';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -54,6 +54,7 @@ const PRECACHE_ASSETS = [
   './src/services/ThemeService.js',
   './src/services/WakeLockService.js',
   './src/services/MetronomeService.js',
+  './src/services/CompingEngineService.js',
   './src/services/AudioSynthService.js',
   './src/services/AbcService.js',
   './src/services/ScaleGenerator.js',

@@ -1,5 +1,11 @@
 import { getChordVoicingMidi, midiToFrequency } from '../core/MusicTheory.js';
 import { applyListeningRegister } from '../core/PitchPolicy.js';
+import {
+  analyzeChordContext,
+  normalizeCompingFeel,
+  planCompingEvents,
+  planPlayAlongBass
+} from './CompingEngineService.js';
 
 /**
  * Intervalo de sondeo del scheduler de reproducción en milisegundos.
@@ -73,6 +79,10 @@ export class AudioSynthService {
     this.metronomeVolume = 0.65;
     /** Patrón rítmico de acompañamiento armónico (comping) para prácticas de armonía/mixtas. */
     this.comping = 'negras-abajo';
+    /** Nivel de variación orgánica del acompañamiento ('fijo' | 'organico' | 'vivo'). */
+    this.compingFeel = 'organico';
+    /** Contador de vueltas (coros) en bucle para variar frases entre repeticiones. */
+    this._chorusIndex = 0;
     /** Cantidad de compases de conteo previo (0, 1 o 2). */
     this.countInMeasures = 1;
 
@@ -185,6 +195,9 @@ export class AudioSynthService {
     if (patch.comping !== undefined) {
       const rawComping = typeof patch.comping === 'object' && patch.comping !== null ? patch.comping.pattern : patch.comping;
       this.comping = rawComping || 'negras-abajo';
+    }
+    if (patch.compingFeel !== undefined) {
+      this.compingFeel = normalizeCompingFeel(patch.compingFeel);
     }
     if (patch.countInMeasures !== undefined) this.countInMeasures = Math.max(0, Math.min(2, Number(patch.countInMeasures) || 0));
     if (patch.loopEnabled !== undefined) this.loopEnabled = Boolean(patch.loopEnabled);
@@ -359,6 +372,9 @@ export class AudioSynthService {
 
     const beatsPerMeasure = this._timeline.beatsPerMeasure || 4;
     const startingFresh = !this._isPaused;
+    if (startingFresh) {
+      this._chorusIndex = 0;
+    }
     this._countInTotalBeats = startingFresh ? this.countInMeasures * beatsPerMeasure : 0;
 
     const startBeat = startingFresh
@@ -617,11 +633,12 @@ export class AudioSynthService {
       }
 
       if ((this.chordsEnabled || tl.isHarmonyOnly) && tl.chords.length > 0) {
-        for (const chordEv of tl.chords) {
+        for (let cIdx = 0; cIdx < tl.chords.length; cIdx++) {
+          const chordEv = tl.chords[cIdx];
           if (chordEv.beat > scheduleWindowStart && chordEv.beat <= scheduleWindowEnd && chordEv.beat < this._rangeEndBeat) {
             const t = this._beatToAudioTime(chordEv.beat);
             const durSec = Math.max(0.25, chordEv.durationBeats * secPerBeat);
-            this._playChordEvent(ctx, chordEv, t, durSec, secPerBeat, tl);
+            this._playChordEvent(ctx, chordEv, t, durSec, secPerBeat, tl, cIdx);
             if (tl.isHarmonyOnly) {
               this._visualQueue.push({
                 time: t,
@@ -644,6 +661,7 @@ export class AudioSynthService {
         this._anchorAudioTime = endAudioTime;
         this._anchorBeat = this._rangeStartBeat;
         this._scheduledUntilBeat = this._rangeStartBeat - 0.0001;
+        this._chorusIndex += 1;
         this._visualQueue.push({ time: endAudioTime, isPassComplete: true });
       } else {
         const endAudioTime = this._beatToAudioTime(this._rangeEndBeat);
@@ -1006,9 +1024,12 @@ export class AudioSynthService {
    * @param {number} secPerBeat Segundos por negra al BPM actual.
    * @param {object} tl Línea de tiempo activa.
    */
-  _playChordEvent(ctx, chordEv, startTime, duration, secPerBeat, tl) {
+  _playChordEvent(ctx, chordEv, startTime, duration, secPerBeat, tl, chordIndex = 0) {
     const pattern = chordEv.rhythm || this.comping || 'negras-abajo';
     const hasVoicing = Array.isArray(chordEv.voicingMidis) && chordEv.voicingMidis.length > 0;
+    const feel = normalizeCompingFeel(this.compingFeel);
+    const beatsPerMeasure = tl.beatsPerMeasure || 4;
+    const context = analyzeChordContext(tl.chords || [], chordIndex, beatsPerMeasure, this._chorusIndex);
 
     if (tl.isHarmonyOnly) {
       // Modo armonía / play-along: pista de acordes y pista de bajo separadas y silenciables
@@ -1022,22 +1043,51 @@ export class AudioSynthService {
             : tl.isBassPiece && !this.instrument.includes('guitar')
               ? 'electric-bass'
               : (this.instrument.includes('guitar') ? this.instrument : 'nylon-guitar');
-          this._scheduleCompingPattern(
-            ctx,
-            chordMidis,
-            startTime,
-            chordEv.durationBeats,
-            secPerBeat,
-            pattern,
-            chordInst,
-            this.chordsVolume,
-            false
-          );
+          if (feel === 'fijo') {
+            this._scheduleCompingPattern(
+              ctx,
+              chordMidis,
+              startTime,
+              chordEv.durationBeats,
+              secPerBeat,
+              pattern,
+              chordInst,
+              this.chordsVolume,
+              false
+            );
+          } else {
+            this._scheduleOrganicComping(ctx, {
+              chordSymbol: chordEv.symbol,
+              voicingMidis: chordMidis,
+              startTime,
+              durationBeats: chordEv.durationBeats,
+              beatsPerMeasure,
+              secPerBeat,
+              pattern,
+              feel,
+              context,
+              instrument: chordInst,
+              volume: this.chordsVolume
+            });
+          }
         }
       }
 
       if (this.bassEnabled && this.bassVolume > 0.01) {
-        this._schedulePlayAlongBass(ctx, chordEv.symbol, startTime, chordEv.durationBeats, secPerBeat, pattern);
+        if (feel === 'fijo') {
+          this._schedulePlayAlongBass(ctx, chordEv.symbol, startTime, chordEv.durationBeats, secPerBeat, pattern);
+        } else {
+          this._scheduleOrganicBass(ctx, {
+            chordSymbol: chordEv.symbol,
+            startTime,
+            durationBeats: chordEv.durationBeats,
+            beatsPerMeasure,
+            secPerBeat,
+            pattern,
+            feel,
+            context
+          });
+        }
       }
       return;
     }
@@ -1048,11 +1098,89 @@ export class AudioSynthService {
         : tl.isBassPiece
           ? (this.instrument.includes('bass') ? this.instrument : 'electric-bass')
           : (this.instrument.includes('guitar') ? this.instrument : 'acoustic-guitar');
-      this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, tl.isBassPiece);
+      if (feel === 'fijo' || tl.isBassPiece) {
+        this._scheduleCompingPattern(ctx, chordEv.voicingMidis, startTime, chordEv.durationBeats, secPerBeat, pattern, inst, this.chordsVolume, tl.isBassPiece);
+      } else {
+        this._scheduleOrganicComping(ctx, {
+          chordSymbol: chordEv.symbol,
+          voicingMidis: chordEv.voicingMidis,
+          startTime,
+          durationBeats: chordEv.durationBeats,
+          beatsPerMeasure,
+          secPerBeat,
+          pattern,
+          feel,
+          context,
+          instrument: inst,
+          volume: this.chordsVolume
+        });
+      }
       return;
     }
 
     this._playChordAccompaniment(ctx, chordEv.symbol, startTime, duration, tl.isBassPiece);
+  }
+
+  /**
+   * Agenda eventos de acompañamiento generados por `CompingEngineService` ('organico' o 'vivo')
+   * con micro-humanización controlada y sin desplazar el reloj maestro.
+   */
+  _scheduleOrganicComping(ctx, { chordSymbol, voicingMidis, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context, instrument, volume }) {
+    const isPiano = String(instrument || '').includes('piano');
+    const hits = planCompingEvents({
+      chordSymbol,
+      nextChordSymbol: context.nextChordSymbol,
+      voicingMidis,
+      nextVoicingMidis: context.nextVoicingMidis,
+      durationBeats,
+      beatsPerMeasure,
+      pattern,
+      compingFeel: feel,
+      context,
+      isPiano
+    });
+    for (const hit of hits) {
+      const t = Math.max(ctx.currentTime, startTime + hit.beatOffset * secPerBeat + (hit.humanizeMs || 0) / 1000);
+      const durSec = Math.max(0.12, hit.durationBeats * secPerBeat);
+      this._scheduleVoicingAt(
+        ctx,
+        hit.midis,
+        t,
+        durSec,
+        hit.mode,
+        instrument,
+        Math.min(1.15, volume * hit.volumeScale),
+        hit.strumMs
+      );
+    }
+  }
+
+  /**
+   * Agenda una línea de bajo acompañante con fraseo multi-compás y aproximación cromática.
+   */
+  _scheduleOrganicBass(ctx, { chordSymbol, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context }) {
+    const notes = planPlayAlongBass({
+      chordSymbol,
+      nextChordSymbol: context.nextChordSymbol,
+      durationBeats,
+      beatsPerMeasure,
+      pattern,
+      compingFeel: feel,
+      context
+    });
+    const baseVol = this.bassVolume * 0.65;
+    for (const n of notes) {
+      const t = Math.max(ctx.currentTime, startTime + n.beatOffset * secPerBeat + (n.humanizeMs || 0) / 1000);
+      const durSec = Math.max(0.14, n.durationBeats * secPerBeat);
+      this._playPluckedNote(
+        ctx,
+        applyListeningRegister(n.midi, this.listeningRegister),
+        t,
+        durSec,
+        n.bassInst,
+        Math.min(1.15, baseVol * n.volumeScale)
+      );
+    }
   }
 
   /**

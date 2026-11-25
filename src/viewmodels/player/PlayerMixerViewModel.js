@@ -1,4 +1,5 @@
 import { Observable } from '../../core/Observable.js';
+import { normalizeCompingFeel } from '../../services/CompingEngineService.js';
 
 /**
  * Sub-ViewModel del mezclador de audio del Reproductor.
@@ -26,6 +27,8 @@ export class PlayerMixerViewModel {
     this.synthInstrument = new Observable('acoustic-guitar');
     /** Patrón rítmico de acompañamiento (comping) editable en vivo. */
     this.compingPattern = new Observable('negras-abajo');
+    /** Nivel de variación orgánica del acompañamiento ('fijo' | 'organico' | 'vivo'). */
+    this.compingFeel = new Observable('organico');
     /** Volumen de melodía / voz principal (1.0 = 100 % por defecto). */
     this.melodyVolume = new Observable(1.0);
     /** Acompañamiento de acordes activado/desactivado. */
@@ -63,6 +66,12 @@ export class PlayerMixerViewModel {
     const resolvedComping =
       typeof rawComping === 'object' && rawComping !== null ? rawComping.pattern : rawComping;
     this.compingPattern.set(resolvedComping || 'negras-abajo');
+    const isPlayAlongStyle = Boolean(
+      practice.type === 'harmony' ||
+      ['jazz', 'blues', 'bossa', 'tango'].includes(practice.style) ||
+      ['swing-negras', 'shuffle', 'blues-shuffle', 'bossa', 'tango-marcato'].includes(resolvedComping)
+    );
+    this.compingFeel.set(isPlayAlongStyle ? 'organico' : 'fijo');
 
     const mix = this._appVm.getPracticeMix(practice);
     this.melodyVolume.set(mix.melody);
@@ -88,7 +97,8 @@ export class PlayerMixerViewModel {
       voiceMode: this.voiceMode.value,
       metronomeEnabled: this.metronomeEnabled.value,
       metronomeVolume: this.metronomeVolume.value,
-      comping: this.compingPattern.value
+      comping: this.compingPattern.value,
+      compingFeel: this.compingFeel.value
     };
   }
 
@@ -115,6 +125,16 @@ export class PlayerMixerViewModel {
   setCompingPattern(pattern) {
     this.compingPattern.set(pattern);
     this._onConfigChanged({ comping: pattern });
+  }
+
+  /**
+   * Cambia el modo de interpretación del acompañamiento ('fijo' | 'organico' | 'vivo') en vivo.
+   * @param {'fijo'|'organico'|'vivo'} feel Modo elegido.
+   */
+  setCompingFeel(feel) {
+    const safe = normalizeCompingFeel(feel);
+    this.compingFeel.set(safe);
+    this._onConfigChanged({ compingFeel: safe });
   }
 
   /**
