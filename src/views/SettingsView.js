@@ -426,6 +426,27 @@ export class SettingsView {
       });
     };
 
+    const updateBtn = el(
+      'button',
+      {
+        type: 'button',
+        className: 'm3-btn m3-btn--compact m3-btn--tonal',
+        ripple: true,
+        onClick: async () => {
+          updateBtn.disabled = true;
+          updateBtn.textContent = 'Buscando…';
+          try {
+            await this._vm.checkForUpdates();
+          } finally {
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = '';
+            updateBtn.append(icon('download', 16), 'Buscar actualizaciones');
+          }
+        }
+      },
+      [icon('download', 16), 'Buscar actualizaciones']
+    );
+
     const aboutCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('h2', { className: 'm3-title-md' }, ['Acerca de Acordate']),
@@ -443,7 +464,8 @@ export class SettingsView {
           'Prohibida su copia, redistribución o uso comercial sin permiso escrito. Repertorio: obras de dominio público y cifrados armónicos de estudio. Motor de partituras: abcjs 6.4.4 (Licencia MIT).'
         ])
       ]),
-      el('div', {}, [
+      el('div', { className: 'm3-chip-row' }, [
+        updateBtn,
         el(
           'button',
           {

@@ -21,6 +21,7 @@ import { StorageService } from '../src/services/StorageService.js';
 import { AREA_ORDER, filterPractices } from '../src/services/StudyRoutineService.js';
 import { generateM3Palette } from '../src/services/ThemeService.js';
 import { StudySessionRunner } from '../src/stores/StudySessionRunner.js';
+import { SettingsViewModel } from '../src/viewmodels/SettingsViewModel.js';
 
 /** Convierte una cadena CSS `hsl(h s% l%)` a contraste WCAG contra blanco `#FFFFFF`. */
 function contrastAgainstWhite(hslStr) {
@@ -275,4 +276,49 @@ test('Ola 1 curricular: categoría técnica, bajo 5 cuerdas (B0), repertorio N1/
   assert.equal(pkg.version, APP_VERSION, 'package.json y src/core/version.js deben declarar la misma versión');
   assert.ok(readme.includes(`v${APP_VERSION}`), `README.md debe reflejar v${APP_VERSION}`);
   assert.ok(swText.includes(`v${APP_VERSION}`), `sw.js debe reflejar v${APP_VERSION} en su cabecera de caché`);
+
+  // SettingsViewModel.checkForUpdates(): al día, waiting (SKIP_WAITING) y modo offline
+  const messages = [];
+  const fakeAppVm = { settings: { value: {} }, showSnackbar: (msg, opts) => messages.push({ msg, opts }) };
+  const svm = new SettingsViewModel(fakeAppVm, null);
+  const prevNavDesc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const setMockNav = (swObj) => Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { serviceWorker: swObj } });
+  try {
+    let updateCalled = false;
+    setMockNav({
+      getRegistration: async () => ({
+        waiting: null,
+        installing: null,
+        update: async () => { updateCalled = true; }
+      })
+    });
+    const r1 = await svm.checkForUpdates();
+    assert.equal(r1.status, 'up-to-date');
+    assert.equal(updateCalled, true);
+    assert.ok(messages.at(-1).msg.includes(`v${APP_VERSION}`));
+
+    let postedMsg = null;
+    setMockNav({
+      getRegistration: async () => ({
+        waiting: { postMessage: (m) => { postedMsg = m; } },
+        installing: null,
+        update: async () => {}
+      })
+    });
+    const r2 = await svm.checkForUpdates();
+    assert.equal(r2.status, 'applying');
+    assert.deepEqual(postedMsg, { type: 'SKIP_WAITING' });
+
+    setMockNav({
+      getRegistration: async () => ({
+        waiting: null,
+        installing: null,
+        update: async () => { throw new Error('offline'); }
+      })
+    });
+    const r3 = await svm.checkForUpdates();
+    assert.equal(r3.status, 'offline');
+  } finally {
+    if (prevNavDesc) Object.defineProperty(globalThis, 'navigator', prevNavDesc);
+  }
 });

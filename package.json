@@ -1,6 +1,6 @@
 {
   "name": "acordate",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "PWA de práctica musical offline para guitarra clásica, guitarra, bajo y piano (lectura, gran pentagrama, acordes, escalas y walking bass)",
   "type": "module",
   "scripts": {

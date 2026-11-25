@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v24 · App v1.1.0: fuente única de versión + Ola 1 + licencia propietaria).
+ * Versión del caché estático de la PWA Acordate (v25 · App v1.1.1: botón Buscar actualizaciones en Ajustes).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v24';
+const CACHE_NAME = 'acordate-static-v25';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
