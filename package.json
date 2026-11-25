@@ -20,5 +20,6 @@
     "mvvm",
     "material-3"
   ],
-  "license": "MIT"
+  "private": true,
+  "license": "UNLICENSED"
 }

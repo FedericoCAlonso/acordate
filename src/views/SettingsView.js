@@ -1,7 +1,7 @@
 import { INSTRUMENT_LABELS, METRONOME_SOUND_LABELS } from '../core/i18n.js';
 import { SEED_COLOR_PRESETS } from '../models/Settings.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
-import { createSliderGroup, createSwitchRow, el, icon } from './uiHelpers.js';
+import { createSliderGroup, createSwitchRow, el, icon, openModalDialog } from './uiHelpers.js';
 
 /**
  * Vista de Ajustes (#/ajustes).
@@ -398,7 +398,34 @@ export class SettingsView {
     ]);
 
     // 5) Acerca de, privacidad y licencias
-    const aboutCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:8px' }, [
+    const openLicenseModal = () => {
+      openModalDialog({
+        title: 'Licencia y derechos de autor',
+        content: el('div', { style: 'display:flex; flex-direction:column; gap:10px; line-height:1.5' }, [
+          el('p', { className: 'm3-body-md' }, [
+            el('strong', {}, ['Licencia Propietaria — Todos los derechos reservados (All Rights Reserved)']),
+            el('br'),
+            '© 2026 Federico C. Alonso.'
+          ]),
+          el('p', { className: 'm3-body-sm' }, [
+            'El código fuente, diseño, arquitectura, textos pedagógicos y ejercicios originales de Acordate son propiedad exclusiva de su titular. Queda prohibido copiar, modificar, redistribuir o utilizar con fines comerciales sin autorización previa y por escrito.'
+          ]),
+          el('p', { className: 'm3-body-sm' }, [
+            el('strong', {}, ['Contenido musical: ']),
+            'las obras históricas del repertorio pertenecen al dominio público y los standards modernos incluyen únicamente secuencias armónicas de estudio (sin melodías ni letras protegidas). Las transcripciones, digitaciones y guías pedagógicas propias de Acordate permanecen protegidas por los derechos reservados.'
+          ]),
+          el('p', { className: 'm3-body-sm', style: 'color:var(--md-sys-color-on-surface-variant)' }, [
+            el('strong', {}, ['Componentes de terceros: ']),
+            'renderizado de partituras con abcjs 6.4.4 bajo Licencia MIT (Copyright Paul Rosen & Gregory Dyke).'
+          ])
+        ]),
+        actions: [
+          { label: 'Cerrar', variant: 'filled', onClick: (close) => close() }
+        ]
+      });
+    };
+
+    const aboutCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('h2', { className: 'm3-title-md' }, ['Acerca de Acordate']),
         el('span', { className: 'm3-badge m3-badge--primary' }, ['v1.0.0 · Offline PWA'])
@@ -406,8 +433,26 @@ export class SettingsView {
       el('p', { className: 'm3-body-md' }, [
         'Privacidad: Acordate funciona 100 % en tu dispositivo (IndexedDB + caché offline), sin cuentas, sin servidores externos y sin telemetría ni rastreo.'
       ]),
-      el('p', { className: 'm3-body-sm', style: 'color:var(--md-sys-color-on-surface-variant)' }, [
-        'Repertorio: incluye obras de dominio público y secuencias armónicas de estudio (solo cifrado, sin melodías protegidas). Renderizado musical con abcjs 6.4.4 (Licencia MIT · Paul Rosen & Gregory Dyke). Código de Acordate bajo Licencia MIT.'
+      el('div', { style: 'display:flex; flex-direction:column; gap:4px; padding:10px 12px; border-radius:12px; background:var(--md-sys-color-surface-container-low)' }, [
+        el('strong', { className: 'm3-label' }, ['Licencia y derechos de autor']),
+        el('p', { className: 'm3-body-sm', style: 'margin:0' }, [
+          'Licencia Propietaria — Todos los derechos reservados · © 2026 Federico C. Alonso.'
+        ]),
+        el('p', { className: 'm3-body-sm', style: 'margin:0; color:var(--md-sys-color-on-surface-variant)' }, [
+          'Prohibida su copia, redistribución o uso comercial sin permiso escrito. Repertorio: obras de dominio público y cifrados armónicos de estudio. Motor de partituras: abcjs 6.4.4 (Licencia MIT).'
+        ])
+      ]),
+      el('div', {}, [
+        el(
+          'button',
+          {
+            type: 'button',
+            className: 'm3-btn m3-btn--compact m3-btn--outlined',
+            ripple: true,
+            onClick: openLicenseModal
+          },
+          ['Ver licencia completa']
+        )
       ])
     ]);
 

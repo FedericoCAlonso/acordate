@@ -118,3 +118,10 @@ Todos los generadores viven en `src/services/` como servicios puros (sin DOM ni 
 2. **Nuevas progresiones de acordes**: agregá una entrada en `PROGRESSION_TEMPLATES` dentro de `src/models/ChordProgression.js` indicando su nombre y arreglo de grados romanos (`degrees`). Si necesitás un grado romano nuevo, registralo en `ROMAN_DEGREE_MAP` en `src/services/ProgressionGenerator.js`.
 3. **Nuevas variantes de walking bass**: extendé `_chooseMiddleBeats` o agregá una nueva variante en `WalkingBassGenerator.generate()` (`src/services/WalkingBassGenerator.js`) y añadí la opción correspondiente en `_openWalkingGeneratorDialog()` dentro de `src/views/EditorView.js`.
 4. **Tests**: agregá un caso unitario en `tests/generators.test.js` y corré `npm test`.
+
+## Licencia
+
+**© 2026 Federico C. Alonso — Todos los derechos reservados (All Rights Reserved).**  
+El código fuente, diseño, arquitectura y catálogo pedagógico de Acordate son propietarios (ver [LICENSE](./LICENSE)). No se permite copiar, modificar, redistribuir ni utilizar comercialmente sin autorización escrita del titular.
+
+- **Terceros:** el motor de partituras `abcjs 6.4.4` (`vendor/abcjs/`) se incluye bajo Licencia MIT (Paul Rosen & Gregory Dyke).

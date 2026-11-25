@@ -1,21 +1,30 @@
-MIT License
+Licencia Propietaria — Todos los derechos reservados (All Rights Reserved)
 
-Copyright (c) 2026 Acordate Contributors
+Copyright (c) 2026 Federico C. Alonso. Todos los derechos reservados.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+El código fuente, diseño, arquitectura, textos pedagógicos y ejercicios originales
+de Acordate (en adelante, el «Software») son propiedad exclusiva de su titular de
+derechos de autor.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Queda estrictamente prohibido, sin autorización previa y por escrito del titular:
+1. Copiar, reproducir, distribuir, publicar o redistribuir total o parcialmente el
+   Software, en código fuente o compilado/empaquetado.
+2. Modificar, adaptar, traducir, crear obras derivadas o realizar ingeniería
+   inversa del Software para su redistribución o explotación.
+3. Utilizar el Software, su código o su catálogo pedagógico con fines comerciales,
+   de reventa, sublicenciamiento o prestación de servicios a terceros.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+El acceso al repositorio o a la aplicación publicada tiene únicamente fines de
+evaluación o uso autorizado por el titular y no otorga licencia implícita alguna.
+
+EL SOFTWARE SE PROPORCIONA «TAL CUAL», SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+IMPLÍCITA.
+
+-------------------------------------------------------------------------------
+Componentes de terceros y contenido de dominio público:
+- abcjs 6.4.4 (vendor/abcjs/) se incluye bajo la Licencia MIT
+  (Copyright Paul Rosen & Gregory Dyke; ver vendor/abcjs/abcjs-basic-min.js.LICENSE).
+- Las piezas históricas incluidas en el repertorio marcado como `public_domain`
+  pertenecen al dominio público; las transcripciones, digitaciones y notas
+  pedagógicas propias de Acordate quedan sujetas a los derechos reservados arriba
+  indicados.
