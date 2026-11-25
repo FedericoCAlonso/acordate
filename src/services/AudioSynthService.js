@@ -2,6 +2,7 @@ import { getChordVoicingMidi, midiToFrequency } from '../core/MusicTheory.js';
 import { applyListeningRegister } from '../core/PitchPolicy.js';
 import {
   analyzeChordContext,
+  createCompingMemory,
   normalizeCompingFeel,
   planCompingEvents,
   planPlayAlongBass
@@ -83,6 +84,8 @@ export class AudioSynthService {
     this.compingFeel = 'organico';
     /** Contador de vueltas (coros) en bucle para variar frases entre repeticiones. */
     this._chorusIndex = 0;
+    /** Memoria anti-repetición y equilibrio de densidad del motor de comping orgánico. */
+    this._compingMemory = createCompingMemory();
     /** Cantidad de compases de conteo previo (0, 1 o 2). */
     this.countInMeasures = 1;
 
@@ -374,6 +377,7 @@ export class AudioSynthService {
     const startingFresh = !this._isPaused;
     if (startingFresh) {
       this._chorusIndex = 0;
+      this._compingMemory = createCompingMemory();
     }
     this._countInTotalBeats = startingFresh ? this.countInMeasures * beatsPerMeasure : 0;
 
@@ -735,7 +739,7 @@ export class AudioSynthService {
         if (typeof this.onPlaybackEnd === 'function') this.onPlaybackEnd();
         return;
       }
-      if (ev.isCountIn || ev.chordStepIndex !== undefined) {
+      if (ev.isCountIn || ev.chordStepIndex !== undefined || ev.isCompingHit) {
         if (typeof this.onVisualEvent === 'function') {
           this.onVisualEvent(ev);
         }
@@ -1137,7 +1141,8 @@ export class AudioSynthService {
       pattern,
       compingFeel: feel,
       context,
-      isPiano
+      isPiano,
+      memory: this._compingMemory
     });
     for (const hit of hits) {
       const t = Math.max(ctx.currentTime, startTime + hit.beatOffset * secPerBeat + (hit.humanizeMs || 0) / 1000);
@@ -1152,6 +1157,19 @@ export class AudioSynthService {
         Math.min(1.15, volume * hit.volumeScale),
         hit.strumMs
       );
+      this._visualQueue.push({
+        time: t,
+        endTime: t + durSec,
+        isCompingHit: true,
+        liveComping: {
+          baseSymbol: hit.baseSymbol || chordSymbol,
+          displaySymbol: hit.displaySymbol || chordSymbol,
+          techniqueLabel: hit.techniqueLabel || 'Base',
+          isVariation: Boolean(hit.isVariation),
+          feel,
+          midis: hit.midis
+        }
+      });
     }
   }
 
@@ -1166,7 +1184,8 @@ export class AudioSynthService {
       beatsPerMeasure,
       pattern,
       compingFeel: feel,
-      context
+      context,
+      memory: this._compingMemory
     });
     const baseVol = this.bassVolume * 0.65;
     for (const n of notes) {

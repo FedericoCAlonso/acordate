@@ -151,6 +151,7 @@ export class PracticePlayerViewModel {
     this.activeChordStepIndex = this.transport.activeChordStepIndex;
     this.activeNoteEvent = this.transport.activeNoteEvent;
     this.activeNoteEvents = this.transport.activeNoteEvents;
+    this.liveCompingEvent = this.transport.liveCompingEvent;
     this.loopEnabled = this.transport.loopEnabled;
     this.loopStartMeasure = this.transport.loopStartMeasure;
     this.loopEndMeasure = this.transport.loopEndMeasure;

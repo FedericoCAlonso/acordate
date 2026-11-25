@@ -126,6 +126,8 @@ export class PracticePlayerView {
     }
     if (this._container) {
       this._renderHeaderAndGuide();
+      this._renderViewBar();
+      this._renderLiveCompingBanner();
       this._renderNotationSurface();
       this._syncTransportDom();
     }
@@ -179,6 +181,13 @@ export class PracticePlayerView {
     this._metaStrip = el('div', { className: 'meta-strip', 'aria-label': 'Datos de la práctica' });
     this._viewBar = el('div', { className: 'player-view-bar' });
     this._annotationsBar = el('div', { className: 'annotations-bar', 'aria-label': 'Capas de referencias en partitura' });
+    this._liveCompingEl = el('div', {
+      className: 'live-comping-bar',
+      style: 'display:none',
+      role: 'status',
+      'aria-live': 'polite',
+      'aria-label': 'Acorde que suena en vivo'
+    });
     this._countInEl = el('div', { className: 'count-in-overlay', style: 'display:none', 'aria-live': 'assertive' });
     this._scoreEl = el('div', { className: 'score-surface', 'aria-label': 'Partitura en pentagrama' });
     this._harmonyEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
@@ -197,6 +206,7 @@ export class PracticePlayerView {
       this._metaStrip,
       this._viewBar,
       this._annotationsBar,
+      this._liveCompingEl,
       scoreWrap
     ]);
 
@@ -301,7 +311,10 @@ export class PracticePlayerView {
       this._vm.compingFeel.subscribe(() => {
         this._renderViewBar();
         this._renderNotationSurface();
+        this._renderLiveCompingBanner();
       }),
+      this._vm.liveCompingEvent.subscribe(() => this._renderLiveCompingBanner()),
+      this._vm.isPlaying.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.chordsEnabled.subscribe(() => this._renderNotationSurface()),
       this._vm.bassEnabled.subscribe(() => this._renderNotationSurface()),
       this._vm.voiceMode.subscribe(() => this._renderViewBar()),
@@ -729,6 +742,65 @@ export class PracticePlayerView {
     if (compingSelect) this._viewBar.appendChild(compingSelect);
     if (compingFeelControl) this._viewBar.appendChild(compingFeelControl);
     this._viewBar.classList.toggle('player-view-bar--has-extra', Boolean(voiceControl || compingSelect || compingFeelControl));
+    this._renderLiveCompingBanner();
+  }
+
+  /**
+   * Renderiza la pastilla en vivo que muestra qué acorde exacto y qué recurso armónico
+   * (color 9.ª/13.ª, inversión, adorno blues IV/I, aproximación cromática o anticipación)
+   * está tocando el acompañamiento en modo Orgánico o Vivo.
+   */
+  _renderLiveCompingBanner() {
+    if (!this._liveCompingEl) return;
+    const pr = this._vm.practice.value;
+    const hasHarmony = Boolean(pr && (pr.type === 'harmony' || this._vm.harmonySteps.value.length > 0));
+    const feel = this._vm.compingFeel.value;
+
+    if (!hasHarmony || feel === 'fijo') {
+      this._liveCompingEl.style.display = 'none';
+      this._liveCompingEl.innerHTML = '';
+      return;
+    }
+
+    const liveEv = this._vm.liveCompingEvent.value;
+    const isPlaying = this._vm.isPlaying.value;
+    const notation = this._appVm.settings.value.chordNotation;
+
+    this._liveCompingEl.style.display = 'flex';
+    this._liveCompingEl.innerHTML = '';
+
+    if (!liveEv) {
+      this._liveCompingEl.classList.remove('live-comping-bar--variation');
+      this._liveCompingEl.append(
+        el('span', { className: 'm3-badge' }, [feel === 'vivo' ? 'Modo Vivo' : 'Modo Orgánico']),
+        el('span', { className: 'm3-body-sm' }, [
+          isPlaying
+            ? 'Escuchando acompañamiento en tiempo real…'
+            : feel === 'vivo'
+              ? 'Al reproducir verás aquí cada acorde, coloración (9/13), adorno IV/I y anticipación en vivo.'
+              : 'Al reproducir verás aquí cada acorde y anticipación del acompañamiento en vivo.'
+        ])
+      );
+      return;
+    }
+
+    const isVar = Boolean(liveEv.isVariation);
+    this._liveCompingEl.classList.toggle('live-comping-bar--variation', isVar);
+
+    this._liveCompingEl.append(
+      el('span', { className: 'live-comping-bar__meta' }, [
+        'Base ',
+        el('strong', {}, [createChordSymbolElement(liveEv.baseSymbol || 'C', notation)])
+      ]),
+      el('span', { className: 'live-comping-bar__arrow', 'aria-hidden': 'true' }, ['→']),
+      el('span', { className: 'live-comping-bar__chord' }, [
+        'Tocando: ',
+        createChordSymbolElement(liveEv.displaySymbol || liveEv.baseSymbol || 'C', notation)
+      ]),
+      el('span', { className: `m3-badge ${isVar ? 'm3-badge--primary' : ''}` }, [
+        liveEv.techniqueLabel || 'Base'
+      ])
+    );
   }
 
   /**

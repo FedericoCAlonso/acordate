@@ -38,6 +38,8 @@ export class PlayerTransportViewModel {
     this.activeNoteEvent = new Observable(null);
     /** Lista simultánea de eventos de nota activos en todas las voces del pulso actual. */
     this.activeNoteEvents = new Observable([]);
+    /** Evento en vivo del acorde/coloración que está tocando el motor orgánico/vivo (null si detenido o fijo). */
+    this.liveCompingEvent = new Observable(null);
 
     /** Bucle activado. */
     this.loopEnabled = new Observable(false);
@@ -82,6 +84,7 @@ export class PlayerTransportViewModel {
     this.loopStartMeasure.set(1);
     this.loopEndMeasure.set(safe);
     this.activeChordStepIndex.set(-1);
+    this.liveCompingEvent.set(null);
   }
 
   /** Inicia o reanuda la reproducción solicitando Wake Lock. */
@@ -118,6 +121,7 @@ export class PlayerTransportViewModel {
     this.activeChordStepIndex.set(-1);
     this.activeNoteEvent.set(null);
     this.activeNoteEvents.set([]);
+    this.liveCompingEvent.set(null);
     this._wakeLock.release();
   }
 
@@ -161,6 +165,10 @@ export class PlayerTransportViewModel {
     this.countInStatus.set(null);
     if (ev.measureIndex) this.activeMeasure.set(ev.measureIndex);
     if (ev.chordStepIndex !== undefined) this.activeChordStepIndex.set(ev.chordStepIndex);
+    if (ev.isCompingHit && ev.liveComping) {
+      this.liveCompingEvent.set({ ...ev.liveComping, seq: Date.now() }, true);
+      return;
+    }
     if (Array.isArray(ev.activeNotes)) {
       this.activeNoteEvents.set(ev.activeNotes, true);
       this.activeNoteEvent.set(ev.activeNotes[0] || null, true);
@@ -178,6 +186,7 @@ export class PlayerTransportViewModel {
     this.countInStatus.set(null);
     this.activeNoteEvent.set(null);
     this.activeNoteEvents.set([]);
+    this.liveCompingEvent.set(null);
     this._wakeLock.release();
   }
 

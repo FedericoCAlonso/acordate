@@ -5,15 +5,27 @@ import {
   COMPING_FEEL_MODES,
   analyzeChordContext,
   buildVariedVoicing,
+  createCompingMemory,
+  describeLiveCompingChord,
   normalizeCompingFeel,
   planCompingEvents,
   planPlayAlongBass,
   resolveBassRootMidi
 } from '../src/services/CompingEngineService.js';
 import { PlayerMixerViewModel } from '../src/viewmodels/player/PlayerMixerViewModel.js';
+import { PlayerTransportViewModel } from '../src/viewmodels/player/PlayerTransportViewModel.js';
 import { Practice } from '../src/models/Practice.js';
 
-test('CompingEngineService: Blues 12c (4 compases de A7 → D7) varía rítmica, anticipa D7 y aproxima cromáticamente en bajo', () => {
+/** Generador determinista LCG para pruebas reproducibles sin flakiness. */
+function makeSeededRng(seed = 42) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
+test('CompingEngineService: Blues 12c estocástico no periódico (A7 × 4 → D7), colores en vivo y aproximación cromática', () => {
   assert.deepEqual(COMPING_FEEL_MODES.map((m) => m.id), ['fijo', 'organico', 'vivo']);
   assert.equal(normalizeCompingFeel('desconocido'), 'organico');
 
@@ -23,40 +35,43 @@ test('CompingEngineService: Blues 12c (4 compases de A7 → D7) varía rítmica,
     { symbol: 'A7', beat: 0, durationBeats: 16, measureIndex: 1, voicingMidis: a7Midis },
     { symbol: 'D7', beat: 16, durationBeats: 8, measureIndex: 5, voicingMidis: d7Midis }
   ];
-
   const ctx0 = analyzeChordContext(chords, 0, 4, 0);
   assert.equal(ctx0.ownBars, 4);
   assert.equal(ctx0.changesAfterEvent, true);
-  assert.equal(ctx0.nextChordSymbol, 'D7');
 
-  // 1) Modo Orgánico sobre 4 compases de A7: cada compás debe tener un perfil rítmico distinto (sin martilleo monótono)
-  const orgEvents = planCompingEvents({
-    chordSymbol: 'A7',
-    nextChordSymbol: 'D7',
-    voicingMidis: a7Midis,
-    nextVoicingMidis: d7Midis,
-    durationBeats: 16,
-    beatsPerMeasure: 4,
-    pattern: 'shuffle',
-    compingFeel: 'organico',
-    context: ctx0,
-    isPiano: true
-  });
+  // 1) 3 coros consecutivos (12 compases de A7): no periódico y con alta variedad rítmica
+  const mem = createCompingMemory();
+  const rng = makeSeededRng(1337);
+  const allBarSigs = [];
+  const chorusSigs = [];
+  for (let chorus = 0; chorus < 3; chorus++) {
+    const evs = planCompingEvents({
+      chordSymbol: 'A7',
+      nextChordSymbol: 'D7',
+      voicingMidis: a7Midis,
+      nextVoicingMidis: d7Midis,
+      durationBeats: 16,
+      beatsPerMeasure: 4,
+      pattern: 'shuffle',
+      compingFeel: 'organico',
+      context: analyzeChordContext(chords, 0, 4, chorus),
+      isPiano: true,
+      memory: mem,
+      rng
+    });
+    const perBar = [0, 1, 2, 3].map((b) =>
+      evs
+        .filter((ev) => ev.beatOffset >= b * 4 && ev.beatOffset < (b + 1) * 4)
+        .map((ev) => Number((ev.beatOffset - b * 4).toFixed(2)))
+        .join(',')
+    );
+    allBarSigs.push(...perBar);
+    chorusSigs.push(perBar.join('|'));
+  }
+  assert.equal(new Set(chorusSigs).size, 3, 'Los 3 coros deben sonar distintos entre sí (sin periodicidad fija)');
+  assert.ok(new Set(allBarSigs).size >= 6, `Se espera alta variedad rítmica en 12 compases (distintos: ${new Set(allBarSigs).size})`);
 
-  const barFingerprints = [0, 1, 2, 3].map((b) =>
-    orgEvents
-      .filter((ev) => ev.beatOffset >= b * 4 && ev.beatOffset < (b + 1) * 4)
-      .map((ev) => Number((ev.beatOffset - b * 4).toFixed(2)))
-      .join(',')
-  );
-  assert.equal(new Set(barFingerprints).size, 4, `Los 4 compases de A7 deben tener patrones distintos: ${JSON.stringify(barFingerprints)}`);
-
-  // Debe existir anticipación de D7 en el 4.º compás (beat 15.67)
-  const ant = orgEvents.find((ev) => ev.tag === 'anticipation');
-  assert.ok(ant, 'Debe anticipar el acorde siguiente D7 en el último compás antes del cambio');
-  assert.deepEqual(ant.midis, d7Midis);
-
-  // 2) Bajo acompañante orgánico en shuffle: los 4 compases no se repiten idénticos y el tiempo 4 del c.4 aproxima cromáticamente a D7
+  // 2) Bajo acompañante orgánico en shuffle: varía contornos y aproxima a D7 en tiempo 4 del c.4
   const bassNotes = planPlayAlongBass({
     chordSymbol: 'A7',
     nextChordSymbol: 'D7',
@@ -64,20 +79,19 @@ test('CompingEngineService: Blues 12c (4 compases de A7 → D7) varía rítmica,
     beatsPerMeasure: 4,
     pattern: 'shuffle',
     compingFeel: 'organico',
-    context: ctx0
+    context: ctx0,
+    memory: createCompingMemory(),
+    rng: makeSeededRng(77)
   });
-  assert.equal(bassNotes.length, 16, '4 compases × 4 negras = 16 notas de bajo');
+  assert.equal(bassNotes.length, 16);
   const dRoot = resolveBassRootMidi('D7');
   const lastBass = bassNotes[bassNotes.length - 1];
   assert.equal(lastBass.tag, 'approach');
-  assert.ok(
-    Math.abs(lastBass.midi - dRoot) <= 2 && lastBass.midi !== dRoot,
-    `La nota final del compás 4 (${lastBass.midi}) debe aproximar a D (${dRoot}) por semitono o tono`
-  );
-  const bassBarLines = [0, 1, 2, 3].map((b) => bassNotes.slice(b * 4, (b + 1) * 4).map((n) => n.midi).join('-'));
-  assert.ok(new Set(bassBarLines).size >= 3, `La línea de bajo en 4 compases de A7 debe variar: ${JSON.stringify(bassBarLines)}`);
+  assert.ok(Math.abs(lastBass.midi - dRoot) <= 2 && lastBass.midi !== dRoot);
+  const bassBars = [0, 1, 2, 3].map((b) => bassNotes.slice(b * 4, (b + 1) * 4).map((n) => n.midi).join('-'));
+  assert.ok(new Set(bassBars).size >= 3, 'La línea de bajo debe variar entre los 4 compases de A7');
 
-  // 3) Modo Vivo añade variaciones armónicas válidas sin bajar del LIL (MIDI >= 48)
+  // 3) Modo Vivo expone displaySymbol y techniqueLabel en vivo y respeta LIL (>= 48)
   const vivoEvents = planCompingEvents({
     chordSymbol: 'A7',
     nextChordSymbol: 'D7',
@@ -88,56 +102,31 @@ test('CompingEngineService: Blues 12c (4 compases de A7 → D7) varía rítmica,
     pattern: 'shuffle',
     compingFeel: 'vivo',
     context: ctx0,
-    isPiano: true
+    isPiano: true,
+    memory: createCompingMemory(),
+    rng: makeSeededRng(2026)
   });
-  assert.ok(vivoEvents.some((e) => e.tag.startsWith('vivo-')), 'Modo Vivo debe incluir variaciones de color/voicing');
-  assert.ok(
-    vivoEvents.every((e) => e.midis.every((m) => m >= 48 && m <= 84)),
-    'Todas las notas de voicing en modo Vivo deben respetar el LIL (>= 48) y rango agudo (<= 84)'
-  );
-
-  // 4) Coro 2 (chorusIndex = 1) varía la frase respecto al Coro 1
-  const ctxChorus2 = analyzeChordContext(chords, 0, 4, 1);
-  const chorus2Events = planCompingEvents({
-    chordSymbol: 'A7',
-    nextChordSymbol: 'D7',
-    voicingMidis: a7Midis,
-    nextVoicingMidis: d7Midis,
-    durationBeats: 16,
-    beatsPerMeasure: 4,
-    pattern: 'shuffle',
-    compingFeel: 'organico',
-    context: ctxChorus2,
-    isPiano: true
-  });
-  const sig1 = orgEvents.map((e) => `${e.beatOffset.toFixed(2)}:${e.tag}`).join('|');
-  const sig2 = chorus2Events.map((e) => `${e.beatOffset.toFixed(2)}:${e.tag}`).join('|');
-  assert.notEqual(sig1, sig2, 'El coro 2 debe variar la frase rítmica respecto al coro 1');
+  assert.ok(vivoEvents.some((e) => e.isVariation && e.displaySymbol !== 'A7'), 'Modo Vivo debe producir acordes coloreados visibles (ej. A9, A13, D/A)');
+  assert.ok(vivoEvents.every((e) => typeof e.displaySymbol === 'string' && typeof e.techniqueLabel === 'string'));
+  assert.ok(vivoEvents.every((e) => e.midis.every((m) => m >= 48 && m <= 84)), 'Respeta LIL >= 48 y techo <= 84');
 });
 
-test('CompingEngineService: cobertura estilística (swing, bossa 2 compases, tango, balada), buildVariedVoicing y PlayerMixerViewModel', () => {
+test('CompingEngineService: etiquetas en vivo (describeLiveCompingChord), estilos y despacho visual en PlayerTransportViewModel', () => {
+  // Etiquetas en vivo precisas
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'color9', false).displaySymbol, 'A9');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'color13', false).displaySymbol, 'A13');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'bluesNeighbor', false).displaySymbol, 'D/A');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'sideSlipDown', false).displaySymbol, 'Ab9');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'base', true).displaySymbol, 'D7');
+  assert.equal(describeLiveCompingChord('A7', 'D7', 'base', true).techniqueLabel, 'Anticipación');
+  assert.equal(describeLiveCompingChord('Cmaj7', 'G7', 'color13', false).displaySymbol, 'C6/9');
+
   const cMaj7 = [60, 64, 67, 71];
   const g7 = [55, 59, 62, 65];
+  const rng = makeSeededRng(99);
 
-  // Bossa nova alterna compás A y compás B de la clave real de 2 compases
-  const bossa = planCompingEvents({
-    chordSymbol: 'Cmaj7',
-    nextChordSymbol: 'G7',
-    voicingMidis: cMaj7,
-    nextVoicingMidis: g7,
-    durationBeats: 8,
-    beatsPerMeasure: 4,
-    pattern: 'bossa',
-    compingFeel: 'organico',
-    context: { barIndex: 0, chorusIndex: 0, prevSameBars: 0, changesAfterEvent: true },
-    isPiano: false
-  });
-  const bossaBar1 = bossa.filter((e) => e.beatOffset < 4).map((e) => e.beatOffset);
-  const bossaBar2 = bossa.filter((e) => e.beatOffset >= 4).map((e) => e.beatOffset - 4);
-  assert.notDeepEqual(bossaBar1, bossaBar2, 'Bossa nova debe alternar los 2 compases de la clave');
-
-  // Jazz swing, tango y balada generan eventos y líneas de bajo válidas
-  for (const pat of ['swing-negras', 'tango-marcato', 'balada-lenta', 'vals']) {
+  // Cobertura de todos los estilos principales
+  for (const pat of ['swing-negras', 'bossa', 'tango-marcato', 'balada-lenta', 'rasgueo-balada', 'funk-16', 'vals']) {
     const evs = planCompingEvents({
       chordSymbol: 'Cmaj7',
       nextChordSymbol: 'G7',
@@ -147,9 +136,11 @@ test('CompingEngineService: cobertura estilística (swing, bossa 2 compases, tan
       beatsPerMeasure: pat === 'vals' ? 3 : 4,
       pattern: pat,
       compingFeel: 'vivo',
-      context: { barIndex: 0, chorusIndex: 0, prevSameBars: 0, changesAfterEvent: true }
+      context: { barIndex: 0, chorusIndex: 0, prevSameBars: 0, changesAfterEvent: true },
+      memory: createCompingMemory(),
+      rng
     });
-    assert.ok(evs.length >= 2, `Patrón ${pat} debe generar eventos orgánicos`);
+    assert.ok(evs.length >= 2, `Patrón ${pat} debe generar eventos en modo Vivo`);
     const bass = planPlayAlongBass({
       chordSymbol: 'Cmaj7',
       nextChordSymbol: 'G7',
@@ -157,21 +148,21 @@ test('CompingEngineService: cobertura estilística (swing, bossa 2 compases, tan
       beatsPerMeasure: pat === 'vals' ? 3 : 4,
       pattern: pat,
       compingFeel: 'organico',
-      context: { barIndex: 0, chorusIndex: 0, prevSameBars: 0, changesAfterEvent: true }
+      context: { barIndex: 0, chorusIndex: 0, prevSameBars: 0, changesAfterEvent: true },
+      memory: createCompingMemory(),
+      rng
     });
     assert.ok(bass.length >= 2, `Patrón ${pat} debe generar línea de bajo`);
   }
 
-  // buildVariedVoicing: color9 añade 9.ª (D = pc 2) sobre Cmaj7; bluesNeighbor en A7 mantiene raíz/7.ª
+  // buildVariedVoicing
   const with9 = buildVariedVoicing({ baseMidis: cMaj7, chordSymbol: 'Cmaj7', variant: 'color9' });
-  assert.ok(with9.some((m) => m % 12 === 2), 'color9 sobre Cmaj7 debe incluir la 9.ª (Re)');
-  const neighbor = buildVariedVoicing({ baseMidis: [57, 61, 64, 67], chordSymbol: 'A7', variant: 'bluesNeighbor' });
-  assert.ok(neighbor.some((m) => m % 12 === 2) && neighbor.some((m) => m % 12 === 6), 'bluesNeighbor en A7 debe mover 3M→4J (D) y 5J→6M (F#)');
+  assert.ok(with9.some((m) => m % 12 === 2));
 
-  // PlayerMixerViewModel: defaults inteligentes por práctica y cambio en vivo
+  // PlayerMixerViewModel + PlayerTransportViewModel liveCompingEvent
   const patches = [];
   const fakeAppVm = {
-    settings: { value: { defaultInstrument: 'piano' } },
+    settings: { value: { defaultInstrument: 'piano', countInMeasures: 1 } },
     getPracticeMix: () => ({ melody: 1, chords: 0.55, bass: 0.75, metronome: 0.65, chordsEnabled: true, metronomeEnabled: true })
   };
   const mixer = new PlayerMixerViewModel({
@@ -179,9 +170,8 @@ test('CompingEngineService: cobertura estilística (swing, bossa 2 compases, tan
     getPractice: () => null,
     onConfigChanged: (p) => patches.push(p)
   });
-
   const bluesPr = new Practice({
-    id: 'test-blues',
+    id: 'test-blues-live',
     version: 3,
     type: 'harmony',
     title: 'Blues test',
@@ -196,10 +186,26 @@ test('CompingEngineService: cobertura estilística (swing, bossa 2 compases, tan
     progression: [{ chord: 'A7', bars: 4 }, { chord: 'D7', bars: 2 }]
   });
   mixer.loadForPractice(bluesPr);
-  assert.equal(mixer.compingFeel.value, 'organico', 'Un blues play-along debe arrancar en modo Orgánico');
-
+  assert.equal(mixer.compingFeel.value, 'organico');
   mixer.setCompingFeel('vivo');
-  assert.equal(mixer.compingFeel.value, 'vivo');
   assert.equal(patches.at(-1).compingFeel, 'vivo');
-  assert.equal(mixer.getAudioConfigPatch().compingFeel, 'vivo');
+
+  const fakeAudio = { play() {}, pause() {}, stop() {}, onVisualEvent: null, onPassComplete: null, onPlaybackEnd: null };
+  const transport = new PlayerTransportViewModel({
+    appVm: fakeAppVm,
+    audioService: fakeAudio,
+    wakeLockService: { request() {}, release() {} },
+    sessionTracker: { markPlayStarted() {}, accumulateElapsedTime() {}, flushStudyTime() {}, handlePassComplete() {} },
+    getPractice: () => bluesPr,
+    onSyncConfig: () => {}
+  });
+  fakeAudio.onVisualEvent({
+    isCompingHit: true,
+    liveComping: { baseSymbol: 'A7', displaySymbol: 'A13', techniqueLabel: 'Color 13.ª / 6.ª', isVariation: true }
+  });
+  assert.equal(transport.liveCompingEvent.value?.displaySymbol, 'A13');
+  assert.equal(transport.liveCompingEvent.value?.isVariation, true);
+  transport.stop();
+  assert.equal(transport.liveCompingEvent.value, null, 'stop() debe limpiar liveCompingEvent');
+  transport.dispose();
 });

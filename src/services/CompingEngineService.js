@@ -1,12 +1,13 @@
-import { getChordVoicingMidi, parseChord } from '../core/MusicTheory.js';
+import { getChordVoicingMidi, parseChord, pcToNoteName } from '../core/MusicTheory.js';
 
 /**
  * Modos de ejecución del motor de acompañamiento (comping).
  * - 'fijo': patrón regular y predecible idéntico en cada compás (ideal para lectura y pulso base).
- * - 'organico': células rítmicas multi-compás con aire, anticipaciones, bajo caminante con aproximación
- *   cromática al siguiente acorde y micro-humanización sutil.
+ * - 'organico': células rítmicas no periódicas (selección estocástica con reglas musicales,
+ *   equilibrio pregunta/respuesta y memoria anti-repetición), anticipaciones y bajo caminante real.
  * - 'vivo': suma movimiento armónico interno dentro del mismo acorde (tensiones 9/13/6, inversiones
- *   suaves, adorno blues IV/I en tiempos débiles y side-slipping cromático breve).
+ *   suaves, adorno blues IV/I en tiempos débiles y side-slipping cromático breve) informando en vivo
+ *   qué acorde/recurso exacto está sonando en pantalla.
  */
 export const COMPING_FEEL_MODES = [
   {
@@ -17,14 +18,28 @@ export const COMPING_FEEL_MODES = [
   {
     id: 'organico',
     label: 'Orgánico',
-    description: 'Fraseo con aire, células de 2–4 compases, anticipaciones y bajo caminante real.'
+    description: 'Fraseo no periódico con aire, pregunta/respuesta aleatoria controlada, anticipaciones y bajo caminante real.'
   },
   {
     id: 'vivo',
     label: 'Vivo',
-    description: 'Estilo pianista/guitarrista de jazz y blues: coloraciones 9/13, inversiones y adornos sin romper la armonía.'
+    description: 'Estilo pianista/guitarrista de jazz y blues: coloraciones 9/13, inversiones, adornos IV/I y aproximaciones visibles en vivo.'
   }
 ];
+
+/**
+ * Crea un estado de memoria mutable para una sesión de reproducción (evita repeticiones
+ * consecutivas y equilibra la densidad rítmica compás a compás).
+ * @returns {{ lastCellIdx: number, lastDensity: string, lastVariant: string, lastBassContour: number }}
+ */
+export function createCompingMemory() {
+  return {
+    lastCellIdx: -1,
+    lastDensity: 'medium',
+    lastVariant: 'base',
+    lastBassContour: -1
+  };
+}
 
 /**
  * Normaliza un identificador de feel de comping a una de las 3 opciones válidas.
@@ -73,25 +88,37 @@ export function resolveBassRootMidi(chordSymbol) {
 }
 
 /**
- * Calcula un desplazamiento determinista pequeño para micro-humanización (sin aleatoriedad caótica).
- * @param {number} chorusIndex Número de vuelta/coro (0, 1, 2...).
- * @param {number} barIndex Índice de compás.
- * @param {number} hitIndex Índice del golpe dentro del compás.
- * @returns {{ humanizeMs: number, velFactor: number }} Micro-ajuste de tiempo (-5..+11 ms) y volumen (0.93..1.05).
+ * Calcula un desplazamiento orgánico pequeño para micro-humanización (tiempo y dinámica).
+ * @param {Function} [rng=Math.random] Generador pseudoaleatorio [0..1).
+ * @returns {{ humanizeMs: number, velFactor: number }} Micro-ajuste de tiempo (-5..+11 ms) y volumen (0.91..1.06).
  */
-export function computeHumanizeOffset(chorusIndex = 0, barIndex = 0, hitIndex = 0) {
-  const seed = Math.abs((chorusIndex * 37 + barIndex * 13 + hitIndex * 7 + 5) % 17);
-  const norm = seed / 16; // 0..1
+export function computeHumanizeOffset(rng = Math.random) {
+  const r = typeof rng === 'function' ? rng() : Math.random();
+  const r2 = typeof rng === 'function' ? rng() : Math.random();
   return {
-    humanizeMs: Math.round((norm - 0.32) * 16), // ~ -5ms a +11ms
-    velFactor: Number((0.93 + norm * 0.12).toFixed(3))
+    humanizeMs: Math.round((r - 0.32) * 16), // ~ -5ms a +11ms
+    velFactor: Number((0.91 + r2 * 0.15).toFixed(3))
   };
 }
 
 /**
- * Analiza el contexto armónico de un evento dentro de la lista completa de acordes de la timeline:
- * detecta compases consecutivos del mismo acorde, si el siguiente evento cambia de acorde y
- * cuál es la raíz siguiente para anticipaciones y aproximaciones de bajo.
+ * Elige un elemento de una lista ponderada con `rng()`.
+ * @param {Array<{ item: any, weight: number }>} weighted Lista ponderada.
+ * @param {Function} rng Generador [0..1).
+ * @returns {any} Elemento elegido.
+ */
+function pickWeighted(weighted, rng = Math.random) {
+  const total = weighted.reduce((acc, w) => acc + Math.max(0.01, w.weight), 0);
+  let cursor = rng() * total;
+  for (const entry of weighted) {
+    cursor -= Math.max(0.01, entry.weight);
+    if (cursor <= 0) return entry.item;
+  }
+  return weighted[weighted.length - 1]?.item;
+}
+
+/**
+ * Analiza el contexto armónico de un evento dentro de la lista completa de acordes de la timeline.
  * @param {Array<object>} chords Lista de eventos armónicos de la timeline.
  * @param {number} index Índice del evento actual.
  * @param {number} [beatsPerMeasure=4] Pulsos por compás.
@@ -103,7 +130,6 @@ export function analyzeChordContext(chords = [], index = 0, beatsPerMeasure = 4,
   const bpm = Math.max(1, Number(beatsPerMeasure) || 4);
   const baseBarIndex = Math.max(0, (Number(cur.measureIndex) || Math.floor((Number(cur.beat) || 0) / bpm) + 1) - 1);
 
-  // Cuenta cuántos eventos contiguos hacia atrás y hacia adelante comparten el mismo símbolo
   let prevSameBars = 0;
   for (let i = index - 1; i >= 0; i--) {
     if (chords[i]?.symbol !== cur.symbol) break;
@@ -119,7 +145,6 @@ export function analyzeChordContext(chords = [], index = 0, beatsPerMeasure = 4,
       break;
     }
   }
-  // En vuelta en bucle, si no hay cambio posterior miramos el inicio del tema
   if (!nextDifferentEvent && chords.length > 1 && chords[0]?.symbol !== cur.symbol) {
     nextDifferentEvent = chords[0];
   }
@@ -148,8 +173,106 @@ export function analyzeChordContext(chords = [], index = 0, beatsPerMeasure = 4,
 }
 
 /**
- * Genera una variación armónicamente compatible del voicing para el modo 'vivo', sin salir
- * jamás de la función del acorde ni violar el Low Interval Limit (piso MIDI 48 para acordes).
+ * Calcula la etiqueta legible del acorde y recurso armónico que está sonando en vivo
+ * para mostrarla en la UI sincronizada (ej. `A7` → `A13 · Color 13.ª`, `D/A · Adorno blues IV/I`,
+ * `Ab9 · Aprox. cromática −½`, `D7 · Anticipación`).
+ * @param {string} chordSymbol Acorde base del compás.
+ * @param {string|null} nextChordSymbol Acorde siguiente.
+ * @param {string} variant Variante aplicada.
+ * @param {boolean} isAnticipation True si anticipa el próximo acorde.
+ * @returns {{ displaySymbol: string, techniqueLabel: string, isVariation: boolean }} Descripción en vivo.
+ */
+export function describeLiveCompingChord(chordSymbol = 'C', nextChordSymbol = null, variant = 'base', isAnticipation = false) {
+  if (isAnticipation && nextChordSymbol) {
+    return {
+      displaySymbol: nextChordSymbol,
+      techniqueLabel: 'Anticipación',
+      isVariation: true
+    };
+  }
+
+  const parsed = parseChord(chordSymbol);
+  if (!parsed || variant === 'base') {
+    return {
+      displaySymbol: chordSymbol,
+      techniqueLabel: 'Base',
+      isVariation: false
+    };
+  }
+
+  const rootName = parsed.root;
+  const useFlats = rootName.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Dm', 'Gm', 'Cm', 'Fm'].includes(chordSymbol);
+  const q = String(parsed.quality || '');
+  const qLow = q.toLowerCase();
+  const isMinor = qLow.startsWith('m') && !qLow.startsWith('maj');
+  const isMaj7 = qLow.startsWith('maj');
+  const isDimOrHalf = qLow.includes('dim') || qLow.includes('b5') || qLow.includes('b9');
+
+  if (variant === 'invUp') {
+    return {
+      displaySymbol: chordSymbol,
+      techniqueLabel: 'Inversión alta',
+      isVariation: true
+    };
+  }
+
+  if (variant === 'bluesNeighbor' && !isMinor && !isDimOrHalf) {
+    const fourthName = pcToNoteName((parsed.rootPc + 5) % 12, useFlats);
+    return {
+      displaySymbol: `${fourthName}/${rootName}`,
+      techniqueLabel: 'Adorno blues IV/I',
+      isVariation: true
+    };
+  }
+
+  if (variant === 'sideSlipUp' || variant === 'sideSlipDown') {
+    const delta = variant === 'sideSlipUp' ? 1 : -1;
+    const slipRoot = pcToNoteName((parsed.rootPc + delta + 12) % 12, delta < 0 || useFlats);
+    const slipQual = isMinor ? 'm9' : isMaj7 ? 'maj7' : (q === '7' ? '9' : q || '7');
+    return {
+      displaySymbol: `${slipRoot}${slipQual}`,
+      techniqueLabel: delta > 0 ? 'Aprox. cromática +½' : 'Aprox. cromática −½',
+      isVariation: true
+    };
+  }
+
+  if (variant === 'color9' && !isDimOrHalf) {
+    let sym = chordSymbol;
+    if (q === '7') sym = `${rootName}9`;
+    else if (q === 'maj7') sym = `${rootName}maj9`;
+    else if (q === 'm7') sym = `${rootName}m9`;
+    else if (q === '') sym = `${rootName}add9`;
+    else if (q === 'm') sym = `${rootName}madd9`;
+    return {
+      displaySymbol: sym,
+      techniqueLabel: 'Color 9.ª',
+      isVariation: true
+    };
+  }
+
+  if (variant === 'color13' && !isDimOrHalf) {
+    let sym = chordSymbol;
+    if (q === '7') sym = `${rootName}13`;
+    else if (q === 'maj7') sym = `${rootName}6/9`;
+    else if (q === '') sym = `${rootName}6`;
+    else if (q === 'm7') sym = `${rootName}m9`;
+    return {
+      displaySymbol: sym,
+      techniqueLabel: isMinor ? 'Color 9.ª' : 'Color 13.ª / 6.ª',
+      isVariation: true
+    };
+  }
+
+  return {
+    displaySymbol: chordSymbol,
+    techniqueLabel: 'Base',
+    isVariation: false
+  };
+}
+
+/**
+ * Genera una variación armónicamente compatible del voicing para el modo 'vivo', respetando
+ * siempre el Low Interval Limit (piso MIDI 48 para acordes) y el rango superior (<= 84).
  * @param {object} params Parámetros.
  * @param {number[]} params.baseMidis Alturas MIDI originales del voicing.
  * @param {string} params.chordSymbol Símbolo del acorde actual.
@@ -166,12 +289,10 @@ export function buildVariedVoicing({ baseMidis = [], chordSymbol = 'C', variant 
 
   if (variant === 'sideSlipUp' || variant === 'sideSlipDown') {
     const delta = variant === 'sideSlipUp' ? 1 : -1;
-    // Solo desplazamos las notas superiores (o todo el bloque si tiene <=3 notas), respetando LIL >= 48
     return sorted.map((m) => Math.max(48, Math.min(84, m + delta)));
   }
 
   if (variant === 'invUp' && sorted.length >= 3) {
-    // Sube la voz más grave (si no genera un acorde demasiado agudo) o rota la 2.ª voz para melodía superior
     const out = [...sorted];
     const candidate = out[0] + 12;
     if (candidate <= 81) {
@@ -183,7 +304,6 @@ export function buildVariedVoicing({ baseMidis = [], chordSymbol = 'C', variant 
   }
 
   if (variant === 'bluesNeighbor' && sorted.length >= 3) {
-    // Truco clásico de blues/gospel en acorde dominante o mayor (I7 ↔ IV/I): sube la 3.ª (+1 st a 4.ª) y 5.ª (+2 st a 6.ª) manteniendo raíz/7.ª
     const out = sorted.map((m) => {
       const iv = ((m % 12) - rootPc + 12) % 12;
       if (iv === 4) return m + 1; // 3M -> 4J
@@ -194,18 +314,15 @@ export function buildVariedVoicing({ baseMidis = [], chordSymbol = 'C', variant 
   }
 
   if (variant === 'color9' || variant === 'color13') {
-    // No añadimos 9M/13M a acordes disminuidos o semidisminuidos alterados que choquen
     if (quality.includes('dim') || quality.includes('b9') || quality.includes('m7b5')) {
       return sorted;
     }
     const top = sorted[sorted.length - 1];
-    const targetInterval = variant === 'color13' && !quality.includes('m') ? 9 : 2; // 13.ª (9 st) en dom/maj, 9.ª (2 st) en todos
-    // Busca la nota de color más cercana por encima del voicing sin pasarse de C6 (84)
+    const targetInterval = variant === 'color13' && !quality.includes('m') ? 9 : 2;
     let colorMidi = rootPc + targetInterval;
     while (colorMidi <= top) colorMidi += 12;
     if (colorMidi > 81) colorMidi -= 12;
     if (colorMidi < 55) colorMidi += 12;
-    // Reemplaza la duplicación de raíz si hay >=4 notas o la suma si hay 3 notas
     const out = sorted.length >= 4 ? [...sorted.slice(0, -1), colorMidi] : [...sorted, colorMidi];
     return [...new Set(out)].sort((a, b) => a - b);
   }
@@ -214,167 +331,516 @@ export function buildVariedVoicing({ baseMidis = [], chordSymbol = 'C', variant 
 }
 
 /**
- * Células rítmicas de comping de 1 compás (en pulsos de negra sobre 4/4) organizadas por estilo.
- * Cada hit define:
- * - `offset`: pulso relativo dentro del compás (0..beatsInBar)
- * - `dur`: duración en pulsos de negra
- * - `mode`: 'block' | 'strum-down' | 'strum-up' | 'bass' | 'upper'
- * - `accent`: escala de volumen
- * - `variant`: coloración opcional en modo 'vivo'
- * - `anticipateNext`: si true y cambia el acorde al compás siguiente, usa el voicing del próximo acorde!
+ * Vocabulario amplio de células rítmicas (8–10 por estilo principal) clasificadas por densidad
+ * ('sparse' | 'medium' | 'active') para selección estocástica sin periodicidad mecánica.
  */
 const ORGANIC_CELLS = {
-  // Blues shuffle (corchea atresillada 2/3 = 0.67): frases con aire y respuestas, nunca martilleo monótono
+  // Blues shuffle (9 células: de compases muy abiertos con aire hasta respuestas y fills atresillados)
   shuffle: [
-    // Célula 0 (c.1 — entrada firme con aire)
-    [
-      { offset: 0, dur: 0.9, mode: 'strum-down', accent: 0.98, variant: 'base' },
-      { offset: 1.67, dur: 0.35, mode: 'strum-up', accent: 0.68, variant: 'color9' },
-      { offset: 2, dur: 1.15, mode: 'block', accent: 0.86, variant: 'base' }
-    ],
-    // Célula 1 (c.2 — respuesta corta tipo pianista de blues en 2 y 4 con adorno vecino)
-    [
-      { offset: 1, dur: 0.45, mode: 'block', accent: 0.82, variant: 'bluesNeighbor' },
-      { offset: 2.67, dur: 0.32, mode: 'strum-up', accent: 0.65, variant: 'base' },
-      { offset: 3, dur: 0.65, mode: 'strum-down', accent: 0.9, variant: 'color13' }
-    ],
-    // Célula 2 (c.3 — empuje sincopado con side-slip breve en vivo)
-    [
-      { offset: 0.67, dur: 0.3, mode: 'block', accent: 0.58, variant: 'sideSlipDown' },
-      { offset: 1, dur: 0.95, mode: 'strum-down', accent: 0.92, variant: 'invUp' },
-      { offset: 2.67, dur: 0.8, mode: 'block', accent: 0.84, variant: 'color9' }
-    ],
-    // Célula 3 (c.4 — preparación / fill hacia el siguiente acorde con anticipación opcional en 3.67)
-    [
-      { offset: 0, dur: 0.55, mode: 'strum-down', accent: 0.92, variant: 'base' },
-      { offset: 1.67, dur: 0.3, mode: 'strum-up', accent: 0.64, variant: 'bluesNeighbor' },
-      { offset: 2, dur: 0.55, mode: 'block', accent: 0.84, variant: 'color13' },
-      { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.88, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.5, mode: 'strum-down', accent: 0.96, variant: 'base' },
+        { offset: 2.67, dur: 0.75, mode: 'block', accent: 0.76, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 1, dur: 0.5, mode: 'block', accent: 0.84, variant: 'bluesNeighbor' },
+        { offset: 3, dur: 0.75, mode: 'strum-down', accent: 0.82, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 2.1, mode: 'block', accent: 0.9, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.85, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 1.67, dur: 0.34, mode: 'strum-up', accent: 0.68, variant: 'color9', optional: true },
+        { offset: 2, dur: 1.15, mode: 'block', accent: 0.86, variant: 'invUp' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0.67, dur: 0.3, mode: 'block', accent: 0.58, variant: 'sideSlipDown' },
+        { offset: 1, dur: 0.95, mode: 'strum-down', accent: 0.92, variant: 'base' },
+        { offset: 2.67, dur: 0.8, mode: 'block', accent: 0.84, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 1, dur: 0.45, mode: 'block', accent: 0.82, variant: 'bluesNeighbor' },
+        { offset: 2, dur: 0.65, mode: 'strum-down', accent: 0.88, variant: 'base' },
+        { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.86, variant: 'color13', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.55, mode: 'strum-down', accent: 0.94, variant: 'invUp' },
+        { offset: 2.67, dur: 0.32, mode: 'strum-up', accent: 0.66, variant: 'bluesNeighbor', optional: true },
+        { offset: 3, dur: 0.72, mode: 'block', accent: 0.88, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.55, mode: 'strum-down', accent: 0.92, variant: 'base' },
+        { offset: 1.67, dur: 0.3, mode: 'strum-up', accent: 0.64, variant: 'bluesNeighbor', optional: true },
+        { offset: 2, dur: 0.55, mode: 'block', accent: 0.84, variant: 'color13' },
+        { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.88, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.45, mode: 'block', accent: 0.9, variant: 'base' },
+        { offset: 0.67, dur: 0.32, mode: 'strum-up', accent: 0.62, variant: 'color9' },
+        { offset: 1.67, dur: 0.35, mode: 'block', accent: 0.78, variant: 'bluesNeighbor' },
+        { offset: 3, dur: 0.65, mode: 'strum-down', accent: 0.86, variant: 'invUp' }
+      ]
+    }
   ],
 
-  // Jazz swing (vocabulario Charleston, Red Garland, Wynton Kelly con aire real)
+  // Jazz swing (10 células: Charleston, Red Garland, Wynton Kelly, Bill Evans flotado, compases con aire)
   'swing-negras': [
-    // Célula 0: Charleston clásico (1 largo + & de 2 breve)
-    [
-      { offset: 0, dur: 1.25, mode: 'block', accent: 0.94, variant: 'base' },
-      { offset: 1.67, dur: 0.42, mode: 'block', accent: 0.78, variant: 'color9' }
-    ],
-    // Célula 1: Respuesta ligera en 2 + empuje en & de 4 (estilo Red Garland)
-    [
-      { offset: 1, dur: 0.42, mode: 'block', accent: 0.8, variant: 'invUp' },
-      { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.88, variant: 'color13', anticipateNext: true }
-    ],
-    // Célula 2: Síncopa en & de 1 + side-slip + respuesta en 3
-    [
-      { offset: 0.67, dur: 0.32, mode: 'block', accent: 0.58, variant: 'sideSlipUp' },
-      { offset: 1, dur: 0.75, mode: 'block', accent: 0.88, variant: 'base' },
-      { offset: 2.67, dur: 0.75, mode: 'block', accent: 0.82, variant: 'color9' }
-    ],
-    // Célula 3: Compás con aire (acorde en 1 + anticipación limpia en & de 4 al siguiente acorde)
-    [
-      { offset: 0, dur: 1.6, mode: 'block', accent: 0.9, variant: 'color13' },
-      { offset: 2, dur: 0.45, mode: 'block', accent: 0.72, variant: 'invUp' },
-      { offset: 3.67, dur: 0.68, mode: 'block', accent: 0.9, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.4, mode: 'block', accent: 0.92, variant: 'base' },
+        { offset: 1.67, dur: 0.45, mode: 'block', accent: 0.78, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 1, dur: 0.42, mode: 'block', accent: 0.8, variant: 'invUp' },
+        { offset: 3.67, dur: 0.68, mode: 'block', accent: 0.88, variant: 'color13', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0.67, dur: 1.45, mode: 'block', accent: 0.86, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 2.67, dur: 0.95, mode: 'block', accent: 0.84, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0.67, dur: 0.32, mode: 'block', accent: 0.58, variant: 'sideSlipUp' },
+        { offset: 1, dur: 0.85, mode: 'block', accent: 0.88, variant: 'base' },
+        { offset: 2.67, dur: 0.75, mode: 'block', accent: 0.82, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.55, mode: 'block', accent: 0.9, variant: 'base' },
+        { offset: 1.67, dur: 0.36, mode: 'block', accent: 0.72, variant: 'color9', optional: true },
+        { offset: 3, dur: 0.65, mode: 'block', accent: 0.84, variant: 'invUp' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 1.6, mode: 'block', accent: 0.9, variant: 'color13' },
+        { offset: 2, dur: 0.42, mode: 'block', accent: 0.74, variant: 'invUp', optional: true },
+        { offset: 3.67, dur: 0.68, mode: 'block', accent: 0.9, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 1, dur: 0.38, mode: 'block', accent: 0.78, variant: 'color9' },
+        { offset: 1.67, dur: 0.85, mode: 'block', accent: 0.86, variant: 'base' },
+        { offset: 3, dur: 0.45, mode: 'block', accent: 0.76, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.42, mode: 'block', accent: 0.88, variant: 'base' },
+        { offset: 0.67, dur: 0.3, mode: 'block', accent: 0.62, variant: 'sideSlipDown' },
+        { offset: 1, dur: 0.6, mode: 'block', accent: 0.86, variant: 'invUp' },
+        { offset: 2.67, dur: 0.42, mode: 'block', accent: 0.8, variant: 'color13', optional: true },
+        { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.9, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.5, mode: 'block', accent: 0.92, variant: 'color9' },
+        { offset: 1, dur: 0.38, mode: 'block', accent: 0.76, variant: 'base' },
+        { offset: 2, dur: 0.48, mode: 'block', accent: 0.84, variant: 'invUp', optional: true },
+        { offset: 3.67, dur: 0.65, mode: 'block', accent: 0.88, variant: 'color13', anticipateNext: true }
+      ]
+    }
   ],
 
-  // Bossa nova: clave real de 2 compases (A: 1, 2.5, 4 · B: 1.5, 3, 4.5 anticipado)
+  // Bossa nova (6 células: 3 variantes de compás A + 3 variantes de compás B preservando la clave)
   bossa: [
-    // Compás A de la clave
-    [
-      { offset: 0, dur: 1.1, mode: 'block', accent: 0.94, variant: 'base' },
-      { offset: 1.5, dur: 0.85, mode: 'upper', accent: 0.76, variant: 'color9' },
-      { offset: 3, dur: 0.85, mode: 'upper', accent: 0.8, variant: 'base' }
-    ],
-    // Compás B de la clave (con empuje en 3.5 hacia el próximo acorde)
-    [
-      { offset: 0.5, dur: 0.95, mode: 'upper', accent: 0.78, variant: 'invUp' },
-      { offset: 2, dur: 0.9, mode: 'block', accent: 0.84, variant: 'color13' },
-      { offset: 3.5, dur: 0.75, mode: 'block', accent: 0.86, variant: 'base', anticipateNext: true }
-    ]
+    // A0
+    {
+      barRole: 'A',
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 1.1, mode: 'block', accent: 0.94, variant: 'base' },
+        { offset: 1.5, dur: 0.85, mode: 'upper', accent: 0.76, variant: 'color9' },
+        { offset: 3, dur: 0.85, mode: 'upper', accent: 0.8, variant: 'base' }
+      ]
+    },
+    // B0
+    {
+      barRole: 'B',
+      density: 'medium',
+      hits: [
+        { offset: 0.5, dur: 0.95, mode: 'upper', accent: 0.78, variant: 'invUp' },
+        { offset: 2, dur: 0.9, mode: 'block', accent: 0.84, variant: 'color13' },
+        { offset: 3.5, dur: 0.75, mode: 'block', accent: 0.86, variant: 'base', anticipateNext: true }
+      ]
+    },
+    // A1 (más liviano)
+    {
+      barRole: 'A',
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.4, mode: 'block', accent: 0.92, variant: 'color13' },
+        { offset: 1.5, dur: 1.4, mode: 'upper', accent: 0.78, variant: 'color9' }
+      ]
+    },
+    // B1 (más activo)
+    {
+      barRole: 'B',
+      density: 'active',
+      hits: [
+        { offset: 0.5, dur: 0.75, mode: 'upper', accent: 0.76, variant: 'base' },
+        { offset: 1.5, dur: 0.45, mode: 'upper', accent: 0.68, variant: 'color9', optional: true },
+        { offset: 2, dur: 0.85, mode: 'block', accent: 0.86, variant: 'invUp' },
+        { offset: 3.5, dur: 0.75, mode: 'block', accent: 0.88, variant: 'base', anticipateNext: true }
+      ]
+    },
+    // A2
+    {
+      barRole: 'A',
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.85, mode: 'block', accent: 0.94, variant: 'base' },
+        { offset: 1.5, dur: 0.7, mode: 'upper', accent: 0.78, variant: 'invUp' },
+        { offset: 2.5, dur: 0.45, mode: 'upper', accent: 0.66, variant: 'color9', optional: true },
+        { offset: 3, dur: 0.85, mode: 'block', accent: 0.82, variant: 'color13' }
+      ]
+    },
+    // B2 (liviano con empuje final)
+    {
+      barRole: 'B',
+      density: 'sparse',
+      hits: [
+        { offset: 1, dur: 1.2, mode: 'upper', accent: 0.8, variant: 'color9' },
+        { offset: 3.5, dur: 0.78, mode: 'block', accent: 0.86, variant: 'base', anticipateNext: true }
+      ]
+    }
   ],
 
-  // Tango rioplatense: alterna marcato en 4, síncopa porteña y acento yumba
+  // Tango rioplatense (5 células: marcato, síncopa porteña, yumba, arrastre + corte, cierre)
   'tango-marcato': [
-    // Marcato en 4 con peso en 1 y 3
-    [
-      { offset: 0, dur: 0.48, mode: 'block', accent: 1.0, variant: 'base' },
-      { offset: 1, dur: 0.4, mode: 'block', accent: 0.7, variant: 'base' },
-      { offset: 2, dur: 0.48, mode: 'block', accent: 0.92, variant: 'invUp' },
-      { offset: 3, dur: 0.4, mode: 'block', accent: 0.72, variant: 'base' }
-    ],
-    // Síncopa porteña clásica (1 acentuado + anticipación en 1.5 + cierre seco en 3)
-    [
-      { offset: 0, dur: 0.9, mode: 'block', accent: 1.0, variant: 'base' },
-      { offset: 1.5, dur: 0.45, mode: 'block', accent: 0.84, variant: 'color9' },
-      { offset: 2, dur: 0.85, mode: 'block', accent: 0.9, variant: 'invUp' },
-      { offset: 3.5, dur: 0.55, mode: 'block', accent: 0.82, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.48, mode: 'block', accent: 1.0, variant: 'base' },
+        { offset: 1, dur: 0.4, mode: 'block', accent: 0.7, variant: 'base' },
+        { offset: 2, dur: 0.48, mode: 'block', accent: 0.92, variant: 'invUp' },
+        { offset: 3, dur: 0.4, mode: 'block', accent: 0.72, variant: 'base' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.9, mode: 'block', accent: 1.0, variant: 'base' },
+        { offset: 1.5, dur: 0.45, mode: 'block', accent: 0.84, variant: 'color9' },
+        { offset: 2, dur: 0.85, mode: 'block', accent: 0.9, variant: 'invUp' },
+        { offset: 3.5, dur: 0.55, mode: 'block', accent: 0.82, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.4, mode: 'block', accent: 1.0, variant: 'base' },
+        { offset: 2, dur: 0.9, mode: 'block', accent: 0.88, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.55, mode: 'block', accent: 0.98, variant: 'invUp' },
+        { offset: 1.5, dur: 0.75, mode: 'block', accent: 0.86, variant: 'color9' },
+        { offset: 3, dur: 0.55, mode: 'block', accent: 0.8, variant: 'base' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.1, mode: 'block', accent: 1.0, variant: 'base' },
+        { offset: 2.5, dur: 0.45, mode: 'block', accent: 0.78, variant: 'sideSlipDown' },
+        { offset: 3, dur: 0.75, mode: 'block', accent: 0.9, variant: 'base' }
+      ]
+    }
   ],
 
-  // Balada / Pop suave: alterna arpegio/acorde sostenido y respuesta delicada en blancas/contratiempos
+  // Balada lenta (5 células)
   'balada-lenta': [
-    [
-      { offset: 0, dur: 2.2, mode: 'strum-down', accent: 0.92, variant: 'base' },
-      { offset: 2.5, dur: 1.3, mode: 'upper', accent: 0.7, variant: 'color9' }
-    ],
-    [
-      { offset: 0, dur: 1.8, mode: 'strum-down', accent: 0.88, variant: 'invUp' },
-      { offset: 2, dur: 1.3, mode: 'upper', accent: 0.74, variant: 'color13' },
-      { offset: 3.5, dur: 0.6, mode: 'upper', accent: 0.68, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 2.4, mode: 'strum-down', accent: 0.92, variant: 'base' },
+        { offset: 2.5, dur: 1.3, mode: 'upper', accent: 0.7, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 1.8, mode: 'strum-down', accent: 0.88, variant: 'invUp' },
+        { offset: 2, dur: 1.3, mode: 'upper', accent: 0.74, variant: 'color13' },
+        { offset: 3.5, dur: 0.65, mode: 'upper', accent: 0.68, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 3.4, mode: 'strum-down', accent: 0.9, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 1.4, mode: 'strum-down', accent: 0.92, variant: 'base' },
+        { offset: 1.5, dur: 0.9, mode: 'upper', accent: 0.68, variant: 'color13', optional: true },
+        { offset: 3, dur: 1.0, mode: 'upper', accent: 0.75, variant: 'invUp' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 1.0, mode: 'strum-down', accent: 0.92, variant: 'base' },
+        { offset: 1.5, dur: 0.7, mode: 'upper', accent: 0.66, variant: 'color9' },
+        { offset: 2.5, dur: 0.8, mode: 'upper', accent: 0.72, variant: 'invUp' },
+        { offset: 3.5, dur: 0.65, mode: 'upper', accent: 0.7, variant: 'base', anticipateNext: true }
+      ]
+    }
   ],
 
-  // Rasgueo balada / pop: alterna rasgueo clásico con compás más liviano y empuje al cambio
+  // Rasgueo balada / pop (6 células)
   'rasgueo-balada': [
-    [
-      { offset: 0, dur: 0.9, mode: 'strum-down', accent: 0.98, variant: 'base' },
-      { offset: 1.5, dur: 0.65, mode: 'strum-up', accent: 0.68, variant: 'base' },
-      { offset: 2.5, dur: 0.6, mode: 'strum-up', accent: 0.74, variant: 'color9' },
-      { offset: 3, dur: 0.8, mode: 'strum-down', accent: 0.86, variant: 'base' }
-    ],
-    [
-      { offset: 0, dur: 1.1, mode: 'strum-down', accent: 0.94, variant: 'invUp' },
-      { offset: 1, dur: 0.55, mode: 'strum-down', accent: 0.76, variant: 'base' },
-      { offset: 2.5, dur: 0.55, mode: 'strum-up', accent: 0.72, variant: 'color13' },
-      { offset: 3.5, dur: 0.65, mode: 'strum-up', accent: 0.8, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.9, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 1.5, dur: 0.65, mode: 'strum-up', accent: 0.68, variant: 'base' },
+        { offset: 2.5, dur: 0.6, mode: 'strum-up', accent: 0.74, variant: 'color9' },
+        { offset: 3, dur: 0.8, mode: 'strum-down', accent: 0.86, variant: 'base' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 1.0, mode: 'strum-down', accent: 0.94, variant: 'invUp' },
+        { offset: 1, dur: 0.55, mode: 'strum-down', accent: 0.76, variant: 'base', optional: true },
+        { offset: 2.5, dur: 0.55, mode: 'strum-up', accent: 0.72, variant: 'color13' },
+        { offset: 3.5, dur: 0.65, mode: 'strum-up', accent: 0.8, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.7, mode: 'strum-down', accent: 0.95, variant: 'base' },
+        { offset: 2, dur: 1.6, mode: 'strum-down', accent: 0.82, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 1.2, mode: 'strum-down', accent: 0.96, variant: 'color13' },
+        { offset: 2, dur: 0.75, mode: 'strum-down', accent: 0.84, variant: 'base' },
+        { offset: 3.5, dur: 0.65, mode: 'strum-up', accent: 0.78, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 1.3, mode: 'strum-down', accent: 0.94, variant: 'invUp' },
+        { offset: 2.5, dur: 1.1, mode: 'strum-up', accent: 0.76, variant: 'color9' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.8, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 1, dur: 0.45, mode: 'strum-down', accent: 0.74, variant: 'base' },
+        { offset: 1.5, dur: 0.5, mode: 'strum-up', accent: 0.66, variant: 'color9', optional: true },
+        { offset: 2.5, dur: 0.55, mode: 'strum-up', accent: 0.74, variant: 'color13' },
+        { offset: 3, dur: 0.75, mode: 'strum-down', accent: 0.86, variant: 'base' }
+      ]
+    }
   ],
 
-  // Funk 16: alterna síncopas secas en semicorcheas
+  // Funk 16 (6 células)
   'funk-16': [
-    [
-      { offset: 0, dur: 0.35, mode: 'strum-down', accent: 0.98, variant: 'base' },
-      { offset: 0.75, dur: 0.25, mode: 'strum-up', accent: 0.74, variant: 'color9' },
-      { offset: 2, dur: 0.35, mode: 'strum-down', accent: 0.88, variant: 'base' },
-      { offset: 3.5, dur: 0.35, mode: 'strum-up', accent: 0.8, variant: 'color13' }
-    ],
-    [
-      { offset: 0, dur: 0.32, mode: 'strum-down', accent: 0.95, variant: 'invUp' },
-      { offset: 1.5, dur: 0.3, mode: 'strum-up', accent: 0.78, variant: 'color9' },
-      { offset: 2.75, dur: 0.25, mode: 'strum-up', accent: 0.72, variant: 'base' },
-      { offset: 3.75, dur: 0.35, mode: 'strum-up', accent: 0.84, variant: 'base', anticipateNext: true }
-    ]
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0, dur: 0.35, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 0.75, dur: 0.25, mode: 'strum-up', accent: 0.74, variant: 'color9' },
+        { offset: 2, dur: 0.35, mode: 'strum-down', accent: 0.88, variant: 'base' },
+        { offset: 3.5, dur: 0.35, mode: 'strum-up', accent: 0.8, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.32, mode: 'strum-down', accent: 0.95, variant: 'invUp' },
+        { offset: 1.5, dur: 0.3, mode: 'strum-up', accent: 0.78, variant: 'color9', optional: true },
+        { offset: 2.75, dur: 0.25, mode: 'strum-up', accent: 0.72, variant: 'base' },
+        { offset: 3.75, dur: 0.35, mode: 'strum-up', accent: 0.84, variant: 'base', anticipateNext: true }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 0.4, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 2.5, dur: 0.35, mode: 'strum-up', accent: 0.82, variant: 'color13' }
+      ]
+    },
+    {
+      density: 'medium',
+      hits: [
+        { offset: 0.75, dur: 0.28, mode: 'strum-up', accent: 0.76, variant: 'color9' },
+        { offset: 1.5, dur: 0.32, mode: 'strum-down', accent: 0.88, variant: 'invUp' },
+        { offset: 3, dur: 0.35, mode: 'strum-down', accent: 0.84, variant: 'base' }
+      ]
+    },
+    {
+      density: 'sparse',
+      hits: [
+        { offset: 0, dur: 0.35, mode: 'strum-down', accent: 0.96, variant: 'color9' },
+        { offset: 1.75, dur: 0.28, mode: 'strum-up', accent: 0.78, variant: 'base' }
+      ]
+    },
+    {
+      density: 'active',
+      hits: [
+        { offset: 0, dur: 0.3, mode: 'strum-down', accent: 0.98, variant: 'base' },
+        { offset: 0.75, dur: 0.25, mode: 'strum-up', accent: 0.72, variant: 'color9' },
+        { offset: 2, dur: 0.3, mode: 'strum-down', accent: 0.88, variant: 'invUp', optional: true },
+        { offset: 2.75, dur: 0.25, mode: 'strum-up', accent: 0.76, variant: 'color13' },
+        { offset: 3.75, dur: 0.35, mode: 'strum-up', accent: 0.86, variant: 'base', anticipateNext: true }
+      ]
+    }
   ]
 };
 
 /**
- * Planifica los ataques de acordes (comping) para un evento armónico de cualquier duración
- * (incluyendo eventos multi-compás como 4 compases seguidos de A7 en un blues de 12).
+ * Selecciona una célula rítmica con reglas Markovianas:
+ * - Nunca repite el mismo índice consecutivo.
+ * - Equilibra densidad (tras 'active' favorece 'sparse'/'medium'; tras 'sparse' favorece 'medium'/'active').
+ * - En compases previos a cambio de acorde, da mayor peso a células con anticipación natural.
+ */
+function selectStochasticCell(cells, { family, absBar, isLastBeforeChange, memory, rng }) {
+  const candidates = [];
+  cells.forEach((cell, idx) => {
+    // En bossa respeta el rol A (compás par) / B (compás impar) de la clave real de 2 compases
+    if (family === 'bossa') {
+      const expectedRole = absBar % 2 === 0 ? 'A' : 'B';
+      if (cell.barRole && cell.barRole !== expectedRole) return;
+    }
+
+    let weight = 1.0;
+    // Anti-repetición estricta cuando hay más de 1 candidata
+    if (idx === memory.lastCellIdx && cells.length > 2) {
+      weight *= 0.04;
+    }
+    // Balance pregunta / respuesta de densidad
+    if (memory.lastDensity === 'active') {
+      if (cell.density === 'sparse') weight *= 2.4;
+      else if (cell.density === 'medium') weight *= 1.5;
+      else weight *= 0.45;
+    } else if (memory.lastDensity === 'sparse') {
+      if (cell.density === 'medium') weight *= 2.0;
+      else if (cell.density === 'active') weight *= 1.6;
+      else weight *= 0.45;
+    }
+    // En compás previo a cambio armónico, favorece ligeramente células con empuje/anticipación
+    if (isLastBeforeChange && cell.hits.some((h) => h.anticipateNext)) {
+      weight *= 1.75;
+    }
+    candidates.push({ item: { cell, idx }, weight });
+  });
+
+  const chosen = pickWeighted(candidates.length > 0 ? candidates : [{ item: { cell: cells[0], idx: 0 }, weight: 1 }], rng);
+  memory.lastCellIdx = chosen.idx;
+  memory.lastDensity = chosen.cell.density || 'medium';
+  return chosen;
+}
+
+/**
+ * Elige dinámicamente una coloración armónica para modo 'vivo' evitando repetir mecánicamente
+ * el mismo color y manteniendo la tonalidad anclada en los primeros golpes.
+ */
+function pickLiveVariant(suggestedVariant, { chordSymbol, family, sameBarIdx, hitIdx, memory, rng }) {
+  if (suggestedVariant === 'base' && hitIdx === 0 && sameBarIdx === 0) return 'base';
+
+  const parsed = parseChord(chordSymbol);
+  const qLow = String(parsed?.quality || '').toLowerCase();
+  const isMinor = qLow.startsWith('m') && !qLow.startsWith('maj');
+  const isDimOrHalf = qLow.includes('dim') || qLow.includes('b5') || qLow.includes('b9');
+  if (isDimOrHalf) return hitIdx > 0 && rng() < 0.35 ? 'invUp' : 'base';
+
+  // Construye piscina de colores musicales válidos según estilo y calidad
+  const pool = [
+    { item: 'base', weight: hitIdx === 0 ? 1.4 : 0.7 },
+    { item: 'color9', weight: 1.5 },
+    { item: 'invUp', weight: 1.2 }
+  ];
+  if (!isMinor) {
+    pool.push({ item: 'color13', weight: 1.4 });
+    if (family === 'shuffle' || qLow === '7') {
+      pool.push({ item: 'bluesNeighbor', weight: hitIdx > 0 ? 1.35 : 0.35 });
+    }
+  }
+  // Side-slip solo en compases repetidos o contratiempos débiles (nunca en el primer tiempo fuerte del primer compás)
+  if ((sameBarIdx >= 1 || hitIdx > 0) && (family === 'swing-negras' || family === 'shuffle')) {
+    pool.push({ item: 'sideSlipDown', weight: 0.45 });
+    pool.push({ item: 'sideSlipUp', weight: 0.4 });
+  }
+  // Favorece ligeramente la sugerencia idiomática de la célula pero con apertura aleatoria real
+  for (const entry of pool) {
+    if (entry.item === suggestedVariant) entry.weight *= 1.35;
+    if (entry.item === memory.lastVariant && entry.item !== 'base') entry.weight *= 0.35;
+  }
+
+  const chosen = pickWeighted(pool, rng);
+  memory.lastVariant = chosen;
+  return chosen;
+}
+
+/**
+ * Planifica los ataques de acordes (comping) para un evento armónico de cualquier duración,
+ * devolviendo además metadatos en vivo (`displaySymbol`, `techniqueLabel`, `isVariation`) para
+ * visualizar en pantalla qué acorde/coloración exacta está tocando el acompañamiento.
  *
  * @param {object} params Parámetros de planificación.
- * @param {string} params.chordSymbol Símbolo americano del acorde actual.
- * @param {string|null} [params.nextChordSymbol=null] Símbolo del acorde que sigue al evento.
- * @param {number[]} params.voicingMidis Alturas MIDI del voicing actual.
- * @param {number[]} [params.nextVoicingMidis=[]] Alturas MIDI del acorde siguiente (para anticipaciones).
- * @param {number} params.durationBeats Duración total del evento en negras.
- * @param {number} [params.beatsPerMeasure=4] Pulsos por compás.
- * @param {string} [params.pattern='negras-abajo'] Patrón base de comping.
- * @param {'fijo'|'organico'|'vivo'} [params.compingFeel='organico'] Nivel de variación orgánica.
- * @param {object} [params.context={}] Contexto devuelto por `analyzeChordContext`.
- * @param {boolean} [params.isPiano=false] True si suena con timbre piano (prefiere ataque en bloque limpio).
- * @returns {Array<{ beatOffset: number, durationBeats: number, midis: number[], mode: string, volumeScale: number, strumMs: number, humanizeMs: number, tag: string }>}
+ * @returns {Array<{ beatOffset: number, durationBeats: number, midis: number[], mode: string, volumeScale: number, strumMs: number, humanizeMs: number, tag: string, baseSymbol: string, displaySymbol: string, techniqueLabel: string, isVariation: boolean }>}
  */
 export function planCompingEvents({
   chordSymbol = 'C',
@@ -386,7 +852,9 @@ export function planCompingEvents({
   pattern = 'negras-abajo',
   compingFeel = 'organico',
   context = {},
-  isPiano = false
+  isPiano = false,
+  memory = null,
+  rng = Math.random
 }) {
   const sorted = [...voicingMidis].filter(Number.isFinite).sort((a, b) => a - b);
   if (sorted.length === 0) return [];
@@ -395,13 +863,13 @@ export function planCompingEvents({
   const family = normalizePatternFamily(pattern);
   const bpm = Math.max(1, Number(beatsPerMeasure) || 4);
   const totalBeats = Math.max(0.5, Number(durationBeats) || bpm);
-  const chorusIndex = Math.max(0, Number(context.chorusIndex) || 0);
   const baseBarIndex = Math.max(0, Number(context.barIndex) || 0);
   const prevSameBars = Math.max(0, Number(context.prevSameBars) || 0);
   const changesAfter = Boolean(context.changesAfterEvent ?? (nextChordSymbol && nextChordSymbol !== chordSymbol));
   const nextSorted = [...(nextVoicingMidis || [])].filter(Number.isFinite).sort((a, b) => a - b);
+  const mem = memory || createCompingMemory();
+  const rand = typeof rng === 'function' ? rng : Math.random;
 
-  // En modo 'fijo' o en patrones puramente fijos ('bloque', 'arpegio-pima', 'arpegio-asc') devuelve comportamiento regular
   if (feel === 'fijo' || family === 'bloque') {
     return [{
       beatOffset: 0,
@@ -411,11 +879,14 @@ export function planCompingEvents({
       volumeScale: 1.0,
       strumMs: 0,
       humanizeMs: 0,
-      tag: 'fijo'
+      tag: 'fijo',
+      baseSymbol: chordSymbol,
+      displaySymbol: chordSymbol,
+      techniqueLabel: 'Base',
+      isVariation: false
     }];
   }
 
-  // Divide eventos multi-compás (ej. 16 negras = 4 compases de A7) en rebanadas de 1 compás
   const events = [];
   const barCount = Math.max(1, Math.ceil(totalBeats / bpm - 0.0001));
 
@@ -429,77 +900,93 @@ export function planCompingEvents({
     const isLastSubBar = subBar === barCount - 1;
     const isLastBeforeChange = isLastSubBar && changesAfter;
 
-    // Caso 1: Estilos con células rítmicas multi-compás definidas (shuffle, swing, bossa, tango, balada, funk)
     const cells = ORGANIC_CELLS[family] || (family === 'negras-abajo' || family === 'rock-corcheas' ? ORGANIC_CELLS['rasgueo-balada'] : null);
 
     if (cells && barDur >= 2.5) {
-      let cellIdx;
-      if (isLastBeforeChange && cells.length >= 4 && (sameBarIdx >= 1 || chorusIndex > 0)) {
-        // Compás de cierre / preparación antes de cambiar de acorde
-        cellIdx = cells.length - 1;
-      } else if (family === 'bossa') {
-        // Bossa siempre alterna compás A (par) y compás B (impar) de la clave de 2 compases
-        cellIdx = (absBar + chorusIndex) % 2;
-      } else {
-        // Rota células por compás consecutivo + coro para que 4 compases de A7 jamás se repitan iguales
-        cellIdx = (sameBarIdx + chorusIndex * 2 + Math.floor(absBar / 4)) % cells.length;
-      }
+      const { cell, idx: cellIdx } = selectStochasticCell(cells, {
+        family,
+        absBar,
+        isLastBeforeChange,
+        memory: mem,
+        rng: rand
+      });
 
-      const cell = cells[cellIdx];
-      cell.forEach((h, hIdx) => {
+      cell.hits.forEach((h, hIdx) => {
         if (h.offset >= barDur - 0.05) return;
 
-        // Anticipación del próximo acorde solo en el último compás previo a un cambio real
-        const useAnticipation = Boolean(h.anticipateNext && isLastBeforeChange && nextSorted.length > 0);
-        // En el último compás SIN cambio de acorde, si el hit era anticipación, toca el acorde actual más suave
+        // Omisión probabilística sutil (~18 %) en golpes opcionales para romper simetrías
+        if (h.optional && rand() < 0.18) return;
+
+        // Anticipación probabilística (~65 % en el último compás previo a cambio, ~80 % si hubo varios compases iguales)
+        const antProb = sameBarIdx >= 1 ? 0.8 : 0.6;
+        const useAnticipation = Boolean(h.anticipateNext && isLastBeforeChange && nextSorted.length > 0 && rand() < antProb);
+
+        let chosenVariant = 'base';
         let targetMidis = useAnticipation ? nextSorted : sorted;
         let tag = useAnticipation ? 'anticipation' : `cell-${cellIdx}`;
 
-        if (!useAnticipation && feel === 'vivo' && h.variant && h.variant !== 'base') {
-          // En modo 'vivo' evita side-slip en el primer compás del tema para anclar la tonalidad primero
-          const safeVariant = (h.variant === 'sideSlipUp' || h.variant === 'sideSlipDown') && sameBarIdx === 0
-            ? 'color9'
-            : h.variant;
-          targetMidis = buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: safeVariant });
-          tag = `vivo-${safeVariant}`;
+        if (!useAnticipation && feel === 'vivo') {
+          chosenVariant = pickLiveVariant(h.variant || 'base', {
+            chordSymbol,
+            family,
+            sameBarIdx,
+            hitIdx: hIdx,
+            memory: mem,
+            rng: rand
+          });
+          if (chosenVariant !== 'base') {
+            targetMidis = buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: chosenVariant });
+            tag = `vivo-${chosenVariant}`;
+          }
         }
 
-        if (h.mode === 'upper' && targetMidis.length > 1) {
-          targetMidis = targetMidis.slice(1);
+        const liveDesc = describeLiveCompingChord(
+          chordSymbol,
+          nextChordSymbol || context.nextChordSymbol,
+          chosenVariant,
+          useAnticipation
+        );
+
+        let playMidis = targetMidis;
+        if (h.mode === 'upper' && playMidis.length > 1) {
+          playMidis = playMidis.slice(1);
         } else if (h.mode === 'bass') {
-          targetMidis = [targetMidis[0]];
+          playMidis = [playMidis[0]];
         }
 
         const effectiveMode = isPiano
           ? 'block'
           : (h.mode === 'upper' || h.mode === 'bass' ? 'block' : h.mode);
-        const { humanizeMs, velFactor } = computeHumanizeOffset(chorusIndex, absBar, hIdx);
+        const { humanizeMs, velFactor } = computeHumanizeOffset(rand);
 
         events.push({
           beatOffset: barStart + h.offset,
           durationBeats: Math.min(h.dur, Math.max(0.28, barDur - h.offset + (useAnticipation ? 0.45 : 0.1))),
-          midis: targetMidis,
+          midis: playMidis,
           mode: effectiveMode,
           volumeScale: Number((h.accent * velFactor).toFixed(3)),
           strumMs: effectiveMode === 'block' ? 6 : (effectiveMode === 'strum-up' ? 14 : 18),
           humanizeMs,
-          tag
+          tag,
+          baseSymbol: chordSymbol,
+          displaySymbol: liveDesc.displaySymbol,
+          techniqueLabel: liveDesc.techniqueLabel,
+          isVariation: liveDesc.isVariation
         });
       });
       continue;
     }
 
-    // Caso 2: Compases partidos (ej. 2 pulsos en ii–V dentro del mismo compás) o vals 3/4
     if (family === 'vals') {
       const bass = [sorted[0]];
       const upper = sorted.length > 1 ? sorted.slice(1) : sorted;
-      const upperVaried = feel === 'vivo' && (sameBarIdx % 2 === 1)
-        ? buildVariedVoicing({ baseMidis: upper, chordSymbol, variant: 'color9' })
-        : upper;
+      const chosenVariant = feel === 'vivo' && rand() < 0.55 ? pickLiveVariant('color9', { chordSymbol, family, sameBarIdx, hitIdx: 1, memory: mem, rng: rand }) : 'base';
+      const upperVaried = chosenVariant !== 'base' ? buildVariedVoicing({ baseMidis: upper, chordSymbol, variant: chosenVariant }) : upper;
+      const liveDesc = describeLiveCompingChord(chordSymbol, nextChordSymbol, chosenVariant, false);
       const beats = Math.max(1, Math.round(barDur));
       for (let b = 0; b < beats; b++) {
         const isOne = b % 3 === 0;
-        const { humanizeMs, velFactor } = computeHumanizeOffset(chorusIndex, absBar, b);
+        const { humanizeMs, velFactor } = computeHumanizeOffset(rand);
         events.push({
           beatOffset: barStart + b,
           durationBeats: isOne ? 1.35 : 0.72,
@@ -508,17 +995,21 @@ export function planCompingEvents({
           volumeScale: Number(((isOne ? 0.98 : b === 1 ? 0.74 : 0.64) * velFactor).toFixed(3)),
           strumMs: isOne || isPiano ? 4 : 14,
           humanizeMs,
-          tag: isOne ? 'vals-bass' : 'vals-upper'
+          tag: isOne ? 'vals-bass' : 'vals-upper',
+          baseSymbol: chordSymbol,
+          displaySymbol: isOne ? chordSymbol : liveDesc.displaySymbol,
+          techniqueLabel: isOne ? 'Base' : liveDesc.techniqueLabel,
+          isVariation: !isOne && liveDesc.isVariation
         });
       }
       continue;
     }
 
     if (family === 'arpegio-pima' || family === 'arpegio-asc') {
-      const targetMidis = feel === 'vivo' && (sameBarIdx % 2 === 1)
-        ? buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: 'invUp' })
-        : sorted;
-      const { humanizeMs, velFactor } = computeHumanizeOffset(chorusIndex, absBar, 0);
+      const chosenVariant = feel === 'vivo' && rand() < 0.5 ? 'invUp' : 'base';
+      const targetMidis = chosenVariant !== 'base' ? buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: chosenVariant }) : sorted;
+      const liveDesc = describeLiveCompingChord(chordSymbol, nextChordSymbol, chosenVariant, false);
+      const { humanizeMs, velFactor } = computeHumanizeOffset(rand);
       events.push({
         beatOffset: barStart,
         durationBeats: barDur,
@@ -527,16 +1018,20 @@ export function planCompingEvents({
         volumeScale: Number((0.95 * velFactor).toFixed(3)),
         strumMs: 16,
         humanizeMs,
-        tag: family
+        tag: family,
+        baseSymbol: chordSymbol,
+        displaySymbol: liveDesc.displaySymbol,
+        techniqueLabel: liveDesc.techniqueLabel,
+        isVariation: liveDesc.isVariation
       });
       continue;
     }
 
-    // Compás partido (barDur <= 2 pulsos, ej. Dm7 | G7): ataque claro en tiempo 1 + respuesta corta opcional
-    const { humanizeMs, velFactor } = computeHumanizeOffset(chorusIndex, absBar, 0);
-    const splitMidis = feel === 'vivo' && (absBar + chorusIndex) % 2 === 1
-      ? buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: 'color9' })
-      : sorted;
+    // Compás partido (barDur <= 2 pulsos, ej. ii–V en un compás)
+    const { humanizeMs, velFactor } = computeHumanizeOffset(rand);
+    const splitVariant = feel === 'vivo' && rand() < 0.5 ? pickLiveVariant('color9', { chordSymbol, family, sameBarIdx, hitIdx: 0, memory: mem, rng: rand }) : 'base';
+    const splitMidis = splitVariant !== 'base' ? buildVariedVoicing({ baseMidis: sorted, chordSymbol, variant: splitVariant }) : sorted;
+    const splitDesc = describeLiveCompingChord(chordSymbol, nextChordSymbol, splitVariant, false);
     events.push({
       beatOffset: barStart,
       durationBeats: Math.max(0.5, barDur * 0.78),
@@ -545,19 +1040,29 @@ export function planCompingEvents({
       volumeScale: Number((0.92 * velFactor).toFixed(3)),
       strumMs: isPiano ? 5 : 16,
       humanizeMs,
-      tag: 'split-bar'
+      tag: splitVariant !== 'base' ? `vivo-${splitVariant}` : 'split-bar',
+      baseSymbol: chordSymbol,
+      displaySymbol: splitDesc.displaySymbol,
+      techniqueLabel: splitDesc.techniqueLabel,
+      isVariation: splitDesc.isVariation
     });
-    if (barDur >= 2 && (family === 'swing-negras' || family === 'shuffle')) {
-      const { humanizeMs: h2, velFactor: v2 } = computeHumanizeOffset(chorusIndex, absBar, 1);
+    if (barDur >= 2 && (family === 'swing-negras' || family === 'shuffle') && rand() < 0.55) {
+      const { humanizeMs: h2, velFactor: v2 } = computeHumanizeOffset(rand);
+      const doAnt = Boolean(isLastBeforeChange && nextSorted.length > 0 && rand() < 0.6);
+      const antDesc = describeLiveCompingChord(chordSymbol, nextChordSymbol, 'base', doAnt);
       events.push({
         beatOffset: barStart + 1.67,
         durationBeats: 0.38,
-        midis: isLastBeforeChange && nextSorted.length > 0 ? nextSorted : splitMidis,
+        midis: doAnt ? nextSorted : splitMidis,
         mode: 'block',
         volumeScale: Number((0.72 * v2).toFixed(3)),
         strumMs: 6,
         humanizeMs: h2,
-        tag: isLastBeforeChange ? 'anticipation' : 'split-push'
+        tag: doAnt ? 'anticipation' : 'split-push',
+        baseSymbol: chordSymbol,
+        displaySymbol: antDesc.displaySymbol,
+        techniqueLabel: antDesc.techniqueLabel,
+        isVariation: antDesc.isVariation
       });
     }
   }
@@ -566,39 +1071,22 @@ export function planCompingEvents({
 }
 
 /**
- * Elige la nota de aproximación (cromática ±1 st o diatónica ±2 st) para el último pulso antes
- * de aterrizar en `nextRootMidi` respetando el rango físico del bajo eléctrico (28..52).
- * @param {number} prevMidi Nota anterior del bajo.
- * @param {number} nextRootMidi Raíz del acorde destino.
- * @param {number} seed Semilla determinista para alternar arriba/abajo entre coros.
- * @returns {number} Altura MIDI de la nota de aproximación.
+ * Elige aleatoriamente entre aproximación cromática inferior (-1), superior (+1) o diatónica (±2)
+ * hacia `nextRootMidi`, evitando repetir `prevMidi` y respetando el rango del bajo (28..52).
  */
-function pickApproachMidi(prevMidi, nextRootMidi, seed = 0) {
-  const below = nextRootMidi - 1;
-  const above = nextRootMidi + 1;
+function pickApproachMidi(prevMidi, nextRootMidi, rng = Math.random) {
   const candidates = [];
-  if (below >= 28 && below !== prevMidi) candidates.push(below);
-  if (above <= 52 && above !== prevMidi) candidates.push(above);
-  if (candidates.length === 0) return Math.max(28, nextRootMidi - 2);
-  if (candidates.length === 1) return candidates[0];
-  // Prefiere dirección natural desde prevMidi, alternando ocasionalmente por coro
-  const preferBelow = prevMidi < nextRootMidi ? (seed % 3 !== 2) : (seed % 3 === 2);
-  return preferBelow ? candidates[0] : candidates[1];
+  if (nextRootMidi - 1 >= 28 && nextRootMidi - 1 !== prevMidi) candidates.push({ item: nextRootMidi - 1, weight: 2.2 });
+  if (nextRootMidi + 1 <= 52 && nextRootMidi + 1 !== prevMidi) candidates.push({ item: nextRootMidi + 1, weight: 1.8 });
+  if (nextRootMidi - 2 >= 28 && nextRootMidi - 2 !== prevMidi) candidates.push({ item: nextRootMidi - 2, weight: 0.9 });
+  if (nextRootMidi + 2 <= 52 && nextRootMidi + 2 !== prevMidi) candidates.push({ item: nextRootMidi + 2, weight: 0.7 });
+  if (candidates.length === 0) return Math.max(28, nextRootMidi - 1);
+  return pickWeighted(candidates, rng);
 }
 
 /**
- * Planifica una línea de bajo acompañante (play-along) con fraseo real de 2–4 compases,
- * variaciones entre vueltas (coros) y aproximaciones cromáticas hacia el próximo acorde.
- *
- * @param {object} params Parámetros.
- * @param {string} params.chordSymbol Símbolo americano del acorde actual.
- * @param {string|null} [params.nextChordSymbol=null] Símbolo del acorde siguiente.
- * @param {number} params.durationBeats Duración total en negras.
- * @param {number} [params.beatsPerMeasure=4] Pulsos por compás.
- * @param {string} [params.pattern='negras-abajo'] Patrón base de acompañamiento.
- * @param {'fijo'|'organico'|'vivo'} [params.compingFeel='organico'] Nivel de variación orgánica.
- * @param {object} [params.context={}] Contexto armónico.
- * @returns {Array<{ beatOffset: number, durationBeats: number, midi: number, volumeScale: number, humanizeMs: number, bassInst: string, tag: string }>}
+ * Planifica una línea de bajo acompañante (play-along) no periódica con selección estocástica
+ * de contornos y aproximación cromática/diatónica hacia el acorde siguiente.
  */
 export function planPlayAlongBass({
   chordSymbol = 'C',
@@ -607,7 +1095,9 @@ export function planPlayAlongBass({
   beatsPerMeasure = 4,
   pattern = 'negras-abajo',
   compingFeel = 'organico',
-  context = {}
+  context = {},
+  memory = null,
+  rng = Math.random
 }) {
   const voicing = getChordVoicingMidi(chordSymbol, 40);
   if (!voicing) return [];
@@ -620,6 +1110,8 @@ export function planPlayAlongBass({
   const bpm = Math.max(1, Number(beatsPerMeasure) || 4);
   const totalBeats = Math.max(0.5, Number(durationBeats) || bpm);
   const bassInst = family === 'swing-negras' || family === 'balada-lenta' ? 'acoustic-bass' : 'electric-bass';
+  const mem = memory || createCompingMemory();
+  const rand = typeof rng === 'function' ? rng : Math.random;
 
   const parsed = parseChord(chordSymbol);
   const qual = String(parsed?.quality || '').toLowerCase();
@@ -631,8 +1123,6 @@ export function planPlayAlongBass({
   const flatSeven = root + 10;
   const octave = root + 12 <= 52 ? root + 12 : fifth;
 
-  const chorusIndex = Math.max(0, Number(context.chorusIndex) || 0);
-  const baseBarIndex = Math.max(0, Number(context.barIndex) || 0);
   const prevSameBars = Math.max(0, Number(context.prevSameBars) || 0);
   const nextRoot = resolveBassRootMidi(nextChordSymbol || context.nextChordSymbol);
   const changesAfter = Boolean(context.changesAfterEvent ?? (nextChordSymbol && nextChordSymbol !== chordSymbol));
@@ -645,25 +1135,23 @@ export function planPlayAlongBass({
     const barDur = Math.min(bpm, totalBeats - barStart);
     if (barDur <= 0.05) break;
 
-    const absBar = baseBarIndex + subBar;
     const sameBarIdx = prevSameBars + subBar;
     const isLastSubBar = subBar === barCount - 1;
     const isLastBeforeChange = isLastSubBar && changesAfter && nextRoot !== null;
     const beats = Math.max(1, Math.round(barDur));
 
-    // 1) Bossa nova: bajo en 2 con anticipaciones y aproximación en último pulso antes de cambio
     if (family === 'bossa') {
       const altFifth = fifth <= 46 ? fifth : fifth - 12;
-      const pickupMidi = isLastBeforeChange ? pickApproachMidi(altFifth, nextRoot, absBar + chorusIndex) : root;
+      const pickupMidi = isLastBeforeChange && feel !== 'fijo' ? pickApproachMidi(altFifth, nextRoot, rand) : root;
       const hits = [
         { offset: 0, midi: root, dur: 1.4, acc: 1.0, tag: 'bossa-root' },
         { offset: 1.5, midi: altFifth, dur: 0.45, acc: 0.84, tag: 'bossa-push' },
         { offset: 2, midi: altFifth, dur: 1.4, acc: 0.92, tag: 'bossa-5th' },
         { offset: 3.5, midi: feel === 'fijo' ? root : pickupMidi, dur: 0.45, acc: 0.86, tag: isLastBeforeChange ? 'approach' : 'bossa-push' }
       ];
-      hits.forEach((h, hIdx) => {
+      hits.forEach((h) => {
         if (h.offset < barDur) {
-          const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(chorusIndex, absBar, hIdx);
+          const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(rand);
           notes.push({
             beatOffset: barStart + h.offset,
             durationBeats: h.dur,
@@ -678,109 +1166,91 @@ export function planPlayAlongBass({
       continue;
     }
 
-    // 2) Blues shuffle: fraseo de 4 compases (sube → baja → variación octava → aproximación cromática)
-    if (family === 'shuffle') {
+    if (family === 'shuffle' || family === 'swing-negras') {
       let seq;
       if (feel === 'fijo') {
-        seq = [root, third, fifth, sixth];
+        seq = family === 'shuffle' ? [root, third, fifth, sixth] : [root, third, fifth, third];
       } else {
-        const phraseSlot = (sameBarIdx + (chorusIndex % 2)) % 4;
+        const contours = family === 'shuffle'
+          ? [
+              [root, third, fifth, sixth],
+              [flatSeven, sixth, fifth, third],
+              [root, fifth, octave, flatSeven],
+              [root, third, fifth, flatSeven],
+              [root, sixth, fifth, third],
+              [root, third, root + 5, fifth]
+            ]
+          : [
+              [root, third, fifth, sixth],
+              [root, fifth, octave, fifth],
+              [sameBarIdx > 0 ? third : root, fifth, isMinor ? flatSeven : sixth, fifth],
+              [root, root + 2, third, fifth],
+              [root, third, root + 5, fifth],
+              [sameBarIdx > 0 ? fifth : root, third, root + 2, third]
+            ];
+        const weighted = contours.map((c, idx) => ({
+          item: { c, idx },
+          weight: idx === mem.lastBassContour ? 0.05 : (sameBarIdx === 0 && c[0] === root ? 1.8 : 1.0)
+        }));
+        const picked = pickWeighted(weighted, rand);
+        mem.lastBassContour = picked.idx;
+        seq = [...picked.c];
         if (isLastBeforeChange) {
-          seq = [root, third, fifth, pickApproachMidi(fifth, nextRoot, absBar + chorusIndex)];
-        } else if (phraseSlot === 0) {
-          seq = [root, third, fifth, sixth];
-        } else if (phraseSlot === 1) {
-          seq = [flatSeven, sixth, fifth, third];
-        } else if (phraseSlot === 2) {
-          seq = [root, fifth, octave, flatSeven];
-        } else {
-          seq = [root, third, fifth, flatSeven];
+          seq[3] = pickApproachMidi(seq[2], nextRoot, rand);
         }
       }
       for (let b = 0; b < beats; b++) {
-        const m = seq[b % seq.length];
-        const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(chorusIndex, absBar, b);
+        const midi = beats <= 2 && b === 1 && isLastBeforeChange && feel !== 'fijo'
+          ? pickApproachMidi(root, nextRoot, rand)
+          : seq[b % seq.length];
+        const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(rand);
         notes.push({
           beatOffset: barStart + b,
-          durationBeats: 0.86,
-          midi: m,
+          durationBeats: family === 'shuffle' ? 0.86 : 0.92,
+          midi,
           volumeScale: Number(((b === 0 ? 1.0 : 0.9) * hum.velFactor).toFixed(3)),
           humanizeMs: hum.humanizeMs,
           bassInst,
-          tag: isLastBeforeChange && b === beats - 1 ? 'approach' : 'shuffle-walk'
+          tag: isLastBeforeChange && b === beats - 1 ? 'approach' : `${family}-walk`
         });
       }
       continue;
     }
 
-    // 3) Jazz swing: walking bass real de 4 negras con aproximación cromática en tiempo 4
-    if (family === 'swing-negras') {
-      let seq;
-      if (feel === 'fijo') {
-        seq = [root, third, fifth, third];
-      } else {
-        const patternChoice = (sameBarIdx + chorusIndex) % 3;
-        const b1 = sameBarIdx > 0 && patternChoice === 1 ? third : root;
-        const b2 = patternChoice === 0 ? third : patternChoice === 1 ? fifth : fifth;
-        const b3 = patternChoice === 0 ? fifth : patternChoice === 1 ? octave : (isMinor ? root + 10 : sixth);
-        const b4 = isLastBeforeChange
-          ? pickApproachMidi(b3, nextRoot, absBar + chorusIndex)
-          : (patternChoice === 2 ? third : (b3 > root + 5 ? fifth : third));
-        seq = [b1, b2, b3, b4];
-      }
-      for (let b = 0; b < beats; b++) {
-        const midi = beats <= 2 && b === 1 && isLastBeforeChange && feel !== 'fijo'
-          ? pickApproachMidi(root, nextRoot, absBar + chorusIndex)
-          : seq[b % seq.length];
-        const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(chorusIndex, absBar, b);
-        notes.push({
-          beatOffset: barStart + b,
-          durationBeats: 0.92,
-          midi,
-          volumeScale: Number(((b === 0 ? 1.0 : 0.92) * hum.velFactor).toFixed(3)),
-          humanizeMs: hum.humanizeMs,
-          bassInst,
-          tag: isLastBeforeChange && b === beats - 1 ? 'approach' : 'swing-walk'
-        });
-      }
-      continue;
-    }
-
-    // 4) Tango rioplatense: alterna 1–3 seco con bordoneo cromático en compás previo a cambio
     if (family === 'tango-marcato' && feel !== 'fijo' && barDur >= 3) {
-      const hum0 = computeHumanizeOffset(chorusIndex, absBar, 0);
+      const hum0 = computeHumanizeOffset(rand);
       notes.push({ beatOffset: barStart, durationBeats: 1.1, midi: root, volumeScale: Number((1.0 * hum0.velFactor).toFixed(3)), humanizeMs: hum0.humanizeMs, bassInst, tag: 'tango-root' });
       if (isLastBeforeChange) {
-        const app = pickApproachMidi(fifth, nextRoot, absBar + chorusIndex);
+        const app = pickApproachMidi(fifth, nextRoot, rand);
         notes.push({ beatOffset: barStart + 2, durationBeats: 0.85, midi: fifth, volumeScale: 0.88, humanizeMs: 3, bassInst, tag: 'tango-5th' });
         notes.push({ beatOffset: barStart + 3, durationBeats: 0.85, midi: app, volumeScale: 0.92, humanizeMs: 4, bassInst, tag: 'approach' });
-      } else {
+      } else if (rand() < 0.55) {
         notes.push({ beatOffset: barStart + 1.5, durationBeats: 0.45, midi: third, volumeScale: 0.78, humanizeMs: 2, bassInst, tag: 'tango-sync' });
         notes.push({ beatOffset: barStart + 2, durationBeats: 1.1, midi: fifth, volumeScale: 0.9, humanizeMs: 3, bassInst, tag: 'tango-5th' });
+      } else {
+        notes.push({ beatOffset: barStart + 2, durationBeats: 1.1, midi: fifth, volumeScale: 0.9, humanizeMs: 2, bassInst, tag: 'tango-5th' });
       }
       continue;
     }
 
-    // 5) Balada / Bloque
     if (family === 'balada-lenta' || family === 'bloque') {
-      const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(chorusIndex, absBar, 0);
-      if (feel !== 'fijo' && barDur >= 3 && isLastBeforeChange) {
+      const hum = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(rand);
+      if (feel !== 'fijo' && barDur >= 3 && isLastBeforeChange && rand() < 0.7) {
         notes.push({ beatOffset: barStart, durationBeats: barDur - 1, midi: root, volumeScale: hum.velFactor, humanizeMs: hum.humanizeMs, bassInst, tag: 'ballad-root' });
-        notes.push({ beatOffset: barStart + barDur - 1, durationBeats: 0.95, midi: pickApproachMidi(root, nextRoot, absBar + chorusIndex), volumeScale: 0.8, humanizeMs: 4, bassInst, tag: 'approach' });
+        notes.push({ beatOffset: barStart + barDur - 1, durationBeats: 0.95, midi: pickApproachMidi(root, nextRoot, rand), volumeScale: 0.8, humanizeMs: 4, bassInst, tag: 'approach' });
       } else {
         notes.push({ beatOffset: barStart, durationBeats: barDur * 0.92, midi: root, volumeScale: hum.velFactor, humanizeMs: hum.humanizeMs, bassInst, tag: 'ballad-root' });
       }
       continue;
     }
 
-    // 6) Por defecto (recto, pop, rock, vals): raíz en 1, quinta en 3 y aproximación opcional en 4
-    const hum0 = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(chorusIndex, absBar, 0);
+    const hum0 = feel === 'fijo' ? { humanizeMs: 0, velFactor: 1 } : computeHumanizeOffset(rand);
     notes.push({ beatOffset: barStart, durationBeats: Math.min(2, barDur) * 0.9, midi: root, volumeScale: hum0.velFactor, humanizeMs: hum0.humanizeMs, bassInst, tag: 'root' });
     if (barDur >= 3) {
       const hasApproach = feel !== 'fijo' && isLastBeforeChange && barDur >= 4;
       notes.push({ beatOffset: barStart + 2, durationBeats: (hasApproach ? 1 : Math.min(2, barDur - 2)) * 0.9, midi: fifth, volumeScale: 0.88, humanizeMs: feel === 'fijo' ? 0 : 3, bassInst, tag: '5th' });
       if (hasApproach) {
-        notes.push({ beatOffset: barStart + 3, durationBeats: 0.9, midi: pickApproachMidi(fifth, nextRoot, absBar + chorusIndex), volumeScale: 0.86, humanizeMs: 4, bassInst, tag: 'approach' });
+        notes.push({ beatOffset: barStart + 3, durationBeats: 0.9, midi: pickApproachMidi(fifth, nextRoot, rand), volumeScale: 0.86, humanizeMs: 4, bassInst, tag: 'approach' });
       }
     }
   }

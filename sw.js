@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v26 · App v1.2.0: Motor de acompañamiento orgánico Fijo/Orgánico/Vivo).
+ * Versión del caché estático de la PWA Acordate (v27 · App v1.3.0: comping estocástico no periódico y visor de acordes en vivo).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v26';
+const CACHE_NAME = 'acordate-static-v27';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
