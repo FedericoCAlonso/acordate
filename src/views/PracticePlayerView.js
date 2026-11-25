@@ -110,6 +110,9 @@ export class PracticePlayerView {
 
     if (this._vm.practice.value) {
       this._renderHeaderAndGuide();
+      this._renderViewBar();
+      this._renderLiveCompingBanner();
+      this._renderChorusScorePanel();
       this._renderNotationSurface();
       this._syncTransportDom();
     }
@@ -128,6 +131,7 @@ export class PracticePlayerView {
       this._renderHeaderAndGuide();
       this._renderViewBar();
       this._renderLiveCompingBanner();
+      this._renderChorusScorePanel();
       this._renderNotationSurface();
       this._syncTransportDom();
     }
@@ -189,14 +193,16 @@ export class PracticePlayerView {
       'aria-label': 'Acorde que suena en vivo'
     });
     this._countInEl = el('div', { className: 'count-in-overlay', style: 'display:none', 'aria-live': 'assertive' });
+    this._chorusScoreHost = el('div', { className: 'chorus-score-host', style: 'display:none', 'aria-label': 'Partitura generada del coro activo' });
     this._scoreEl = el('div', { className: 'score-surface', 'aria-label': 'Partitura en pentagrama' });
-    this._harmonyEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
-    this._chartEl = el('div', { className: 'score-surface', style: 'display:none', 'aria-label': 'Grilla de cifrado de acordes' });
+    this._harmonyEl = el('div', { className: 'score-surface score-surface--panel', style: 'display:none', 'aria-label': 'Diagramas de acordes de la progresión' });
+    this._chartEl = el('div', { className: 'score-surface score-surface--panel', style: 'display:none', 'aria-label': 'Grilla de cifrado de acordes' });
     this._guideHost = el('aside', { className: 'player-guide-host atril-workspace__side', 'aria-label': 'Guía de estudio y objetivos' });
     this._transportDock = el('div', { className: 'transport-dock', role: 'region', 'aria-label': 'Controles de reproducción' });
 
     const scoreWrap = el('div', { className: 'score-wrap' }, [
       this._countInEl,
+      this._chorusScoreHost,
       this._scoreEl,
       this._harmonyEl,
       this._chartEl
@@ -263,6 +269,9 @@ export class PracticePlayerView {
       if (!this._container) return;
       const scrollY = window.scrollY;
       this._renderNotationSurface();
+      if (this._vm.showChorusScore.value) {
+        this._renderChorusScorePanel();
+      }
       if (Math.abs(window.scrollY - scrollY) > 4) {
         window.scrollTo({ top: scrollY, behavior: 'auto' });
       }
@@ -312,7 +321,18 @@ export class PracticePlayerView {
         this._renderViewBar();
         this._renderNotationSurface();
         this._renderLiveCompingBanner();
+        this._renderChorusScorePanel();
       }),
+      this._vm.chorusPlan.subscribe(() => {
+        this._renderLiveCompingBanner();
+        this._renderChorusScorePanel();
+        this._renderNotationSurface();
+      }),
+      this._vm.showChorusScore.subscribe(() => {
+        this._renderLiveCompingBanner();
+        this._renderChorusScorePanel();
+      }),
+      this._vm.lockChorusVariation.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.liveCompingEvent.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.isPlaying.subscribe(() => this._renderLiveCompingBanner()),
       this._vm.chordsEnabled.subscribe(() => this._renderNotationSurface()),
@@ -746,9 +766,10 @@ export class PracticePlayerView {
   }
 
   /**
-   * Renderiza la pastilla en vivo que muestra qué acorde exacto y qué recurso armónico
-   * (color 9.ª/13.ª, inversión, adorno blues IV/I, aproximación cromática o anticipación)
-   * está tocando el acompañamiento en modo Orgánico o Vivo.
+   * Renderiza la barra de acompañamiento en vivo (`Orgánico` / `Vivo`):
+   * - Muestra el acorde y técnica que suena en tiempo real (`Base → Tocando`).
+   * - Permite generar una nueva variación de coro, fijarla entre repeticiones del bucle
+   *   y desplegar la partitura ABC completa del coro generado.
    */
   _renderLiveCompingBanner() {
     if (!this._liveCompingEl) return;
@@ -765,42 +786,182 @@ export class PracticePlayerView {
     const liveEv = this._vm.liveCompingEvent.value;
     const isPlaying = this._vm.isPlaying.value;
     const notation = this._appVm.settings.value.chordNotation;
+    const isLocked = this._vm.lockChorusVariation.value;
+    const scoreVisible = this._vm.showChorusScore.value;
 
     this._liveCompingEl.style.display = 'flex';
     this._liveCompingEl.innerHTML = '';
 
+    const statusNodes = [];
     if (!liveEv) {
       this._liveCompingEl.classList.remove('live-comping-bar--variation');
-      this._liveCompingEl.append(
+      statusNodes.push(
         el('span', { className: 'm3-badge' }, [feel === 'vivo' ? 'Modo Vivo' : 'Modo Orgánico']),
         el('span', { className: 'm3-body-sm' }, [
           isPlaying
-            ? 'Escuchando acompañamiento en tiempo real…'
+            ? 'Escuchando coro precalculado en tiempo real…'
             : feel === 'vivo'
-              ? 'Al reproducir verás aquí cada acorde, coloración (9/13), adorno IV/I y anticipación en vivo.'
-              : 'Al reproducir verás aquí cada acorde y anticipación del acompañamiento en vivo.'
+              ? 'Coro armado con coloraciones (9/13), adornos IV/I y anticipaciones visibles en Cifrado y Diagramas.'
+              : 'Coro orgánico precalculado con síncopas y anticipaciones visibles antes de tocar.'
         ])
       );
+    } else {
+      const isVar = Boolean(liveEv.isVariation);
+      this._liveCompingEl.classList.toggle('live-comping-bar--variation', isVar);
+      statusNodes.push(
+        el('span', { className: 'live-comping-bar__meta' }, [
+          'Base ',
+          el('strong', {}, [createChordSymbolElement(liveEv.baseSymbol || 'C', notation)])
+        ]),
+        el('span', { className: 'live-comping-bar__arrow', 'aria-hidden': 'true' }, ['→']),
+        el('span', { className: 'live-comping-bar__chord' }, [
+          'Tocando: ',
+          createChordSymbolElement(liveEv.displaySymbol || liveEv.baseSymbol || 'C', notation)
+        ]),
+        el('span', { className: `m3-badge ${isVar ? 'm3-badge--primary' : ''}` }, [
+          liveEv.techniqueLabel || 'Base'
+        ])
+      );
+    }
+
+    const actions = el('div', { className: 'live-comping-bar__actions' }, [
+      el(
+        'button',
+        {
+          type: 'button',
+          className: 'm3-btn m3-btn--compact m3-btn--tonal',
+          ripple: true,
+          title: 'Generar una nueva variación aleatoria del coro completo',
+          onClick: () => this._vm.regenerateChorusPlan()
+        },
+        [icon('wand', 15), 'Nueva variación']
+      ),
+      el(
+        'button',
+        {
+          type: 'button',
+          className: 'm3-chip m3-chip--compact',
+          ripple: true,
+          'aria-pressed': String(isLocked),
+          title: isLocked
+            ? 'Variación fijada: se repetirá igual en cada vuelta del bucle'
+            : 'Fijar esta variación para estudiarla igual en todas las vueltas',
+          onClick: () => this._vm.toggleLockChorusVariation()
+        },
+        [icon('lock', 14), isLocked ? 'Fijada' : 'Fijar']
+      ),
+      el(
+        'button',
+        {
+          type: 'button',
+          className: `m3-btn m3-btn--compact ${scoreVisible ? 'm3-btn--filled' : 'm3-btn--outlined'}`,
+          ripple: true,
+          'aria-pressed': String(scoreVisible),
+          title: 'Mostrar u ocultar la partitura en pentagrama de esta variación',
+          onClick: () => this._vm.toggleShowChorusScore()
+        },
+        [icon('music', 15), scoreVisible ? 'Ocultar partitura' : 'Ver partitura']
+      )
+    ]);
+
+    this._liveCompingEl.append(
+      el('div', { className: 'live-comping-bar__status' }, statusNodes),
+      actions
+    );
+  }
+
+  /**
+   * Renderiza bajo demanda el panel con la partitura ABC generada para el coro activo
+   * (gran pentagrama en piano, clave de sol octavada en guitarra, clave de fa en bajo)
+   * junto con acciones para regenerar o guardarla en el Editor.
+   */
+  _renderChorusScorePanel() {
+    if (!this._chorusScoreHost) return;
+    const feel = this._vm.compingFeel.value;
+    const abc = this._vm.chorusScoreAbc.value;
+    const visible = this._vm.showChorusScore.value && feel !== 'fijo' && Boolean(abc);
+
+    if (!visible) {
+      this._chorusScoreHost.style.display = 'none';
+      this._chorusScoreHost.innerHTML = '';
       return;
     }
 
-    const isVar = Boolean(liveEv.isVariation);
-    this._liveCompingEl.classList.toggle('live-comping-bar--variation', isVar);
+    const vInst = normalizeVoicingInstrument(this._vm.voicingInstrument.value);
+    const isPiano = vInst === 'piano';
+    const isBass = vInst === 'bajo' || vInst === 'bajo-5';
+    const notation = this._appVm.settings.value.chordNotation;
+    const feelLabel = feel === 'vivo' ? 'Vivo' : 'Orgánico';
+    const instLabel = VOICING_INSTRUMENT_OPTIONS.find((o) => o.id === vInst)?.label || 'Piano';
 
-    this._liveCompingEl.append(
-      el('span', { className: 'live-comping-bar__meta' }, [
-        'Base ',
-        el('strong', {}, [createChordSymbolElement(liveEv.baseSymbol || 'C', notation)])
+    this._chorusScoreHost.style.display = 'block';
+    this._chorusScoreHost.innerHTML = '';
+
+    const surface = el('div', {
+      className: 'score-surface chorus-score-card__surface',
+      'aria-label': `Partitura generada del coro en modo ${feelLabel}`
+    });
+
+    const card = el('div', { className: 'm3-card chorus-score-card' }, [
+      el('div', { className: 'chorus-score-card__header' }, [
+        el('div', { className: 'chorus-score-card__title' }, [
+          el('strong', {}, [`Partitura de esta variación (${feelLabel} · ${instLabel})`]),
+          el('span', { className: 'm3-body-sm' }, [
+            'Muestra exactamente los acordes, coloraciones, anticipaciones y bajo que sonarán en esta vuelta.'
+          ])
+        ]),
+        el('div', { className: 'm3-chip-row' }, [
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--tonal',
+              ripple: true,
+              onClick: () => this._vm.regenerateChorusPlan()
+            },
+            [icon('wand', 15), 'Nueva']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--filled',
+              ripple: true,
+              onClick: () => this._vm.saveChorusAsPractice()
+            },
+            [icon('edit', 15), 'Guardar en Editor']
+          ),
+          el(
+            'button',
+            {
+              type: 'button',
+              className: 'm3-btn m3-btn--compact m3-btn--text',
+              onClick: () => this._vm.toggleShowChorusScore()
+            },
+            ['Ocultar']
+          )
+        ])
       ]),
-      el('span', { className: 'live-comping-bar__arrow', 'aria-hidden': 'true' }, ['→']),
-      el('span', { className: 'live-comping-bar__chord' }, [
-        'Tocando: ',
-        createChordSymbolElement(liveEv.displaySymbol || liveEv.baseSymbol || 'C', notation)
-      ]),
-      el('span', { className: `m3-badge ${isVar ? 'm3-badge--primary' : ''}` }, [
-        liveEv.techniqueLabel || 'Base'
-      ])
-    );
+      surface
+    ]);
+
+    this._chorusScoreHost.appendChild(card);
+
+    const width = surface.clientWidth || this._chorusScoreHost.clientWidth || this._container?.clientWidth || 520;
+    const prepared = this._abc.prepareAbcForRender(abc, {
+      viewMode: 'mixto',
+      chordNotation: notation,
+      showChords: true,
+      showFingerings: false,
+      isPiano,
+      isBass,
+      stripTitle: true
+    });
+    this._abc.renderScore(surface, prepared, {
+      width,
+      zoom: Math.min(1.15, this._vm.zoom.value),
+      isPiano
+    });
   }
 
   /**
@@ -1060,18 +1221,24 @@ export class PracticePlayerView {
     }
 
     // 4) Tira de diagramas (scroll horizontal en móvil; grilla completa en escritorio)
+    const chorusPlan = this._vm.compingFeel.value !== 'fijo' ? this._vm.chorusPlan.value : null;
     const strip = el(
       'div',
-      { className: 'harmony-strip', role: 'list', 'aria-label': 'Progresión de acordes con diagramas' },
-      steps.map((step, idx) =>
-        el(
+      {
+        className: `harmony-strip ${isPiano ? 'harmony-strip--piano' : ''}`.trim(),
+        role: 'list',
+        'aria-label': 'Progresión de acordes con diagramas'
+      },
+      steps.map((step, idx) => {
+        const stepVars = chorusPlan?.stepVariations?.[idx] || [];
+        return el(
           'div',
           {
             className: `harmony-step-card ${idx === activeIdx ? 'harmony-step-card--active' : ''}`,
             dataset: { stepIndex: idx }
           },
           [
-            el('div', { className: 'player-toolbar', style: 'margin-bottom:4px' }, [
+            el('div', { className: 'player-toolbar', style: 'margin-bottom:4px; width:100%' }, [
               el('div', { style: 'display:flex; align-items:center; gap:4px' }, [
                 step.section ? el('span', { className: 'm3-badge m3-badge--primary', style: 'padding:1px 6px' }, [step.section]) : null,
                 el('strong', {}, [createChordSymbolElement(step.chord, notation)])
@@ -1099,6 +1266,33 @@ export class PracticePlayerView {
                   className: 'm3-btn m3-btn--compact m3-btn--tonal',
                   onClick: () => this._vm.playStepVoicing(step)
                 }, [createChordSymbolElement(step.chord, notation)]),
+            stepVars.length > 0
+              ? el(
+                  'div',
+                  {
+                    className: 'harmony-step-card__vars',
+                    'aria-label': 'Variaciones activas en este paso'
+                  },
+                  stepVars.map((v) =>
+                    el(
+                      'button',
+                      {
+                        type: 'button',
+                        className: `harmony-var-chip ${v.isAnticipation ? 'harmony-var-chip--ant' : ''}`.trim(),
+                        title: `${v.techniqueLabel} — Tocá para escuchar`,
+                        onClick: (e) => {
+                          e.stopPropagation();
+                          this._vm.playPreviewMidis(v.midis);
+                        }
+                      },
+                      [
+                        v.isAnticipation ? '→ ' : '',
+                        createChordSymbolElement(v.displaySymbol, notation)
+                      ]
+                    )
+                  )
+                )
+              : null,
             step.rationale
               ? el('span', { className: 'm3-label harmony-step-card__rationale', title: step.rationale }, [step.rationale])
               : null,
@@ -1116,8 +1310,8 @@ export class PracticePlayerView {
                 )
               : null
           ]
-        )
-      )
+        );
+      })
     );
 
     this._harmonyEl.appendChild(strip);
@@ -1288,6 +1482,43 @@ export class PracticePlayerView {
   }
 
   /**
+   * Construye la fila compacta de variaciones precalculadas para un compás dentro de la grilla de Cifrado.
+   * @param {number} measureNumber Número de compás (1-based).
+   * @param {'americano'|'latino'} notation Sistema de cifrado.
+   * @returns {HTMLElement|null} Nodo DOM de secuencia enriquecida o null si no hay variaciones en este compás.
+   */
+  _createBarLiveSequenceEl(measureNumber, notation) {
+    if (this._vm.compingFeel.value === 'fijo') return null;
+    const plan = this._vm.chorusPlan.value;
+    const summary = plan?.barsSummary?.[measureNumber];
+    if (!summary || !Array.isArray(summary.sequence) || summary.sequence.length === 0) return null;
+    const hasInteresting = summary.sequence.some((it) => it.isVariation || it.isAnticipation);
+    if (!hasInteresting) return null;
+
+    const nodes = [];
+    summary.sequence.forEach((item, i) => {
+      if (i > 0) {
+        nodes.push(el('span', { className: 'chord-bar-cell__live-sep', 'aria-hidden': 'true' }, [item.isAnticipation ? '→' : '·']));
+      }
+      nodes.push(
+        el(
+          'span',
+          {
+            className: `chord-bar-cell__live-chip ${item.isVariation ? 'chord-bar-cell__live-chip--var' : ''} ${item.isAnticipation ? 'chord-bar-cell__live-chip--ant' : ''}`.trim(),
+            title: item.techniqueLabel
+          },
+          [
+            item.isAnticipation ? '(' : '',
+            createChordSymbolElement(item.displaySymbol, notation),
+            item.isAnticipation ? ')' : ''
+          ]
+        )
+      );
+    });
+    return el('div', { className: 'chord-bar-cell__live-seq', 'aria-label': 'Secuencia del coro activo en este compás' }, nodes);
+  }
+
+  /**
    * Renderiza la grilla de compases de acordes en modo Cifrado.
    */
   _renderChordChart() {
@@ -1356,16 +1587,18 @@ export class PracticePlayerView {
               : createChordSymbolElement(entry.chord, notation)
           );
         });
+        const liveSeqEl = this._createBarLiveSequenceEl(barObj.measure, notation);
         gridChildren.push(
           el(
             'div',
             {
-              className: `chord-bar-cell ${isSplit ? 'chord-bar-cell--split' : ''} ${isActiveBar ? 'chord-bar-cell--active' : ''}`.trim(),
+              className: `chord-bar-cell ${isSplit ? 'chord-bar-cell--split' : ''} ${liveSeqEl ? 'chord-bar-cell--enriched' : ''} ${isActiveBar ? 'chord-bar-cell--active' : ''}`.trim(),
               dataset: { measure: barObj.measure }
             },
             [
               el('span', { className: 'chord-bar-cell__num' }, [String(barObj.measure)]),
-              el('div', { className: 'chord-bar-cell__chords' }, chordNodes)
+              el('div', { className: 'chord-bar-cell__chords' }, chordNodes),
+              liveSeqEl
             ]
           )
         );
@@ -1393,15 +1626,17 @@ export class PracticePlayerView {
       { className: 'chord-chart-grid' },
       ex.measures.map((m) => {
         const chords = m.chords.length > 0 ? m.chords.map((c) => formatChordSymbol(c, notation)) : ['%'];
+        const liveSeqEl = this._createBarLiveSequenceEl(m.index, notation);
         return el(
           'div',
           {
-            className: `chord-bar-cell ${m.index === activeM ? 'chord-bar-cell--active' : ''}`,
+            className: `chord-bar-cell ${liveSeqEl ? 'chord-bar-cell--enriched' : ''} ${m.index === activeM ? 'chord-bar-cell--active' : ''}`.trim(),
             dataset: { measure: m.index }
           },
           [
             el('span', { className: 'chord-bar-cell__num' }, [String(m.index)]),
-            el('div', { className: 'chord-bar-cell__chords' }, chords.map((c) => el('span', {}, [c])))
+            el('div', { className: 'chord-bar-cell__chords' }, chords.map((c) => el('span', {}, [c]))),
+            liveSeqEl
           ]
         );
       })

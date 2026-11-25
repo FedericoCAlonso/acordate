@@ -4,14 +4,18 @@ import assert from 'node:assert/strict';
 import {
   COMPING_FEEL_MODES,
   analyzeChordContext,
+  buildChorusAbcScore,
   buildVariedVoicing,
   createCompingMemory,
   describeLiveCompingChord,
   normalizeCompingFeel,
+  planChorusComping,
   planCompingEvents,
   planPlayAlongBass,
   resolveBassRootMidi
 } from '../src/services/CompingEngineService.js';
+import { validateAbcInstrumentRange, validateAbcMeasures } from '../src/services/AbcService.js';
+import { AudioSynthService } from '../src/services/AudioSynthService.js';
 import { PlayerMixerViewModel } from '../src/viewmodels/player/PlayerMixerViewModel.js';
 import { PlayerTransportViewModel } from '../src/viewmodels/player/PlayerTransportViewModel.js';
 import { Practice } from '../src/models/Practice.js';
@@ -208,4 +212,104 @@ test('CompingEngineService: etiquetas en vivo (describeLiveCompingChord), estilo
   transport.stop();
   assert.equal(transport.liveCompingEvent.value, null, 'stop() debe limpiar liveCompingEvent');
   transport.dispose();
+});
+
+test('CompingEngineService: planChorusComping + buildChorusAbcScore (Piano, Guitarra, Bajo) y AudioSynthService.setChorusPlan', () => {
+  const chords12 = [
+    { symbol: 'A7', beat: 0, durationBeats: 16, measureIndex: 1, stepIndex: 0, voicingMidis: [57, 61, 64, 67] },
+    { symbol: 'D7', beat: 16, durationBeats: 8, measureIndex: 5, stepIndex: 1, voicingMidis: [62, 66, 69, 72] },
+    { symbol: 'A7', beat: 24, durationBeats: 8, measureIndex: 7, stepIndex: 2, voicingMidis: [57, 61, 64, 67] },
+    { symbol: 'E7', beat: 32, durationBeats: 4, measureIndex: 9, stepIndex: 3, voicingMidis: [52, 56, 59, 62] },
+    { symbol: 'D7', beat: 36, durationBeats: 4, measureIndex: 10, stepIndex: 4, voicingMidis: [62, 66, 69, 72] },
+    { symbol: 'A7', beat: 40, durationBeats: 4, measureIndex: 11, stepIndex: 5, voicingMidis: [57, 61, 64, 67] },
+    { symbol: 'E7', beat: 44, durationBeats: 4, measureIndex: 12, stepIndex: 6, voicingMidis: [52, 56, 59, 62] }
+  ];
+
+  const plan = planChorusComping({
+    chords: chords12,
+    beatsPerMeasure: 4,
+    pattern: 'shuffle',
+    compingFeel: 'vivo',
+    isPiano: true,
+    chorusIndex: 0,
+    rng: makeSeededRng(202604)
+  });
+
+  assert.equal(plan.totalMeasures, 12);
+  assert.equal(plan.eventsByIndex.length, chords12.length);
+  assert.equal(plan.bassByIndex.length, chords12.length);
+  assert.ok(Object.keys(plan.barsSummary).length >= 10, 'barsSummary debe cubrir los compases del coro');
+  assert.ok(
+    Object.values(plan.barsSummary).some((b) => b.sequence.some((s) => s.isVariation)),
+    'barsSummary debe exponer variaciones visibles para lookahead en Cifrado'
+  );
+  assert.ok(
+    (plan.stepVariations[0] || []).length >= 1,
+    'stepVariations[0] debe listar variaciones clickeables para los 4 compases de A7'
+  );
+
+  // 1) Piano (gran pentagrama %%staves {1 2})
+  const pianoAbc = buildChorusAbcScore(plan, {
+    title: 'Blues en La (Vivo)',
+    key: 'A',
+    timeSignature: '4/4',
+    voicingInstrument: 'piano'
+  });
+  assert.ok(pianoAbc.includes('%%staves {1 2}'), 'Piano debe generar gran pentagrama');
+  const pianoMeasures = validateAbcMeasures(pianoAbc);
+  assert.equal(pianoMeasures.valid, true, `Compases inválidos en ABC de piano: ${JSON.stringify(pianoMeasures.errors)}`);
+  const pianoRange = validateAbcInstrumentRange(pianoAbc, 'piano');
+  assert.equal(pianoRange.valid, true, `Rango inválido en ABC de piano: ${JSON.stringify(pianoRange.errors)}`);
+
+  // 2) Guitarra (clef=treble-8)
+  const guitarAbc = buildChorusAbcScore(plan, {
+    title: 'Blues en La (Guitarra)',
+    key: 'A',
+    timeSignature: '4/4',
+    voicingInstrument: 'guitarra'
+  });
+  assert.ok(guitarAbc.includes('clef=treble-8'));
+  assert.equal(validateAbcMeasures(guitarAbc).valid, true, 'Compases de guitarra deben ser exactos');
+  const guitarRange = validateAbcInstrumentRange(guitarAbc, 'guitarra');
+  assert.equal(guitarRange.valid, true, `Rango inválido en ABC de guitarra: ${JSON.stringify(guitarRange.errors)}`);
+
+  // 3) Bajo (clef=bass)
+  const bassAbc = buildChorusAbcScore(plan, {
+    title: 'Blues en La (Bajo)',
+    key: 'A',
+    timeSignature: '4/4',
+    voicingInstrument: 'bajo'
+  });
+  assert.ok(bassAbc.includes('clef=bass'));
+  assert.equal(validateAbcMeasures(bassAbc).valid, true, 'Compases de bajo deben ser exactos');
+  const bassRange = validateAbcInstrumentRange(bassAbc, 'bajo');
+  assert.equal(bassRange.valid, true, `Rango inválido en ABC de bajo: ${JSON.stringify(bassRange.errors)}`);
+
+  // 4) Compás 3/4 (vals)
+  const waltzPlan = planChorusComping({
+    chords: [
+      { symbol: 'G', beat: 0, durationBeats: 6, measureIndex: 1, stepIndex: 0, voicingMidis: [55, 59, 62, 67] },
+      { symbol: 'D7', beat: 6, durationBeats: 6, measureIndex: 3, stepIndex: 1, voicingMidis: [54, 57, 60, 62] }
+    ],
+    beatsPerMeasure: 3,
+    pattern: 'vals',
+    compingFeel: 'vivo',
+    isPiano: true,
+    rng: makeSeededRng(34)
+  });
+  const waltzAbc = buildChorusAbcScore(waltzPlan, {
+    title: 'Vals en Sol',
+    key: 'G',
+    timeSignature: '3/4',
+    voicingInstrument: 'piano'
+  });
+  assert.equal(validateAbcMeasures(waltzAbc).valid, true, 'Vals 3/4 debe sumar exactamente 6 corcheas por compás');
+
+  // 5) AudioSynthService.setChorusPlan() almacena el plan para ejecución exacta
+  const fakeMetronome = { ensureAudioContext: () => null };
+  const audio = new AudioSynthService(fakeMetronome);
+  audio.setChorusPlan(plan);
+  assert.equal(audio._chorusPlan, plan);
+  audio.setChorusPlan(null);
+  assert.equal(audio._chorusPlan, null);
 });

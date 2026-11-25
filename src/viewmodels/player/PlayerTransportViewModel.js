@@ -10,7 +10,7 @@ export class PlayerTransportViewModel {
    * Construye el controlador de transporte del reproductor.
    * @param {object} deps Dependencias inyectadas.
    */
-  constructor({ appVm, audioService, wakeLockService, sessionTracker, getPractice, onSyncConfig }) {
+  constructor({ appVm, audioService, wakeLockService, sessionTracker, getPractice, onSyncConfig, onPassCompleteHook = null }) {
     /** Referencia al ViewModel global. */
     this._appVm = appVm;
     /** Servicio de síntesis Web Audio. */
@@ -23,6 +23,8 @@ export class PlayerTransportViewModel {
     this._getPractice = getPractice;
     /** Callback para empujar la configuración completa hacia `_audio`. */
     this._onSyncConfig = onSyncConfig;
+    /** Hook opcional ejecutado al completar cada vuelta/coro (ej. regenerar variación de coro). */
+    this._onPassCompleteHook = onPassCompleteHook;
 
     /** Estado de reproducción en curso. */
     this.isPlaying = new Observable(false);
@@ -54,7 +56,10 @@ export class PlayerTransportViewModel {
 
     /** Callbacks ligados a esta instancia para re-vincular y limpiar de forma segura. */
     this._onVisual = (ev) => this._handleVisualEvent(ev);
-    this._onPass = () => this._tracker.handlePassComplete();
+    this._onPass = () => {
+      this._tracker.handlePassComplete();
+      if (typeof this._onPassCompleteHook === 'function') this._onPassCompleteHook();
+    };
     this._onEnd = () => this._handlePlaybackEnd();
     this.bindAudioCallbacks();
   }

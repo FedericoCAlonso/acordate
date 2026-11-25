@@ -86,6 +86,8 @@ export class AudioSynthService {
     this._chorusIndex = 0;
     /** Memoria anti-repetición y equilibrio de densidad del motor de comping orgánico. */
     this._compingMemory = createCompingMemory();
+    /** Plan pre-generado del coro completo (cuando está disponible) para sincronía 100 % audio-visual. */
+    this._chorusPlan = null;
     /** Cantidad de compases de conteo previo (0, 1 o 2). */
     this.countInMeasures = 1;
 
@@ -140,6 +142,15 @@ export class AudioSynthService {
    */
   get isPlaying() {
     return this._isPlaying;
+  }
+
+  /**
+   * Registra un plan pre-generado del coro completo (`planChorusComping`) para que el sintetizador
+   * ejecute exactamente las mismas variaciones y anticipaciones mostradas en Cifrado, Diagramas y Partitura.
+   * @param {object|null} plan Plan de coro o null para planificación dinámica en vivo.
+   */
+  setChorusPlan(plan) {
+    this._chorusPlan = plan || null;
   }
 
   /**
@@ -1035,6 +1046,14 @@ export class AudioSynthService {
     const beatsPerMeasure = tl.beatsPerMeasure || 4;
     const context = analyzeChordContext(tl.chords || [], chordIndex, beatsPerMeasure, this._chorusIndex);
 
+    const planMatches =
+      feel !== 'fijo' &&
+      this._chorusPlan &&
+      this._chorusPlan.feel === feel &&
+      Array.isArray(this._chorusPlan.eventsByIndex?.[chordIndex]);
+    const preplannedHits = planMatches ? this._chorusPlan.eventsByIndex[chordIndex] : null;
+    const preplannedBass = planMatches ? this._chorusPlan.bassByIndex?.[chordIndex] : null;
+
     if (tl.isHarmonyOnly) {
       // Modo armonía / play-along: pista de acordes y pista de bajo separadas y silenciables
       if (this.chordsEnabled && this.chordsVolume > 0.01) {
@@ -1071,7 +1090,8 @@ export class AudioSynthService {
               feel,
               context,
               instrument: chordInst,
-              volume: this.chordsVolume
+              volume: this.chordsVolume,
+              preplannedHits
             });
           }
         }
@@ -1089,7 +1109,8 @@ export class AudioSynthService {
             secPerBeat,
             pattern,
             feel,
-            context
+            context,
+            preplannedNotes: preplannedBass
           });
         }
       }
@@ -1116,7 +1137,8 @@ export class AudioSynthService {
           feel,
           context,
           instrument: inst,
-          volume: this.chordsVolume
+          volume: this.chordsVolume,
+          preplannedHits
         });
       }
       return;
@@ -1129,21 +1151,23 @@ export class AudioSynthService {
    * Agenda eventos de acompañamiento generados por `CompingEngineService` ('organico' o 'vivo')
    * con micro-humanización controlada y sin desplazar el reloj maestro.
    */
-  _scheduleOrganicComping(ctx, { chordSymbol, voicingMidis, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context, instrument, volume }) {
+  _scheduleOrganicComping(ctx, { chordSymbol, voicingMidis, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context, instrument, volume, preplannedHits = null }) {
     const isPiano = String(instrument || '').includes('piano');
-    const hits = planCompingEvents({
-      chordSymbol,
-      nextChordSymbol: context.nextChordSymbol,
-      voicingMidis,
-      nextVoicingMidis: context.nextVoicingMidis,
-      durationBeats,
-      beatsPerMeasure,
-      pattern,
-      compingFeel: feel,
-      context,
-      isPiano,
-      memory: this._compingMemory
-    });
+    const hits = Array.isArray(preplannedHits)
+      ? preplannedHits
+      : planCompingEvents({
+          chordSymbol,
+          nextChordSymbol: context.nextChordSymbol,
+          voicingMidis,
+          nextVoicingMidis: context.nextVoicingMidis,
+          durationBeats,
+          beatsPerMeasure,
+          pattern,
+          compingFeel: feel,
+          context,
+          isPiano,
+          memory: this._compingMemory
+        });
     for (const hit of hits) {
       const t = Math.max(ctx.currentTime, startTime + hit.beatOffset * secPerBeat + (hit.humanizeMs || 0) / 1000);
       const durSec = Math.max(0.12, hit.durationBeats * secPerBeat);
@@ -1176,17 +1200,19 @@ export class AudioSynthService {
   /**
    * Agenda una línea de bajo acompañante con fraseo multi-compás y aproximación cromática.
    */
-  _scheduleOrganicBass(ctx, { chordSymbol, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context }) {
-    const notes = planPlayAlongBass({
-      chordSymbol,
-      nextChordSymbol: context.nextChordSymbol,
-      durationBeats,
-      beatsPerMeasure,
-      pattern,
-      compingFeel: feel,
-      context,
-      memory: this._compingMemory
-    });
+  _scheduleOrganicBass(ctx, { chordSymbol, startTime, durationBeats, beatsPerMeasure, secPerBeat, pattern, feel, context, preplannedNotes = null }) {
+    const notes = Array.isArray(preplannedNotes)
+      ? preplannedNotes
+      : planPlayAlongBass({
+          chordSymbol,
+          nextChordSymbol: context.nextChordSymbol,
+          durationBeats,
+          beatsPerMeasure,
+          pattern,
+          compingFeel: feel,
+          context,
+          memory: this._compingMemory
+        });
     const baseVol = this.bassVolume * 0.65;
     for (const n of notes) {
       const t = Math.max(ctx.currentTime, startTime + n.beatOffset * secPerBeat + (n.humanizeMs || 0) / 1000);

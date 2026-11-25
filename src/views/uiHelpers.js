@@ -86,6 +86,7 @@ if (typeof window !== 'undefined') {
 export function icon(name, size = 22) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'm3-icon');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('width', String(size));
   svg.setAttribute('height', String(size));

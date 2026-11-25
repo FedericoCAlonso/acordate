@@ -1,4 +1,4 @@
-# Acordate — App PWA de práctica musical (`v1.3.0`)
+# Acordate — App PWA de práctica musical (`v1.4.0`)
 
 Aplicación web progresiva (**PWA**) offline para practicar **guitarra clásica, guitarra, bajo y piano** con foco en lectura de partitura, gran pentagrama, técnica, secuencias de acordes, escalas y *walking bass*.
 

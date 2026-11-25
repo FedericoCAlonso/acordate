@@ -182,6 +182,49 @@ export function createWalkingBassPractice({ practice, abc, transposedKey }) {
 }
 
 /**
+ * Construye una práctica editable de usuario a partir de una variación de coro generada por el
+ * motor orgánico/vivo (`buildChorusAbcScore`), permitiendo estudiarla, modificarla o imprimirla.
+ * @param {object} params Datos de la práctica origen y ABC del coro generado.
+ * @returns {Practice} Nueva práctica mixta v3 lista para guardar y abrir en el Editor.
+ */
+export function createChorusVariationPractice({
+  practice,
+  abc,
+  transposedKey,
+  compingPattern,
+  compingFeel = 'vivo',
+  voicingInstrument = 'piano'
+}) {
+  const vInst = normalizeVoicingInstrument(voicingInstrument);
+  const instKey = vInst === 'bajo-5' ? 'bajo' : vInst;
+  const feelLabel = compingFeel === 'vivo' ? 'Vivo' : 'Orgánico';
+  const title = `${practice.title} — Variación ${feelLabel}`;
+  return new Practice({
+    id: generatePracticeId(title),
+    version: 3,
+    type: 'mixed',
+    title,
+    instruments: [instKey],
+    category: practice.category || 'repertorio',
+    level: practice.level,
+    tags: ['variacion', compingFeel, ...(practice.tags || []).slice(0, 3)],
+    key: transposedKey || practice.key,
+    timeSignature: practice.timeSignature || '4/4',
+    tempo: { ...practice.tempo },
+    abc,
+    progression: practice.progression ? practice.progression.map((s) => (typeof s.toJSON === 'function' ? s.toJSON() : { ...s })) : [],
+    comping: compingPattern || practice.comping || 'swing-negras',
+    goals: [
+      'Leer con anticipación las coloraciones y síncopas del coro',
+      'Mantener el groove estable respetando los silencios y anticipaciones'
+    ],
+    notes: `Partitura de acompañamiento (${feelLabel}) generada sobre ${practice.title}.`,
+    origin: 'user',
+    createdAt: new Date().toISOString()
+  });
+}
+
+/**
  * Expande pasos armónicos en acordes por compás y genera la línea ABC de walking bass sugerida.
  * @param {object} params Datos de la práctica y generador.
  * @returns {string} Partitura ABC de walking bass (o cadena vacía si no hay pasos).

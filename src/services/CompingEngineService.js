@@ -1,4 +1,13 @@
-import { getChordVoicingMidi, parseChord, pcToNoteName } from '../core/MusicTheory.js';
+import {
+  getChordVoicingMidi,
+  getKeySignatureMap,
+  midiToAbcPitch,
+  mod12,
+  parseChord,
+  pcToNoteName,
+  prefersFlats
+} from '../core/MusicTheory.js';
+import { soundingMidiToWrittenMidi } from '../core/PitchPolicy.js';
 
 /**
  * Modos de ejecución del motor de acompañamiento (comping).
@@ -1256,4 +1265,382 @@ export function planPlayAlongBass({
   }
 
   return notes;
+}
+
+/**
+ * Pre-genera el coro completo de acompañamiento (acordes + bajo) para una secuencia de eventos
+ * armónicos, garantizando sincronía exacta 100 % entre el audio que sonará y las vistas visuales
+ * (Cifrado con lookahead, chips de variación en Diagramas y Partitura ABC generada).
+ *
+ * @param {object} params Parámetros de generación del coro.
+ * @param {Array<object>} params.chords Lista de eventos armónicos de la línea de tiempo.
+ * @param {number} [params.beatsPerMeasure=4] Pulsos (en negras) por compás.
+ * @param {string} [params.pattern='negras-abajo'] Patrón de comping.
+ * @param {'fijo'|'organico'|'vivo'} [params.compingFeel='organico'] Feel activo.
+ * @param {boolean} [params.isPiano=false] True si se planifica para piano.
+ * @param {number} [params.chorusIndex=0] Índice de coro / variación.
+ * @param {Function} [params.rng=Math.random] Generador pseudoaleatorio [0..1).
+ * @returns {object} Plan completo del coro con `eventsByIndex`, `bassByIndex`, `barsSummary` y `stepVariations`.
+ */
+export function planChorusComping({
+  chords = [],
+  beatsPerMeasure = 4,
+  pattern = 'negras-abajo',
+  compingFeel = 'organico',
+  isPiano = false,
+  chorusIndex = 0,
+  rng = Math.random
+}) {
+  const feel = normalizeCompingFeel(compingFeel);
+  const bpm = Math.max(1, Number(beatsPerMeasure) || 4);
+  const rand = typeof rng === 'function' ? rng : Math.random;
+  const memory = createCompingMemory();
+
+  const eventsByIndex = [];
+  const bassByIndex = [];
+  const barsMap = new Map();
+  const stepVarsMap = new Map();
+
+  let maxMeasure = 0;
+
+  for (let cIdx = 0; cIdx < chords.length; cIdx++) {
+    const chordEv = chords[cIdx];
+    const chordMidis = Array.isArray(chordEv.voicingMidis) && chordEv.voicingMidis.length > 0
+      ? chordEv.voicingMidis
+      : (getChordVoicingMidi(chordEv.symbol, 52)?.chordMidis || []);
+    const context = analyzeChordContext(chords, cIdx, bpm, chorusIndex);
+
+    const hits = planCompingEvents({
+      chordSymbol: chordEv.symbol,
+      nextChordSymbol: context.nextChordSymbol,
+      voicingMidis: chordMidis,
+      nextVoicingMidis: context.nextVoicingMidis,
+      durationBeats: chordEv.durationBeats,
+      beatsPerMeasure: bpm,
+      pattern: chordEv.rhythm || pattern,
+      compingFeel: feel,
+      context,
+      isPiano,
+      memory,
+      rng: rand
+    });
+
+    const bassNotes = planPlayAlongBass({
+      chordSymbol: chordEv.symbol,
+      nextChordSymbol: context.nextChordSymbol,
+      durationBeats: chordEv.durationBeats,
+      beatsPerMeasure: bpm,
+      pattern: chordEv.rhythm || pattern,
+      compingFeel: feel,
+      context,
+      memory,
+      rng: rand
+    });
+
+    eventsByIndex.push(hits);
+    bassByIndex.push(bassNotes);
+
+    const evStartBeat = Number(chordEv.beat) || 0;
+    const evEndBeat = evStartBeat + (Number(chordEv.durationBeats) || bpm);
+    maxMeasure = Math.max(maxMeasure, Math.ceil(evEndBeat / bpm - 1e-6));
+
+    const stepKey = chordEv.stepIndex !== undefined ? chordEv.stepIndex : cIdx;
+    if (!stepVarsMap.has(stepKey)) stepVarsMap.set(stepKey, []);
+    const stepList = stepVarsMap.get(stepKey);
+
+    for (const hit of hits) {
+      const absBeat = evStartBeat + hit.beatOffset;
+      const measure = Math.floor(absBeat / bpm + 1e-6) + 1;
+      const beatInBar = Math.max(0, absBeat - (measure - 1) * bpm);
+      const isAnticipation = hit.tag === 'anticipation';
+
+      if (!barsMap.has(measure)) {
+        barsMap.set(measure, { measure, sequence: [] });
+      }
+      const barEntry = barsMap.get(measure);
+      const lastItem = barEntry.sequence[barEntry.sequence.length - 1];
+      const itemKey = `${hit.displaySymbol}|${isAnticipation ? 'ant' : 'std'}`;
+      const lastKey = lastItem ? `${lastItem.displaySymbol}|${lastItem.isAnticipation ? 'ant' : 'std'}` : '';
+      if (itemKey !== lastKey && barEntry.sequence.length < 4) {
+        barEntry.sequence.push({
+          displaySymbol: hit.displaySymbol || chordEv.symbol,
+          baseSymbol: hit.baseSymbol || chordEv.symbol,
+          techniqueLabel: hit.techniqueLabel || 'Base',
+          isVariation: Boolean(hit.isVariation),
+          isAnticipation,
+          beatInBar: Number(beatInBar.toFixed(2)),
+          midis: [...(hit.midis || [])]
+        });
+      }
+
+      if (hit.isVariation && hit.displaySymbol && stepList.length < 4) {
+        const dup = stepList.some((v) => v.displaySymbol === hit.displaySymbol && v.isAnticipation === isAnticipation);
+        if (!dup) {
+          stepList.push({
+            displaySymbol: hit.displaySymbol,
+            techniqueLabel: hit.techniqueLabel || 'Variación',
+            isAnticipation,
+            midis: [...(hit.midis || [])]
+          });
+        }
+      }
+    }
+  }
+
+  const barsSummary = {};
+  for (const [m, info] of barsMap.entries()) {
+    barsSummary[m] = info;
+  }
+
+  const stepVariations = {};
+  for (const [k, list] of stepVarsMap.entries()) {
+    stepVariations[k] = list;
+  }
+
+  return {
+    id: `${chorusIndex}-${Math.floor(rand() * 1e9).toString(36)}`,
+    chorusIndex,
+    feel,
+    pattern,
+    beatsPerMeasure: bpm,
+    totalMeasures: Math.max(1, maxMeasure),
+    chords,
+    eventsByIndex,
+    bassByIndex,
+    barsSummary,
+    stepVariations
+  };
+}
+
+/**
+ * Convierte una nota MIDI escrita a sintaxis ABC actualizando las alteraciones vigentes del compás.
+ */
+function writtenMidiToAbcTokenInBar(writtenMidi, useFlats, barAcc) {
+  const token = midiToAbcPitch(writtenMidi, useFlats, barAcc);
+  const pc = mod12(writtenMidi);
+  const noteName = pcToNoteName(pc, useFlats);
+  const letter = noteName[0];
+  const desiredAcc = noteName[1] === '#' ? 1 : noteName[1] === 'b' ? -1 : 0;
+  barAcc[letter] = desiredAcc;
+  return token;
+}
+
+/**
+ * Formatea una secuencia de eventos cuantizados en un compás de `slotsPerBar` corcheas (`L:1/8`),
+ * garantizando matemáticamente suma exacta de compás (cero errores en `validateAbcMeasures`).
+ */
+function formatQuantizedBarAbc({ slotMap, slotsPerBar, useFlats, keyMap, includeChords, clampRange, toWritten }) {
+  const barAcc = { ...keyMap };
+  const activeSlots = [...slotMap.keys()].sort((a, b) => a - b);
+  if (activeSlots.length === 0) {
+    return `z${slotsPerBar > 1 ? slotsPerBar : ''}`;
+  }
+
+  const parts = [];
+  let lastChordShown = '';
+  if (activeSlots[0] > 0) {
+    parts.push(`z${activeSlots[0] > 1 ? activeSlots[0] : ''}`);
+  }
+
+  for (let i = 0; i < activeSlots.length; i++) {
+    const slot = activeSlots[i];
+    const nextSlot = i + 1 < activeSlots.length ? activeSlots[i + 1] : slotsPerBar;
+    const span = Math.max(1, nextSlot - slot);
+    const entry = slotMap.get(slot);
+    const durStr = span === 1 ? '' : String(span);
+
+    let chordPrefix = '';
+    if (includeChords && entry.displaySymbol && entry.displaySymbol !== lastChordShown) {
+      chordPrefix = `"${entry.displaySymbol}"`;
+      lastChordShown = entry.displaySymbol;
+    }
+
+    const uniqueMidis = [...new Set((entry.midis || []).filter(Number.isFinite))]
+      .map((m) => Math.max(clampRange[0], Math.min(clampRange[1], Math.round(m))))
+      .sort((a, b) => a - b);
+
+    if (uniqueMidis.length === 0) {
+      parts.push(`${chordPrefix}z${durStr}`);
+    } else if (uniqueMidis.length === 1) {
+      const tok = writtenMidiToAbcTokenInBar(toWritten(uniqueMidis[0]), useFlats, barAcc);
+      parts.push(`${chordPrefix}${tok}${durStr}`);
+    } else {
+      const tokens = uniqueMidis.map((m) => writtenMidiToAbcTokenInBar(toWritten(m), useFlats, barAcc));
+      parts.push(`${chordPrefix}[${tokens.join('')}]${durStr}`);
+    }
+  }
+
+  return parts.join(' ');
+}
+
+/**
+ * Convierte un plan pre-generado de coro (`planChorusComping`) en una partitura ABC limpia,
+ * con suma exacta de compases (`L:1/8`) y registro válido según `PitchPolicy`:
+ * - Piano: gran pentagrama (`%%staves {1 2}`, MD acordes en clave de Sol + MI bajo en clave de Fa).
+ * - Guitarra / Clásica: pentagrama `clef=treble-8` con voicings y cifrado enriquecido.
+ * - Bajo (4c / 5c): pentagrama `clef=bass` con línea caminante/shuffle y cifrado enriquecido.
+ *
+ * @param {object} chorusPlan Plan retornado por `planChorusComping`.
+ * @param {object} [options={}] Metadatos de cabecera e instrumento.
+ * @returns {string} Partitura ABC lista para renderizar con `abcjs` o guardar en el Editor.
+ */
+export function buildChorusAbcScore(
+  chorusPlan,
+  { title = 'Variación generada', key = 'C', timeSignature = '4/4', voicingInstrument = 'piano' } = {}
+) {
+  if (!chorusPlan || !Array.isArray(chorusPlan.chords) || chorusPlan.chords.length === 0) {
+    return '';
+  }
+
+  const tsMatch = String(timeSignature || '4/4').trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+  const tsNum = tsMatch ? Math.max(1, Number(tsMatch[1])) : 4;
+  const tsDen = tsMatch ? Math.max(1, Number(tsMatch[2])) : 4;
+  const slotsPerBar = Math.max(2, Math.round((tsNum / tsDen) * 8));
+  const bpm = chorusPlan.beatsPerMeasure || (tsNum * (4 / tsDen));
+  const totalMeasures = Math.max(1, chorusPlan.totalMeasures || 1);
+
+  const cleanKey = String(key || 'C').trim().split(/\s+/)[0] || 'C';
+  const useFlats = prefersFlats(cleanKey);
+  const keyMap = getKeySignatureMap(cleanKey);
+
+  const isPiano = voicingInstrument === 'piano';
+  const isBass = voicingInstrument === 'bajo' || voicingInstrument === 'bajo-5';
+
+  // Agrupa eventos de acordes y de bajo en grilla discreta de corcheas (slotsPerBar) por compás
+  const chordSlotsByBar = Array.from({ length: totalMeasures }, () => new Map());
+  const bassSlotsByBar = Array.from({ length: totalMeasures }, () => new Map());
+
+  const placeInSlot = (map, rawSlot, payload) => {
+    let slot = Math.max(0, Math.min(slotsPerBar - 1, rawSlot));
+    if (map.has(slot)) {
+      if (slot + 1 < slotsPerBar && !map.has(slot + 1)) slot += 1;
+    }
+    map.set(slot, payload);
+  };
+
+  chorusPlan.chords.forEach((chordEv, cIdx) => {
+    const evStartBeat = Number(chordEv.beat) || 0;
+    const hits = chorusPlan.eventsByIndex?.[cIdx] || [];
+    const bassNotes = chorusPlan.bassByIndex?.[cIdx] || [];
+
+    for (const hit of hits) {
+      const absBeat = evStartBeat + hit.beatOffset;
+      const barIdx = Math.floor(absBeat / bpm + 1e-6);
+      if (barIdx < 0 || barIdx >= totalMeasures) continue;
+      const beatInBar = Math.max(0, absBeat - barIdx * bpm);
+      const slot = Math.round(beatInBar * 2);
+      placeInSlot(chordSlotsByBar[barIdx], slot, {
+        displaySymbol: hit.displaySymbol || chordEv.symbol,
+        midis: hit.midis || []
+      });
+    }
+
+    for (const bn of bassNotes) {
+      const absBeat = evStartBeat + bn.beatOffset;
+      const barIdx = Math.floor(absBeat / bpm + 1e-6);
+      if (barIdx < 0 || barIdx >= totalMeasures) continue;
+      const beatInBar = Math.max(0, absBeat - barIdx * bpm);
+      const slot = Math.round(beatInBar * 2);
+      const barSummary = chorusPlan.barsSummary?.[barIdx + 1];
+      const symForSlot = slot === 0
+        ? (barSummary?.sequence?.[0]?.displaySymbol || chordEv.symbol)
+        : '';
+      placeInSlot(bassSlotsByBar[barIdx], slot, {
+        displaySymbol: symForSlot,
+        midis: [bn.midi]
+      });
+    }
+  });
+
+  const joinBars = (bars) => {
+    const lines = [];
+    for (let i = 0; i < bars.length; i += 4) {
+      const chunk = bars.slice(i, i + 4);
+      const isEnd = i + 4 >= bars.length;
+      lines.push(`${chunk.join(' | ')} ${isEnd ? '|]' : '|'}`);
+    }
+    return lines.join('\n');
+  };
+
+  const safeTitle = String(title || 'Variación generada').replace(/[\r\n]+/g, ' ').trim();
+
+  if (isPiano) {
+    const rhBars = chordSlotsByBar.map((slotMap) =>
+      formatQuantizedBarAbc({
+        slotMap,
+        slotsPerBar,
+        useFlats,
+        keyMap,
+        includeChords: true,
+        clampRange: [48, 84],
+        toWritten: (m) => m
+      })
+    );
+    const lhBars = bassSlotsByBar.map((slotMap) =>
+      formatQuantizedBarAbc({
+        slotMap,
+        slotsPerBar,
+        useFlats,
+        keyMap,
+        includeChords: false,
+        clampRange: [28, 55],
+        toWritten: (m) => m
+      })
+    );
+    return [
+      'X:1',
+      `T:${safeTitle}`,
+      `M:${tsNum}/${tsDen}`,
+      'L:1/8',
+      `K:${cleanKey}`,
+      '%%staves {1 2}',
+      'V:1 clef=treble',
+      joinBars(rhBars),
+      'V:2 clef=bass',
+      joinBars(lhBars)
+    ].join('\n');
+  }
+
+  if (isBass) {
+    const bassBars = bassSlotsByBar.map((slotMap) =>
+      formatQuantizedBarAbc({
+        slotMap,
+        slotsPerBar,
+        useFlats,
+        keyMap,
+        includeChords: true,
+        clampRange: [28, 62],
+        toWritten: (m) => soundingMidiToWrittenMidi(m, 'bajo')
+      })
+    );
+    return [
+      'X:1',
+      `T:${safeTitle}`,
+      `M:${tsNum}/${tsDen}`,
+      'L:1/8',
+      `K:${cleanKey} clef=bass`,
+      joinBars(bassBars)
+    ].join('\n');
+  }
+
+  // Guitarra / Guitarra clásica (clef=treble-8)
+  const guitarBars = chordSlotsByBar.map((slotMap) =>
+    formatQuantizedBarAbc({
+      slotMap,
+      slotsPerBar,
+      useFlats,
+      keyMap,
+      includeChords: true,
+      clampRange: [40, 81],
+      toWritten: (m) => soundingMidiToWrittenMidi(m, 'guitarra')
+    })
+  );
+  return [
+    'X:1',
+    `T:${safeTitle}`,
+    `M:${tsNum}/${tsDen}`,
+    'L:1/8',
+    `K:${cleanKey} clef=treble-8`,
+    joinBars(guitarBars)
+  ].join('\n');
 }

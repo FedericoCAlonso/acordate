@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v27 · App v1.3.0: comping estocástico no periódico y visor de acordes en vivo).
+ * Versión del caché estático de la PWA Acordate (v28 · App v1.4.0: coro precalculado con lookahead en Cifrado/Diagramas, partitura generada y fix vista escritorio).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v27';
+const CACHE_NAME = 'acordate-static-v28';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
