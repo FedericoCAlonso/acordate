@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { loadBuiltinCatalog } from '../src/data/catalog.js';
 import { CATEGORY_LABELS } from '../src/core/i18n.js';
+import { APP_VERSION } from '../src/core/version.js';
 import { Practice, VALID_CATEGORIES } from '../src/models/Practice.js';
 import { SEED_COLOR_PRESETS } from '../src/models/Settings.js';
 import { validateAbcInstrumentRange } from '../src/services/AbcService.js';
@@ -266,4 +267,12 @@ test('Ola 1 curricular: categoría técnica, bajo 5 cuerdas (B0), repertorio N1/
 
   const pianoN5WrittenRep = catalog.filter((p) => p.instruments.includes('piano') && p.level === 5 && p.isRepertoire && Boolean(p.abc));
   assert.ok(pianoN5WrittenRep.length >= 1, 'Piano N5 debe tener al menos 1 obra de repertorio escrita en gran pentagrama');
+
+  // Coherencia global de versión: APP_VERSION === package.json === README.md === sw.js
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  const readme = fs.readFileSync('README.md', 'utf8');
+  const swText = fs.readFileSync('sw.js', 'utf8');
+  assert.equal(pkg.version, APP_VERSION, 'package.json y src/core/version.js deben declarar la misma versión');
+  assert.ok(readme.includes(`v${APP_VERSION}`), `README.md debe reflejar v${APP_VERSION}`);
+  assert.ok(swText.includes(`v${APP_VERSION}`), `sw.js debe reflejar v${APP_VERSION} en su cabecera de caché`);
 });

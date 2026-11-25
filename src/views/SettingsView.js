@@ -1,4 +1,5 @@
 import { INSTRUMENT_LABELS, METRONOME_SOUND_LABELS } from '../core/i18n.js';
+import { APP_VERSION } from '../core/version.js';
 import { SEED_COLOR_PRESETS } from '../models/Settings.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
 import { createSliderGroup, createSwitchRow, el, icon, openModalDialog } from './uiHelpers.js';
@@ -403,9 +404,9 @@ export class SettingsView {
         title: 'Licencia y derechos de autor',
         content: el('div', { style: 'display:flex; flex-direction:column; gap:10px; line-height:1.5' }, [
           el('p', { className: 'm3-body-md' }, [
-            el('strong', {}, ['Licencia Propietaria — Todos los derechos reservados (All Rights Reserved)']),
+            el('strong', {}, [`Acordate v${APP_VERSION} — Licencia Propietaria (All Rights Reserved)`]),
             el('br'),
-            '© 2026 Federico C. Alonso.'
+            '© 2026 Federico C. Alonso. Todos los derechos reservados.'
           ]),
           el('p', { className: 'm3-body-sm' }, [
             'El código fuente, diseño, arquitectura, textos pedagógicos y ejercicios originales de Acordate son propiedad exclusiva de su titular. Queda prohibido copiar, modificar, redistribuir o utilizar con fines comerciales sin autorización previa y por escrito.'
@@ -428,7 +429,7 @@ export class SettingsView {
     const aboutCard = el('div', { className: 'm3-card', style: 'display:flex; flex-direction:column; gap:10px' }, [
       el('div', { className: 'player-toolbar' }, [
         el('h2', { className: 'm3-title-md' }, ['Acerca de Acordate']),
-        el('span', { className: 'm3-badge m3-badge--primary' }, ['v1.0.0 · Offline PWA'])
+        el('span', { className: 'm3-badge m3-badge--primary' }, [`v${APP_VERSION} · Offline PWA`])
       ]),
       el('p', { className: 'm3-body-md' }, [
         'Privacidad: Acordate funciona 100 % en tu dispositivo (IndexedDB + caché offline), sin cuentas, sin servidores externos y sin telemetría ni rastreo.'

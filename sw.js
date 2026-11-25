@@ -1,8 +1,8 @@
 /**
- * Versión del caché estático de la PWA Acordate (v23: Network-first en localhost + Ola 1 +42 ejercicios y categoría Técnica).
+ * Versión del caché estático de la PWA Acordate (v24 · App v1.1.0: fuente única de versión + Ola 1 + licencia propietaria).
  * Incrementar esta versión ante cambios de archivos para renovar el caché offline.
  */
-const CACHE_NAME = 'acordate-static-v23';
+const CACHE_NAME = 'acordate-static-v24';
 
 /**
  * Lista completa de recursos locales precacheados para garantizar funcionamiento 100% offline
@@ -29,6 +29,7 @@ const PRECACHE_ASSETS = [
   './src/core/EventBus.js',
   './src/core/Router.js',
   './src/core/i18n.js',
+  './src/core/version.js',
   './src/core/MusicTheory.js',
   './src/core/PitchPolicy.js',
   './src/models/Practice.js',

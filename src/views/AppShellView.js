@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../core/version.js';
 import { openNotationGuideModal } from './NotationGuideModal.js';
 import { closeAllOverlays, createPopupMenu, el, icon } from './uiHelpers.js';
 
@@ -82,7 +83,7 @@ export class AppShellView {
       el('span', { className: 'm3-nav__brand-icon', 'aria-hidden': 'true' }, ['♪']),
       el('div', { className: 'm3-nav__brand-text' }, [
         el('strong', {}, ['Acordate']),
-        el('span', { className: 'm3-body-md' }, ['Práctica musical'])
+        el('span', { className: 'm3-body-md' }, [`Práctica musical · v${APP_VERSION}`])
       ])
     ]);
 
